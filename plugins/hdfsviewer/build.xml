@@ -8,14 +8,15 @@
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
-	
+		
 	<property name="conf.dir" value="${basedir}/conf" />
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="java.src.dir" value="${basedir}/src" />
 	
 	<property name="azkaban-hdfs-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
-
+	<property name="azkaban-hdfs-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
+	
 	<property environment="env" />
 
 	<path id="main.classpath">
@@ -65,6 +66,16 @@
 			<fileset dir="${dist.classes.dir}">
 				<include name="**/*.*" />
 			</fileset>
+		</jar>
+	</target>
+	
+	<target name="src-jars" description="Create azkaban binary+source jar">
+		<mkdir dir="${dist.jar.dir}" />
+		<jar destfile="${azkaban-hdfs-jar}">
+			<fileset dir="${dist.classes.dir}">
+				<include name="**/*.*" />
+			</fileset>
+			<fileset dir="${java.src.dir}" />
 		</jar>
 	</target>
 	

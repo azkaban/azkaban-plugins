@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.servlet.ServletConfig;
@@ -23,11 +24,11 @@ import org.apache.log4j.Logger;
 
 import azkaban.user.User;
 import azkaban.utils.Props;
-import azkaban.webapp.servlet.AbstractViewerServlet;
+import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
 import azkaban.webapp.servlet.Page;
 import azkaban.webapp.session.Session;
 
-public class HdfsBrowserServlet extends AbstractViewerServlet {
+public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	private static final long serialVersionUID = 1L;
 	private static final String PROXY_USER_SESSION_KEY = "hdfs.browser.proxy.user";
 	private static Logger logger = Logger.getLogger(HdfsBrowserServlet.class);
@@ -46,7 +47,7 @@ public class HdfsBrowserServlet extends AbstractViewerServlet {
 	private boolean allowGroupProxy;
 	private Configuration conf;
 	
-	public HdfsBrowserServlet(String name, Props props) {
+	public HdfsBrowserServlet(Props props) {
 		this.props = props;
 	}
 
@@ -54,13 +55,13 @@ public class HdfsBrowserServlet extends AbstractViewerServlet {
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 
-		try {
-			hdfsURI = new URI(props.getString("hdfs.namenode.url"));
-		} catch (URISyntaxException e) {
-			logger.error(e);
-		}
-
+//		try {
+//			hdfsURI = new URI(props.getString("hdfs.namenode.url"));
+//		} catch (URISyntaxException e) {
+//			logger.error(e);
+//		}
 		conf = new Configuration();
+		conf.setClassLoader(this.getClass().getClassLoader());
 		
 		shouldProxy = props.getBoolean("azkaban.should.proxy", false);
 		if (shouldProxy) {
@@ -87,12 +88,12 @@ public class HdfsBrowserServlet extends AbstractViewerServlet {
 	}
 
 	private FileSystem getFileSystem(String username) throws IOException {
-		UserGroupInformation ugi = getProxiedUser(username, new Configuration());
+		UserGroupInformation ugi = getProxiedUser(username, new Configuration(), shouldProxy);
 		FileSystem fs = ugi.doAs(new PrivilegedAction<FileSystem>(){
 			@Override
 			public FileSystem run() {
 				try {
-					return FileSystem.get(hdfsURI, conf);
+					return FileSystem.get(conf);
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -125,16 +126,42 @@ public class HdfsBrowserServlet extends AbstractViewerServlet {
 			}
 		}
 		catch (Exception e) {
-			Page page = newPage(req, resp, session, "azkaban/hdfsviewer/hdfsbrowserpage.vm");
+			Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/hdfsbrowserpage.vm");
 			page.add("error_message", "Error: " + e.getMessage());
+			page.add("user", username);
+			page.add("allowproxy", allowGroupProxy);
 			page.add("no_fs", "true");
 			page.render();
 		}
 	}
 
 	@Override
-	protected void handlePost(HttpServletRequest req, HttpServletResponse resp, Session session)
-			throws ServletException, IOException {
+	protected void handlePost(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
+		User user = session.getUser();
+		if (hasParam(req, "action")) {
+			HashMap<String,String> results = new HashMap<String,String>();			
+			String action = getParam(req, "action");
+			
+			if (action.equals("changeProxyUser")) {
+				if (hasParam(req, "proxyname")) {
+					String newProxyname = getParam(req, "proxyname");
+								
+					if (user.getUserId().equals(newProxyname) || user.isInGroup(newProxyname)) {
+						session.setSessionData(PROXY_USER_SESSION_KEY, newProxyname);
+					}
+					else {
+						results.put("error", "User '" + user.getUserId() + "' cannot proxy as '" + newProxyname + "'");
+					}
+				}
+			}
+			else {
+				results.put("error", "changeProxyUser param is not set");
+			}
+			
+			this.writeJSON(resp, results);
+			return;
+		}
+		
 		// if (hasParam(req, "logout")) {
 		// Page page = newPage(req, resp, session,
 		// "azkaban/hdfsviewer/hdfsbrowserlogin.vm");
@@ -199,7 +226,8 @@ public class HdfsBrowserServlet extends AbstractViewerServlet {
 			Session session, Path path) throws IOException {
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/hdfsbrowserpage.vm");
-
+		page.add("allowproxy", allowGroupProxy);
+		
 		List<Path> paths = new ArrayList<Path>();
 		List<String> segments = new ArrayList<String>();
 		Path curr = path;
@@ -224,7 +252,6 @@ public class HdfsBrowserServlet extends AbstractViewerServlet {
 			page.add("error_message", "Error: " + e.getMessage());
 		}
 		page.render();
-
 	}
 
 	private void displayFile(FileSystem fs, HttpServletRequest req, HttpServletResponse resp, Session session, Path path)
@@ -257,7 +284,7 @@ public class HdfsBrowserServlet extends AbstractViewerServlet {
 	 * Create a proxied user based on the explicit user name, taking other
 	 * parameters necessary from properties file.
 	 */
-	public static synchronized UserGroupInformation getProxiedUser(String toProxy, Configuration conf) throws IOException {
+	public static synchronized UserGroupInformation getProxiedUser(String toProxy, Configuration conf, boolean shouldProxy) throws IOException {
 		if (toProxy == null) {
 			throw new IllegalArgumentException("toProxy can't be null");
 		}
@@ -265,10 +292,13 @@ public class HdfsBrowserServlet extends AbstractViewerServlet {
 			throw new IllegalArgumentException("conf can't be null");
 		}
 
-		logger.info("loginUser (" + loginUser + ") already created, refreshing tgt.");
-		loginUser.checkTGTAndReloginFromKeytab();
-
-		return UserGroupInformation.createProxyUser(toProxy, loginUser);
+		if (shouldProxy) {
+			logger.info("loginUser (" + loginUser + ") already created, refreshing tgt.");
+			loginUser.checkTGTAndReloginFromKeytab();
+			return UserGroupInformation.createProxyUser(toProxy, loginUser);
+		}
+		
+		return UserGroupInformation.createRemoteUser(toProxy);
 	}
 
 }
