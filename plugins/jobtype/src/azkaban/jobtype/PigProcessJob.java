@@ -48,7 +48,7 @@ public class PigProcessJob extends JavaProcessJob {
 	public static final String DEBUG = "debug";
 
 	public static final String PIG_JAVA_CLASS = "org.apache.pig.Main";
-	public static final String SECURE_PIG_WRAPPER = "com.linkedin.azkaban.jobtypes.SecurePigWrapper";
+	public static final String SECURE_PIG_WRAPPER = "azkaban.jobtype.SecurePigWrapper";
 
 	public PigProcessJob(String jobid, Props sysProps, Props jobProps, Logger log) {
 		super(jobid, sysProps, new Props(sysProps, jobProps), log);

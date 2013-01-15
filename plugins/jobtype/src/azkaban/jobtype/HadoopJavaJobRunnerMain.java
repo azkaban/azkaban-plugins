@@ -120,11 +120,6 @@ public class HadoopJavaJobRunnerMain {
 
 				_logger.info("Current logged in user is " + loginUser.getUserName());
 
-//				_logger.info("user " + loginUser + " has these tokens ");
-//				for(Token<?> t : loginUser.getTokens() ) {
-//					System.out.println("Token = " +t);
-//				}
-				
 				String userToProxy = prop.getProperty("user.to.proxy");
 				proxyUser = UserGroupInformation.createProxyUser(userToProxy, loginUser);
 

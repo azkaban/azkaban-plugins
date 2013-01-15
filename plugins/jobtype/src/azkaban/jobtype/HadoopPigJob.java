@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
@@ -56,7 +55,7 @@ public class HadoopPigJob extends JavaProcessJob {
 
 	// should point to the specific pig installation libs
 	public static String PIG_JAVA_CLASS = "org.apache.pig.Main";
-	public static String HADOOP_SECURE_PIG_WRAPPER = "com.linkedin.azkaban.JobTypes.HadoopSecurePigWrapper";
+	public static String HADOOP_SECURE_PIG_WRAPPER = "azkaban.jobtype.HadoopSecurePigWrapper";
 
 	private HadoopSecurityManager hadoopSecurityManager;
 	

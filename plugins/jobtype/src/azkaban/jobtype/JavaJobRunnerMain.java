@@ -17,7 +17,6 @@
 package azkaban.jobtype;
 
 import azkaban.jobExecutor.ProcessJob;
-import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
 
 import org.apache.hadoop.conf.Configuration;

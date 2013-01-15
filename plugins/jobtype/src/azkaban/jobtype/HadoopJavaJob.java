@@ -17,21 +17,17 @@ package azkaban.jobtype;
  */
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Properties;
 import java.util.StringTokenizer;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
 import azkaban.security.DefaultHadoopSecurityManager;
 import azkaban.security.HadoopSecurityManager;
 import azkaban.security.HadoopSecurityManagerException;
-import azkaban.security.HadoopSecurityManager_H_1_0_2;
 import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.utils.Props;
 

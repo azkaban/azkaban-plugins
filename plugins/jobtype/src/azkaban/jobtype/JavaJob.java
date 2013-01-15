@@ -22,9 +22,6 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
-
-import azkaban.security.SecurityUtils;
-
 import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.utils.Props;
 
