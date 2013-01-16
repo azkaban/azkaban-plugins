@@ -1,9 +1,13 @@
 package azkaban.viewer.hdfs;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,23 +51,30 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	private boolean allowGroupProxy;
 	private Configuration conf;
 	
+	private String viewerName;
+	private String viewerPath;
+	
 	public HdfsBrowserServlet(Props props) {
 		this.props = props;
+		
+		viewerName = props.getString("viewer.name");
+		viewerPath = props.getString("viewer.path");
 	}
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 
-//		try {
-//			hdfsURI = new URI(props.getString("hdfs.namenode.url"));
-//		} catch (URISyntaxException e) {
-//			logger.error(e);
-//		}
 		conf = new Configuration();
-		conf.setClassLoader(this.getClass().getClassLoader());
+		try {
+			ClassLoader loader = getHadoopClassLoader();
+			conf.setClassLoader(loader);
+		} catch (MalformedURLException e) {
+			logger.error("Error loading class loader with Hadoop confs", e);
+		}
 		
 		shouldProxy = props.getBoolean("azkaban.should.proxy", false);
+		logger.info("Hdfs browser should proxy: " + shouldProxy);
 		if (shouldProxy) {
 			proxyUser = props.getString("proxy.user");
 			keytabLocation = props.getString("proxy.keytab.location");
@@ -78,7 +89,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 				logger.error("Error setting up hdfs browser security", e);
 			}
 		}
-
+		
 		defaultViewer = new TextFileViewer();
 		viewers.add(new HdfsAvroFileViewer());
 		viewers.add(new JsonSequenceFileViewer());
@@ -87,6 +98,26 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		logger.info("HDFS Browser initiated");
 	}
 
+	private ClassLoader getHadoopClassLoader() throws MalformedURLException {
+		ClassLoader loader;
+		String hadoopHome = System.getenv("HADOOP_HOME");
+		String hadoopConfDir = System.getenv("HADOOP_CONF_DIR");
+
+		if (hadoopConfDir != null) {
+			logger.info("Using hadoop config found in " + hadoopConfDir);
+			loader = new URLClassLoader(new URL[] { new File(hadoopConfDir).toURI().toURL() }, getClass()
+					.getClassLoader());
+		} else if (hadoopHome != null) {
+			logger.info("Using hadoop config found in " + hadoopHome);
+			loader = new URLClassLoader(new URL[] { new File(hadoopHome, "conf").toURI().toURL() }, getClass().getClassLoader());
+		} else {
+			logger.info("HADOOP_HOME not set, using default hadoop config.");
+			loader = getClass().getClassLoader();
+		}
+		
+		return loader;
+	}
+	
 	private FileSystem getFileSystem(String username) throws IOException {
 		UserGroupInformation ugi = getProxiedUser(username, new Configuration(), shouldProxy);
 		FileSystem fs = ugi.doAs(new PrivilegedAction<FileSystem>(){
@@ -161,42 +192,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			this.writeJSON(resp, results);
 			return;
 		}
-		
-		// if (hasParam(req, "logout")) {
-		// Page page = newPage(req, resp, session,
-		// "azkaban/hdfsviewer/hdfsbrowserlogin.vm");
-		// page.render();
-		// } else if(hasParam(req, "login")) {
-		// // Props prop = this.getApplication().getAzkabanProps();
-		// // Properties property = prop.toProperties();
-		//
-		// String user = session.getUser().getUserId();
-		//
-		// String browseUser = getParam(req, "login");
-		// logger.info("Browsing user set to " + browseUser + " by " + user);
-		//
-		//
-		// try {
-		// FileSystem fs;// = hadoopSecurityManager.getFSAsUser(user);
-		//
-		// try{
-		// handleFSDisplay(fs, browseUser, req, resp, session);
-		// } catch (IOException e) {
-		// fs.close();
-		// throw e;
-		// } finally {
-		// fs.close();
-		// }
-		//
-		// } catch (Exception e) {
-		// Page page = newPage(req, resp, session,
-		// "azkaban/hdfsviewer/hdfsbrowserpage.vm");
-		// page.add("error_message", "Error: " + e.getMessage());
-		// page.add("no_fs", "true");
-		// page.render();
-		// }
-		//
-		// }
+
 	}
 
 	private void handleFSDisplay(FileSystem fs, String user, HttpServletRequest req, HttpServletResponse resp,
@@ -227,6 +223,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/hdfsbrowserpage.vm");
 		page.add("allowproxy", allowGroupProxy);
+		page.add("viewerPath", viewerPath);
+		page.add("viewername", viewerName);
 		
 		List<Path> paths = new ArrayList<Path>();
 		List<String> segments = new ArrayList<String>();
