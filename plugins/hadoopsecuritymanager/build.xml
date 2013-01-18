@@ -3,7 +3,7 @@
 <project name="hadoopsecuritymanager" basedir="." default="all">
 	<property file="build.properties" />
 	<property name="base.dir" value="${basedir}/../.." />
-	<property name="dist.dir" value="${basedir}/dist/hadoopsecuritymanager" />
+	<property name="dist.dir" value="${base.dir}/dist/hadoopsecuritymanager" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
@@ -68,6 +68,7 @@
 		<copy file="${azkaban-hadoopsecuritymanager-jar}" todir="${dist.packages.dir}/lib" />
 		<copy todir="${dist.packages.dir}/lib" >
 			<fileset dir="${lib.dir}" >
+				<exclude name="hadoop-core*.jar"/>
 				<exclude name="azkaban*.jar"/>
 			</fileset>
 		</copy>

@@ -56,7 +56,7 @@ public class PigProcessJob extends JavaProcessJob {
 
 	@Override
 	protected String getJavaClass() {
-    return shouldProxy(getProps().toProperties()) ? SECURE_PIG_WRAPPER : PIG_JAVA_CLASS;
+		return shouldProxy(getSysProps().toProperties()) ? SECURE_PIG_WRAPPER : PIG_JAVA_CLASS;
 	}
 
 	@Override
@@ -82,13 +82,15 @@ public class PigProcessJob extends JavaProcessJob {
 			args += " -Dhadoop.job.ugi=" + hadoopUGI;
 		}
 
-    if(shouldProxy(getProps().toProperties())) {
+    if(shouldProxy(getSysProps().toProperties())) {
       info("Setting up secure proxy info for child process");
       String secure;
-      Properties p = getProps().toProperties();
+      Properties p = getSysProps().toProperties();
       secure = " -D" + PROXY_USER + "=" + p.getProperty(PROXY_USER);
       secure += " -D" + PROXY_KEYTAB_LOCATION + "=" + p.getProperty(PROXY_KEYTAB_LOCATION);
-      secure += " -D" + TO_PROXY + "=" + p.getProperty(TO_PROXY);
+      
+      secure += " -D" + TO_PROXY + "=" + getJobProps().get(TO_PROXY);
+      
       String extraToken = p.getProperty(OBTAIN_BINARY_TOKEN);
       if(extraToken != null) {
         secure += " -D" + OBTAIN_BINARY_TOKEN + "=" + extraToken;
@@ -142,7 +144,7 @@ public class PigProcessJob extends JavaProcessJob {
 		}
 
 		classPath.add(getSourcePathFromClass(Props.class));
-		if(shouldProxy(getProps().toProperties())) {
+		if(shouldProxy(getSysProps().toProperties())) {
 			classPath.add(getSourcePathFromClass(SecurePigWrapper.class));
 			classPath.add(getSourcePathFromClass(SecurityUtils.class));
 		}
@@ -167,11 +169,11 @@ public class PigProcessJob extends JavaProcessJob {
 	}
 
 	protected boolean getDebug() {
-		return getProps().getBoolean(DEBUG, false);
+		return getJobProps().getBoolean(DEBUG, false);
 	}
 
 	protected String getScript() {
-		return getProps().getString(PIG_SCRIPT, getJobName() + ".pig");
+		return getJobProps().getString(PIG_SCRIPT);
 	}
 
 //	protected List<String> getUDFImportList() {
@@ -205,15 +207,15 @@ public class PigProcessJob extends JavaProcessJob {
 	}
 	
 	protected String getHadoopUGI() {
-		return getProps().getString(HADOOP_UGI, null);
+		return getJobProps().getString(HADOOP_UGI, null);
 	}
 	
 	protected Map<String, String> getPigParams() {
-		return getProps().getMapByPrefix(PIG_PARAM_PREFIX);
+		return getJobProps().getMapByPrefix(PIG_PARAM_PREFIX);
 	}
 
 	protected List<String> getPigParamFiles() {
-		return getProps().getStringList(PIG_PARAM_FILES, null, ",");
+		return getJobProps().getStringList(PIG_PARAM_FILES, null, ",");
 	}
 	
 	

@@ -39,10 +39,10 @@ import java.net.URLClassLoader;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 
-public class HadoopSecurityManager_H_1_0_2 extends HadoopSecurityManager {
+public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 
 	private static UserGroupInformation loginUser = null;
-	private static final Logger logger = Logger.getLogger(HadoopSecurityManager_H_1_0_2.class);
+	private static final Logger logger = Logger.getLogger(HadoopSecurityManager_H_1_0.class);
 	private static Configuration conf;
 	private Props props = null;
 	
@@ -51,7 +51,7 @@ public class HadoopSecurityManager_H_1_0_2 extends HadoopSecurityManager {
 	private static boolean shouldProxy = false;
 	private static boolean securityEnabled = false;
 
-	public HadoopSecurityManager_H_1_0_2(Props props) throws MalformedURLException, HadoopSecurityManagerException {
+	public HadoopSecurityManager_H_1_0(Props props) throws MalformedURLException, HadoopSecurityManagerException {
 		
 		this.props = props;
 		
