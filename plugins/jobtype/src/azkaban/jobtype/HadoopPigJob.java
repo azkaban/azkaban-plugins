@@ -217,7 +217,7 @@ public class HadoopPigJob extends JavaProcessJob {
 		}
 
 		list.add(getScript());
-
+		
 		return org.apache.commons.lang.StringUtils.join(list, " ");
 	}
 
@@ -246,7 +246,7 @@ public class HadoopPigJob extends JavaProcessJob {
 //			classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
 //		}
 		//classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
-		classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
+		//classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
 		if(typeClassPath != null) {
 			for(String jar : typeClassPath) {
@@ -273,7 +273,7 @@ public class HadoopPigJob extends JavaProcessJob {
 	}
 
 	protected String getScript() {
-		return getJobProps().getString(PIG_SCRIPT, getJobName() + ".pig");
+		return getJobProps().getString(PIG_SCRIPT);
 	}
 
 	protected List<String> getUDFImportList() {
