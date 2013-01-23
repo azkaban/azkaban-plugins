@@ -11,6 +11,7 @@
 		
 	<property name="conf.dir" value="${basedir}/conf" />
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
+	<property name="plugin.ext.lib.dir" value="${basedir}/extlib" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="java.src.dir" value="${basedir}/src" />
 	
@@ -20,13 +21,19 @@
 	<property environment="env" />
 
 	<path id="main.classpath">
-		<fileset dir="${lib.dir}">
-			<include name="*.jar" />
-		</fileset>
 		
 		<fileset dir="${ext.lib.dir}">
 			<include name="*.jar" />
 		</fileset>
+		
+		<fileset dir="${plugin.ext.lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		
 		<pathelement path="${dist.classes.dir}" />
 	</path>
 
@@ -84,6 +91,7 @@
 		<mkdir dir="${dist.packages.dir}" />
 		<mkdir dir="${dist.packages.dir}/conf" />
 		<mkdir dir="${dist.packages.dir}/lib" />
+		<mkdir dir="${dist.packages.dir}/extlib" />
 		
 		<!-- Copy conf files -->
 		<copy todir="${dist.packages.dir}/conf" >
@@ -96,6 +104,11 @@
 		<copy todir="${dist.packages.dir}/lib" >
 			<fileset dir="${lib.dir}" >
 				<exclude name="azkaban*.jar"/>
+			</fileset>
+		</copy>
+		
+		<copy todir="${dist.packages.dir}/extlib" >
+			<fileset dir="${plugin.ext.lib.dir}" >
 			</fileset>
 		</copy>
 		
