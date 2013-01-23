@@ -105,7 +105,8 @@
 		</style>
 	</head>
 	<body>
-#set($current_page="viewer")
+
+#set($current_page="$viewerName")
 
 #parse( "azkaban/webapp/servlet/velocity/nav.vm" )
 		<div class="content">

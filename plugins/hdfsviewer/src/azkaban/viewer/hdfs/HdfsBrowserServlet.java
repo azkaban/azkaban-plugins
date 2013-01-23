@@ -162,6 +162,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			page.add("user", username);
 			page.add("allowproxy", allowGroupProxy);
 			page.add("no_fs", "true");
+			page.add("viewerName", viewerName);
 			page.render();
 		}
 	}
@@ -224,7 +225,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/hdfsbrowserpage.vm");
 		page.add("allowproxy", allowGroupProxy);
 		page.add("viewerPath", viewerPath);
-		page.add("viewername", viewerName);
+		page.add("viewerName", viewerName);
 		
 		List<Path> paths = new ArrayList<Path>();
 		List<String> segments = new ArrayList<String>();
