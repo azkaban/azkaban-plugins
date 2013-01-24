@@ -5,8 +5,8 @@ This is where common plugins will be stored.
 
 These include the HDFS browser plugin as well as several executor plugins.
 
-To go to the download page: [Download Packages](azkaban-plugins/Download-Packages)
+To go to the download page: [Download Packages](azkaban-plugins/wiki/Download-Packages)
 
-For install instrucations: [How To Install](azkaban-plugins/How-To-Install)
+For install instrucations: [How To Install](azkaban-plugins/wiki/How-To-Install)
 
-Azkaban2 Repo: https://github.com/azkaban/azkaban2
+Azkaban2 Repo: [Azkaban2](azkaban2)
