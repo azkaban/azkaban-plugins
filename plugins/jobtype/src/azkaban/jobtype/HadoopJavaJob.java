@@ -112,9 +112,8 @@ public class HadoopJavaJob extends JavaProcessJob {
 	protected List<String> getClassPaths() {
 		List<String> classPath = super.getClassPaths();
 
-//		classPath.add(getSourcePathFromClass(Configuration.class));
-//		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
-//		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
+		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
+		classPath.add(getSourcePathFromClass(Props.class));
 //		String loggerPath = getSourcePathFromClass(org.apache.log4j.Logger.class);
 //		if (!classPath.contains(loggerPath)) {
 //			classPath.add(loggerPath);
@@ -131,12 +130,20 @@ public class HadoopJavaJob extends JavaProcessJob {
 		
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
 		if(typeClassPath != null) {
+			// fill in this when load this jobtype
+			String pluginDir = getSysProps().get("plugin.dir");
 			for(String jar : typeClassPath) {
-				if(!classPath.contains(jar)) {
-					classPath.add(jar);
+				File jarFile = new File(jar);
+				if(!jarFile.isAbsolute()) {
+					jarFile = new File(pluginDir + File.separatorChar + jar);
+				}
+				
+				if(!classPath.contains(jarFile.getAbsoluteFile())) {
+					classPath.add(jarFile.getAbsolutePath());
 				}
 			}
 		}
+		
 		
 		List<String> typeGlobalClassPath = getSysProps().getStringList("jobtype.global.classpath", null, ",");
 		if(typeGlobalClassPath != null) {

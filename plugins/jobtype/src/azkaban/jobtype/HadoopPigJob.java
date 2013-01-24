@@ -245,16 +245,24 @@ public class HadoopPigJob extends JavaProcessJob {
 //			classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 //			classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
 //		}
-		//classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
-		//classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
+		classPath.add(getSourcePathFromClass(Props.class));
+		classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
 		if(typeClassPath != null) {
+			// fill in this when load this jobtype
+			String pluginDir = getSysProps().get("plugin.dir");
 			for(String jar : typeClassPath) {
-				if(!classPath.contains(jar)) {
-					classPath.add(jar);
+				File jarFile = new File(jar);
+				if(!jarFile.isAbsolute()) {
+					jarFile = new File(pluginDir + File.separatorChar + jar);
+				}
+				
+				if(!classPath.contains(jarFile.getAbsoluteFile())) {
+					classPath.add(jarFile.getAbsolutePath());
 				}
 			}
 		}
+		
 		
 		List<String> typeGlobalClassPath = getSysProps().getStringList("jobtype.global.classpath", null, ",");
 		if(typeGlobalClassPath != null) {

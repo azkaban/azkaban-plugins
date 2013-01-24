@@ -19,17 +19,14 @@ package azkaban.jobtype;
 import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
-
 import org.apache.log4j.Logger;
 
-import azkaban.security.SecurityUtils;
 
 import static azkaban.jobtype.SecurePigWrapper.OBTAIN_BINARY_TOKEN;
 import static azkaban.security.SecurityUtils.PROXY_KEYTAB_LOCATION;
@@ -146,13 +143,20 @@ public class PigProcessJob extends JavaProcessJob {
 		classPath.add(getSourcePathFromClass(Props.class));
 		if(shouldProxy(getSysProps().toProperties())) {
 			classPath.add(getSourcePathFromClass(SecurePigWrapper.class));
-			classPath.add(getSourcePathFromClass(SecurityUtils.class));
 		}
+		
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
 		if(typeClassPath != null) {
+			// fill in this when load this jobtype
+			String pluginDir = getSysProps().get("plugin.dir");
 			for(String jar : typeClassPath) {
-				if(!classPath.contains(jar)) {
-					classPath.add(jar);
+				File jarFile = new File(jar);
+				if(!jarFile.isAbsolute()) {
+					jarFile = new File(pluginDir + File.separatorChar + jar);
+				}
+				
+				if(!classPath.contains(jarFile.getAbsoluteFile())) {
+					classPath.add(jarFile.getAbsolutePath());
 				}
 			}
 		}

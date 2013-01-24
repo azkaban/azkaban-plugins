@@ -12,6 +12,8 @@
 	<property name="java.src.dir" value="${basedir}/src" />
 	<property name="azkaban-jobtype-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="jobtypes.dir" value="${basedir}/jobtypes" />
+	<property name="javatype.dir" value="${basedir}/jobtypes/java" />
+	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
 	<property file="build.properties" />
 
 	<property environment="env" />
@@ -77,7 +79,9 @@
 		</copy>
 
         <!-- Copy Azkaban jars and libs-->
-		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/lib" />
+		<!--copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/lib" /-->
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/java" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig" />
 
         <!-- Tarball it -->
         <tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
