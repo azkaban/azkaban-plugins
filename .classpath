@@ -10,7 +10,6 @@
 	<classpathentry kind="lib" path="extlib/jackson-mapper-asl-1.9.5.jar"/>
 	<classpathentry kind="lib" path="extlib/log4j-1.2.16.jar"/>
 	<classpathentry kind="lib" path="extlib/servlet-api-2.5.jar"/>
-	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/hadoop-core-1.0.4.jar"/>
 	<classpathentry kind="lib" path="/azkaban2/lib/velocity-1.7.jar"/>
 	<classpathentry kind="lib" path="extlib/velocity-1.7.jar"/>
 	<classpathentry kind="output" path="bin"/>
