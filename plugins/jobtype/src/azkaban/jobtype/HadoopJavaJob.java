@@ -178,7 +178,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 		}
 	}
 	
-	private static String getSourcePathFromClass(Class containedClass) {
+	private static String getSourcePathFromClass(Class<?> containedClass) {
 		File file = new File(containedClass.getProtectionDomain().getCodeSource().getLocation().getPath());
 
 		if (!file.isDirectory() && file.getName().endsWith(".class")) {

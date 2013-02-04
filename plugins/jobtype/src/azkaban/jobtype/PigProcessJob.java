@@ -124,7 +124,7 @@ public class PigProcessJob extends JavaProcessJob {
 
 		list.add(getScript());
 
-		return org.apache.commons.lang.StringUtils.join(list, " ");
+		return StringUtils.join(list, " ");
 	}
 
 	@Override
@@ -223,7 +223,7 @@ public class PigProcessJob extends JavaProcessJob {
 	}
 	
 	
-	private static String getSourcePathFromClass(Class containedClass) {
+	private static String getSourcePathFromClass(Class<?> containedClass) {
 		File file = new File(containedClass.getProtectionDomain().getCodeSource().getLocation().getPath());
 
 		if (!file.isDirectory() && file.getName().endsWith(".class")) {

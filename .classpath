@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="plugins/hdfsviewer/src"/>
+	<classpathentry kind="src" path="plugins/jobtype/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="extlib/azkaban-2.0.jar"/>
 	<classpathentry kind="lib" path="plugins/hdfsviewer/extlib/hadoop-core-1.0.4.jar"/>
 	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/avro-1.4.1.jar"/>
 	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/voldemort-0.96.jar"/>
@@ -12,5 +12,8 @@
 	<classpathentry kind="lib" path="extlib/servlet-api-2.5.jar"/>
 	<classpathentry kind="lib" path="/azkaban2/lib/velocity-1.7.jar"/>
 	<classpathentry kind="lib" path="extlib/velocity-1.7.jar"/>
+	<classpathentry kind="lib" path="extlib/azkaban-2.01.jar"/>
+	<classpathentry kind="lib" path="dist/jobtype/packages/java/lib/azkaban-hadoopsecuritymanager-0.10.jar"/>
+	<classpathentry kind="lib" path="plugins/jobtype/lib/pig-0.10.0-core.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

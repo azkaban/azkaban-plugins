@@ -18,6 +18,7 @@ package azkaban.jobtype;
 
 import azkaban.jobExecutor.ProcessJob;
 
+import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
 
 import org.apache.hadoop.conf.Configuration;
@@ -30,12 +31,12 @@ import org.apache.log4j.PatternLayout;
 
 import azkaban.security.HadoopSecurityManager;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.FileOutputStream;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.Writer;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -228,23 +229,18 @@ public class HadoopJavaJobRunnerMain {
 			properties.put(key, outputProperties.get(key));
 		}
 
-		OutputStream writer = null;
+		Writer writer = null;
 		try {
-			writer = new BufferedOutputStream(new FileOutputStream(outputFileStr));
-			// Manually serialize into JSON instead of adding org.json to
-			// external classpath
-			writer.write("{\n".getBytes());
-			for (Map.Entry<String, String> entry : properties.entrySet()) {
-				writer.write(String.format("  '%s':'%s',\n", entry.getKey().replace("'", "\\'"),
-						entry.getValue().replace("'", "\\'")).getBytes());
-			}
-			writer.write("}".getBytes());
+			writer = new BufferedWriter(new FileWriter(outputFileStr));
+			JSONUtils.writePropsNoJarDependency(properties, writer);
 		} catch (Exception e) {
 			new RuntimeException("Unable to store output properties to: " + outputFileStr);
 		} finally {
-			try {
-				writer.close();
-			} catch (IOException e) {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (IOException e) {
+				}
 			}
 		}
 	}
@@ -333,8 +329,7 @@ public class HadoopJavaJobRunnerMain {
 			Constructor<?> con = getConstructor(runningClass, String.class, Map.class);
 			logger.info("Constructor found " + con.toGenericString());
 
-			@SuppressWarnings("rawtypes")
-			HashMap map = new HashMap();
+			HashMap<Object, Object> map = new HashMap<Object, Object>();
 			for (Map.Entry<Object, Object> entry : properties.entrySet()) {
 				map.put(entry.getKey(), entry.getValue());
 			}

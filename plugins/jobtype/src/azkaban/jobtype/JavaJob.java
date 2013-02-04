@@ -107,7 +107,7 @@ public class JavaJob extends JavaProcessJob {
 		return classPath;
 	}
 
-	private static String getSourcePathFromClass(Class containedClass) {
+	private static String getSourcePathFromClass(Class<?> containedClass) {
 		File file = new File(containedClass.getProtectionDomain().getCodeSource().getLocation().getPath());
 
 		if (!file.isDirectory() && file.getName().endsWith(".class")) {

@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.PrivilegedAction;
@@ -44,7 +42,6 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	private HdfsFileViewer defaultViewer;
 
 	private Props props;
-	private URI hdfsURI;
 	private String proxyUser;
 	private String keytabLocation;
 	private boolean shouldProxy;
