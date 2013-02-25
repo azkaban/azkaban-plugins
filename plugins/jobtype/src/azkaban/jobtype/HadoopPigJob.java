@@ -107,7 +107,7 @@ public class HadoopPigJob extends JavaProcessJob {
 	
 	private HadoopSecurityManager loadHadoopSecurityManager(Props props) throws RuntimeException {
 		
-		Class<?> hadoopSecurityManagerClass = props.getClass(HADOOP_SECURITY_MANAGER_CLASS_PARAM, null);
+		Class<?> hadoopSecurityManagerClass = props.getClass(HADOOP_SECURITY_MANAGER_CLASS_PARAM, true, HadoopPigJob.class.getClassLoader());
 		getLog().info("Loading hadoop security manager " + hadoopSecurityManagerClass.getName());
 		HadoopSecurityManager hadoopSecurityManager = null;
 

@@ -28,8 +28,8 @@ import org.apache.log4j.Logger;
 import azkaban.security.DefaultHadoopSecurityManager;
 import azkaban.security.HadoopSecurityManager;
 import azkaban.security.HadoopSecurityManagerException;
-import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.utils.Props;
+import azkaban.jobExecutor.JavaProcessJob;
 
 public class HadoopJavaJob extends JavaProcessJob {
 
@@ -70,9 +70,9 @@ public class HadoopJavaJob extends JavaProcessJob {
 	}
 	
 	private HadoopSecurityManager loadHadoopSecurityManager(Props props) throws RuntimeException {
-		
-		Class<?> hadoopSecurityManagerClass = props.getClass(HADOOP_SECURITY_MANAGER_CLASS_PARAM, null);
-		getLog().info("Loading hadoop security manager " + hadoopSecurityManagerClass.getName());
+		getLog().info("Loading hadoop security manager...");
+		Class<?> hadoopSecurityManagerClass = props.getClass(HADOOP_SECURITY_MANAGER_CLASS_PARAM, true, HadoopJavaJob.class.getClassLoader());
+		getLog().info("Initializing hadoop security manager " + hadoopSecurityManagerClass.getName());
 		HadoopSecurityManager hadoopSecurityManager = null;
 
 		if (hadoopSecurityManagerClass != null && hadoopSecurityManagerClass.getConstructors().length > 0) {
@@ -101,9 +101,13 @@ public class HadoopJavaJob extends JavaProcessJob {
 	protected String getJVMArguments() {
 		String args = super.getJVMArguments();
 
-		String typeGlobalJVMArgs = getSysProps().getString("jobtype.global.jvm.args", null);
-		if (typeGlobalJVMArgs != null) {
-			args += " " + typeGlobalJVMArgs;
+		String typeUserJVMArgs = getJobProps().getString("jobtype.global.jvm.args", null);
+		if (typeUserJVMArgs != null) {
+			args += " " + typeUserJVMArgs;
+		}
+		String typeSysJVMArgs = getSysProps().getString("jobtype.global.jvm.args", null);
+		if (typeSysJVMArgs != null) {
+			args += " " + typeSysJVMArgs;
 		}
 		return args;
 	}
