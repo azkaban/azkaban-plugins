@@ -85,9 +85,13 @@ public class HadoopPigJob extends JavaProcessJob {
 	
 	@Override
 	public void run() throws Exception {
+		File f = null;
 		if(shouldProxy(getSysProps())) {
 			getLog().info("Need to proxy. Getting tokens.");
 			getHadoopTokens(getJobProps());
+		}
+		if(getJobProps().containsKey("env."+UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION)) {
+			f = new File(getJobProps().getString("env."+UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION));
 		}
 		try {
 			super.run();
@@ -96,8 +100,7 @@ public class HadoopPigJob extends JavaProcessJob {
 			throw new Exception(e);
 		}
 		finally{
-			if(getJobProps().containsKey("env."+UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION)) {
-				File f = new File(getJobProps().getString("env."+UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION));
+			if(f != null) {
 				if(f.exists()) {
 					f.delete();
 				}
