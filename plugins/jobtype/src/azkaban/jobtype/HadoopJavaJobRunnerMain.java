@@ -200,7 +200,6 @@ public class HadoopJavaJobRunnerMain {
 				return null;
 			}
 		});
-
 	}
 
 	private void runMethod(Object obj, String runMethod) throws IllegalAccessException, InvocationTargetException,

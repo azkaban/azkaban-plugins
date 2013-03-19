@@ -32,7 +32,7 @@ public abstract class HadoopSecurityManager {
 	
 	public static final String PROXY_KEYTAB_LOCATION = "proxy.keytab.location";
 	public static final String PROXY_USER = "proxy.user";
-	public static final String TO_PROXY = "user.to.proxy";
+	public static final String USER_TO_PROXY = "user.to.proxy";
 	public static final String OBTAIN_BINARY_TOKEN = "obtain.binary.token";
 	public static final String MAPREDUCE_JOB_CREDENTIALS_BINARY = "mapreduce.job.credentials.binary";
 	
@@ -60,6 +60,8 @@ public abstract class HadoopSecurityManager {
 		return shouldProxy != null && shouldProxy.equals("true");
 	}
 	
-	public abstract void prefetchToken(File tokenFile, String userToProxy) throws HadoopSecurityManagerException;
+	public abstract void prefetchToken(File tokenFile, String userToProxy, Logger logger) throws HadoopSecurityManagerException;
+	
+	public abstract void cancelTokens(File tokenFile, String userToProxy, Logger logger) throws HadoopSecurityManagerException;
 
 }

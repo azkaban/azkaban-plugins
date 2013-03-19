@@ -21,39 +21,44 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.log4j.Logger;
 
+import azkaban.utils.Pair;
 import azkaban.utils.Props;
+import azkaban.utils.UndefinedPropertyException;
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 
-	private static UserGroupInformation loginUser = null;
-	private static final Logger logger = Logger.getLogger(HadoopSecurityManager_H_1_0.class);
-	private static Configuration conf;
-	private Props props = null;
+	private UserGroupInformation loginUser = null;
+	private final static Logger logger = Logger.getLogger(HadoopSecurityManager.class);
+	private Configuration conf;
 	
 	private String keytabLocation;
-	private String proxyUser;
-	private static boolean shouldProxy = false;
-	private static boolean securityEnabled = false;
+	private String keytabPrincipal;
+	private boolean shouldProxy = false;
+	private boolean securityEnabled = false;
+	
+	private static HadoopSecurityManager hsmInstance = null;
+	private ConcurrentMap<String, UserGroupInformation> userUgiMap;
+	private Map<String, Token<?>> nnTokens = new ConcurrentHashMap<String, Token<?>>();
+	private Map<String, Token<DelegationTokenIdentifier>> jtTokens = new ConcurrentHashMap<String, Token<DelegationTokenIdentifier>>();
 
-	public HadoopSecurityManager_H_1_0(Props props) throws MalformedURLException, HadoopSecurityManagerException {
-		
-		this.props = props;
+	private HadoopSecurityManager_H_1_0(Props props) throws HadoopSecurityManagerException, IOException {
 		
 		ClassLoader cl;
 
@@ -85,15 +90,47 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 		
 		securityEnabled = UserGroupInformation.isSecurityEnabled();
 		if(securityEnabled) {
-			logger.info("The Hadoop cluster security enabled is " + UserGroupInformation.isSecurityEnabled());
-			keytabLocation = props.getString(PROXY_KEYTAB_LOCATION);
-			proxyUser = props.getString(PROXY_USER);
-			if(keytabLocation == null || proxyUser == null) {
-				throw new HadoopSecurityManagerException("Azkaban Keytab info missing on secured hadoop cluster.");
-			}
+			logger.info("The Hadoop cluster has enabled security");
 			shouldProxy = true;
+			try {
+				keytabLocation = props.getString(PROXY_KEYTAB_LOCATION);
+				keytabPrincipal = props.getString(PROXY_USER);
+			}
+			catch (UndefinedPropertyException e) {
+				throw new HadoopSecurityManagerException(e.getMessage());
+			}
+			
+			// try login
+			try {
+				if (loginUser == null) {
+					logger.info("No login user. Creating login user");
+					UserGroupInformation.loginUserFromKeytab(keytabPrincipal, keytabLocation);
+					loginUser = UserGroupInformation.getLoginUser();
+					logger.info("Logged in with user " + loginUser);
+				} else {
+					logger.info("loginUser (" + loginUser + ") already created, refreshing tgt.");
+					loginUser.checkTGTAndReloginFromKeytab();
+				}
+			}
+			catch (IOException e) {
+				throw new HadoopSecurityManagerException("Failed to login with kerberos ", e);
+			}
+
 		}
 		
+		userUgiMap = new ConcurrentHashMap<String, UserGroupInformation>();
+	}
+	
+	public static HadoopSecurityManager getInstance(Props props) throws HadoopSecurityManagerException, IOException {
+		if(hsmInstance == null) {
+			synchronized (HadoopSecurityManager_H_1_0.class) {
+				if(hsmInstance == null) {
+						logger.info("getting new instance");
+						hsmInstance = new HadoopSecurityManager_H_1_0(props);
+				}
+			}
+		}
+		return hsmInstance;		
 	}
 	
 	/**
@@ -102,35 +139,31 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 	 * @throws IOException 
 	 */
 	@Override
-	public synchronized UserGroupInformation getProxiedUser(String toProxy) throws HadoopSecurityManagerException {
+	public synchronized UserGroupInformation getProxiedUser(String userToProxy) throws HadoopSecurityManagerException {
 		// don't do privileged actions in case the hadoop is not secured.
 		if(!isHadoopSecurityEnabled()) {
 			logger.error("Can't get proxy user with unsecured cluster");
 			return null;
 		}
 		
-		if(toProxy == null) {
-			throw new HadoopSecurityManagerException("toProxy can't be null");
+		if(userToProxy == null) {
+			throw new HadoopSecurityManagerException("userToProxy can't be null");
 		}
 		
-		try {
-			if (loginUser == null) {
-				logger.info("No login user. Creating login user");
-				String keytab = verifySecureProperty(props, PROXY_KEYTAB_LOCATION);
-				String proxyUser = verifySecureProperty(props, PROXY_USER);
-				UserGroupInformation.loginUserFromKeytab(proxyUser, keytab);
-				loginUser = UserGroupInformation.getLoginUser();
-				logger.info("Logged in with user " + loginUser);
-			} else {
-				logger.info("loginUser (" + loginUser + ") already created, refreshing tgt.");
-				loginUser.checkTGTAndReloginFromKeytab();
+		UserGroupInformation ugi = userUgiMap.get(userToProxy);
+		if(ugi == null) {
+			logger.info("proxy user " + userToProxy + " not exist. Creating new proxy user");
+			try {
+				ugi = UserGroupInformation.createProxyUser(userToProxy, UserGroupInformation.getLoginUser());
+			} catch (IOException e) {
+				e.printStackTrace();
+				throw new HadoopSecurityManagerException("Failed to create proxy user", e);
 			}
+			userUgiMap.putIfAbsent(userToProxy, ugi);
 		}
-		catch (IOException e) {
-			throw new HadoopSecurityManagerException("Failed to get Proxy user ", e);
-		}
+		
 
-		return UserGroupInformation.createProxyUser(toProxy, loginUser);
+		return ugi;
 	}
 
 	/**
@@ -139,8 +172,8 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 	*/
 	@Override
 	public UserGroupInformation getProxiedUser(Props userProp) throws HadoopSecurityManagerException {
-		String toProxy = verifySecureProperty(userProp, TO_PROXY);
-		UserGroupInformation user = getProxiedUser(toProxy);
+		String userToProxy = verifySecureProperty(userProp, USER_TO_PROXY);
+		UserGroupInformation user = getProxiedUser(userToProxy);
 		if(user == null) throw new HadoopSecurityManagerException("Proxy as any user in unsecured grid is not supported!");
 		return user;
 	}
@@ -150,7 +183,7 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 		if(value == null) {
 			throw new HadoopSecurityManagerException(s + " not set in properties.");
 		}
-		logger.info("Secure proxy configuration: Property " + s + " = " + value);
+		//logger.info("Secure proxy configuration: Property " + s + " = " + value);
 		return value;
 	}
 	
@@ -158,6 +191,7 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 	public FileSystem getFSAsUser(String user) throws HadoopSecurityManagerException {
 		FileSystem fs;
 		try {
+			logger.info("Getting file system as " + user);
 			UserGroupInformation ugi = getProxiedUser(user);
 			
 			if (ugi != null) {
@@ -198,10 +232,10 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 	 * Gets hadoop tokens for a user to run mapred/pig jobs on a secured cluster
 	 */
 	@Override
-	public synchronized void prefetchToken(final File tokenFile, final String userToProxy) throws HadoopSecurityManagerException {
+	public synchronized void prefetchToken(final File tokenFile, final String userToProxy, final Logger logger) throws HadoopSecurityManagerException {
 		
 		//final Configuration conf = new Configuration();
-		logger.info("Creating hadoop tokens for "+userToProxy);
+		logger.info("Getting hadoop tokens for "+userToProxy);
 
 		try{
 			getProxiedUser(userToProxy).doAs(
@@ -214,9 +248,8 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 						}
 						
 						private void getToken(String userToProxy) throws InterruptedException,IOException, HadoopSecurityManagerException {
-							logger.info("Pre-fetching token");
-			
-							logger.info("Pre-fetching DFS token");
+
+							//logger.info("Pre-fetching DFS token");
 							FileSystem fs = FileSystem.get(conf);
 							// check if we get the correct FS, and most importantly, the conf
 							logger.info("Getting DFS token from " + fs.getCanonicalServiceName() + fs.getUri());
@@ -224,23 +257,23 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 							if(fsToken == null) {
 								logger.error("Failed to fetch DFS token for ");
 								throw new HadoopSecurityManagerException("Failed to fetch DFS token for " + userToProxy);
-							}
-							logger.info("Created DFS token: " + fsToken.toString());
+							}							
+							//logger.info("Created DFS token: " + fsToken.toString());
 								
-							Job job = new Job(conf,"totally phony, extremely fake, not real job");			
+							//Job job = new Job(conf,"totally phony, extremely fake, not real job");			
 							JobConf jc = new JobConf(conf);
 							JobClient jobClient = new JobClient(jc);
 							logger.info("Pre-fetching JT token: Got new JobClient: " + jc);
 	
-							Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("hi"));
+							Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("mr token"));
 							if(mrdt == null) {
 								logger.error("Failed to fetch JT token for ");
 								throw new HadoopSecurityManagerException("Failed to fetch JT token for " + userToProxy);
-							}
-							logger.info("Created JT token: " + mrdt.toString());
+							}							
+							//logger.info("Created JT token: " + mrdt.toString());
 								
-							job.getCredentials().addToken(new Text("howdy"), mrdt);
-							job.getCredentials().addToken(fsToken.getService(), fsToken);
+							jc.getCredentials().addToken(new Text("howdy"), mrdt);
+							jc.getCredentials().addToken(fsToken.getService(), fsToken);
 				
 					//			File temp = File.createTempFile("mr-azkaban", ".token");
 					//			temp.deleteOnExit();
@@ -250,7 +283,7 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 							try {
 								fos = new FileOutputStream(tokenFile);
 								dos = new DataOutputStream(fos);
-								job.getCredentials().writeTokenStorageToStream(	dos);
+								jc.getCredentials().writeTokenStorageToStream(	dos);
 							} finally {
 								if (dos != null) {
 									dos.close();
@@ -259,13 +292,83 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 									fos.close();
 								}
 							}
+							// stash them to cancel after use.
+							nnTokens.put(tokenFile.getName(), fsToken);
+							jtTokens.put(tokenFile.getName(), mrdt);
+							System.out.println("Total tokens: nn " + nnTokens.size() + " jt " + jtTokens.size());
 							logger.info("Tokens loaded in " + tokenFile.getAbsolutePath());
 						}
 				}
 			);
 		}
 		catch(Exception e) {
-			throw new HadoopSecurityManagerException("Failed to get hadoop tokens!"+ e);
+			e.printStackTrace();
+			throw new HadoopSecurityManagerException("Failed to get hadoop tokens! "+ e.getMessage() + e.getCause());
+			
+		}
+	}
+
+	@Override
+	public void cancelTokens(File tokenFile, String userToProxy, Logger logger) throws HadoopSecurityManagerException {
+		// nntoken
+		String key = tokenFile.getName();
+		
+		if(jtTokens.containsKey(key)) {
+			final Token<DelegationTokenIdentifier> jtToken = jtTokens.get(key);
+			logger.info("Canceling jt token" + jtToken);
+			jtTokens.remove(key);
+			try {
+				getProxiedUser(userToProxy).doAs(
+					new PrivilegedExceptionAction<Void>() {
+							@Override
+							public Void run() throws Exception {
+								cancelToken(jtToken);
+								return null;
+							}							
+							private void cancelToken(Token<DelegationTokenIdentifier> jt) throws IOException, InterruptedException   {
+								JobConf jc = new JobConf(conf);
+								JobClient jobClient = new JobClient(jc);
+								jobClient.cancelDelegationToken(jtToken);
+							}
+					}
+				);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new HadoopSecurityManagerException("Failed to cancel token", e);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new HadoopSecurityManagerException("Failed to cancel token", e);
+			}
+		}
+		
+		if(nnTokens.containsKey(key)) {
+			final Token<?> nnToken = nnTokens.get(key);
+			logger.info("Canceling nn token" + nnToken);
+			nnTokens.remove(key);
+			try {
+				getProxiedUser(userToProxy).doAs(
+					new PrivilegedExceptionAction<Void>() {
+							@Override
+							public Void run() throws Exception {
+								cancelToken(nnToken);
+								return null;
+							}							
+							private void cancelToken(Token<?> nt) throws IOException, InterruptedException   {
+								nt.cancel(conf);
+							}
+					}
+				);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new HadoopSecurityManagerException("Failed to cancel token", e);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				throw new HadoopSecurityManagerException("Failed to cancel token", e);
+			}
 		}
 	}
 	

@@ -43,7 +43,7 @@ public class HadoopSecurePigWrapper {
 		}
 		
 		logger.info("Found token file " + filelocation);
-		logger.info("Security enabled is " + UserGroupInformation.isSecurityEnabled());
+//		logger.info("Security enabled is " + UserGroupInformation.isSecurityEnabled());
 		
 		logger.info("Setting " + HadoopSecurityManager.MAPREDUCE_JOB_CREDENTIALS_BINARY + " to " + filelocation);
 		System.setProperty(HadoopSecurityManager.MAPREDUCE_JOB_CREDENTIALS_BINARY, filelocation);

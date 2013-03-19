@@ -18,6 +18,8 @@ package azkaban.security;
 
 
 import java.io.File;
+import java.io.IOException;
+
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
@@ -34,9 +36,22 @@ public class DefaultHadoopSecurityManager extends HadoopSecurityManager {
 
 	private static final Logger logger = Logger.getLogger(DefaultHadoopSecurityManager.class);
 
+	private static HadoopSecurityManager hsmInstance = null;
 
-	public DefaultHadoopSecurityManager() {
+	private DefaultHadoopSecurityManager(Props props) {
 		logger.info("Default Hadoop Security Manager is used. Only do this on a non-hadoop cluster!");
+	}
+	
+	public static HadoopSecurityManager getInstance(Props props) throws HadoopSecurityManagerException, IOException {
+		if(hsmInstance == null) {
+			synchronized (DefaultHadoopSecurityManager.class) {
+				if(hsmInstance == null) {
+						logger.info("getting new instance");
+						hsmInstance = new DefaultHadoopSecurityManager(props);
+				}
+			}
+		}
+		return hsmInstance;		
 	}
 	
 	@Override
@@ -64,9 +79,16 @@ public class DefaultHadoopSecurityManager extends HadoopSecurityManager {
 	}
 
 	@Override
-	public void prefetchToken(File tokenFile, String userToProxy)
+	public void prefetchToken(File tokenFile, String userToProxy, Logger logger)
 			throws HadoopSecurityManagerException {
 		throw new HadoopSecurityManagerException("No real Hadoop Security Manager is set!");		
+	}
+
+	@Override
+	public void cancelTokens(File tokenFile, String userToProxy, Logger logger)
+			throws HadoopSecurityManagerException {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

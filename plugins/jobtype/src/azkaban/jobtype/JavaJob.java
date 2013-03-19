@@ -23,6 +23,7 @@ import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import azkaban.jobExecutor.JavaProcessJob;
+import azkaban.security.SecurityUtils;
 import azkaban.utils.Props;
 
 public class JavaJob extends JavaProcessJob {
@@ -64,6 +65,7 @@ public class JavaJob extends JavaProcessJob {
 
 		classPath.add(getSourcePathFromClass(JavaJobRunnerMain.class));
 		classPath.add(getSourcePathFromClass(Props.class));
+		classPath.add(getSourcePathFromClass(SecurityUtils.class));
 		
 		String loggerPath = getSourcePathFromClass(org.apache.log4j.Logger.class);
 		if (!classPath.contains(loggerPath)) {

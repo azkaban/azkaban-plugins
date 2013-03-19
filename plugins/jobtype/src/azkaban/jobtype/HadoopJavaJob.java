@@ -19,6 +19,8 @@ package azkaban.jobtype;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -50,51 +52,49 @@ public class HadoopJavaJob extends JavaProcessJob {
 
 	private Object _javaObject = null;
 	private String props;
+	
+	
+	private String userToProxy = null;
+	private boolean shouldProxy = false;
+	
 	private HadoopSecurityManager hadoopSecurityManager;
 
 	public HadoopJavaJob(String jobid, Props sysProps, Props jobProps, Logger log) throws RuntimeException {
 		super(jobid, sysProps, jobProps, log);
-		if(shouldProxy(getSysProps())) {
+		
+		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy");
+		
+		if(shouldProxy) {
+			getLog().info("Initiating hadoop security manager.");
 			try {
-				hadoopSecurityManager = loadHadoopSecurityManager(sysProps);
+				hadoopSecurityManager = loadHadoopSecurityManager(sysProps, log);
 			}
 			catch(RuntimeException e) {
-				throw new RuntimeException("Failed to get hadoop security manager!" + e);
+				e.printStackTrace();
+				throw new RuntimeException("Failed to get hadoop security manager!" + e.getCause());
 			}
 		}
 	}
 	
-	public boolean shouldProxy(Props prop) {
-		String shouldProxy = prop.getString("azkaban.should.proxy");
-		return shouldProxy != null && shouldProxy.equals("true");
-	}
-	
-	private HadoopSecurityManager loadHadoopSecurityManager(Props props) throws RuntimeException {
-		getLog().info("Loading hadoop security manager...");
+	private HadoopSecurityManager loadHadoopSecurityManager(Props props, Logger logger) throws RuntimeException {
+
 		Class<?> hadoopSecurityManagerClass = props.getClass(HADOOP_SECURITY_MANAGER_CLASS_PARAM, true, HadoopJavaJob.class.getClassLoader());
 		getLog().info("Initializing hadoop security manager " + hadoopSecurityManagerClass.getName());
 		HadoopSecurityManager hadoopSecurityManager = null;
 
-		if (hadoopSecurityManagerClass != null && hadoopSecurityManagerClass.getConstructors().length > 0) {
-
-			try {
-				Constructor<?> hsmConstructor = hadoopSecurityManagerClass.getConstructor(Props.class);
-				hadoopSecurityManager = (HadoopSecurityManager) hsmConstructor.newInstance(props);
-			} 
-			catch (InvocationTargetException e) {
-				getLog().error("Could not instantiate Hadoop Security Manager "+ hadoopSecurityManagerClass.getName() + e.getCause());
-				throw new RuntimeException(e.getCause());
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				throw new RuntimeException(e.getCause());
-			} 
+		try {
+			Method getInstanceMethod = hadoopSecurityManagerClass.getMethod("getInstance", Props.class);
+			hadoopSecurityManager = (HadoopSecurityManager) getInstanceMethod.invoke(hadoopSecurityManagerClass, props);
 		} 
-		else {
-			hadoopSecurityManager = new DefaultHadoopSecurityManager();
+		catch (InvocationTargetException e) {
+			getLog().error("Could not instantiate Hadoop Security Manager "+ hadoopSecurityManagerClass.getName() + e.getCause());
+			throw new RuntimeException(e.getCause());
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException(e.getCause());
 		}
 
 		return hadoopSecurityManager;
-
 	}
 
 	@Override
@@ -118,6 +118,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 
 		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
 		classPath.add(getSourcePathFromClass(Props.class));
+		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 //		String loggerPath = getSourcePathFromClass(org.apache.log4j.Logger.class);
 //		if (!classPath.contains(loggerPath)) {
 //			classPath.add(loggerPath);
@@ -164,16 +165,15 @@ public class HadoopJavaJob extends JavaProcessJob {
 	@Override
 	public void run() throws Exception {
 		File f = null;
-		if(shouldProxy(getSysProps())) {
-			getHadoopTokens(getJobProps());
-		}
-		if(getJobProps().containsKey("env."+UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION)) {
-			f = new File(getJobProps().getString("env."+UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION));
+		if(shouldProxy) {
+			userToProxy = getJobProps().getString("user.to.proxy");
+			getLog().info("Need to proxy. Getting tokens.");
+			f = getHadoopTokens(getJobProps());
 		}
 		try {
 			super.run();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			e.printStackTrace();
 			throw new Exception(e);
 		}
 		finally {
@@ -181,6 +181,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 				if(f.exists()) {
 					f.delete();
 				}
+				cancelHadoopTokens(f);
 			}
 		}
 	}
@@ -203,19 +204,33 @@ public class HadoopJavaJob extends JavaProcessJob {
 		}
 	}
 	
-	protected void getHadoopTokens(Props props) throws HadoopSecurityManagerException {
+	protected File getHadoopTokens(Props props) throws HadoopSecurityManagerException {
 
 		File tokenFile = null;
 		try {
 			tokenFile = File.createTempFile("mr-azkaban", ".token");
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			e.printStackTrace();
 			throw new HadoopSecurityManagerException("Failed to create the token file.", e);
 		}
 		
-		hadoopSecurityManager.prefetchToken(tokenFile, props.getString(HadoopSecurityManager.TO_PROXY));
+		hadoopSecurityManager.prefetchToken(tokenFile, userToProxy, getLog());
 		
 		props.put("env."+UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION, tokenFile.getAbsolutePath());
+		
+		return tokenFile;
+	}
+	
+	private void cancelHadoopTokens(File f) {
+		try {
+			hadoopSecurityManager.cancelTokens(f, userToProxy, getLog());
+		} catch (HadoopSecurityManagerException e) {
+			e.printStackTrace();
+			getLog().error(e.getCause() + e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			getLog().error(e.getCause() + e.getMessage());
+		}
 		
 	}
 	
