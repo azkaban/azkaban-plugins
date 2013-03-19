@@ -1,7 +1,7 @@
 type=pig
 pig.script=src/wordcountpig.pig
 
-user.to.proxy=cyu
+user.to.proxy=
 
 HDFSRoot=/tmp
 
