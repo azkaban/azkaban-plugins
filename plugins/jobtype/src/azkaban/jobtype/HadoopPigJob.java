@@ -17,6 +17,7 @@ package azkaban.jobtype;
  */
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -61,13 +62,17 @@ public class HadoopPigJob extends JavaProcessJob {
 
 	private HadoopSecurityManager hadoopSecurityManager;
 	
+	private File pigLogFile = null;
+	
 	private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
 	
-	public HadoopPigJob(String jobid, Props sysProps, Props jobProps, Logger log) {
+	public HadoopPigJob(String jobid, Props sysProps, Props jobProps, Logger log) throws IOException {
 		super(jobid, sysProps, jobProps, log);
 
 		HADOOP_SECURE_PIG_WRAPPER = HadoopSecurePigWrapper.class.getName();
 		PIG_JAVA_CLASS = org.apache.pig.Main.class.getName();
+		
+		
 		
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy");
 		
@@ -224,6 +229,17 @@ public class HadoopPigJob extends JavaProcessJob {
 		
 		if (getDebug()) {
 			list.add("-debug");
+		}
+		
+		try {
+			pigLogFile = File.createTempFile("piglogfile", ".log");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		if(pigLogFile != null) {
+			list.add("-logfile " + pigLogFile.getAbsolutePath());
 		}
 
 		list.add(getScript());

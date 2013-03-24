@@ -17,17 +17,14 @@ package azkaban.jobtype;
  */
 
 import java.io.File;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.StringTokenizer;
 
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
-import azkaban.security.DefaultHadoopSecurityManager;
 import azkaban.security.HadoopSecurityManager;
 import azkaban.security.HadoopSecurityManagerException;
 import azkaban.utils.Props;
@@ -51,7 +48,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 	private String _progressMethod;
 
 	private Object _javaObject = null;
-	private String props;
+	
 	
 	
 	private String userToProxy = null;
@@ -245,7 +242,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 				+ ", _cancelMethod='" + _cancelMethod + '\''
 				+ ", _progressMethod='" + _progressMethod + '\''
 				+ ", _javaObject=" + _javaObject + ", props="
-				+ props + '}';
+				+ getJobProps() + '}';
 	}
 }
 

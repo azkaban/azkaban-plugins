@@ -84,7 +84,7 @@ public class HadoopJavaJobRunnerMain {
 		try {
 			_jobName = System.getenv(ProcessJob.JOB_NAME_ENV);
 			String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
-
+			
 			_logger = Logger.getRootLogger();
 			_logger.removeAllAppenders();
 			ConsoleAppender appender = new ConsoleAppender(DEFAULT_LAYOUT);
@@ -101,18 +101,17 @@ public class HadoopJavaJobRunnerMain {
 			}
 			_logger.info("Class name " + className);
 			
-			String filelocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
-			_logger.info("Found token file " + filelocation);
-			_logger.info("Security enabled is " + UserGroupInformation.isSecurityEnabled());
-			
-			_logger.info("Setting mapreduce.job.credentials.binary to " + filelocation);
-			System.setProperty("mapreduce.job.credentials.binary", filelocation);
-
-			
 			UserGroupInformation loginUser = null;
 			UserGroupInformation proxyUser = null;
-
+			
 			if (shouldProxy(prop)) {
+				String filelocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
+				_logger.info("Found token file " + filelocation);
+				_logger.info("Security enabled is " + UserGroupInformation.isSecurityEnabled());
+				
+				_logger.info("Setting mapreduce.job.credentials.binary to " + filelocation);
+				System.setProperty("mapreduce.job.credentials.binary", filelocation);
+			
 				_logger.info("Proxying enabled.");
 				Configuration conf = new Configuration();
 				UserGroupInformation.setConfiguration(conf);
@@ -129,8 +128,6 @@ public class HadoopJavaJobRunnerMain {
 				}
 				
 			}
-			
-			
 			
 			// Create the object using proxy
 			if (shouldProxy(prop)) {
