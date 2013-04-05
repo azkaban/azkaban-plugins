@@ -23,13 +23,14 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
-import azkaban.security.HadoopSecurityManager;
-import azkaban.security.HadoopSecurityManagerException;
+import azkaban.security.commons.HadoopSecurityManager;
+import azkaban.security.commons.HadoopSecurityManagerException;
 
 import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.utils.Props;
@@ -41,6 +42,7 @@ import azkaban.utils.StringUtils;
  * hadoop-core*.jar
  * HadoopSecurePigWrapper
  * HadoopSecurityManager(corresponding version with hadoop)
+ * abandon support for pig 0.8 and prior versions. don't see a use case here.
  */
 
 public class HadoopPigJob extends JavaProcessJob {
@@ -54,7 +56,7 @@ public class HadoopPigJob extends JavaProcessJob {
 	public static final String DEBUG = "debug";
 
 	// should point to the specific pig installation libs
-	public static String PIG_JAVA_CLASS = "org.apache.pig.Main";
+//	public static String PIG_JAVA_CLASS = "org.apache.pig.Main";
 	public static String HADOOP_SECURE_PIG_WRAPPER = "azkaban.jobtype.HadoopSecurePigWrapper";
 	
 	private String userToProxy = null;
@@ -70,7 +72,7 @@ public class HadoopPigJob extends JavaProcessJob {
 		super(jobid, sysProps, jobProps, log);
 
 		HADOOP_SECURE_PIG_WRAPPER = HadoopSecurePigWrapper.class.getName();
-		PIG_JAVA_CLASS = org.apache.pig.Main.class.getName();
+//		PIG_JAVA_CLASS = org.apache.pig.Main.class.getName();
 		
 		
 		
@@ -166,7 +168,8 @@ public class HadoopPigJob extends JavaProcessJob {
 	
 	@Override
 	protected String getJavaClass() {
-		return shouldProxy ? HADOOP_SECURE_PIG_WRAPPER : PIG_JAVA_CLASS;
+		//return shouldProxy ? HADOOP_SECURE_PIG_WRAPPER : PIG_JAVA_CLASS;
+		return HADOOP_SECURE_PIG_WRAPPER;
 	}
 
 	@Override
@@ -232,7 +235,8 @@ public class HadoopPigJob extends JavaProcessJob {
 		}
 		
 		try {
-			pigLogFile = File.createTempFile("piglogfile", ".log");
+			pigLogFile = File.createTempFile("piglogfile", ".log", new File(getWorkingDirectory()));
+			jobProps.put("env."+"PIG_LOG_FILE", pigLogFile.getAbsolutePath());
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

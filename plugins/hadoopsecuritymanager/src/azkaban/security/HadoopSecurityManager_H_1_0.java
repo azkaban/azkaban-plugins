@@ -26,6 +26,8 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.log4j.Logger;
 
+import azkaban.security.commons.HadoopSecurityManager;
+import azkaban.security.commons.HadoopSecurityManagerException;
 import azkaban.utils.Pair;
 import azkaban.utils.Props;
 import azkaban.utils.UndefinedPropertyException;
@@ -141,10 +143,10 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 	@Override
 	public synchronized UserGroupInformation getProxiedUser(String userToProxy) throws HadoopSecurityManagerException {
 		// don't do privileged actions in case the hadoop is not secured.
-		if(!isHadoopSecurityEnabled()) {
-			logger.error("Can't get proxy user with unsecured cluster");
-			return null;
-		}
+//		if(!isHadoopSecurityEnabled()) {
+//			logger.error("Can't get proxy user with unsecured cluster");
+//			return null;
+//		}
 		
 		if(userToProxy == null) {
 			throw new HadoopSecurityManagerException("userToProxy can't be null");
@@ -153,11 +155,16 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 		UserGroupInformation ugi = userUgiMap.get(userToProxy);
 		if(ugi == null) {
 			logger.info("proxy user " + userToProxy + " not exist. Creating new proxy user");
-			try {
-				ugi = UserGroupInformation.createProxyUser(userToProxy, UserGroupInformation.getLoginUser());
-			} catch (IOException e) {
-				e.printStackTrace();
-				throw new HadoopSecurityManagerException("Failed to create proxy user", e);
+			if(shouldProxy) {
+				try {
+					ugi = UserGroupInformation.createProxyUser(userToProxy, UserGroupInformation.getLoginUser());
+				} catch (IOException e) {
+					e.printStackTrace();
+					throw new HadoopSecurityManagerException("Failed to create proxy user", e);
+				}
+			}
+			else {
+				ugi = UserGroupInformation.createRemoteUser(userToProxy);
 			}
 			userUgiMap.putIfAbsent(userToProxy, ugi);
 		}

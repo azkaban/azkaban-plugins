@@ -15,6 +15,7 @@
 	<property name="javatype.dir" value="${basedir}/jobtypes/java" />
 	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
 	<property file="build.properties" />
+	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-0.20.jar"/>
 
 	<property environment="env" />
 
@@ -46,6 +47,14 @@
 		<delete dir="${dist.classes.dir}" />
 		<mkdir dir="${dist.classes.dir}" />
 
+        <!-- copy the latest securitymanager jar -->
+		<delete file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar" />
+		<copy todir="${lib.dir}">
+			<fileset file="${hadoopsecuritymanagerjar}">
+			</fileset>
+		</copy>
+
+
 		<!--copy todir="${dist.classes.dir}">
             <fileset dir="${java.src.dir}">
 				<exclude name="**/*.java" />
@@ -60,6 +69,7 @@
 	</target>
 	
 	<target name="jars" depends="build" description="Compile main source tree java files">
+
 		<mkdir dir="${dist.jar.dir}" />
 		<jar destfile="${azkaban-jobtype-jar}">
 			<fileset dir="${dist.classes.dir}">
@@ -78,10 +88,23 @@
 			</fileset>
 		</copy>
 
-        <!-- Copy Azkaban jars and libs-->
-		<!--copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/lib" /-->
+        <!-- Copy jobtype jar-->
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/java" />
-		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hadoopJava" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.9.2" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.10.0" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.10.1" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.11.0" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hive-0.8.1" />
+
+		<!-- Copy hadoopsecuritymanager-->
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/java" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hadoopJava" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.9.2" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.10.0" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.10.1" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.11.0" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive-0.8.1" />
 
         <!-- Tarball it -->
         <tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">

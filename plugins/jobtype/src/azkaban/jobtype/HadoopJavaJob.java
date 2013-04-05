@@ -22,11 +22,10 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
-import azkaban.security.HadoopSecurityManager;
-import azkaban.security.HadoopSecurityManagerException;
+import azkaban.security.commons.HadoopSecurityManager;
+import azkaban.security.commons.HadoopSecurityManagerException;
 import azkaban.utils.Props;
 import azkaban.jobExecutor.JavaProcessJob;
 
@@ -213,7 +212,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 		
 		hadoopSecurityManager.prefetchToken(tokenFile, userToProxy, getLog());
 		
-		props.put("env."+UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION, tokenFile.getAbsolutePath());
+		props.put("env."+"HADOOP_TOKEN_FILE_LOCATION", tokenFile.getAbsolutePath());
 		
 		return tokenFile;
 	}

@@ -23,7 +23,7 @@ import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 import azkaban.jobExecutor.JavaProcessJob;
-import azkaban.security.SecurityUtils;
+import azkaban.security.commons.SecurityUtils;
 import azkaban.utils.Props;
 
 public class JavaJob extends JavaProcessJob {

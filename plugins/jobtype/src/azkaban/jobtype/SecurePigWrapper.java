@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Properties;
 
-import static azkaban.security.SecurityUtils.getProxiedUser;
+import static azkaban.security.commons.SecurityUtils.getProxiedUser;
 
 public class SecurePigWrapper {
 

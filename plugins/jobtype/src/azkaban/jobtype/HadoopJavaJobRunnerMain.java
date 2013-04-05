@@ -29,7 +29,7 @@ import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
-import azkaban.security.HadoopSecurityManager;
+import azkaban.security.commons.HadoopSecurityManager;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -68,6 +68,8 @@ public class HadoopJavaJobRunnerMain {
 	public String _jobName;
 	public Object _javaObject;
 	private boolean _isFinished = false;
+	
+	private static boolean securityEnabled;
 
 	public static void main(String[] args) throws Exception {
 		@SuppressWarnings("unused")
@@ -93,6 +95,11 @@ public class HadoopJavaJobRunnerMain {
 
 			Properties prop = new Properties();
 			prop.load(new BufferedReader(new FileReader(propsFile)));
+			
+			final Configuration conf = new Configuration();
+			
+			UserGroupInformation.setConfiguration(conf);
+			securityEnabled = UserGroupInformation.isSecurityEnabled();
 
 			_logger.info("Running job " + _jobName);
 			String className = prop.getProperty(JOB_CLASS);
@@ -105,28 +112,31 @@ public class HadoopJavaJobRunnerMain {
 			UserGroupInformation proxyUser = null;
 			
 			if (shouldProxy(prop)) {
-				String filelocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
-				_logger.info("Found token file " + filelocation);
-				_logger.info("Security enabled is " + UserGroupInformation.isSecurityEnabled());
-				
-				_logger.info("Setting mapreduce.job.credentials.binary to " + filelocation);
-				System.setProperty("mapreduce.job.credentials.binary", filelocation);
-			
-				_logger.info("Proxying enabled.");
-				Configuration conf = new Configuration();
-				UserGroupInformation.setConfiguration(conf);
-				
-				loginUser = UserGroupInformation.getLoginUser();
-
-				_logger.info("Current logged in user is " + loginUser.getUserName());
-
 				String userToProxy = prop.getProperty("user.to.proxy");
-				proxyUser = UserGroupInformation.createProxyUser(userToProxy, loginUser);
-
-				for (Token<?> token: loginUser.getTokens()) {
-					proxyUser.addToken(token);
-				}
+				if(securityEnabled) {
+					String filelocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
+					_logger.info("Found token file " + filelocation);
+					_logger.info("Security enabled is " + UserGroupInformation.isSecurityEnabled());
+					
+					_logger.info("Setting mapreduce.job.credentials.binary to " + filelocation);
+					System.setProperty("mapreduce.job.credentials.binary", filelocation);
 				
+					_logger.info("Proxying enabled.");
+					
+					loginUser = UserGroupInformation.getLoginUser();
+	
+					_logger.info("Current logged in user is " + loginUser.getUserName());
+	
+					
+					proxyUser = UserGroupInformation.createProxyUser(userToProxy, loginUser);
+					for (Token<?> token: loginUser.getTokens()) {
+						proxyUser.addToken(token);
+					}
+				}
+				else {
+					proxyUser = UserGroupInformation.createRemoteUser(userToProxy);
+				}
+				_logger.info("Proxied as user " + userToProxy);
 			}
 			
 			// Create the object using proxy

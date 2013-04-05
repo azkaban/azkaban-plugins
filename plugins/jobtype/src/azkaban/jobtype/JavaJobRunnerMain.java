@@ -27,7 +27,7 @@ import org.apache.log4j.Layout;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
-import azkaban.security.SecurityUtils;
+import azkaban.security.commons.SecurityUtils;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

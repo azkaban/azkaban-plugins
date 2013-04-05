@@ -28,6 +28,7 @@
 			var contextURL = "${context}";
 			var currentTime = ${currentTime};
 			var timezone = "${timezone}";
+			var homeDir = "${homedir}";
 
 #if($allowproxy)
 			$(function() {
@@ -121,12 +122,16 @@
 			#end
 		#end
 
-#if($allowproxy)
+
+
 		<div id="proxyBox">
+			<button id="goHomedirBtn" class="btn1" onClick="location.href='${context}/hdfs${homedir}'">Go To My Home Directory</button>
+#if($allowproxy)			
 			<button id="changeUserBtn" class="btn3">Change User</button>
 			<p class="logout-label">Proxy user '${user}'</p>
-		</div>
 #end
+		</div>
+
 
 		<div id="all-hdfsbrowser-content">
 			<div class="section-hd">
