@@ -75,13 +75,34 @@
 				float: right;
 			}
 			
+			#rightBox {
+				float: right;
+				margin-top: 20px;
+				margin-right: 10px;
+			}
+			
 			#proxyBox {
-				margin-top: 15px;
-				margin-right: 5px;
+				float: right;
+				height: 40px;
 			}
 			
 			#proxyname {
 				width: 100%;
+			}
+			
+			#goHomeLink {
+				clear: both;
+				float: right;
+				text-decoration: none;
+				margin-top: 10px;
+				margin-left: 1px;
+				margin-right: 1px;
+				font-weight: bold;
+				color: #0571A6;
+			}
+			
+			#goHomeLink:hover {
+				color: #009FC9;
 			}
 			
 			.breadcrumbs {
@@ -125,14 +146,15 @@
 		#end
 
 
-
-		<div id="proxyBox">
-#if($allowproxy)			
-			<button id="changeUserBtn" class="btn3">Change User</button>
-			<p class="logout-label">Proxy user '${user}'</p>
-#end
-			<br/>
-			<a id="goHomeLink" href="${context}/hdfs${homedir}">Home Directory</a>
+		<div id="rightBox">
+			<div id="proxyBox">
+	#if($allowproxy)			
+				<button id="changeUserBtn" class="btn3">Change User</button>
+				<p class="logout-label">Proxy user '${user}'</p>
+	#end
+	
+			</div>
+			<a id="goHomeLink" class="homelink" href="${context}/hdfs${homedir}">Home Directory</a>
 		</div>
 
 
