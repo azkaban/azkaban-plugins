@@ -1,0 +1,68 @@
+package azkaban.jobtype.hiveutils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+
+public class RealHiveMetaStoreBrowser implements HiveMetaStoreBrowser
+{
+  private IMetaStoreClient metaStoreClient;
+  
+  public RealHiveMetaStoreBrowser(IMetaStoreClient metaStoreClient) 
+  {
+     this.metaStoreClient = metaStoreClient;
+  }
+
+  @Override
+  public List<String> getAllDatabases() throws HiveMetaStoreBrowserException
+  {
+    try
+    {
+      return metaStoreClient.getAllDatabases();
+    }
+    catch (Throwable e)
+    {
+      throw new HiveMetaStoreBrowserException(e);
+    }
+  }
+
+  @Override
+  public List<String> getAllTables(String dbName) throws HiveMetaStoreBrowserException
+  {
+    try
+    {
+      return metaStoreClient.getAllTables(dbName);
+    }
+    catch (Throwable e)
+    {
+      throw new HiveMetaStoreBrowserException(e);
+    }
+  }
+
+  @Override
+  public List<ResultSchema> getFields(String db, String tableName) throws HiveMetaStoreBrowserException
+  {
+    try
+    {
+      List<ResultSchema> result = new ArrayList<ResultSchema>();
+      
+      List<FieldSchema> fsList = metaStoreClient.getFields(db, tableName);
+      if (fsList != null)
+      {
+        for (FieldSchema fs : fsList) 
+        {
+          result.add(new ResultSchema(fs.getName(), fs.getType(), fs.getComment()));
+        }
+      }
+      return result;
+    }
+    catch (Throwable e)
+    {
+      throw new HiveMetaStoreBrowserException(e);
+    }
+    
+  }
+
+}
