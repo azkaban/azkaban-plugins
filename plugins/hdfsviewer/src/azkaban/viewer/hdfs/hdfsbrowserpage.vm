@@ -18,11 +18,13 @@
 <html>
 	<head>
 #parse( "azkaban/webapp/servlet/velocity/style.vm" )
-		<script type="text/javascript" src="${context}/js/jquery/jquery.js"></script>    
+		<script type="text/javascript" src="${context}/js/jquery/jquery-1.9.1.js"></script>    
+		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
+		<script type="text/javascript" src="${context}/js/underscore-1.4.4-min.js"></script>
 		<script type="text/javascript" src="${context}/js/namespace.js"></script>
-		<script type="text/javascript" src="${context}/js/underscore-1.2.1-min.js"></script>
-		<script type="text/javascript" src="${context}/js/backbone-0.5.3-min.js"></script>
-		<script type="text/javascript" src="${context}/js/jquery.simplemodal.js"></script>
+		<script type="text/javascript" src="${context}/js/backbone-0.9.10-min.js"></script>
+		<script type="text/javascript" src="${context}/js/jquery.simplemodal-1.4.4.js"></script>
+
 		<script type="text/javascript" src="${context}/js/azkaban.nav.js"></script>
 		<script type="text/javascript">
 			var contextURL = "${context}";
@@ -125,11 +127,12 @@
 
 
 		<div id="proxyBox">
-			<button id="goHomedirBtn" class="btn1" onClick="location.href='${context}/hdfs${homedir}'">Go To My Home Directory</button>
 #if($allowproxy)			
 			<button id="changeUserBtn" class="btn3">Change User</button>
 			<p class="logout-label">Proxy user '${user}'</p>
 #end
+			<br/>
+			<a id="goHomeLink" href="${context}/hdfs${homedir}">Home Directory</a>
 		</div>
 
 

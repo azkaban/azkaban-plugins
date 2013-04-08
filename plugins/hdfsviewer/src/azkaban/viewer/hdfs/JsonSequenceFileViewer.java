@@ -28,7 +28,6 @@ import org.apache.log4j.Logger;
 import voldemort.serialization.json.JsonTypeSerializer;
 
 public class JsonSequenceFileViewer extends HdfsSequenceFileViewer {
-
 	private static Logger logger = Logger.getLogger(JsonSequenceFileViewer.class);
 
 	public boolean canReadFile(Reader reader) {

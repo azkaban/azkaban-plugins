@@ -16,52 +16,27 @@ package azkaban.jobtype;
  * the License.
  */
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hive.ql.parse.HiveParser.searchCondition_return;
-import org.apache.hadoop.mapred.JobClient;
-import org.apache.hadoop.mapred.JobID;
-import org.apache.hadoop.mapred.RunningJob;
-import org.apache.hadoop.mapred.TaskReport;
-import org.apache.hadoop.mapred.JobHistory.JobInfo;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.log4j.Logger;
 import org.apache.pig.PigRunner;
-import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.MapReduceOper;
-import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.plans.MROperPlan;
-import org.apache.pig.impl.plan.OperatorKey;
-import org.apache.pig.parser.QueryParser.bool_cond_return;
-import org.apache.pig.tools.pigstats.JobStats;
-import org.apache.pig.tools.pigstats.OutputStats;
-import org.apache.pig.tools.pigstats.PigProgressNotificationListener;
 import org.apache.pig.tools.pigstats.PigStats;
 
 import azkaban.jobExecutor.ProcessJob;
-import azkaban.jobtype.AmbrosePigProgressNotificationListener.JobProgressField;
 import azkaban.security.commons.HadoopSecurityManager;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 public class HadoopSecurePigWrapper {
 	
 	private static File pigLogFile;
 	
-	private static Set<String> jobs;
-	
 	private static boolean securityEnabled;
-	
-//	private static BasicPigProgressNotificationListener pigProgressListener;
 	
 	public static void main(final String[] args) throws Exception {
 		
@@ -77,9 +52,7 @@ public class HadoopSecurePigWrapper {
 		});
 		
 		final Logger logger = Logger.getRootLogger();
-		
-		
-		
+
 		String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
 		Properties prop = new Properties();
 		prop.load(new BufferedReader(new FileReader(propsFile)));
@@ -90,9 +63,7 @@ public class HadoopSecurePigWrapper {
 		securityEnabled = UserGroupInformation.isSecurityEnabled();
 		
 		pigLogFile = new File(System.getenv("PIG_LOG_FILE"));
-		jobs = new HashSet<String>();
-//		pigProgressListener = new BasicPigProgressNotificationListener();
-		
+
 		if (shouldProxy(prop)) {
 			
 			UserGroupInformation proxyUser = null;
@@ -108,17 +79,12 @@ public class HadoopSecurePigWrapper {
 				}
 				
 				logger.info("Found token file " + filelocation);
-		//		logger.info("Security enabled is " + UserGroupInformation.isSecurityEnabled());
-				
+
 				logger.info("Setting " + HadoopSecurityManager.MAPREDUCE_JOB_CREDENTIALS_BINARY + " to " + filelocation);
 				System.setProperty(HadoopSecurityManager.MAPREDUCE_JOB_CREDENTIALS_BINARY, filelocation);
 				
 				UserGroupInformation loginUser = null;
-				
-		
-				//logger.info("Proxying enabled.");
-				
-					
+
 				loginUser = UserGroupInformation.getLoginUser();
 				logger.info("Current logged in user is " + loginUser.getUserName());
 				
@@ -134,7 +100,7 @@ public class HadoopSecurePigWrapper {
 				proxyUser = UserGroupInformation.createRemoteUser(userToProxy);
 			}
 			
-			_logger.info("Proxied as user " + userToProxy);
+			logger.info("Proxied as user " + userToProxy);
 			
 			proxyUser.doAs(
 					new PrivilegedExceptionAction<Void>() {

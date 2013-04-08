@@ -4,9 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.hadoop.hive.cli.CliDriver;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.log4j.Logger;
 
 /**

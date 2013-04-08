@@ -23,9 +23,6 @@ import org.apache.log4j.Logger;
 
 import azkaban.utils.Props;
 
-
-
-
 public abstract class AbstractHadoopJob
 {
 	private static final Logger logger = Logger.getLogger(AbstractHadoopJob.class);
@@ -91,19 +88,22 @@ public abstract class AbstractHadoopJob
 				logger.info(counter.getDisplayName() + ":\t" + counter.getValue());
 		}
 	}
-
+	
+	@SuppressWarnings("rawtypes") 
 	public JobConf createJobConf(Class<? extends Mapper> mapperClass) throws IOException, URISyntaxException {
 		JobConf conf = createJobConf(mapperClass, null);
 		conf.setNumReduceTasks(0);
 		return conf;
 	}
 
+	@SuppressWarnings("rawtypes") 
 	public JobConf createJobConf(Class<? extends Mapper> mapperClass, Class<? extends Reducer> reducerClass, Class<? extends Reducer> combinerClass) throws IOException, URISyntaxException {
 		JobConf conf = createJobConf(mapperClass, reducerClass);
 		conf.setCombinerClass(combinerClass);
 		return conf;
 	}
 
+	@SuppressWarnings("rawtypes") 
 	public JobConf createJobConf(Class<? extends Mapper> mapperClass, Class<? extends Reducer> reducerClass) throws IOException, URISyntaxException {
 		JobConf conf = new JobConf();
 		// set custom class loader with custom find resource strategy.

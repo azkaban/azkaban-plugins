@@ -21,7 +21,7 @@ public class HadoopUtils {
 	
 	private static final Logger logger = Logger.getLogger(HadoopUtils.class);
 	
-	public static void setClassLoaderAndJar(JobConf conf, Class jobClass)
+	public static void setClassLoaderAndJar(JobConf conf, Class<?> jobClass)
 	{
 		conf.setClassLoader(Thread.currentThread().getContextClassLoader());
 		String jar = findContainingJar(jobClass, Thread.currentThread().getContextClassLoader());
@@ -35,7 +35,7 @@ public class HadoopUtils {
 	{
 		try
 		{
-			for (Enumeration itr = loader.getResources(fileName); itr.hasMoreElements();)
+			for (Enumeration<?> itr = loader.getResources(fileName); itr.hasMoreElements();)
 			{
 				URL url = (URL) itr.nextElement();
 				logger.info("findContainingJar finds url:" + url);
@@ -58,7 +58,7 @@ public class HadoopUtils {
 		return null;
 	}
 
-	public static String findContainingJar(Class my_class, ClassLoader loader)
+	public static String findContainingJar(Class<?> my_class, ClassLoader loader)
 	{
 		String class_file = my_class.getName().replaceAll("\\.", "/") + ".class";
 		return findContainingJar(class_file, loader);

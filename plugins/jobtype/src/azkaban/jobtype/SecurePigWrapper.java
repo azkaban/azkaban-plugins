@@ -24,14 +24,14 @@ import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIden
 import org.apache.hadoop.security.token.Token;
 import org.apache.log4j.Logger;
 
+import azkaban.security.commons.SecurityUtils;
+
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Properties;
-
-import static azkaban.security.commons.SecurityUtils.getProxiedUser;
 
 public class SecurePigWrapper {
 
@@ -42,8 +42,8 @@ public class SecurePigWrapper {
 		final Logger logger = Logger.getRootLogger();
 		final Properties p = System.getProperties();
 		final Configuration conf = new Configuration();
-
-		getProxiedUser(p, logger, conf).doAs(
+	
+		SecurityUtils.getProxiedUser(p, logger, conf).doAs(
 				new PrivilegedExceptionAction<Void>() {
 					@Override
 					public Void run() throws Exception {

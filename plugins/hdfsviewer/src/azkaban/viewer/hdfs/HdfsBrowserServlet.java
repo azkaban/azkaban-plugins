@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.net.URI;
 
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,17 +16,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.AccessControlException;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.security.commons.HadoopSecurityManagerException;
-import azkaban.user.Permission;
-import azkaban.user.Role;
 import azkaban.user.User;
 import azkaban.utils.Props;
 import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
@@ -40,24 +34,17 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	private static final String PROXY_USER_SESSION_KEY = "hdfs.browser.proxy.user";
 	private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
 	private static Logger logger = Logger.getLogger(HdfsBrowserServlet.class);
-	private static UserGroupInformation loginUser = null;
 
 	private ArrayList<HdfsFileViewer> viewers = new ArrayList<HdfsFileViewer>();
 
-	// Default viewer will be a text viewer
 	private HdfsFileViewer defaultViewer;
 
 	private Props props;
-//	private String proxyUser;
-//	private String keytabLocation;
 	private boolean shouldProxy;
 	private boolean allowGroupProxy;
-	private Configuration conf;
 	
 	private String viewerName;
 	private String viewerPath;
-	
-	private ClassLoader cl;
 	
 	private HadoopSecurityManager hadoopSecurityManager;
 	
@@ -66,26 +53,16 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		
 		viewerName = props.getString("viewer.name");
 		viewerPath = props.getString("viewer.path");
-		cl = getClass().getClassLoader();
 	}
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 
-		conf = new Configuration();
-//		try {
-//			ClassLoader loader = getHadoopClassLoader();
-//			conf.setClassLoader(loader);
-//		} catch (MalformedURLException e) {
-//			logger.error("Error loading class loader with Hadoop confs", e);
-//		}
-		
 		shouldProxy = props.getBoolean("azkaban.should.proxy", false);
 		allowGroupProxy = props.getBoolean("allow.group.proxy", false);
 		logger.info("Hdfs browser should proxy: " + shouldProxy);
-//		if (shouldProxy) {
-			
+
 		try {
 			hadoopSecurityManager = loadHadoopSecurityManager(props, logger);
 		}
@@ -93,21 +70,6 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			e.printStackTrace();
 			throw new RuntimeException("Failed to get hadoop security manager!" + e.getCause());
 		}
-			
-			
-//			proxyUser = props.getString("proxy.user");
-//			keytabLocation = props.getString("proxy.keytab.location");
-//			allowGroupProxy = props.getBoolean("allow.group.proxy", false);
-//
-//			logger.info("No login user. Creating login user");
-//			UserGroupInformation.setConfiguration(conf);
-//			try {
-//				UserGroupInformation.loginUserFromKeytab(proxyUser, keytabLocation);
-//				loginUser = UserGroupInformation.getLoginUser();
-//			} catch (IOException e) {
-//				logger.error("Error setting up hdfs browser security", e);
-//			}
-
 		
 		defaultViewer = new TextFileViewer();
 		viewers.add(new HdfsAvroFileViewer());
@@ -138,46 +100,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		return hadoopSecurityManager;
 	}
 
-//	private ClassLoader getHadoopClassLoader() throws MalformedURLException {
-//		ClassLoader loader;
-//		String hadoopHome = System.getenv("HADOOP_HOME");
-//		String hadoopConfDir = System.getenv("HADOOP_CONF_DIR");
-//
-//		if (hadoopConfDir != null) {
-//			logger.info("Using hadoop config found in " + hadoopConfDir);
-//			loader = new URLClassLoader(new URL[] { new File(hadoopConfDir).toURI().toURL() }, getClass()
-//					.getClassLoader());
-//		} else if (hadoopHome != null) {
-//			logger.info("Using hadoop config found in " + hadoopHome);
-//			loader = new URLClassLoader(new URL[] { new File(hadoopHome, "conf").toURI().toURL() }, getClass().getClassLoader());
-//		} else {
-//			logger.info("HADOOP_HOME not set, using default hadoop config.");
-//			loader = getClass().getClassLoader();
-//		}
-//		
-//		return loader;
-//	}
-	
 	private FileSystem getFileSystem(String username) throws HadoopSecurityManagerException {
-
-//		if(shouldProxy) {
 		return hadoopSecurityManager.getFSAsUser(username);
-//		}
-//		else {
-//			UserGroupInformation ugi = UserGroupInformation.createRemoteUser(username);
-//			FileSystem fs = ugi.doAs(new PrivilegedAction<FileSystem>(){
-//				@Override
-//				public FileSystem run() {
-//					try {
-//						return FileSystem.get(conf);
-//					} catch (IOException e) {
-//						throw new RuntimeException(e);
-//					}
-//				}
-//			});
-//			
-//			return fs;
-//		}
 	}
 	
 	@Override
@@ -298,8 +222,14 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		page.add("paths", paths);
 		page.add("segments", segments);
 		page.add("user", user);
-		page.add("homedir", fs.getHomeDirectory().toString().substring(fs.getUri().toString().length()));
-		page.add("something", fs.getUri());
+		
+		String homeDirString = fs.getHomeDirectory().toString();
+		if (homeDirString.startsWith("file:")) {
+			page.add("homedir", homeDirString.substring("file:".length()));
+		}
+		else {
+			page.add("homedir", homeDirString.substring(fs.getUri().toString().length()));
+		}
 
 		try {
 			page.add("subdirs", fs.listStatus(path)); // ??? line
