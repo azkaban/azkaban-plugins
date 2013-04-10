@@ -54,10 +54,10 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 		if(logger.isDebugEnabled())
 			logger.debug("path:" + path.toUri().getPath());
 
+		DataFileStream<Object> avroDataStream = null;
 		try {
-			DataFileStream<Object> avroDataStream = getAvroDataStream(fs, path);
+			avroDataStream = getAvroDataStream(fs, path);
 			Schema schema = avroDataStream.getSchema();
-			avroDataStream.close();
 			return schema != null;
 		} catch(IOException e) {
 			if(logger.isDebugEnabled()) {
@@ -65,6 +65,13 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 				logger.debug("Error in getting avro schema: " + e.getLocalizedMessage());
 			}
 			return false;
+		}
+		finally {
+			try {
+				avroDataStream.close();
+			} catch (IOException e) {
+				logger.error(e);
+			}
 		}
 	}
 

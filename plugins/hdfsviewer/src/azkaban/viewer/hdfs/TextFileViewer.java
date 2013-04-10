@@ -55,28 +55,40 @@ public class TextFileViewer implements HdfsFileViewer {
 
 		if(logger.isDebugEnabled())
 			logger.debug("read in uncompressed text file");
-		InputStream inputStream = fs.open(path);
-		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-		PrintWriter output = new PrintWriter(outputStream);
-		for(int i = 1; i < startLine; i++)
-			reader.readLine();
-
-		final int bufferLimit = 1000000; //only display the first 1M chars. it is used to prevent showing/downloading gb of data
-		int bufferSize = 0;
-		for(int i = startLine; i < endLine; i++) {
-			String line = reader.readLine();
-			if(line == null)
-				break;
-
-			// bread if reach the buffer limit
-			bufferSize += line.length();
-			if (bufferSize >= bufferLimit)
-				break;
-
-			output.write(line);
-			output.write("\n");
+		
+		InputStream inputStream = null;
+		BufferedReader reader = null;
+		try {
+			inputStream = fs.open(path);
+			reader = new BufferedReader(new InputStreamReader(inputStream));
+			PrintWriter output = new PrintWriter(outputStream);
+			for(int i = 1; i < startLine; i++)
+				reader.readLine();
+	
+			final int bufferLimit = 1000000; //only display the first 1M chars. it is used to prevent showing/downloading gb of data
+			int bufferSize = 0;
+			for(int i = startLine; i < endLine; i++) {
+				String line = reader.readLine();
+				if(line == null)
+					break;
+	
+				// bread if reach the buffer limit
+				bufferSize += line.length();
+				if (bufferSize >= bufferLimit)
+					break;
+	
+				output.write(line);
+				output.write("\n");
+			}
+			output.flush();
 		}
-		output.flush();
-		reader.close();
+		finally {
+			if (reader != null){
+				reader.close();
+			}
+			else if (inputStream != null){
+				inputStream.close();
+			}
+		}
 	}
 }
