@@ -28,6 +28,7 @@ import org.apache.log4j.Logger;
 import voldemort.serialization.json.JsonTypeSerializer;
 
 public class JsonSequenceFileViewer extends HdfsSequenceFileViewer {
+
 	private static Logger logger = Logger.getLogger(JsonSequenceFileViewer.class);
 
 	public boolean canReadFile(Reader reader) {
@@ -42,35 +43,32 @@ public class JsonSequenceFileViewer extends HdfsSequenceFileViewer {
 			int startLine,
 			int endLine) throws IOException {
 
-		if(logger.isDebugEnabled())
+		if(logger.isDebugEnabled()) {
 			logger.debug("display json file");
+		}
 
-		try {
-			BytesWritable keyWritable = new BytesWritable();
-			BytesWritable valueWritable = new BytesWritable();
-			Text keySchema = reader.getMetadata().get(new Text("key.schema"));
-			Text valueSchema = reader.getMetadata().get(new Text("value.schema"));
+		BytesWritable keyWritable = new BytesWritable();
+		BytesWritable valueWritable = new BytesWritable();
+		Text keySchema = reader.getMetadata().get(new Text("key.schema"));
+		Text valueSchema = reader.getMetadata().get(new Text("value.schema"));
 
-			JsonTypeSerializer keySerializer = new JsonTypeSerializer(keySchema.toString());
-			JsonTypeSerializer valueSerializer = new JsonTypeSerializer(valueSchema.toString());
+		JsonTypeSerializer keySerializer = new JsonTypeSerializer(keySchema.toString());
+		JsonTypeSerializer valueSerializer = new JsonTypeSerializer(valueSchema.toString());
 
-			// skip lines before the start line
-			for(int i = 1; i < startLine; i++)
-				reader.next(keyWritable, valueWritable);
+		// skip lines before the start line
+		for(int i = 1; i < startLine; i++)
+			reader.next(keyWritable, valueWritable);
 
-			// now actually output lines
-			for(int i = startLine; i <= endLine; i++) {
-				boolean readSomething = reader.next(keyWritable, valueWritable);
-				if(!readSomething)
-					break;
-				output.write(safeToString(keySerializer.toObject(keyWritable.getBytes())));
-				output.write("\t=>\t");
-				output.write(safeToString(valueSerializer.toObject(valueWritable.getBytes())));
-				output.write("\n");
-				output.flush();
-			}
-		} finally {
-			reader.close();
+		// now actually output lines
+		for(int i = startLine; i <= endLine; i++) {
+			boolean readSomething = reader.next(keyWritable, valueWritable);
+			if(!readSomething)
+				break;
+			output.write(safeToString(keySerializer.toObject(keyWritable.getBytes())));
+			output.write("\t=>\t");
+			output.write(safeToString(valueSerializer.toObject(valueWritable.getBytes())));
+			output.write("\n");
+			output.flush();
 		}
 	}
 

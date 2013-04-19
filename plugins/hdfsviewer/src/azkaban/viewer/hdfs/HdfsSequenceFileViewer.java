@@ -35,12 +35,20 @@ public abstract class HdfsSequenceFileViewer implements HdfsFileViewer {
 
 	public boolean canReadFile(FileSystem fs, Path file) {
 		boolean result = false;
+		SequenceFile.Reader reader = null;
 		try {
-			SequenceFile.Reader reader = new SequenceFile.Reader(fs, file, new Configuration());
+			reader = new SequenceFile.Reader(fs, file, new Configuration());
 			result = canReadFile(reader);
-			reader.close();
 		} catch(IOException e) {
 			return false;
+		}
+		finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+				}
+			}
 		}
 
 		return result;
