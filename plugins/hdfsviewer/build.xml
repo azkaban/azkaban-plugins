@@ -114,7 +114,7 @@
 		<copy file="${azkaban-hdfs-jar}" todir="${dist.packages.dir}/lib" />
 		<copy todir="${dist.packages.dir}/lib" >
 			<fileset dir="${lib.dir}" >
-				<exclude name="azkaban*.jar"/>
+				<!--exclude name="azkaban*.jar"/-->
 			</fileset>
 		</copy>
 		

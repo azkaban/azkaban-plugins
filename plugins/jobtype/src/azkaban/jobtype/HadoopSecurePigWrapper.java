@@ -40,16 +40,16 @@ public class HadoopSecurePigWrapper {
 	
 	public static void main(final String[] args) throws Exception {
 		
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run() {
-				try {
-					cancelJob();
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		});
+//		Runtime.getRuntime().addShutdownHook(new Thread() {
+//			public void run() {
+//				try {
+//					cancelJob();
+//				} catch (Exception e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+//		});
 		
 		final Logger logger = Logger.getRootLogger();
 
@@ -110,6 +110,7 @@ public class HadoopSecurePigWrapper {
 								return null;
 						}
 					});
+
 		}
 		else {
 			runPigJob(args);
@@ -127,11 +128,12 @@ public class HadoopSecurePigWrapper {
 		else {
 
 		}
+		
 	}
 	
-	private static void cancelJob() throws Exception {
-		// doesn't seem needed as the job dies by itself if the process is killed
-	}
+//	private static void cancelJob() throws Exception {
+//		// doesn't seem needed as the job dies by itself if the process is killed
+//	}
 	
 	private static void handleError(File pigLog) throws Exception {
 		System.out.println();

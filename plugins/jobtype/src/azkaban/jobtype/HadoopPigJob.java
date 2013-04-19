@@ -75,7 +75,7 @@ public class HadoopPigJob extends JavaProcessJob {
 		
 		
 		
-		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy");
+		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
 		
 		if(shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
@@ -101,6 +101,7 @@ public class HadoopPigJob extends JavaProcessJob {
 			super.run();
 		} catch (Exception e) {
 			e.printStackTrace();
+			getLog().error("caught exception running the job");
 			throw new Exception(e);
 		}
 		finally{

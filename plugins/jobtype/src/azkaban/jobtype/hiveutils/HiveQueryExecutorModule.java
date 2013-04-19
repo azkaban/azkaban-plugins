@@ -21,6 +21,12 @@ class HiveQueryExecutorModule {
 
     troublesomeConfig(HIVEHISTORYFILELOC, hiveConf);
     troublesomeConfig(SCRATCHDIR, hiveConf);
+    
+    if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+    	System.out.println("Setting hadoop tokens ... ");
+		hiveConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+		System.setProperty("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+	}
 
     return hiveConf;
   }

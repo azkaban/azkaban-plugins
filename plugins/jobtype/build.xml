@@ -15,7 +15,7 @@
 	<property name="javatype.dir" value="${basedir}/jobtypes/java" />
 	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
 	<property file="build.properties" />
-	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-0.20.jar"/>
+	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-2.1.jar"/>
 
 	<property environment="env" />
 
@@ -44,16 +44,16 @@
 	</target>
 
 	<target name="build" description="Compile main source tree java files">
-		<delete dir="${dist.classes.dir}" />
-		<mkdir dir="${dist.classes.dir}" />
-
-        <!-- copy the latest securitymanager jar -->
+		<!-- copy the latest securitymanager jar -->
 		<delete file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar" />
 		<copy todir="${lib.dir}">
 			<fileset file="${hadoopsecuritymanagerjar}">
 			</fileset>
 		</copy>
 
+
+		<delete dir="${dist.classes.dir}" />
+		<mkdir dir="${dist.classes.dir}" />
 
 		<!--copy todir="${dist.classes.dir}">
             <fileset dir="${java.src.dir}">

@@ -58,7 +58,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 	public HadoopJavaJob(String jobid, Props sysProps, Props jobProps, Logger log) throws RuntimeException {
 		super(jobid, sysProps, jobProps, log);
 		
-		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy");
+		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
 		
 		if(shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
