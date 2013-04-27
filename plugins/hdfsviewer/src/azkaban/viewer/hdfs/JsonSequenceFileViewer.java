@@ -20,8 +20,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.io.SequenceFile;
-import org.apache.hadoop.io.SequenceFile.Reader;
+import azkaban.viewer.hdfs.LiSequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
 
@@ -31,14 +30,14 @@ public class JsonSequenceFileViewer extends HdfsSequenceFileViewer {
 
 	private static Logger logger = Logger.getLogger(JsonSequenceFileViewer.class);
 
-	public boolean canReadFile(Reader reader) {
+	public boolean canReadFile(LiSequenceFile.Reader reader) {
 		Text keySchema = reader.getMetadata().get(new Text("key.schema"));
 		Text valueSchema = reader.getMetadata().get(new Text("value.schema"));
 
 		return keySchema != null && valueSchema != null;
 	}
 
-	public void displaySequenceFile(SequenceFile.Reader reader,
+	public void displaySequenceFile(LiSequenceFile.Reader reader,
 			PrintWriter output,
 			int startLine,
 			int endLine) throws IOException {

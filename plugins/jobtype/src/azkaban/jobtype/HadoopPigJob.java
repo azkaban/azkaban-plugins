@@ -60,6 +60,7 @@ public class HadoopPigJob extends JavaProcessJob {
 	
 	private String userToProxy = null;
 	private boolean shouldProxy = false;
+	private boolean obtainTokens = false;
 
 	private HadoopSecurityManager hadoopSecurityManager;
 	
@@ -76,6 +77,8 @@ public class HadoopPigJob extends JavaProcessJob {
 		
 		
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
+		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
+		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
 		
 		if(shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
@@ -91,7 +94,7 @@ public class HadoopPigJob extends JavaProcessJob {
 	@Override
 	public void run() throws Exception {
 		File f = null;
-		if(shouldProxy) {
+		if(shouldProxy && obtainTokens) {
 			userToProxy = getJobProps().getString("user.to.proxy");
 			getLog().info("Need to proxy. Getting tokens.");
 			// get tokens in to a file, and put the location in props

@@ -113,6 +113,7 @@ public class HadoopSecurePigWrapper {
 
 		}
 		else {
+			logger.info("Not proxying. ");
 			runPigJob(args);
 		}
 	}

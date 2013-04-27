@@ -83,6 +83,11 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 		conf = new Configuration();
 		conf.setClassLoader(cl);
 		
+		if(props.containsKey("fs.hdfs.impl.disable.cache")) {
+			logger.info("Setting fs.hdfs.impl.disable.cache to " + props.get("fs.hdfs.impl.disable.cache"));
+			conf.setBoolean("fs.hdfs.impl.disable.cache", Boolean.valueOf(props.get("fs.hdfs.impl.disable.cache")));
+		}
+		
 		logger.info("Hadoop Security Manager Initiated");
 		logger.info("hadoop.security.authentication set to " + conf.get("hadoop.security.authentication"));
 		logger.info("hadoop.security.authorization set to " + conf.get("hadoop.security.authorization"));

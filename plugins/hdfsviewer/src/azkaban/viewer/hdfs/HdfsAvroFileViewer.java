@@ -68,7 +68,9 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 		}
 		finally {
 			try {
-				avroDataStream.close();
+				if(avroDataStream != null) {
+					avroDataStream.close();
+				}
 			} catch (IOException e) {
 				logger.error(e);
 			}
@@ -81,7 +83,19 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 
 		GenericDatumReader<Object> avroReader = new GenericDatumReader<Object>();
 		InputStream hdfsInputStream = fs.open(path);
-		return new DataFileStream<Object>(hdfsInputStream, avroReader);
+		
+		DataFileStream<Object> avroDataFileStream = null;
+		try {
+			avroDataFileStream = new DataFileStream<Object>(hdfsInputStream, avroReader);
+		}
+		catch (IOException e) {
+			throw e;
+		}
+		finally {
+			hdfsInputStream.close();
+		}
+
+		return avroDataFileStream;
 
 	}
 

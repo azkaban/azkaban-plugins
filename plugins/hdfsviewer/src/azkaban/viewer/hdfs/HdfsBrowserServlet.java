@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URI;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,7 +61,9 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		shouldProxy = props.getBoolean("azkaban.should.proxy", false);
 		allowGroupProxy = props.getBoolean("allow.group.proxy", false);
 		logger.info("Hdfs browser should proxy: " + shouldProxy);
-
+		
+		props.put("fs.hdfs.impl.disable.cache", "true");
+		
 		try {
 			hadoopSecurityManager = loadHadoopSecurityManager(props, logger);
 		}

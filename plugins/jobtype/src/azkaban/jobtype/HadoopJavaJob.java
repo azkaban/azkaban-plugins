@@ -19,6 +19,7 @@ package azkaban.jobtype;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -48,10 +49,9 @@ public class HadoopJavaJob extends JavaProcessJob {
 
 	private Object _javaObject = null;
 	
-	
-	
 	private String userToProxy = null;
 	private boolean shouldProxy = false;
+	private boolean noUserClasspath = false;
 	
 	private HadoopSecurityManager hadoopSecurityManager;
 
@@ -59,6 +59,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 		super(jobid, sysProps, jobProps, log);
 		
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
+		noUserClasspath = getSysProps().getBoolean("azkaban.no.user.classpath", false);
 		
 		if(shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
@@ -110,7 +111,14 @@ public class HadoopJavaJob extends JavaProcessJob {
 	
 	@Override
 	protected List<String> getClassPaths() {
-		List<String> classPath = super.getClassPaths();
+		List<String> classPath;
+		if(!noUserClasspath) {
+			classPath = super.getClassPaths();
+		}
+		else {
+			getLog().info("Supressing user supplied classpath settings.");
+			classPath = new ArrayList<String>();
+		}
 
 		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
 		classPath.add(getSourcePathFromClass(Props.class));
