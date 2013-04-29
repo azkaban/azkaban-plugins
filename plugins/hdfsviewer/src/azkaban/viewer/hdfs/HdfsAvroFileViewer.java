@@ -89,10 +89,8 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 			avroDataFileStream = new DataFileStream<Object>(hdfsInputStream, avroReader);
 		}
 		catch (IOException e) {
-			throw e;
-		}
-		finally {
 			hdfsInputStream.close();
+			throw e;
 		}
 
 		return avroDataFileStream;

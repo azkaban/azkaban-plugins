@@ -22,22 +22,22 @@ import java.io.PrintWriter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import azkaban.viewer.hdfs.LiSequenceFile;
+import azkaban.viewer.hdfs.AzkabanSequenceFileReader;
 
 public abstract class HdfsSequenceFileViewer implements HdfsFileViewer {
 
-	protected abstract boolean canReadFile(LiSequenceFile.Reader reader);
+	protected abstract boolean canReadFile(AzkabanSequenceFileReader.Reader reader);
 
-	protected abstract void displaySequenceFile(LiSequenceFile.Reader reader,
+	protected abstract void displaySequenceFile(AzkabanSequenceFileReader.Reader reader,
 			PrintWriter output,
 			int startLine,
 			int endLine) throws IOException;
 
 	public boolean canReadFile(FileSystem fs, Path file) {
 		boolean result = false;
-		LiSequenceFile.Reader reader = null;
+		AzkabanSequenceFileReader.Reader reader = null;
 		try {
-			reader = new LiSequenceFile.Reader(fs, file, new Configuration());
+			reader = new AzkabanSequenceFileReader.Reader(fs, file, new Configuration());
 			result = canReadFile(reader);
 		} catch(IOException e) {
 			return false;
@@ -59,13 +59,14 @@ public abstract class HdfsSequenceFileViewer implements HdfsFileViewer {
 			OutputStream outputStream,
 			int startLine,
 			int endLine) throws IOException {
-		LiSequenceFile.Reader reader = null;
+		AzkabanSequenceFileReader.Reader reader = null;
 		PrintWriter writer = new PrintWriter(outputStream);
 		try {
-			reader = new LiSequenceFile.Reader(fs, file, new Configuration());
+			reader = new AzkabanSequenceFileReader.Reader(fs, file, new Configuration());
 			displaySequenceFile(reader, writer, startLine, endLine);
 		} catch(IOException e) {
 			writer.write("Error opening sequence file " + e);
+			throw e;
 		} finally {
 			if(reader != null) {
 				reader.close();

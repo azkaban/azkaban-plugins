@@ -32,10 +32,10 @@ import org.apache.log4j.Logger;
 import azkaban.security.commons.HadoopSecurityManager;
 
 @SuppressWarnings("deprecation")
-public class LiSequenceFile {
+public class AzkabanSequenceFileReader {
   private final static Logger LOG = Logger.getLogger(HadoopSecurityManager.class);
   
-  private LiSequenceFile() {}                         // no public ctor
+  private AzkabanSequenceFileReader() {}                         // no public ctor
 
   private static final byte BLOCK_COMPRESS_VERSION = (byte)4;
   private static final byte CUSTOM_COMPRESS_VERSION = (byte)5;
@@ -53,9 +53,9 @@ public class LiSequenceFile {
 
   /** 
    * The compression type used to compress key/value pairs in the 
-   * {@link LiSequenceFile}.
+   * {@link AzkabanSequenceFileReader}.
    * 
-   * @see LiSequenceFile.Writer
+   * @see AzkabanSequenceFileReader.Writer
    */
   public static enum CompressionType {
     /** Do not compress records. */
@@ -225,15 +225,15 @@ public class LiSequenceFile {
                    long length, Configuration conf, boolean tempReader) 
     throws IOException {
       this.file = file;
-      this.in = openFile(fs, file, bufferSize, length);
-      boolean succeeded = false;
+      
       try {
+    	  this.in = openFile(fs, file, bufferSize, length);
     	  this.conf = conf;
     	  seek(start);
     	  this.end = in.getPos() + length;
     	  init(tempReader);
-      } finally {
-    	  if(!succeeded) {
+      } catch (Exception e) {
+    	  if(this.in != null) {
     		in.close();
     	  }
       }
@@ -251,7 +251,7 @@ public class LiSequenceFile {
     /**
      * Initialize the {@link Reader}
      * @param tmpReader <code>true</code> if we are constructing a temporary
-     *                  reader {@link LiSequenceFile.Sorter.cloneFileAttributes}, 
+     *                  reader {@link AzkabanSequenceFileReader.Sorter.cloneFileAttributes}, 
      *                  and hence do not initialize every component; 
      *                  <code>false</code> otherwise.
      * @throws IOException
@@ -392,7 +392,9 @@ public class LiSequenceFile {
       }
       
       // Close the input-stream
-      in.close();
+      if(in != null) {
+    	  in.close();
+      }
     }
 
     /** Returns the name of the key class. */
@@ -959,8 +961,8 @@ public class LiSequenceFile {
     /** Set the current byte position in the input file.
      *
      * <p>The position passed must be a position returned by {@link
-     * LiSequenceFile.Writer#getLength()} when writing this file.  To seek to an arbitrary
-     * position, use {@link LiSequenceFile.Reader#sync(long)}.
+     * AzkabanSequenceFileReader.Writer#getLength()} when writing this file.  To seek to an arbitrary
+     * position, use {@link AzkabanSequenceFileReader.Reader#sync(long)}.
      */
     public synchronized void seek(long position) throws IOException {
       in.seek(position);
