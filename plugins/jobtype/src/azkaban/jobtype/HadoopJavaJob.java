@@ -51,6 +51,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 	
 	private String userToProxy = null;
 	private boolean shouldProxy = false;
+	private boolean obtainTokens = false;
 	private boolean noUserClasspath = false;
 	
 	private HadoopSecurityManager hadoopSecurityManager;
@@ -59,6 +60,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 		super(jobid, sysProps, jobProps, log);
 		
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
+		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
 		noUserClasspath = getSysProps().getBoolean("azkaban.no.user.classpath", false);
 		
 		if(shouldProxy) {
@@ -169,7 +171,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 	@Override
 	public void run() throws Exception {
 		File f = null;
-		if(shouldProxy) {
+		if(shouldProxy && obtainTokens) {
 			userToProxy = getJobProps().getString("user.to.proxy");
 			getLog().info("Need to proxy. Getting tokens.");
 			f = getHadoopTokens(getJobProps());

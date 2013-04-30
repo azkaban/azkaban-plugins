@@ -128,7 +128,10 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 				throw e;
 			} catch (ServletException se) {
 				throw se;
-			} finally {
+			} catch (Exception ge) {
+				throw ge;
+			}
+			finally {
 				fs.close();
 			}
 		}
@@ -174,7 +177,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	}
 
 	private void handleFSDisplay(FileSystem fs, String user, HttpServletRequest req, HttpServletResponse resp,
-			Session session) throws IOException, ServletException {
+			Session session) throws IOException, ServletException, IllegalArgumentException, IllegalStateException {
 		String prefix = req.getContextPath() + req.getServletPath();
 		String fsPath = req.getRequestURI().substring(prefix.length());
 		

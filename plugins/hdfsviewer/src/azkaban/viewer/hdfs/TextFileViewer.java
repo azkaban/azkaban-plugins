@@ -86,7 +86,7 @@ public class TextFileViewer implements HdfsFileViewer {
 			if (reader != null){
 				reader.close();
 			}
-			else if (inputStream != null){
+			if (inputStream != null){
 				inputStream.close();
 			}
 		}
