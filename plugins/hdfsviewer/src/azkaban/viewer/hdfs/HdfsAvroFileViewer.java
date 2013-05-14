@@ -82,14 +82,25 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 			logger.debug("path:" + path.toUri().getPath());
 
 		GenericDatumReader<Object> avroReader = new GenericDatumReader<Object>();
-		InputStream hdfsInputStream = fs.open(path);
+		
+		InputStream hdfsInputStream = null;
+		try{
+			hdfsInputStream = fs.open(path);
+		}
+		catch(Exception e) {
+			if(hdfsInputStream != null) {
+				hdfsInputStream.close();
+			}
+		}
 		
 		DataFileStream<Object> avroDataFileStream = null;
 		try {
 			avroDataFileStream = new DataFileStream<Object>(hdfsInputStream, avroReader);
 		}
 		catch (IOException e) {
-			hdfsInputStream.close();
+			if(hdfsInputStream != null) {
+				hdfsInputStream.close();
+			}
 			throw e;
 		}
 
@@ -108,13 +119,14 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 			logger.debug("display avro file:" + path.toUri().getPath());
 
 		DataFileStream<Object> avroDatastream = null;
+		JsonGenerator g = null;
 
 		try {
 			avroDatastream = getAvroDataStream(fs, path);
 			Schema schema = avroDatastream.getSchema();
 			DatumWriter<Object> avroWriter = new GenericDatumWriter<Object>(schema);
 
-			JsonGenerator g = new JsonFactory().createJsonGenerator(outputStream, JsonEncoding.UTF8);
+			g = new JsonFactory().createJsonGenerator(outputStream, JsonEncoding.UTF8);
 			g.useDefaultPrettyPrinter();
 			Encoder encoder = new JsonEncoder(schema, g);
 
@@ -134,6 +146,9 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 			outputStream.write(("Error in display avro file: " + e.getLocalizedMessage()).getBytes("UTF-8"));
 			throw e;
 		} finally {
+			if(g != null) {
+				g.close();
+			}
 			avroDatastream.close();
 		}
 	}

@@ -75,6 +75,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		defaultViewer = new TextFileViewer();
 		viewers.add(new HdfsAvroFileViewer());
 		viewers.add(new JsonSequenceFileViewer());
+		viewers.add(new HdfsImageFileViewer());
 		viewers.add(defaultViewer);
 
 		logger.info("HDFS Browser initiated");
@@ -120,8 +121,9 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			}
 		}
 
+		FileSystem fs = null;
 		try {
-			FileSystem fs = getFileSystem(username);
+			fs = getFileSystem(username);
 			try {
 				handleFSDisplay(fs, username, req, resp, session);
 			} catch (IOException e) {
@@ -132,11 +134,13 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 				throw ge;
 			}
 			finally {
-				fs.close();
+				if(fs != null) {
+					fs.close();
+				}
 			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			//e.printStackTrace();
 			Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/hdfsbrowserpage.vm");
 			page.add("error_message", "Error: " + e.getMessage());
 			page.add("user", username);
@@ -144,6 +148,11 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			page.add("no_fs", "true");
 			page.add("viewerName", viewerName);
 			page.render();
+		}
+		finally {
+			if(fs != null) {
+				fs.close();
+			}
 		}
 	}
 

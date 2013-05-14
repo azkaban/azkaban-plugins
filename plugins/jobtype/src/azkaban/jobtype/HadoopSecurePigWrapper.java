@@ -31,6 +31,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.security.PrivilegedExceptionAction;
 import java.util.Properties;
+import java.util.Set;
 
 public class HadoopSecurePigWrapper {
 	
@@ -124,6 +125,22 @@ public class HadoopSecurePigWrapper {
 			if (pigLogFile != null) {
 				handleError(pigLogFile);
 			}
+			
+			
+			// see jira ticket PIG-3313. Will remove these when we use pig binary with that patch.
+			///////////////////////
+			System.out.println("Trying to do self kill, in case pig could not.");
+			Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
+			Thread[] threadArray = threadSet.toArray(new Thread[threadSet.size()]);
+			for(Thread t : threadArray) {
+				if(!t.isDaemon() && !t.equals(Thread.currentThread())) {
+					System.out.println("Killing thread " + t);
+					t.stop();
+				}
+			}
+			System.exit(1);
+			//////////////////////
+			
 			throw new RuntimeException("Pig job failed.");
 		}
 		else {

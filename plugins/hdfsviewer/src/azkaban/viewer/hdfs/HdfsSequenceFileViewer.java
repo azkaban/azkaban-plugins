@@ -26,7 +26,7 @@ import azkaban.viewer.hdfs.AzkabanSequenceFileReader;
 
 public abstract class HdfsSequenceFileViewer implements HdfsFileViewer {
 
-	protected abstract boolean canReadFile(AzkabanSequenceFileReader.Reader reader);
+	protected abstract boolean canReadFile(AzkabanSequenceFileReader.Reader reader) throws Exception;
 
 	protected abstract void displaySequenceFile(AzkabanSequenceFileReader.Reader reader,
 			PrintWriter output,
@@ -39,7 +39,7 @@ public abstract class HdfsSequenceFileViewer implements HdfsFileViewer {
 		try {
 			reader = new AzkabanSequenceFileReader.Reader(fs, file, new Configuration());
 			result = canReadFile(reader);
-		} catch(IOException e) {
+		} catch(Exception e) {
 			return false;
 		}
 		finally {

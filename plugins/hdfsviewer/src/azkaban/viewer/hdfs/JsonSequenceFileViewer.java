@@ -30,7 +30,7 @@ public class JsonSequenceFileViewer extends HdfsSequenceFileViewer {
 
 	private static Logger logger = Logger.getLogger(JsonSequenceFileViewer.class);
 
-	public boolean canReadFile(AzkabanSequenceFileReader.Reader reader) {
+	public boolean canReadFile(AzkabanSequenceFileReader.Reader reader)  {
 		Text keySchema = null;
 		Text valueSchema = null;
 		try {
@@ -40,6 +40,7 @@ public class JsonSequenceFileViewer extends HdfsSequenceFileViewer {
 		catch(Exception e) {
 			logger.error("can't get schema. may not be json file");
 		}
+
 		return keySchema != null && valueSchema != null;
 	}
 
