@@ -8,6 +8,7 @@ import org.joda.time.DateTime;
 import org.joda.time.ReadablePeriod;
 
 import azkaban.trigger.TriggerAction;
+import azkaban.triggertype.HdfsDataTrigger.HdfsDataChecker.PathVariable;
 import azkaban.utils.Pair;
 
 public class HdfsDataTrigger {
@@ -15,7 +16,8 @@ public class HdfsDataTrigger {
 	private int id = -1;
 	private String dataSource;
 	private List<String> dependentDataPatterns;
-	private Map<String, Pair<Integer, Integer>> variables;
+	private String hdfsUser;
+	private Map<String, PathVariable> variables;
 	private ReadablePeriod timeToExpire;
 	
 	private List<TriggerAction> actions; 
@@ -30,7 +32,8 @@ public class HdfsDataTrigger {
 			int id, 
 			String dataSource, 
 			List<String> dataPatterns, 
-			Map<String, Pair<Integer, Integer>> variables, 
+			String hdfsUser,
+			Map<String, PathVariable> variables, 
 			ReadablePeriod timeToExpire, 
 			int projectId,
 			String flowName,
@@ -42,6 +45,7 @@ public class HdfsDataTrigger {
 		this.id = id;
 		this.dataSource = dataSource;
 		this.dependentDataPatterns = dataPatterns;
+		this.hdfsUser = hdfsUser;
 		this.variables = variables;
 		this.timeToExpire = timeToExpire;
 		this.actions = actions;
@@ -52,10 +56,19 @@ public class HdfsDataTrigger {
 		this.submitUser = submitUser;
 	}
 	
+	public String getHdfsUser() {
+		return hdfsUser;
+	}
+
+	public void setHdfsUser(String hdfsUser) {
+		this.hdfsUser = hdfsUser;
+	}
+
 	public HdfsDataTrigger(
 			String dataSource, 
 			List<String> dataPatterns, 
-			Map<String, Pair<Integer, Integer>> variables, 
+			String hdfsUser,
+			Map<String, PathVariable> variables, 
 			ReadablePeriod timeToExpire, 
 			int projectId,
 			String flowName,
@@ -66,6 +79,7 @@ public class HdfsDataTrigger {
 			) {
 		this.dataSource = dataSource;
 		this.dependentDataPatterns = dataPatterns;
+		this.hdfsUser = hdfsUser;
 		this.variables = variables;
 		this.timeToExpire = timeToExpire;
 		this.actions = actions;
@@ -76,6 +90,62 @@ public class HdfsDataTrigger {
 		this.submitUser = submitUser;
 	}
 	
+	public String getDataSource() {
+		return dataSource;
+	}
+
+	public void setDataSource(String dataSource) {
+		this.dataSource = dataSource;
+	}
+
+	public List<String> getDependentDataPatterns() {
+		return dependentDataPatterns;
+	}
+
+	public void setDependentDataPatterns(List<String> dependentDataPatterns) {
+		this.dependentDataPatterns = dependentDataPatterns;
+	}
+
+	public Map<String, PathVariable> getVariables() {
+		return variables;
+	}
+
+	public void setVariables(Map<String, PathVariable> variables) {
+		this.variables = variables;
+	}
+
+	public int getProjectId() {
+		return projectId;
+	}
+
+	public void setProjectId(int projectId) {
+		this.projectId = projectId;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public String getFlowName() {
+		return flowName;
+	}
+
+	public void setTimeToExpire(ReadablePeriod timeToExpire) {
+		this.timeToExpire = timeToExpire;
+	}
+
+	public void setLastModifyTime(DateTime lastModifyTime) {
+		this.lastModifyTime = lastModifyTime;
+	}
+
+	public void setSubmitTime(DateTime submitTime) {
+		this.submitTime = submitTime;
+	}
+
+	public void setSubmitUser(String submitUser) {
+		this.submitUser = submitUser;
+	}
+
 	public DateTime getLastModifyTime() {
 		return lastModifyTime;
 	}

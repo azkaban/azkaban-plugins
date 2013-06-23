@@ -204,7 +204,7 @@ public class HadoopPigJob extends JavaProcessJob {
 			info("Setting up secure proxy info for child process");
 			String secure;
 			secure = " -D" + HadoopSecurityManager.USER_TO_PROXY + "=" + getJobProps().getString(HadoopSecurityManager.USER_TO_PROXY);
-			String extraToken = getSysProps().getString(HadoopSecurityManager.OBTAIN_BINARY_TOKEN);
+			String extraToken = getSysProps().getString(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, "false");
 			if(extraToken != null) {
 				secure += " -D" + HadoopSecurityManager.OBTAIN_BINARY_TOKEN + "=" + extraToken;
 			}

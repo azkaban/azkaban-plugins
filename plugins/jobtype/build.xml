@@ -64,6 +64,7 @@
 		<javac fork="true" destdir="${dist.classes.dir}"
 			target="1.6" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
+			<exclude name="**/examples/**"/>
 			<classpath refid="main.classpath" />
 		</javac>
 	</target>

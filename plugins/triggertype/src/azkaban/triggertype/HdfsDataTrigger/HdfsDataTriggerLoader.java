@@ -25,15 +25,17 @@ public class HdfsDataTriggerLoader {
 	
 	private static final Logger logger = Logger.getLogger(HdfsDataTriggerLoader.class);
 	
-	private Map<String, Class <? extends HdfsDataChecker>> dataCheckerMap;
+//	private Map<String, Class <? extends HdfsDataChecker>> dataCheckerMap;
 	
 	private TriggerManager triggerManager;
 	
-	private static final String triggerSource = "DataTrigger";
+	private final String triggerSource;
 	
 	@SuppressWarnings("unchecked")
-	public HdfsDataTriggerLoader(Props props, TriggerManager triggerManager, ExecutorManager executorManager, ProjectManager projectManager) {
+	public HdfsDataTriggerLoader(Props props, TriggerManager triggerManager, ExecutorManager executorManager, ProjectManager projectManager, String triggerSource) {
 
+		this.triggerSource = triggerSource;
+		
 		// prepare executeflow action
 		if(ExecuteFlowAction.getExecutorManager() == null ) {
 			ExecuteFlowAction.setExecutorManager(executorManager);
@@ -46,12 +48,12 @@ public class HdfsDataTriggerLoader {
 		
 		// get all available data sources
 //		List<String> dataSources = props.getStringList("azkaban.datatrigger.datasources");
-		Map<String, Class<? extends ConditionChecker>> allCheckers = triggerManager.getSupportedCheckers();
-		for(String ds : allCheckers.keySet()) {
-			if(ds.endsWith("DataChecker")) {
-				dataCheckerMap.put(ds, (Class<? extends HdfsDataChecker>) allCheckers.get(ds));
-			}
-		}
+//		Map<String, Class<? extends ConditionChecker>> allCheckers = triggerManager.getSupportedCheckers();
+//		for(String ds : allCheckers.keySet()) {
+//			if(ds.endsWith("DataChecker")) {
+//				dataCheckerMap.put(ds, (Class<? extends HdfsDataChecker>) allCheckers.get(ds));
+//			}
+//		}
 		
 	}
 	
@@ -71,13 +73,14 @@ public class HdfsDataTriggerLoader {
 		return triggerSource;
 	}
 	
-	private HdfsDataTrigger triggerToDataTriger(Trigger t) {
+	public HdfsDataTrigger triggerToDataTriger(Trigger t) {
 		HdfsDataChecker checker = (HdfsDataChecker) t.getTriggerCondition().getCheckers().values().toArray()[0];
 		BasicTimeChecker expireChecker = (BasicTimeChecker) t.getExpireCondition().getCheckers().values().toArray()[0];
 		ExecuteFlowAction action = (ExecuteFlowAction) t.getActions().get(0);
 		HdfsDataTrigger dt = new HdfsDataTrigger(
 				checker.getDataSource(), 
-				checker.getDataPathPatterns(), 
+				checker.getDataPathPatterns(),
+				checker.getHdfsUser(),
 				checker.getVariables(), 
 				expireChecker.getPeriod(), 
 				action.getProjectId(), 
@@ -89,7 +92,7 @@ public class HdfsDataTriggerLoader {
 		return dt;
 	}
 	
-	private Trigger dataTriggerToTrigger(HdfsDataTrigger dt) {
+	public Trigger dataTriggerToTrigger(HdfsDataTrigger dt) throws Exception {
 		Condition triggerCondition = createTriggerCondition(dt);
 		Condition expireCondition = createExpireCondition(dt);
 		Trigger t = new Trigger(
@@ -116,7 +119,7 @@ public class HdfsDataTriggerLoader {
 		}
 	}
 	
-	private Condition createTriggerCondition(HdfsDataTrigger dt) {
+	private Condition createTriggerCondition(HdfsDataTrigger dt) throws Exception {
 		HdfsDataChecker checker = createDataChecker(dt);
 		Map<String, ConditionChecker> checkers = new HashMap<String, ConditionChecker>();
 		checkers.put(checker.getId(), checker);
@@ -125,7 +128,7 @@ public class HdfsDataTriggerLoader {
 		return cond;
 	}
 	
-	private Condition createExpireCondition(HdfsDataTrigger dt) {
+	private static Condition createExpireCondition(HdfsDataTrigger dt) {
 		BasicTimeChecker checker = new BasicTimeChecker("DataCheckExpireChecker", DateTime.now(), DateTimeZone.UTC, true, true, dt.getTimeToExpire());
 		Map<String, ConditionChecker> checkers = new HashMap<String, ConditionChecker>();
 		checkers.put(checker.getId(), checker);
@@ -134,9 +137,9 @@ public class HdfsDataTriggerLoader {
 		return cond;
 	}
 	
-	private HdfsDataChecker createDataChecker(HdfsDataTrigger dt) {
-		//TODO
-		return null;
+	private HdfsDataChecker createDataChecker(HdfsDataTrigger dt) throws Exception {
+		HdfsDataChecker checker = new HdfsDataChecker(triggerSource+"DataChecker", dt.getHdfsUser(), dt.getDependentDataPatterns(), dt.getVariables());
+		return checker;
 	}
 	
 	public void updateDataTrigger(HdfsDataTrigger dt) throws Exception {
