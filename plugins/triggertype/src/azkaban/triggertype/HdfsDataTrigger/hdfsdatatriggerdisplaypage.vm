@@ -1,0 +1,172 @@
+#*
+ * Copyright 2012 LinkedIn, Inc
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*#
+
+<!DOCTYPE html> 
+<html>
+	<head>
+#parse( "azkaban/webapp/servlet/velocity/style.vm" )
+		<script type="text/javascript" src="${context}/js/jquery/jquery-1.9.1.js"></script>    
+		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
+		<script type="text/javascript" src="${context}/js/underscore-1.4.4-min.js"></script>
+		<script type="text/javascript" src="${context}/js/namespace.js"></script>
+		<script type="text/javascript" src="${context}/js/backbone-0.9.10-min.js"></script>
+		<script type="text/javascript" src="${context}/js/jquery.simplemodal-1.4.4.js"></script>
+
+		<script type="text/javascript" src="${context}/js/azkaban.nav.js"></script>
+		<script type="text/javascript">
+			var contextURL = "${context}";
+			var currentTime = ${currentTime};
+			var timezone = "${timezone}";
+
+		function expireTrigger(triggerId) {
+			var triggerURL = contextURL + "/${webPath}"
+			var redirectURL = triggerURL
+			$.post(
+				triggerURL,
+				{"ajax":"removeTrigger", "triggerId":triggerId},
+					function(data) {
+					if (data.error) {
+					$('#errorMsg').text(data.error);
+				}
+				else {
+					alert("Hdfs Data Trigger "+ triggerId +" removed!")
+					window.location = redirectURL;
+				}
+			},
+			"json"
+	)
+}
+
+		</script>
+		<style>
+			.logout-label {
+				float: right;
+				margin: 3px;
+			}
+			#changeUserBtn {
+				float: right;
+			}
+			
+			#rightBox {
+				float: right;
+				margin-top: 20px;
+				margin-right: 10px;
+			}
+			
+			#proxyBox {
+				float: right;
+				height: 40px;
+			}
+			
+			#proxyname {
+				width: 100%;
+			}
+			
+			#goHomeLink {
+				clear: both;
+				float: right;
+				text-decoration: none;
+				margin-top: 10px;
+				margin-left: 1px;
+				margin-right: 1px;
+				font-weight: bold;
+				color: #0571A6;
+			}
+			
+			#goHomeLink:hover {
+				color: #009FC9;
+			}
+			
+			.breadcrumbs {
+				margin-left: 20px;
+				font-size: 14pt;
+				margin-bottom: 10px;
+			}
+			
+			.breadcrumbs a {
+				text-decoration: none;
+				margin-left: 1px;
+				margin-right: 1px;
+				font-weight: bold;
+				color: #0571A6;
+			}
+			
+			.breadcrumbs a:hover {
+				color: #009FC9;
+			}
+			
+			.breadcrumbs a.firstCrumb {
+				font-size: 16pt;
+			}
+		</style>
+	</head>
+	
+	<body>
+
+#set($current_page="$triggerSource")
+
+#parse( "azkaban/webapp/servlet/velocity/nav.vm" )
+
+		<div class="content">
+		
+		#if($errorMsg)
+                	<div class="box-error-message">$errorMsg</div>
+		#else
+			#if($error_message != "null")
+	                <div class="box-error-message">$error_message</div>
+			#elseif($success_message != "null")
+        	        <div class="box-success-message">$success_message</div>
+			#end
+		#end
+
+			<div id="all-hdfs-data-trigger-content">
+				<div class="section-hd">
+					<h2>${pageTitle}</h2>
+				</div>
+			</div>
+			
+			<div class="triggers">
+				<table id="triggersTbl">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>Source</th>
+							<th>Submitted By</th>
+							<th>Description</th>
+							<th colspan="2" class="action ignoresort">Action</th>
+						</tr>
+					</thead>
+					<tbody>
+						#if($triggers)
+#foreach($trigger in $triggers)
+						<tr class="row" >
+
+							<td>${trigger.triggerId}</td>
+							<td>${trigger.source}</td>
+							<td>${trigger.submitUser}</td>
+							<td>${trigger.getDescription()}</td>
+							<td><button id="removeTriggerBtn" onclick="removeTrigger(${trigger.triggerId})" >Remove Trigger</button></td>
+						</tr>
+#end
+#else
+						<tr><td class="last">No Trigger Found</td></tr>
+#end
+					</tbody>
+				</table>
+			</div>
+		
+	</body>
+</html>

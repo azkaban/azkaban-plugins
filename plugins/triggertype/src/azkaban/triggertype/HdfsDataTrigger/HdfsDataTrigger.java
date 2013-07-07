@@ -126,6 +126,10 @@ public class HdfsDataTrigger {
 		return id;
 	}
 
+	public void setId(int id) {
+		this.id = id;
+	}
+	
 	public String getFlowName() {
 		return flowName;
 	}
@@ -154,16 +158,8 @@ public class HdfsDataTrigger {
 		return submitTime;
 	}
 	
-	public int getDataTriggerId() {
-		return id;
-	}
-	
 	public Pair<Integer, String> getIdPair() {
 		return new Pair<Integer, String>(projectId, flowName);
-	}
-	
-	public void setDataTriggerId(int id) {
-		this.id = id;
 	}
 	
 	public String getSubmitUser() {
@@ -177,4 +173,9 @@ public class HdfsDataTrigger {
 	public List<TriggerAction> getActions() {
 		return actions;
 	}
+
+	public String getDescription() {
+		return "Hdfs Data Trigger " + getId();
+	}
+
 }

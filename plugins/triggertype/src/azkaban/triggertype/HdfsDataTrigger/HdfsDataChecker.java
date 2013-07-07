@@ -246,6 +246,13 @@ public class HdfsDataChecker implements ConditionChecker{
 	}
 
 	@Override
+	public void stopChecker() {
+		for(Path p : dataPaths) {
+			dataCheckingThread.removeDataToCheck(new Pair<Path, String>(p, hdfsUser));
+		}
+	}
+	
+	@Override
 	public Object getNum() {
 		// TODO Auto-generated method stub
 		return null;
@@ -296,7 +303,7 @@ public class HdfsDataChecker implements ConditionChecker{
 	public String getId() {
 		return checkerId;
 	}
-
+	
 	public static ConditionChecker createFromJson(HashMap<String, Object> obj) throws Exception {
 		Map<String, Object> jsonObj = (HashMap<String, Object>) obj;
 		if(!jsonObj.get("type").equals(type)) {
@@ -432,6 +439,10 @@ public class HdfsDataChecker implements ConditionChecker{
 			}
 		}
 		
+		public synchronized void removeDataToCheck(Pair<Path, String> data) {
+			dataCheckQueue.remove(data);
+		}
+		
 		private boolean checkHDFSData(Pair<Path, String> dataToCheck) throws HadoopSecurityManagerException, IOException {
 			FileSystem fs = hadoopSecurityManager.getFSAsUser(dataToCheck.getSecond());
 			return fs.exists(dataToCheck.getFirst());
@@ -439,10 +450,6 @@ public class HdfsDataChecker implements ConditionChecker{
 
 		private void addRecord(Pair<Path, String> dataCheck) {
 			cache.put(dataCheck, true);
-		}
-		
-		private void removeRecord(Pair<Path, String> dataCheck) {
-			cache.remove(dataCheck);
 		}
 		
 		public boolean existRecord(Pair<Path, String> dataCheck) {

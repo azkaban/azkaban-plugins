@@ -96,7 +96,7 @@ public class HdfsDataTriggerLoader {
 		Condition triggerCondition = createTriggerCondition(dt);
 		Condition expireCondition = createExpireCondition(dt);
 		Trigger t = new Trigger(
-				dt.getDataTriggerId(), 
+				dt.getId(), 
 				dt.getLastModifyTime(), 
 				dt.getSubmitTime(), 
 				dt.getSubmitUser(), 
@@ -111,7 +111,7 @@ public class HdfsDataTriggerLoader {
 		Trigger t = dataTriggerToTrigger(dt);
 		try {
 			triggerManager.insertTrigger(t);
-			dt.setDataTriggerId(t.getTriggerId());
+			dt.setId(t.getTriggerId());
 		} catch (TriggerManagerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -155,7 +155,7 @@ public class HdfsDataTriggerLoader {
 	
 	public void removeDataTrigger(HdfsDataTrigger dt) throws Exception {
 		try {
-			triggerManager.removeTrigger(dt.getDataTriggerId());
+			triggerManager.removeTrigger(dt.getId());
 		} catch (TriggerManagerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
