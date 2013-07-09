@@ -31,7 +31,7 @@
 			var currentTime = ${currentTime};
 			var timezone = "${timezone}";
 
-		function expireTrigger(triggerId) {
+		function removeTrigger(triggerId) {
 			var triggerURL = contextURL + "/${webPath}"
 			var redirectURL = triggerURL
 			$.post(
@@ -154,11 +154,11 @@
 #foreach($trigger in $triggers)
 						<tr class="row" >
 
-							<td>${trigger.triggerId}</td>
-							<td>${trigger.source}</td>
+							<td>${trigger.id}</td>
+							<td>${trigger.dataSource}</td>
 							<td>${trigger.submitUser}</td>
 							<td>${trigger.getDescription()}</td>
-							<td><button id="removeTriggerBtn" onclick="removeTrigger(${trigger.triggerId})" >Remove Trigger</button></td>
+							<td><button id="removeTriggerBtn" onclick="removeTrigger(${trigger.id})" >Remove Trigger</button></td>
 						</tr>
 #end
 #else

@@ -120,7 +120,7 @@ public class HdfsDataChecker implements ConditionChecker{
 
 		dataPaths = new ArrayList<Path>();
 		for(String str : dataCheckPattern) {
-			dataPaths.add(getPathFromPattern(str));
+			dataPaths.add(getPathFromPattern(str, variables));
 		}
 	}
 	
@@ -156,7 +156,7 @@ public class HdfsDataChecker implements ConditionChecker{
 		}
 	}
 	
-	private Path getPathFromPattern(String pattern) {
+	private Path getPathFromPattern(String pattern, Map<String, PathVariable> variables) {
 		StringBuffer replaced = new StringBuffer();
 		String value = pattern;
 		Matcher matcher = VARIABLE_PATTERN.matcher(value);
@@ -164,6 +164,11 @@ public class HdfsDataChecker implements ConditionChecker{
 			String variableName = matcher.group(1);
 
 			String replacement = String.valueOf(variables.get(variableName).getValue());
+			if(variableName.equals("MONTH") || variableName.equals("DAY") || variableName.equals("HOUR")) {
+				if(replacement.length() == 1) {
+					replacement = "0"+replacement;
+				}
+			}
 			
 			matcher.appendReplacement(replaced, replacement);
 			matcher.appendTail(replaced);
@@ -263,14 +268,14 @@ public class HdfsDataChecker implements ConditionChecker{
 		DateTime time = DateTime.now();
 		for(String k : variables.keySet()) {
 			PathVariable v = variables.get(k);
-			if(v.equals("YEAR")) {
-				time.withYear(v.getValue()).plusYears(v.getIncrement());
-			} else if(v.equals("MONTH")) {
-				time.withMonthOfYear(v.getValue()).plusMonths(v.getIncrement());
-			} else if(v.equals("DAY")) {
-				time.withDayOfMonth(v.getValue()).plusDays(v.getIncrement());
-			} else if(v.equals("HOUR")) {
-				time.withHourOfDay(v.getValue()).plusHours(v.getIncrement());
+			if(k.equals("YEAR")) {
+				time = time.withYear(v.getValue()).plusYears(v.getIncrement());
+			} else if(k.equals("MONTH")) {
+				time = time.withMonthOfYear(v.getValue()).plusMonths(v.getIncrement());
+			} else if(k.equals("DAY")) {
+				time = time.withDayOfMonth(v.getValue()).plusDays(v.getIncrement());
+			} else if(k.equals("HOUR")) {
+				time = time.withHourOfDay(v.getValue()).plusHours(v.getIncrement());
 			} else {
 				v.increment();
 			}
@@ -283,7 +288,7 @@ public class HdfsDataChecker implements ConditionChecker{
 		
 		dataPaths = new ArrayList<Path>();
 		for(String pattern : dataPathPatterns) {
-			dataPaths.add(getPathFromPattern(pattern));
+			dataPaths.add(getPathFromPattern(pattern, variables));
 		}
 	}
 	

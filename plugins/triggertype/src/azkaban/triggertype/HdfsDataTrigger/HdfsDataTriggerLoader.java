@@ -78,6 +78,7 @@ public class HdfsDataTriggerLoader {
 		BasicTimeChecker expireChecker = (BasicTimeChecker) t.getExpireCondition().getCheckers().values().toArray()[0];
 		ExecuteFlowAction action = (ExecuteFlowAction) t.getActions().get(0);
 		HdfsDataTrigger dt = new HdfsDataTrigger(
+				t.getTriggerId(),
 				checker.getDataSource(), 
 				checker.getDataPathPatterns(),
 				checker.getHdfsUser(),

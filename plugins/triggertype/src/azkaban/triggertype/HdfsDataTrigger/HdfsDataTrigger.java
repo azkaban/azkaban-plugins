@@ -3,7 +3,10 @@ package azkaban.triggertype.HdfsDataTrigger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.apache.hadoop.fs.Path;
 import org.joda.time.DateTime;
 import org.joda.time.ReadablePeriod;
 
@@ -27,6 +30,8 @@ public class HdfsDataTrigger {
 	private DateTime lastModifyTime;
 	private DateTime submitTime;
 	private String submitUser;
+	
+	private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\$\\{([a-zA-Z_.0-9]+)\\}");
 	
 	public HdfsDataTrigger(
 			int id, 
@@ -175,7 +180,42 @@ public class HdfsDataTrigger {
 	}
 
 	public String getDescription() {
-		return "Hdfs Data Trigger " + getId();
+//		return "Hdfs Data Trigger " + getId();
+		StringBuffer msg = new StringBuffer();
+		msg.append("DT " + getId() + " ");
+		for(String pattern : dependentDataPatterns) {
+			msg.append(getPathFromPattern(pattern, variables));
+			msg.append(" ");
+		}
+		msg.append(" for flow " + projectId + "." + flowName);
+		
+		return msg.toString();
+	}
+	
+	private String getPathFromPattern(String pattern, Map<String, PathVariable> variables) {
+		StringBuffer replaced = new StringBuffer();
+		String value = pattern;
+		Matcher matcher = VARIABLE_PATTERN.matcher(value);
+		while (matcher.find()) {
+			String variableName = matcher.group(1);
+
+			String replacement = String.valueOf(variables.get(variableName).getValue());
+			if(variableName.equals("MONTH") || variableName.equals("DAY") || variableName.equals("HOUR")) {
+				if(replacement.length() == 1) {
+					replacement = "0"+replacement;
+				}
+			}
+			
+			matcher.appendReplacement(replaced, replacement);
+			matcher.appendTail(replaced);
+
+			value = replaced.toString();
+			replaced = new StringBuffer();
+			matcher = VARIABLE_PATTERN.matcher(value);
+		}
+		matcher.appendTail(replaced);
+		
+		return replaced.toString();
 	}
 
 }
