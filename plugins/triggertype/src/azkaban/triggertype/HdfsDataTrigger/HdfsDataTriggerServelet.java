@@ -21,6 +21,7 @@ import azkaban.executor.ExecutionOptions;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import azkaban.trigger.TriggerAction;
+import azkaban.trigger.TriggerStatus;
 import azkaban.triggertype.HdfsDataTrigger.HdfsDataChecker.PathVariable;
 import azkaban.user.User;
 import azkaban.utils.Props;
@@ -108,7 +109,13 @@ public class HdfsDataTriggerServelet extends LoginAbstractAzkabanServlet {
 		page.add("webPath", webPath);
 		page.add("pageTitle", pageTitle);
 		
-		List<HdfsDataTrigger> triggers = hdfsDataTriggerManager.getDataTriggers();
+		List<HdfsDataTrigger> triggers;
+		try {
+			triggers = hdfsDataTriggerManager.getDataTriggers();
+		} catch (Exception e) {
+			page.add("errorMsg", e.getMessage());
+			return;
+		}
 		page.add("triggers", triggers);
 //		
 //		List<SLA> slas = slaManager.getSLAs();
@@ -190,7 +197,7 @@ public class HdfsDataTriggerServelet extends LoginAbstractAzkabanServlet {
 		TriggerAction act = new ExecuteFlowAction(projectId, projectName, flowName, user.getUserId(), flowOptions);
 		actions.add(act);
 		DateTime now = DateTime.now();
-		HdfsDataTrigger dt = new HdfsDataTrigger(dataSource, dataPatterns, hdfsUser, variables, timeToExpire, projectId, flowName, actions, now, now, user.getUserId());
+		HdfsDataTrigger dt = new HdfsDataTrigger(dataSource, dataPatterns, hdfsUser, variables, timeToExpire, projectId, flowName, actions, now, now, user.getUserId(), TriggerStatus.READY.toString());
 		
 		hdfsDataTriggerManager.addDataTrigger(dt);
 		

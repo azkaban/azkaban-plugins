@@ -19,6 +19,7 @@ import azkaban.trigger.Trigger;
 import azkaban.trigger.TriggerAction;
 import azkaban.trigger.TriggerManager;
 import azkaban.trigger.TriggerManagerException;
+import azkaban.trigger.TriggerStatus;
 import azkaban.utils.Props;
 
 public class HdfsDataTriggerLoader {
@@ -30,6 +31,8 @@ public class HdfsDataTriggerLoader {
 	private TriggerManager triggerManager;
 	
 	private final String triggerSource;
+	
+	private long lastUpdateTime = -1;
 	
 	@SuppressWarnings("unchecked")
 	public HdfsDataTriggerLoader(Props props, TriggerManager triggerManager, ExecutorManager executorManager, ProjectManager projectManager, String triggerSource) {
@@ -58,12 +61,22 @@ public class HdfsDataTriggerLoader {
 	}
 	
 	public List<HdfsDataTrigger> loadDataTriggers() {
-		List<Trigger> triggers = triggerManager.getTriggers();
+		List<Trigger> triggers = triggerManager.getTriggers(triggerSource);
 		List<HdfsDataTrigger> datatriggers = new ArrayList<HdfsDataTrigger>();
 		for(Trigger t : triggers) {
-			if(t.getSource().equals(triggerSource)) {
-				datatriggers.add(triggerToDataTriger(t));
-			}
+			lastUpdateTime = Math.max(lastUpdateTime, t.getLastModifyTime().getMillis());
+			datatriggers.add(triggerToDataTriger(t));
+		}
+		logger.info("Loaded " + datatriggers.size() + " data triggers from " + triggerSource);
+		return datatriggers;
+	}
+	
+	public List<HdfsDataTrigger> loadUpdatedDataTriggers() {
+		List<Trigger> triggers = triggerManager.getUpdatedTriggers(triggerSource, lastUpdateTime);
+		List<HdfsDataTrigger> datatriggers = new ArrayList<HdfsDataTrigger>();
+		for(Trigger t : triggers) {
+			lastUpdateTime = Math.max(lastUpdateTime, t.getLastModifyTime().getMillis());
+			datatriggers.add(triggerToDataTriger(t));
 		}
 		logger.info("Loaded " + datatriggers.size() + " data triggers from " + triggerSource);
 		return datatriggers;
@@ -89,7 +102,8 @@ public class HdfsDataTriggerLoader {
 				t.getActions(),
 				t.getLastModifyTime(),
 				t.getSubmitTime(),
-				t.getSubmitUser());
+				t.getSubmitUser(),
+				t.getStatus().toString());
 		return dt;
 	}
 	
@@ -104,7 +118,9 @@ public class HdfsDataTriggerLoader {
 				triggerSource, 
 				triggerCondition, 
 				expireCondition, 
-				dt.getActions());
+				dt.getActions()
+				);
+		//t.setStatus(TriggerStatus.valueOf(dt.getStatus()));
 		return t;
 	}
 	

@@ -30,6 +30,7 @@ public class HdfsDataTrigger {
 	private DateTime lastModifyTime;
 	private DateTime submitTime;
 	private String submitUser;
+	private String status;
 	
 	private static final Pattern VARIABLE_PATTERN = Pattern.compile("\\$\\{([a-zA-Z_.0-9]+)\\}");
 	
@@ -45,7 +46,8 @@ public class HdfsDataTrigger {
 			List<TriggerAction> actions,
 			DateTime lastModifyTime,
 			DateTime submitTime,
-			String submitUser
+			String submitUser,
+			String status
 			) {
 		this.id = id;
 		this.dataSource = dataSource;
@@ -59,6 +61,7 @@ public class HdfsDataTrigger {
 		this.lastModifyTime = lastModifyTime;
 		this.submitTime = submitTime;
 		this.submitUser = submitUser;
+		this.status = status;
 	}
 	
 	public String getHdfsUser() {
@@ -67,6 +70,14 @@ public class HdfsDataTrigger {
 
 	public void setHdfsUser(String hdfsUser) {
 		this.hdfsUser = hdfsUser;
+	}
+	
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
 	}
 
 	public HdfsDataTrigger(
@@ -80,7 +91,8 @@ public class HdfsDataTrigger {
 			List<TriggerAction> actions,
 			DateTime lastModifyTime,
 			DateTime submitTime,
-			String submitUser
+			String submitUser,
+			String status
 			) {
 		this.dataSource = dataSource;
 		this.dependentDataPatterns = dataPatterns;
@@ -93,6 +105,7 @@ public class HdfsDataTrigger {
 		this.lastModifyTime = lastModifyTime;
 		this.submitTime = submitTime;
 		this.submitUser = submitUser;
+		this.status = status;
 	}
 	
 	public String getDataSource() {

@@ -54,12 +54,39 @@ public class HdfsDataTriggerManager implements TriggerAgent{
 		dataTriggers = new HashMap<Pair<Integer,String>, HdfsDataTrigger>();
 		dataTriggerIdMap = new HashMap<Integer, HdfsDataTrigger>();
 		for(HdfsDataTrigger dt : dts) {
-			dataTriggers.put(dt.getIdPair(), dt);
-			dataTriggerIdMap.put(dt.getId(), dt);
+			if(dt.getStatus().equals(TriggerStatus.EXPIRED.toString())) {
+				try {
+					onDataTriggerExpire(dt);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					logger.error("Failed to carry out action on expired trigger " + dt.getDescription());
+				}
+			} else {
+				dataTriggers.put(dt.getIdPair(), dt);
+				dataTriggerIdMap.put(dt.getId(), dt);
+			}
 		}
 	}
 	
-	public List<HdfsDataTrigger> getDataTriggers() {
+	public synchronized void updateLocal() throws Exception {
+		List<HdfsDataTrigger> dts = loader.loadUpdatedDataTriggers();
+		for(HdfsDataTrigger dt : dts) {
+			if(dt.getStatus().equals(TriggerStatus.EXPIRED.toString())) {
+				onDataTriggerExpire(dt);
+			} else {
+				dataTriggers.put(dt.getIdPair(), dt);
+				dataTriggerIdMap.put(dt.getId(), dt);
+			}
+		}
+		
+	}
+	
+	private void onDataTriggerExpire(HdfsDataTrigger dt) throws Exception {
+		deleteDataTrigger(dt);
+	}
+	
+	public List<HdfsDataTrigger> getDataTriggers() throws Exception {
+		updateLocal();
 		return new ArrayList<HdfsDataTrigger>(dataTriggers.values());
 	}
 	
@@ -110,7 +137,7 @@ public class HdfsDataTriggerManager implements TriggerAgent{
 		actions.add(action);
 		DateTime now = DateTime.now();
 		
-		HdfsDataTrigger dt = new HdfsDataTrigger(dataSource, dataPathPatterns, hdfsUser, variables, timeToExpire, projectId, flowName, actions, now, now, submitUser);
+		HdfsDataTrigger dt = new HdfsDataTrigger(dataSource, dataPathPatterns, hdfsUser, variables, timeToExpire, projectId, flowName, actions, now, now, submitUser, TriggerStatus.READY.toString());
 		addDataTrigger(dt);
 	}
 
@@ -119,18 +146,6 @@ public class HdfsDataTriggerManager implements TriggerAgent{
 		return triggerSource;
 	}
 
-	@Override
-	public void updateLocal(Trigger t) {
-		if(t.getStatus().equals(TriggerStatus.EXPIRED)) {
-			try {
-				deleteDataTrigger(getDataTrigger(t.getTriggerId()));
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				logger.error("failed to remove expired datatrigger " + t.getDescription());
-			}
-		}
-		
-	}
+	
 
 }
