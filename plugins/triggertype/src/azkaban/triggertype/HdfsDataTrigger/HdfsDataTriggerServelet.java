@@ -16,12 +16,12 @@ import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.ReadablePeriod;
 
-import azkaban.actions.ExecuteFlowAction;
 import azkaban.executor.ExecutionOptions;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import azkaban.trigger.TriggerAction;
 import azkaban.trigger.TriggerStatus;
+import azkaban.trigger.builtin.ExecuteFlowAction;
 import azkaban.triggertype.HdfsDataTrigger.HdfsDataChecker.PathVariable;
 import azkaban.user.User;
 import azkaban.utils.Props;
@@ -199,7 +199,7 @@ public class HdfsDataTriggerServelet extends LoginAbstractAzkabanServlet {
 		DateTime now = DateTime.now();
 		HdfsDataTrigger dt = new HdfsDataTrigger(dataSource, dataPatterns, hdfsUser, variables, timeToExpire, projectId, flowName, actions, now, now, user.getUserId(), TriggerStatus.READY.toString());
 		
-		hdfsDataTriggerManager.addDataTrigger(dt);
+		hdfsDataTriggerManager.addDataTrigger(dt, user.getUserId());
 		
 		logger.info("User '" + user.getUserId() + "' has set trigger for " + "[" + projectName + flowName +  " (" + projectId +")" + "].");
 //		projectManager.postProjectEvent(project, EventType.SCHEDULE, user.getUserId(), "Schedule " + schedule.toString() + " has been added.");
@@ -224,7 +224,7 @@ public class HdfsDataTriggerServelet extends LoginAbstractAzkabanServlet {
 //			return;
 //		}
 
-		hdfsDataTriggerManager.deleteDataTrigger(t);
+		hdfsDataTriggerManager.deleteDataTrigger(t, user.getUserId());
 		logger.info("User '" + user.getUserId() + " has removed hdfs data trigger " + t.getDescription());
 //		projectManager.postProjectEvent(project, EventType.SCHEDULE, user.getUserId(), "Schedule " + sched.toString() + " has been removed.");
 		

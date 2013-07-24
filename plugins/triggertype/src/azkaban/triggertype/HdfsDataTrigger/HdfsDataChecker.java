@@ -205,7 +205,6 @@ public class HdfsDataChecker implements ConditionChecker{
 			}
 	
 			dataCheckingThread = new HdfsDataCheckingThread(props);
-			dataCheckingThread.start();
 			
 			init = true;
 			logger.info("HdfsDataChecker initiated");
@@ -240,7 +239,6 @@ public class HdfsDataChecker implements ConditionChecker{
 
 	@Override
 	public Boolean eval() {
-		logger.info("Checking " + dataPaths.size() + " paths.");
 		for(Path p : dataPaths) {
 			dataCheckingThread.addDataToCheck(new Pair<Path, String>(p, hdfsUser));
 			if(!dataCheckingThread.existRecord(new Pair<Path, String>(p, hdfsUser))) {
@@ -265,6 +263,10 @@ public class HdfsDataChecker implements ConditionChecker{
 
 	@Override
 	public void reset() {
+		
+		// first stop checking whatever failed to show up
+		stopChecker();
+		
 		DateTime time = DateTime.now();
 		for(String k : variables.keySet()) {
 			PathVariable v = variables.get(k);
@@ -461,6 +463,10 @@ public class HdfsDataChecker implements ConditionChecker{
 			return cache.get(dataCheck) != null;
 		}
 		
+	}
+
+	public static void start() {
+		dataCheckingThread.start();
 	}
 
 }

@@ -9,10 +9,8 @@ import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
-import azkaban.actions.ExecuteFlowAction;
 import azkaban.executor.ExecutorManager;
 import azkaban.project.ProjectManager;
-import azkaban.scheduler.BasicTimeChecker;
 import azkaban.trigger.Condition;
 import azkaban.trigger.ConditionChecker;
 import azkaban.trigger.Trigger;
@@ -20,6 +18,8 @@ import azkaban.trigger.TriggerAction;
 import azkaban.trigger.TriggerManager;
 import azkaban.trigger.TriggerManagerException;
 import azkaban.trigger.TriggerStatus;
+import azkaban.trigger.builtin.BasicTimeChecker;
+import azkaban.trigger.builtin.ExecuteFlowAction;
 import azkaban.utils.Props;
 
 public class HdfsDataTriggerLoader {
@@ -71,7 +71,7 @@ public class HdfsDataTriggerLoader {
 		return datatriggers;
 	}
 	
-	public List<HdfsDataTrigger> loadUpdatedDataTriggers() {
+	public List<HdfsDataTrigger> loadUpdatedDataTriggers() throws TriggerManagerException {
 		List<Trigger> triggers = triggerManager.getUpdatedTriggers(triggerSource, lastUpdateTime);
 		List<HdfsDataTrigger> datatriggers = new ArrayList<HdfsDataTrigger>();
 		for(Trigger t : triggers) {
@@ -124,10 +124,10 @@ public class HdfsDataTriggerLoader {
 		return t;
 	}
 	
-	public void insertDataTrigger(HdfsDataTrigger dt) throws Exception {
+	public void insertDataTrigger(HdfsDataTrigger dt, String userId) throws Exception {
 		Trigger t = dataTriggerToTrigger(dt);
 		try {
-			triggerManager.insertTrigger(t);
+			triggerManager.insertTrigger(t, userId);
 			dt.setId(t.getTriggerId());
 		} catch (TriggerManagerException e) {
 			// TODO Auto-generated catch block
@@ -159,10 +159,10 @@ public class HdfsDataTriggerLoader {
 		return checker;
 	}
 	
-	public void updateDataTrigger(HdfsDataTrigger dt) throws Exception {
+	public void updateDataTrigger(HdfsDataTrigger dt, String userId) throws Exception {
 		Trigger t = dataTriggerToTrigger(dt);
 		try {
-			triggerManager.updateTrigger(t);
+			triggerManager.updateTrigger(t, userId);
 		} catch (TriggerManagerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -170,9 +170,9 @@ public class HdfsDataTriggerLoader {
 		}
 	}
 	
-	public void removeDataTrigger(HdfsDataTrigger dt) throws Exception {
+	public void removeDataTrigger(HdfsDataTrigger dt, String userId) throws Exception {
 		try {
-			triggerManager.removeTrigger(dt.getId());
+			triggerManager.removeTrigger(dt.getId(), userId);
 		} catch (TriggerManagerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

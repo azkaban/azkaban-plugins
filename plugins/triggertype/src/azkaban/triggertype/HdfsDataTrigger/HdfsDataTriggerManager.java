@@ -10,7 +10,6 @@ import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.ReadablePeriod;
 
-import azkaban.actions.ExecuteFlowAction;
 import azkaban.executor.ExecutionOptions;
 import azkaban.executor.ExecutorManager;
 import azkaban.project.ProjectManager;
@@ -19,6 +18,7 @@ import azkaban.trigger.TriggerAction;
 import azkaban.trigger.TriggerManager;
 import azkaban.trigger.TriggerAgent;
 import azkaban.trigger.TriggerStatus;
+import azkaban.trigger.builtin.ExecuteFlowAction;
 import azkaban.triggertype.HdfsDataTrigger.HdfsDataChecker.PathVariable;
 import azkaban.utils.Pair;
 import azkaban.utils.Props;
@@ -41,14 +41,14 @@ public class HdfsDataTriggerManager implements TriggerAgent{
 		this.triggerSource = props.getString("trigger.source.name");
 		this.dataSource = props.getString("data.source");
 		this.defaultExpireTime = props.getString("default.time.to.expire", "24h");
-		HdfsDataChecker.init(props);
+		
 		triggerManager.getCheckerLoader().registerCheckerType(HdfsDataChecker.type, HdfsDataChecker.class);
 		loader = new HdfsDataTriggerLoader(props, triggerManager, executorManager, projectManager, triggerSource);
 		
 	}
 	
 	@Override
-	public void load() {
+	public void start() {
 		logger.info("Hdfs data trigger manager loading up");
 		List<HdfsDataTrigger> dts = loader.loadDataTriggers();
 		dataTriggers = new HashMap<Pair<Integer,String>, HdfsDataTrigger>();
@@ -82,7 +82,8 @@ public class HdfsDataTriggerManager implements TriggerAgent{
 	}
 	
 	private void onDataTriggerExpire(HdfsDataTrigger dt) throws Exception {
-		deleteDataTrigger(dt);
+		logger.info("Trigger expired. Removing trigger " + dt.getDescription());
+		deleteDataTrigger(dt, "azkaban");
 	}
 	
 	public List<HdfsDataTrigger> getDataTriggers() throws Exception {
@@ -90,14 +91,14 @@ public class HdfsDataTriggerManager implements TriggerAgent{
 		return new ArrayList<HdfsDataTrigger>(dataTriggers.values());
 	}
 	
-	public void addDataTrigger(HdfsDataTrigger dt) throws Exception {
-		loader.insertDataTrigger(dt);
+	public void addDataTrigger(HdfsDataTrigger dt, String userId) throws Exception {
+		loader.insertDataTrigger(dt, userId);
 		dataTriggers.put(dt.getIdPair(), dt);
 		dataTriggerIdMap.put(dt.getId(), dt);
 	}
 	
-	public void deleteDataTrigger(HdfsDataTrigger dt) throws Exception {
-		loader.removeDataTrigger(dt);
+	public void deleteDataTrigger(HdfsDataTrigger dt, String userId) throws Exception {
+		loader.removeDataTrigger(dt, userId);
 		dataTriggers.remove(dt.getIdPair());
 		dataTriggerIdMap.remove(dt.getId());
 	}
@@ -106,8 +107,8 @@ public class HdfsDataTriggerManager implements TriggerAgent{
 		return dataTriggerIdMap.get(id);
 	}
 	
-	public void updateDataTrigger(HdfsDataTrigger dt) throws Exception {
-		loader.updateDataTrigger(dt);
+	public void updateDataTrigger(HdfsDataTrigger dt, String userId) throws Exception {
+		loader.updateDataTrigger(dt, userId);
 		dataTriggers.put(dt.getIdPair(), dt);
 		dataTriggerIdMap.put(dt.getId(), dt);
 	}
@@ -138,7 +139,7 @@ public class HdfsDataTriggerManager implements TriggerAgent{
 		DateTime now = DateTime.now();
 		
 		HdfsDataTrigger dt = new HdfsDataTrigger(dataSource, dataPathPatterns, hdfsUser, variables, timeToExpire, projectId, flowName, actions, now, now, submitUser, TriggerStatus.READY.toString());
-		addDataTrigger(dt);
+		addDataTrigger(dt, submitUser);
 	}
 
 	@Override

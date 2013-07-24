@@ -3,7 +3,13 @@ package azkaban.triggertype.HdfsDataTrigger;
 import org.mortbay.jetty.servlet.ServletHolder;
 
 import org.mortbay.jetty.servlet.Context;
+
+import azkaban.trigger.ActionTypeLoader;
+import azkaban.trigger.CheckerTypeLoader;
 import azkaban.trigger.TriggerAgent;
+import azkaban.trigger.TriggerManager;
+import azkaban.triggerapp.AzkabanTriggerServer;
+import azkaban.triggerapp.TriggerRunnerManager;
 import azkaban.utils.Props;
 import azkaban.webapp.AzkabanWebServer;
 import azkaban.webapp.servlet.AbstractAzkabanServlet;
@@ -21,6 +27,11 @@ public class HdfsDataTriggerPlugin implements TriggerPlugin {
 	
 	public HdfsDataTriggerPlugin(String name, Props props, Context root, AzkabanWebServer azkabanWebApp) {
 		
+		TriggerManager triggerManager = azkabanWebApp.getTriggerManager();
+		CheckerTypeLoader checkerLoader = triggerManager.getCheckerLoader();
+		ActionTypeLoader actionLoader = triggerManager.getActionLoader();
+		initiateCheckerTypes(props, checkerLoader);
+		initiateActionTypes(props, actionLoader);
 		HdfsDataTriggerManager hdfsDataTriggerManager = new HdfsDataTriggerManager(props, azkabanWebApp.getTriggerManager(), azkabanWebApp.getExecutorManager(), azkabanWebApp.getProjectManager());
 		HdfsDataTriggerServelet hdfsDataTriggerServlet = new HdfsDataTriggerServelet(props, hdfsDataTriggerManager, azkabanWebApp.getProjectManager());
 		this.hdfsDataTriggerManager = hdfsDataTriggerManager;
@@ -43,9 +54,30 @@ public class HdfsDataTriggerPlugin implements TriggerPlugin {
 		return hdfsDataTriggerManager;
 	}
 	
+	public static void initiateCheckerTypes(Props props, AzkabanTriggerServer app) {
+		TriggerRunnerManager triggerManager = app.getTriggerRunnerManager();
+		CheckerTypeLoader checkerLoader = triggerManager.getCheckerLoader();
+		initiateCheckerTypes(props, checkerLoader);
+	}
+	
+	private static void initiateCheckerTypes(Props props, CheckerTypeLoader checkerLoader) {
+		HdfsDataChecker.init(props);
+		HdfsDataChecker.start();
+		checkerLoader.registerCheckerType(HdfsDataChecker.type, HdfsDataChecker.class);
+	}
+
+	public static void initiateActionTypes(Props props, AzkabanTriggerServer app) {
+		TriggerRunnerManager triggerManager = app.getTriggerRunnerManager();
+		ActionTypeLoader actionLoader = triggerManager.getActionLoader();
+		initiateActionTypes(props, actionLoader);
+	}
+	
+	private static void initiateActionTypes(Props props, ActionTypeLoader actionLoader) {
+	}
+	
 	@Override
 	public void load() {
-		hdfsDataTriggerManager.load();
+		hdfsDataTriggerManager.start();
 	}
 
 	@Override
