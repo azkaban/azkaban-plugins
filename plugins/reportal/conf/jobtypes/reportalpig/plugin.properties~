@@ -1,5 +1,0 @@
-job.class=azkaban.jobtype.ReportalPigRunner
-
-# This should be either 'local' or 'hdfs'
-reportal.output.filesystem=local
-reportal.output.location=/tmp/reportal

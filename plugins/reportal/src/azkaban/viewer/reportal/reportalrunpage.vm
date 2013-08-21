@@ -41,7 +41,9 @@
 	</head>
 	<body>
 #set($current_page="$viewerName")
-#parse( "azkaban/webapp/servlet/velocity/nav.vm" )
+#if(!$hideNavigation)
+	#parse("azkaban/webapp/servlet/velocity/nav.vm")
+#end
 		<div class="content" style="background-color: #FFF;">
 			<div id="box-error">
 	#if($errorMsg)

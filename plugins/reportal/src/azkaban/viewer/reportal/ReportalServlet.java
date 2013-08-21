@@ -68,6 +68,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private String reportalStorageUser;
 	private File webResourcesFolder;
 	private int itemsPerPage = 20;
+	private boolean showNav;
 
 	// private String viewerPath;
 	private HadoopSecurityManager hadoopSecurityManager;
@@ -78,6 +79,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		viewerName = props.getString("viewer.name");
 		reportalStorageUser = props.getString("reportal.storage.user", "reportal");
 		itemsPerPage = props.getInt("reportal.items_per_page", 20);
+		showNav = props.getBoolean("reportal.show.navigation", false);
 		reportalMailDirectory = new File(props.getString("reportal.mail.temp.directory", "/tmp/reportal"));
 		reportalMailDirectory.mkdirs();
 		ReportalMailCreator.reportalMailDirectory = reportalMailDirectory;
@@ -287,7 +289,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private void handleListReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportallistpage.vm");
-		page.add("viewerName", viewerName);
+		preparePage(page);
 
 		List<Project> projects = ReportalHelper.getReportalProjects(server);
 		page.add("ReportalHelper", ReportalHelper.class);
@@ -312,7 +314,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private void handleViewReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, Exception {
 		int id = getIntParam(req, "id");
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaldatapage.vm");
-		page.add("viewerName", viewerName);
+		preparePage(page);
 
 		ProjectManager projectManager = server.getProjectManager();
 		ExecutorManager executorManager = server.getExecutorManager();
@@ -497,7 +499,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		int id = getIntParam(req, "id");
 		ProjectManager projectManager = server.getProjectManager();
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportalrunpage.vm");
-		page.add("viewerName", viewerName);
+		preparePage(page);
 
 		Project project = projectManager.getProject(id);
 		Reportal reportal = Reportal.loadFromProject(project);
@@ -529,7 +531,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private void handleNewReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
-		page.add("viewerName", viewerName);
+		preparePage(page);
 
 		page.add("new", true);
 		page.add("project", false);
@@ -560,7 +562,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		ProjectManager projectManager = server.getProjectManager();
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
-		page.add("viewerName", viewerName);
+		preparePage(page);
 		page.add("ReportalHelper", ReportalHelper.class);
 
 		Project project = projectManager.getProject(id);
@@ -617,7 +619,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		ProjectManager projectManager = server.getProjectManager();
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
-		page.add("viewerName", viewerName);
+		preparePage(page);
 		page.add("ReportalHelper", ReportalHelper.class);
 
 		boolean isEdit = hasParam(req, "id");
@@ -878,7 +880,12 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			ret.put("error", "Error running reportal " + project.getMetadata().get("title") + ". " + e.getMessage());
 		}
 	}
-
+	
+	private void preparePage(Page page) {
+		page.add("viewerName", viewerName);
+		page.add("hideNavigation", !showNav);
+	}
+	
 	private class CleanerThread extends Thread {
 		// Every hour, clean execution dir.
 		private static final long EXECUTION_DIR_CLEAN_INTERVAL_MS = 60 * 60 * 1000;
