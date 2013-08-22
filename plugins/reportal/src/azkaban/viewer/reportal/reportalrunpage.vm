@@ -17,9 +17,9 @@
 <!DOCTYPE html> 
 <html>
 	<head>
+		<title>Reportal</title>
 		<link href="${context}/reportal/css/bootstrap.min.css" rel="stylesheet">
 		<script type="text/javascript" src="${context}/reportal/js/bootstrap.min.js"></script>
-#parse( "azkaban/webapp/servlet/velocity/style.vm" )
 		<script type="text/javascript" src="${context}/js/jquery/jquery-1.9.1.js"></script>    
 		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
 		<script type="text/javascript" src="${context}/js/underscore-1.4.4-min.js"></script>
@@ -44,7 +44,26 @@
 #if(!$hideNavigation)
 	#parse("azkaban/webapp/servlet/velocity/nav.vm")
 #end
-		<div class="content" style="background-color: #FFF;">
+		<div class="topbar navbar navbar-fixed-top navbar-inverse">
+			<div class="navbar-inner">
+				<div class="container-fluid">
+					<div class="topbar-content">
+						<a class="brand" href="${context}/reportal">
+						Reportal
+						</a>
+						<ul class="nav">
+						</ul>
+						<div class="login pull-right">
+							<p class="navbar-text">
+								<a href="${context}/reportal?logout">Sign out</a>
+							</p>
+						</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="content" style="margin-top: 41px;">
 			<div id="box-error">
 	#if($errorMsg)
 				<div class="box-error-message">$errorMsg</div>
@@ -56,15 +75,12 @@
 		#end
 	#end
 			</div>
-			<div>
-				<div class="section-hd">
-					<h2>Reportal</h2>
-				</div>
-			</div>
+			<div>&nbsp;</div>
 			<div style="text-align: center;">
 				<a class="btn btn-info" href="${context}/reportal">Reportal Home</a>
 #if($project)
-				<a class="btn btn-primary" href="${context}/reportal?view&amp;id=${project.id}">Reportal ${project.metadata.title}</a>
+				<a class="btn btn-primary" href="${context}/reportal?view&amp;id=${project.id}">Reportal History</a>
+				<a class="btn btn-warning" href="${context}/reportal?edit&amp;id=${project.id}">Edit</a>
 #end
 			</div>
 #if($project)
@@ -72,7 +88,6 @@
 			<div class="container">
 				<div>
 					<form method="post" class="form-horizontal">
-						<input id="queryNumber" type="hidden" name="queryNumber" value="${queryNumber}">
 						<input type="hidden" name="id" value="${project.id}">
 						<fieldset>
 							<legend>Report</legend>

@@ -55,6 +55,17 @@ li:hover .ec-add-list-actions { visibility: visible; }
 
 .icon.icon-plus-alt { background-image: url(/reportal/images/plus.png); }
 
+
+th.headerSortUp { background-image: url(/reportal/images/asc.gif); }
+th.headerSortDown { background-image: url(/reportal/images/desc.gif); }
+.header {
+  background-image: url(/reportal/images/bg.gif);
+  cursor: pointer; 
+  font-weight: bold; 
+  background-repeat: no-repeat; 
+  background-position: center right; 
+}
+
 /* Buttons */
 
 .btn-icon { color: #AAA; display: inline-block; padding: 7px; }
@@ -133,4 +144,48 @@ table#report-results td { vertical-align: middle; }
 
 .no-wrap {
 	white-space: nowrap;
+}
+
+.box-success-message {
+  background-color: #4e911e;
+  margin: 0px 2px;
+  padding: 2px 12px;
+  color: white;
+}
+
+.box-error-message {
+  background-color: #C00000;
+  margin: 0px 2px;
+  padding: 2px 12px;
+  color: white;
+}
+
+#jobLogView {
+  top: 210px;
+  bottom: 5px;
+}
+
+.logViewer {
+  position: absolute;
+  top: 300px;
+  bottom: 5px;
+  left: 5px;
+  right: 5px;
+  background-color: #FFF;
+  overflow:auto;
+}
+
+.logLink {
+  text-align: center;
+}
+
+.logLink a {
+  text-decoration: underline;
+  margin: 0px;
+}
+
+.log {
+  padding-left: 15px;
+  font-family: "courier";
+  font-size: 10pt;
 }

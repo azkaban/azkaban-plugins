@@ -47,7 +47,7 @@ public class ReportalMailCreator implements MailCreator {
 		if (emailList != null && !emailList.isEmpty()) {
 			message.addAllToAddress(emailList);
 			message.setMimeType("text/html");
-			message.setSubject("Reportal '" + flow.getFlowId() + "' has failed on " + azkabanName);
+			message.setSubject("Report '" + flow.getExecutionOptions().getFlowParameters().get("reportal.title") + "' has failed on " + azkabanName);
 			String urlPrefix = "https://" + clientHostname + ":" + clientPortNumber + "/reportal";
 			try {
 				createMessage(flow, message, urlPrefix, false);
@@ -69,7 +69,7 @@ public class ReportalMailCreator implements MailCreator {
 		if (emailList != null && !emailList.isEmpty()) {
 			message.addAllToAddress(emailList);
 			message.setMimeType("text/html");
-			message.setSubject("Reportal '" + flow.getFlowId() + "' has failed on " + azkabanName);
+			message.setSubject("Report '" + flow.getExecutionOptions().getFlowParameters().get("reportal.title") + "' has failed on " + azkabanName);
 			String urlPrefix = "https://" + clientHostname + ":" + clientPortNumber + "/reportal";
 			try {
 				createMessage(flow, message, urlPrefix, false);
@@ -90,7 +90,7 @@ public class ReportalMailCreator implements MailCreator {
 		if (emailList != null && !emailList.isEmpty()) {
 			message.addAllToAddress(emailList);
 			message.setMimeType("text/html");
-			message.setSubject("Reportal '" + flow.getFlowId() + "' has succeeded on " + azkabanName);
+			message.setSubject("Report '" + flow.getExecutionOptions().getFlowParameters().get("reportal.title") + "' has succeeded on " + azkabanName);
 			String urlPrefix = "https://" + clientHostname + ":" + clientPortNumber + "/reportal";
 			try {
 				createMessage(flow, message, urlPrefix, true);

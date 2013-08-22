@@ -102,7 +102,7 @@ public class Reportal {
 		}
 	}
 
-	public void updateSchedules(ScheduleManager scheduleManager, User user, Flow flow) {
+	public void updateSchedules(Reportal report, ScheduleManager scheduleManager, User user, Flow flow) {
 		// Clear previous schedules
 		removeSchedules(scheduleManager);
 		// Add new schedule
@@ -128,6 +128,7 @@ public class Reportal {
 			ExecutionOptions options = new ExecutionOptions();
 			options.getFlowParameters().put("reportal.execution.user", user.getUserId());
 			options.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
+			options.getFlowParameters().put("reportal.title", report.title);
 
 			scheduleManager.scheduleFlow(-1, project.getId(), project.getName(), flow.getId(), "ready",
 					firstSchedTime.getMillis(), firstSchedTime.getZone(), period, DateTime.now().getMillis(),

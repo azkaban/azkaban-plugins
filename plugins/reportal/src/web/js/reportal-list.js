@@ -1,5 +1,7 @@
 $(document).ready(function () {
+	var reportalTable = $("#reportalTable");
 	var tableBody = $("#reportalTable").find("tbody").eq(0);
+	reportalTable.tablesorter();
 	var template = $("#action-template").html();
 	var inputBookmark = $("#facet_bookmarked")[0];
 	var inputSubscribe= $("#facet_subscribed")[0];
@@ -115,6 +117,7 @@ $(document).ready(function () {
 				tableBody.append(row);
 			};
 		}
+		reportalTable.trigger("update");
 	}
 
 	function filterData() {

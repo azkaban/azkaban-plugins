@@ -207,20 +207,25 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		// Subscribe reportal
 		else if (ajaxName.equals("subscribe")) {
 			boolean wasSubscribed = ReportalHelper.isSubscribeProject(project, user);
-			try {
-				if (wasSubscribed) {
-					ReportalHelper.unSubscribeProject(server, project, user);
-					ret.put("result", "success");
-					ret.put("subscribe", false);
+			if (!wasSubscribed && !project.hasPermission(user, Type.READ)) {
+				ret.put("error", "You do not have permissions to view this reportal.");
+			}
+			else {
+				try {
+					if (wasSubscribed) {
+						ReportalHelper.unSubscribeProject(server, project, user);
+						ret.put("result", "success");
+						ret.put("subscribe", false);
+					}
+					else {
+						ReportalHelper.subscribeProject(server, project, user, user.getEmail());
+						ret.put("result", "success");
+						ret.put("subscribe", true);
+					}
+				} catch (ProjectManagerException e) {
+					e.printStackTrace();
+					ret.put("error", "Error subscribing to reportal. " + e.getMessage());
 				}
-				else {
-					ReportalHelper.subscribeProject(server, project, user, user.getEmail());
-					ret.put("result", "success");
-					ret.put("subscribe", true);
-				}
-			} catch (ProjectManagerException e) {
-				e.printStackTrace();
-				ret.put("error", "Error subscribing to reportal. " + e.getMessage());
 			}
 		}
 		// Set graph
@@ -324,13 +329,13 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Flow flow = project.getFlows().get(0);
 
 		if (reportal == null) {
-			page.add("errorMsg", "Reportal not found");
+			page.add("errorMsg", "Report not found");
 			page.render();
 			return;
 		}
 
 		if (!project.hasPermission(session.getUser(), Type.READ)) {
-			page.add("errorMsg", "You are not allowed to view this reportal.");
+			page.add("errorMsg", "You are not allowed to view this report.");
 			page.render();
 			return;
 		}
@@ -364,8 +369,15 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					page.add("view-logs", true);
 					List<ExecutableNode> jobs = exec.getExecutableNodes();
 					List<String> logList = new ArrayList<String>();
+					boolean showDataCollector = hasParam(req, "debug");
 					for (ExecutableNode node: jobs) {
-						logList.add(node.getJobId());
+						String jobId = node.getJobId();
+						if (!showDataCollector && !jobId.equals("data-collector")) {
+							logList.add(jobId);
+						}
+					}
+					if (logList.size() == 1) {
+						resp.sendRedirect("/reportal?view&logs&id=" + project.getId() + "&execid=" + execId + "&log=" + logList.get(0));
 					}
 					page.add("logs", logList);
 				}
@@ -505,13 +517,13 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Reportal reportal = Reportal.loadFromProject(project);
 
 		if (reportal == null) {
-			page.add("errorMsg", "Reportal not found");
+			page.add("errorMsg", "Report not found");
 			page.render();
 			return;
 		}
 
 		if (!project.hasPermission(session.getUser(), Type.EXECUTE)) {
-			page.add("errorMsg", "You are not allowed to run this reportal.");
+			page.add("errorMsg", "You are not allowed to run this report.");
 			page.render();
 			return;
 		}
@@ -569,13 +581,13 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Reportal reportal = Reportal.loadFromProject(project);
 
 		if (reportal == null) {
-			page.add("errorMsg", "Reportal not found");
+			page.add("errorMsg", "Report not found");
 			page.render();
 			return;
 		}
 
 		if (!project.hasPermission(session.getUser(), Type.ADMIN)) {
-			page.add("errorMsg", "You are not allowed to edit this reportal.");
+			page.add("errorMsg", "You are not allowed to edit this report.");
 			page.render();
 			return;
 		}
@@ -624,37 +636,37 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		boolean isEdit = hasParam(req, "id");
 		Project project = null;
-		Reportal reportal = new Reportal();
+		Reportal report = new Reportal();
 
-		reportal.title = getParam(req, "title");
-		reportal.description = getParam(req, "description");
-		page.add("title", reportal.title);
-		page.add("description", reportal.description);
+		report.title = getParam(req, "title");
+		report.description = getParam(req, "description");
+		page.add("title", report.title);
+		page.add("description", report.description);
 
-		reportal.schedule = hasParam(req, "schedule");
-		reportal.scheduleEnabled = hasParam(req, "scheduleEnabled");
-		reportal.scheduleInterval = getParam(req, "schedule-interval");
-		reportal.scheduleTime = getIntParam(req, "schedule-time");
-		page.add("schedule", reportal.schedule);
-		page.add("scheduleEnabled", reportal.scheduleEnabled);
-		page.add("scheduleInterval", reportal.scheduleInterval);
-		page.add("scheduleTime", reportal.scheduleTime);
+		report.schedule = hasParam(req, "schedule");
+		report.scheduleEnabled = hasParam(req, "scheduleEnabled");
+		report.scheduleInterval = getParam(req, "schedule-interval");
+		report.scheduleTime = getIntParam(req, "schedule-time");
+		page.add("schedule", report.schedule);
+		page.add("scheduleEnabled", report.scheduleEnabled);
+		page.add("scheduleInterval", report.scheduleInterval);
+		page.add("scheduleTime", report.scheduleTime);
 
-		reportal.accessViewer = getParam(req, "access-viewer");
-		reportal.accessExecutor = getParam(req, "access-executor");
-		reportal.accessOwner = getParam(req, "access-owner");
-		page.add("accessViewer", reportal.accessViewer);
-		page.add("accessExecutor", reportal.accessExecutor);
-		page.add("accessOwner", reportal.accessOwner);
+		report.accessViewer = getParam(req, "access-viewer");
+		report.accessExecutor = getParam(req, "access-executor");
+		report.accessOwner = getParam(req, "access-owner");
+		page.add("accessViewer", report.accessViewer);
+		page.add("accessExecutor", report.accessExecutor);
+		page.add("accessOwner", report.accessOwner);
 
-		reportal.notifications = getParam(req, "notifications");
-		page.add("notifications", reportal.notifications);
+		report.notifications = getParam(req, "notifications");
+		page.add("notifications", report.notifications);
 
 		int queries = getIntParam(req, "queryNumber");
 		page.add("queryNumber", queries);
 		List<Query> queryList = new ArrayList<Query>(queries);
 		page.add("queries", queryList);
-		reportal.queries = queryList;
+		report.queries = queryList;
 
 		String typeError = null;
 		String typePermissionError = null;
@@ -681,7 +693,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("variableNumber", variables);
 		List<Variable> variableList = new ArrayList<Variable>(variables);
 		page.add("variables", variableList);
-		reportal.variables = variableList;
+		report.variables = variableList;
 
 		boolean variableErrorOccured = false;
 		for (int i = 0; i < variables; i++) {
@@ -698,15 +710,15 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		// Bad title or description
-		if (reportal.title.isEmpty()) {
+		if (report.title.isEmpty()) {
 			page.add("errorMsg", "Title must not be empty.");
 			page.render();
 			return;
 		}
 
 		// Make sure description isn't empty
-		if (reportal.description.isEmpty()) {
-			reportal.description = " ";
+		if (report.description.isEmpty()) {
+			report.description = " ";
 		}
 
 		// Empty query check
@@ -722,7 +734,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 		// Type permission check
-		if (typePermissionError != null && reportal.schedule && reportal.scheduleEnabled) {
+		if (typePermissionError != null && report.schedule && report.scheduleEnabled) {
 			page.add("errorMsg", "You do not have permission to schedule Type " + typePermissionError + ".");
 			page.render();
 			return;
@@ -739,48 +751,48 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			// Editing mode, load project
 			int projectId = getIntParam(req, "id");
 			project = projectManager.getProject(projectId);
-			reportal.loadImmutableFromProject(project);
+			report.loadImmutableFromProject(project);
 		}
 		else {
 			// Creation mode, create project
 			try {
 				User user = session.getUser();
-				project = ReportalHelper.createReportalProject(server, reportal.title, reportal.description, user);
-				reportal.reportalUser = user.getUserId();
-				reportal.ownerEmail = user.getEmail();
+				project = ReportalHelper.createReportalProject(server, report.title, report.description, user);
+				report.reportalUser = user.getUserId();
+				report.ownerEmail = user.getEmail();
 			} catch (Exception e) {
 				e.printStackTrace();
-				page.add("errorMsg", "Error while creating reportal. " + e.getMessage());
+				page.add("errorMsg", "Error while creating report. " + e.getMessage());
 				page.render();
 				return;
 			}
 
 			// Project already exists
 			if (project == null) {
-				page.add("errorMsg", "A Reportal with the same name already exists.");
+				page.add("errorMsg", "A Report with the same name already exists.");
 				page.render();
 				return;
 			}
 		}
 
 		if (project == null) {
-			page.add("errorMsg", "Internal Error: Reportal not found");
+			page.add("errorMsg", "Internal Error: Report not found");
 			page.render();
 			return;
 		}
 
-		reportal.project = project;
+		report.project = project;
 		page.add("project", project);
 
-		reportal.updatePermissions();
+		report.updatePermissions();
 
 		try {
-			reportal.createZipAndUpload(projectManager, session.getUser(), reportalStorageUser);
+			report.createZipAndUpload(projectManager, session.getUser(), reportalStorageUser);
 		} catch (Exception e) {
 			e.printStackTrace();
 			page.add("errorMsg", "Error while creating Azkaban jobs. " + e.getMessage());
 			page.render();
-			if(!isEdit) {
+			if (!isEdit) {
 				try {
 					projectManager.removeProject(project, session.getUser());
 				} catch (ProjectManagerException e1) {
@@ -799,9 +811,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		// Create/Save schedule
 		ScheduleManager scheduleManager = server.getScheduleManager();
-		reportal.updateSchedules(scheduleManager, session.getUser(), flow);
+		report.updateSchedules(report, scheduleManager, session.getUser(), flow);
 
-		reportal.saveToProject(project);
+		report.saveToProject(project);
 
 		try {
 			ReportalHelper.updateProjectNotifications(project, projectManager);
@@ -809,9 +821,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			projectManager.updateFlow(project, flow);
 		} catch (ProjectManagerException e) {
 			e.printStackTrace();
-			page.add("errorMsg", "Error while updating reportal. " + e.getMessage());
+			page.add("errorMsg", "Error while updating report. " + e.getMessage());
 			page.render();
-			if(!isEdit) {
+			if (!isEdit) {
 				try {
 					projectManager.removeProject(project, session.getUser());
 				} catch (ProjectManagerException e1) {
@@ -821,7 +833,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
-		this.setSuccessMessageInCookie(resp, "Reportal Saved.");
+		this.setSuccessMessageInCookie(resp, "Report Saved.");
 		resp.sendRedirect(req.getRequestURI() + "?edit&id=" + project.getId());
 	}
 
@@ -829,23 +841,18 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		int id = getIntParam(req, "id");
 		ProjectManager projectManager = server.getProjectManager();
 		Project project = projectManager.getProject(id);
+		Reportal report = Reportal.loadFromProject(project);
 
 		if (!project.hasPermission(session.getUser(), Type.EXECUTE)) {
-			ret.put("error", "You are not allowed to run this reportal.");
+			ret.put("error", "You are not allowed to run this report.");
 			return;
 		}
 
-		int queries = 0;
-		Object queriesObject = project.getMetadata().get("queryNumber");
-		if (queriesObject != null) {
-			queries = (Integer)queriesObject;
-		}
-
-		for (int i = 0; i < queries; i++) {
-			String jobType = (String)project.getMetadata().get("query" + i + "type");
+		for (Query query: report.queries) {
+			String jobType = query.type;
 			ReportalType type = ReportalType.getTypeByName(jobType);
 			if (!type.checkPermission(session.getUser())) {
-				ret.put("error", "You are not allowed to run this reportal as you don't have permission to run job type " + type.toString() + ".");
+				ret.put("error", "You are not allowed to run this report as you don't have permission to run job type " + type.toString() + ".");
 				return;
 			}
 		}
@@ -858,34 +865,31 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		ExecutionOptions options = exflow.getExecutionOptions();
 
-		int variables = 0;
-		Object variableObject = project.getMetadata().get("variableNumber");
-		if (variableObject != null) {
-			variables = (Integer)variableObject;
-		}
-
-		for (int i = 0; i < variables; i++) {
-			options.getFlowParameters().put(REPORTAL_VARIABLE_PREFIX + i + ".from", project.getMetadata().get("variable" + i + "name").toString());
+		int i = 0;
+		for (Variable variable: report.variables) {
+			options.getFlowParameters().put(REPORTAL_VARIABLE_PREFIX + i + ".from", variable.name);
 			options.getFlowParameters().put(REPORTAL_VARIABLE_PREFIX + i + ".to", getParam(req, "variable" + i));
+			i++;
 		}
 		options.getFlowParameters().put("reportal.execution.user", session.getUser().getUserId());
+		options.getFlowParameters().put("reportal.title", report.title);
 
 		try {
-			String message = server.getExecutorManager().submitExecutableFlow(exflow);
+			String message = server.getExecutorManager().submitExecutableFlow(exflow) + ".";
 			ret.put("message", message);
 			ret.put("result", "success");
 			ret.put("redirect", "/reportal?view&logs&id=" + project.getId() + "&execid=" + exflow.getExecutionId());
 		} catch (ExecutorManagerException e) {
 			e.printStackTrace();
-			ret.put("error", "Error running reportal " + project.getMetadata().get("title") + ". " + e.getMessage());
+			ret.put("error", "Error running report " + report.title + ". " + e.getMessage());
 		}
 	}
-	
+
 	private void preparePage(Page page) {
 		page.add("viewerName", viewerName);
 		page.add("hideNavigation", !showNav);
 	}
-	
+
 	private class CleanerThread extends Thread {
 		// Every hour, clean execution dir.
 		private static final long EXECUTION_DIR_CLEAN_INTERVAL_MS = 60 * 60 * 1000;

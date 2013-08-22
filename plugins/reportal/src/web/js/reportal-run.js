@@ -8,8 +8,8 @@ $(document).ready(function () {
 			dataType: "json"
 		}).done(function(data) {
 			if(data.result == "success") {
-				displaySuccess(data.message + " Redirecting in 2 seconds");
-				setTimeout(function(){window.location.href = data.redirect;}, 2000);
+				displaySuccess(data.message + " Redirecting in 5 seconds");
+				setTimeout(function(){window.location.href = data.redirect;}, 5000);
 			}
 			else{
 				displayError(data.error);

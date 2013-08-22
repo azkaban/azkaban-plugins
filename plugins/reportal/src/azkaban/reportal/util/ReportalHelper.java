@@ -117,7 +117,7 @@ public class ReportalHelper {
 		}
 		Object ownerEmail = project.getMetadata().get("owner-email");
 		if(ownerEmail != null && !ownerEmail.toString().trim().isEmpty()) {
-			emailList.add(ownerEmail.toString());
+			emailList.add(ownerEmail.toString().trim());
 		}
 		// Put notifications on the flow
 		flow.getSuccessEmails().clear();
