@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+
+<project name="azkaban-reportal" basedir="." default="all">
+	<property file="build.properties" />
+	<property name="base.dir" value="${basedir}/../.." />
+	<property name="dist.dir" value="${base.dir}/dist/reportal" />
+	<property name="dist.conf.dir" value="${dist.dir}/conf" />
+	<property name="dist.classes.dir" value="${dist.dir}/classes" />
+	<property name="dist.packages.dir" value="${dist.dir}/packages" />
+	<property name="dist.jar.dir" value="${dist.dir}/jars" />
+		
+	<property name="conf.dir" value="${basedir}/conf" />
+	<property name="ext.lib.dir" value="${base.dir}/extlib" />
+	<property name="lib.dir" value="${basedir}/lib" />
+	<property name="java.src.dir" value="${basedir}/src" />
+
+	<property name="dist.jobtypes.dir" value="${dist.packages.dir}/jobtypes" />
+
+	
+	<property name="azkaban-reportal-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
+	<property name="azkaban-reportal-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
+
+	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
+	
+	<property environment="env" />
+
+	<property name="dist.jobtypes.reportalhive" location="${dist.jobtypes.dir}/reportalhive" />
+	<property name="dist.jobtypes.reportalpig" location="${dist.jobtypes.dir}/reportalpig" />
+	<property name="dist.jobtypes.reportalteradata" location="${dist.jobtypes.dir}/reportalteradata" />
+	<property name="dist.jobtypes.reportaldatacollector" location="${dist.jobtypes.dir}/reportaldatacollector" />
+
+	<property name="reportal.exlib.dir" value="${basedir}/extlib" />
+	
+
+	<path id="main.classpath">
+		
+		<fileset dir="${ext.lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		
+		<pathelement path="${dist.classes.dir}" />
+	</path>
+
+	<!-- set the build number based on environment variable, otherwise blank -->
+	<property environment="env" description="System environment variables (including those set by Hudson)" />
+
+	<target name="all" depends="clean, jars, package" description="Builds all jars" />
+
+	<target name="clean" description="Delete generated files.">
+		<echo message="Deleting generated files in dist" />
+		<delete dir="${dist.jar.dir}" />
+		<delete dir="${dist.classes.dir}" />
+		<delete dir="${dist.packages.dir}" />
+	</target>
+
+	<target name="build" description="Compile main source tree java files">
+	
+		<!-- copy the latest securitymanager jar -->
+        <delete file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar" />
+		<copy todir="${lib.dir}">
+			<fileset file="${hadoopsecuritymanagerjar}">
+			</fileset>
+		</copy>
+
+		<delete dir="${dist.classes.dir}" />
+        <mkdir dir="${dist.classes.dir}" />
+	
+		<!-- copy non-java files to classes dir to load from classpath -->
+		<copy todir="${dist.classes.dir}">
+			<fileset dir="${java.src.dir}">
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+		
+		<javac fork="true" destdir="${dist.classes.dir}"
+			target="1.6" debug="true" deprecation="false" failonerror="true">
+			<src path="${java.src.dir}" />
+			<classpath refid="main.classpath" />
+		</javac>
+	</target>
+	
+	<target name="jars" depends="build" description="Create azkaban jar">
+
+		<mkdir dir="${dist.jar.dir}" />
+		<jar destfile="${azkaban-reportal-jar}">
+			<fileset dir="${dist.classes.dir}">
+				<include name="**/*.*" />
+			</fileset>
+		</jar>
+	</target>
+	
+	<target name="src-jars" description="Create azkaban binary+source jar">
+		<mkdir dir="${dist.jar.dir}" />
+		<jar destfile="${azkaban-reportal-jar}">
+			<fileset dir="${dist.classes.dir}">
+				<include name="**/*.*" />
+			</fileset>
+			<fileset dir="${java.src.dir}" />
+		</jar>
+	</target>
+	
+	<target name="package-reportal" depends="jars" description="Creates a package for the webserver">
+		<delete dir="${dist.packages.dir}" />
+		<mkdir dir="${dist.packages.dir}" />
+		<mkdir dir="${dist.packages.dir}/viewer" />
+		<mkdir dir="${dist.packages.dir}/viewer/reportal" />
+		<mkdir dir="${dist.packages.dir}/viewer/reportal/conf" />
+		<mkdir dir="${dist.packages.dir}/viewer/reportal/lib" />
+		<mkdir dir="${dist.packages.dir}/viewer/reportal/web" />
+		<mkdir dir="${dist.packages.dir}/jobtypes" />
+		
+		<!-- Copy conf files and folder structure -->
+		<copy todir="${dist.packages.dir}">
+			<fileset dir="${conf.dir}" />
+		</copy>
+		
+		<!-- Copy Azkaban jars and libs-->
+		<copy file="${azkaban-reportal-jar}" todir="${dist.packages.dir}/viewer/reportal/lib" />
+		<copy todir="${dist.packages.dir}/viewer/reportal/lib" >
+			<fileset dir="${lib.dir}/viewer" />
+		</copy>
+		<copy todir="${dist.packages.dir}/viewer/reportal/web" ><fileset dir="${java.src.dir}/web" /></copy>
+
+		<copy file="${azkaban-reportal-jar}" todir="${dist.jobtypes.reportalhive}/lib" />
+		<copy file="${azkaban-reportal-jar}" todir="${dist.jobtypes.reportalpig}/lib" />
+		<copy file="${azkaban-reportal-jar}" todir="${dist.jobtypes.reportalteradata}/lib" />
+		<copy file="${azkaban-reportal-jar}" todir="${dist.jobtypes.reportaldatacollector}/lib" />
+
+		<copy todir="${dist.jobtypes.dir}" >
+			<fileset dir="${lib.dir}">
+				<include name="**/*.*" />
+				<exclude name="*.*" />
+				<exclude name="viewer/*.*" />
+			</fileset>
+		</copy>
+
+		<copy todir="${dist.jobtypes.reportalhive}" ><fileset dir="${reportal.exlib.dir}" /></copy>
+		<copy todir="${dist.jobtypes.reportalpig}" ><fileset dir="${reportal.exlib.dir}" /></copy>
+		<copy todir="${dist.jobtypes.reportalteradata}" ><fileset dir="${reportal.exlib.dir}" /></copy>
+		<copy todir="${dist.jobtypes.reportaldatacollector}" ><fileset dir="${reportal.exlib.dir}" /></copy>
+
+		<!-- Tarball it -->
+		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
+			<tarfileset dir="${dist.packages.dir}" prefix="${name}-${version}" filemode="755" />
+		</tar>
+	</target>
+	
+	<target name="package" depends="package-reportal" description="Create all packages">
+	</target>
+</project>
