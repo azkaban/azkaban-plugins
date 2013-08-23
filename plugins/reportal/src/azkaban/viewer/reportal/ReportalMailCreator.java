@@ -42,22 +42,9 @@ public class ReportalMailCreator implements MailCreator {
 	public boolean createFirstErrorMessage(ExecutableFlow flow, EmailMessage message, String azkabanName, String clientHostname, String clientPortNumber, String... vars) {
 
 		ExecutionOptions option = flow.getExecutionOptions();
-		List<String> emailList = option.getDisabledJobs();
+		List<String> emailList = option.getFailureEmails();
 
-		if (emailList != null && !emailList.isEmpty()) {
-			message.addAllToAddress(emailList);
-			message.setMimeType("text/html");
-			message.setSubject("Report '" + flow.getExecutionOptions().getFlowParameters().get("reportal.title") + "' has failed on " + azkabanName);
-			String urlPrefix = "https://" + clientHostname + ":" + clientPortNumber + "/reportal";
-			try {
-				createMessage(flow, message, urlPrefix, false);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			return true;
-		}
-
-		return false;
+		return createEmail(flow, emailList, message, "failed", azkabanName, clientHostname, clientPortNumber, false);
 	}
 
 	@Override
@@ -66,19 +53,7 @@ public class ReportalMailCreator implements MailCreator {
 		ExecutionOptions option = flow.getExecutionOptions();
 		List<String> emailList = option.getFailureEmails();
 
-		if (emailList != null && !emailList.isEmpty()) {
-			message.addAllToAddress(emailList);
-			message.setMimeType("text/html");
-			message.setSubject("Report '" + flow.getExecutionOptions().getFlowParameters().get("reportal.title") + "' has failed on " + azkabanName);
-			String urlPrefix = "https://" + clientHostname + ":" + clientPortNumber + "/reportal";
-			try {
-				createMessage(flow, message, urlPrefix, false);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			return true;
-		}
-		return false;
+		return createEmail(flow, emailList, message, "failed", azkabanName, clientHostname, clientPortNumber, false);
 	}
 
 	@Override
@@ -86,24 +61,31 @@ public class ReportalMailCreator implements MailCreator {
 
 		ExecutionOptions option = flow.getExecutionOptions();
 		List<String> emailList = option.getSuccessEmails();
+		
+		return createEmail(flow, emailList, message, "succeeded", azkabanName, clientHostname, clientPortNumber, true);
+	}
+	
+	private boolean createEmail(ExecutableFlow flow, List<String> emailList, EmailMessage message, String status, String azkabanName, String clientHostname, String clientPortNumber, boolean printData) {
+		
+		Project project = azkaban.getProjectManager().getProject(flow.getProjectId());
 
 		if (emailList != null && !emailList.isEmpty()) {
 			message.addAllToAddress(emailList);
 			message.setMimeType("text/html");
-			message.setSubject("Report '" + flow.getExecutionOptions().getFlowParameters().get("reportal.title") + "' has succeeded on " + azkabanName);
+			message.setSubject("Report '" + project.getMetadata().get("title") + "' has " + status + " on " + azkabanName);
 			String urlPrefix = "https://" + clientHostname + ":" + clientPortNumber + "/reportal";
 			try {
-				createMessage(flow, message, urlPrefix, true);
+				createMessage(project, flow, message, urlPrefix, printData);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			return true;
 		}
+
 		return false;
 	}
 
-	private void createMessage(ExecutableFlow flow, EmailMessage message, String urlPrefix, boolean printData) throws Exception {
-		Project project = azkaban.getProjectManager().getProject(flow.getProjectId());
+	private void createMessage(Project project, ExecutableFlow flow, EmailMessage message, String urlPrefix, boolean printData) throws Exception {
 		message.println("<html>");
 		message.println("<head></head>");
 		message.println("<body style='font-family: verdana; color: #000000; background-color: #cccccc; padding: 20px;'>");
