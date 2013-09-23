@@ -76,6 +76,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		viewers.add(new HdfsAvroFileViewer());
 		viewers.add(new JsonSequenceFileViewer());
 		viewers.add(new HdfsImageFileViewer());
+		viewers.add(new BsonFileViewer());
 		viewers.add(defaultViewer);
 
 		logger.info("HDFS Browser initiated");
@@ -263,21 +264,27 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		// use registered viewers to show the file content
 		boolean outputed = false;
 		OutputStream output = resp.getOutputStream();
-		for (HdfsFileViewer viewer : viewers) {
-			if (viewer.canReadFile(fs, path)) {
-				viewer.displayFile(fs, path, output, startLine, endLine);
-				outputed = true;
-				break; // don't need to try other viewers
+		
+		try {
+			for (HdfsFileViewer viewer : viewers) {
+				if (viewer.canReadFile(fs, path)) {
+					viewer.displayFile(fs, path, output, startLine, endLine);
+					outputed = true;
+					break; // don't need to try other viewers
+				}
 			}
-		}
-
-		// use default text viewer
-		if (!outputed) {
-			if (defaultViewer.canReadFile(fs, path)) {
-				defaultViewer.displayFile(fs, path, output, startLine, endLine);
-			} else {
-				output.write(("Sorry, no viewer available for this file. ").getBytes("UTF-8"));
+			
+			// use default text viewer
+			if (!outputed) {
+				if (defaultViewer.canReadFile(fs, path)) {
+					defaultViewer.displayFile(fs, path, output, startLine, endLine);
+				} else {
+					output.write(("Sorry, no viewer available for this file. ").getBytes("UTF-8"));
+				}
 			}
+		} finally {
+			output.flush();
+			output.close();
 		}
 	}
 
