@@ -93,6 +93,12 @@ public class DefaultHadoopSecurityManager extends HadoopSecurityManager {
 		
 	}
 
+	@Override
+	public void prefetchToken(File tokenFile, Props props, Logger logger)
+			throws HadoopSecurityManagerException {
+		throw new HadoopSecurityManagerException("No real Hadoop Security Manager is set!");	
+	}
+
 }
 
 

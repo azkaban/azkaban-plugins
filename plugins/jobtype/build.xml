@@ -15,7 +15,7 @@
 	<property name="javatype.dir" value="${basedir}/jobtypes/java" />
 	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
 	<property file="build.properties" />
-	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-2.1.jar"/>
+	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-2.2.jar"/>
 
 	<property environment="env" />
 

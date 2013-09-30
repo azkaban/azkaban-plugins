@@ -17,7 +17,6 @@ package azkaban.security.commons;
 
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -35,6 +34,10 @@ public abstract class HadoopSecurityManager {
 	public static final String USER_TO_PROXY = "user.to.proxy";
 	public static final String OBTAIN_BINARY_TOKEN = "obtain.binary.token";
 	public static final String MAPREDUCE_JOB_CREDENTIALS_BINARY = "mapreduce.job.credentials.binary";
+	
+	public static final String OBTAIN_JOBTRACKER_TOKEN = "obtain.jobtracker.token";
+	public static final String OBTAIN_NAMENODE_TOKEN = "obtain.namenode.token";
+	public static final String OBTAIN_HCAT_TOKEN = "obtain.hcat.token";
 	
 	public boolean isHadoopSecurityEnabled() throws HadoopSecurityManagerException {
 		return false; 
@@ -63,5 +66,7 @@ public abstract class HadoopSecurityManager {
 	public abstract void prefetchToken(File tokenFile, String userToProxy, Logger logger) throws HadoopSecurityManagerException;
 	
 	public abstract void cancelTokens(File tokenFile, String userToProxy, Logger logger) throws HadoopSecurityManagerException;
+	
+	public abstract void prefetchToken(File tokenFile, Props props, Logger logger) throws HadoopSecurityManagerException;
 
 }

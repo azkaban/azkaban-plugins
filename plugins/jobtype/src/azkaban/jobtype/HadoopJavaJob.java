@@ -60,6 +60,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 		super(jobid, sysProps, jobProps, log);
 		
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
+		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
 		noUserClasspath = getSysProps().getBoolean("azkaban.no.user.classpath", false);
 		
@@ -174,7 +175,12 @@ public class HadoopJavaJob extends JavaProcessJob {
 		if(shouldProxy && obtainTokens) {
 			userToProxy = getJobProps().getString("user.to.proxy");
 			getLog().info("Need to proxy. Getting tokens.");
-			f = getHadoopTokens(getJobProps());
+			Props props = new Props();
+			props.putAll(getJobProps());
+			props.putAll(getSysProps());
+			
+			f = getHadoopTokens(props);
+			getJobProps().put("env."+"HADOOP_TOKEN_FILE_LOCATION", f.getAbsolutePath());
 		}
 		try {
 			super.run();
@@ -184,10 +190,15 @@ public class HadoopJavaJob extends JavaProcessJob {
 		}
 		finally {
 			if(f != null) {
+				try{
+					cancelHadoopTokens(f);
+				} catch (Throwable t) {
+					t.printStackTrace();
+					getLog().error("Failed to cancel tokens.");
+				}
 				if(f.exists()) {
 					f.delete();
 				}
-				cancelHadoopTokens(f);
 			}
 		}
 	}
@@ -220,9 +231,9 @@ public class HadoopJavaJob extends JavaProcessJob {
 			throw new HadoopSecurityManagerException("Failed to create the token file.", e);
 		}
 		
-		hadoopSecurityManager.prefetchToken(tokenFile, userToProxy, getLog());
+		hadoopSecurityManager.prefetchToken(tokenFile, props, getLog());
 		
-		props.put("env."+"HADOOP_TOKEN_FILE_LOCATION", tokenFile.getAbsolutePath());
+		//props.put("env."+"HADOOP_TOKEN_FILE_LOCATION", tokenFile.getAbsolutePath());
 		
 		return tokenFile;
 	}
@@ -253,5 +264,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 				+ ", _javaObject=" + _javaObject + ", props="
 				+ getJobProps() + '}';
 	}
+	
+	
 }
 

@@ -99,7 +99,11 @@ public class HadoopPigJob extends JavaProcessJob {
 			userToProxy = getJobProps().getString("user.to.proxy");
 			getLog().info("Need to proxy. Getting tokens.");
 			// get tokens in to a file, and put the location in props
-			f = getHadoopTokens(getJobProps());
+			Props props = new Props();
+			props.putAll(getJobProps());
+			props.putAll(getSysProps());
+			f = getHadoopTokens(props);
+			getJobProps().put("env."+"HADOOP_TOKEN_FILE_LOCATION", f.getAbsolutePath());
 		}
 		try {
 			super.run();
@@ -107,13 +111,17 @@ public class HadoopPigJob extends JavaProcessJob {
 			e.printStackTrace();
 			getLog().error("caught exception running the job");
 			throw new Exception(e);
+		} catch (Throwable t) {
+			t.printStackTrace();
+			getLog().error("caught error running the job");
+			throw new Exception(t);
 		}
 		finally{
 			if(f != null) {
+				cancelHadoopTokens(f);	
 				if(f.exists()) {
 					f.delete();
 				}
-				cancelHadoopTokens(f);				
 			}
 		}
 	}
@@ -163,10 +171,8 @@ public class HadoopPigJob extends JavaProcessJob {
 			throw new HadoopSecurityManagerException("Failed to create the token file.", e);
 		}
 		
-		hadoopSecurityManager.prefetchToken(tokenFile, userToProxy, getLog());
-		
-		props.put("env."+UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION, tokenFile.getAbsolutePath());
-		
+		hadoopSecurityManager.prefetchToken(tokenFile, props, getLog());
+
 		return tokenFile;
 	}
 	
