@@ -289,7 +289,7 @@ public class HadoopPigJob extends JavaProcessJob {
 		classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 		//assuming pig 0.8 and up
-		classPath.add(getSourcePathFromClass(PigRunner.class));
+//		classPath.add(getSourcePathFromClass(PigRunner.class));
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
 		if(typeClassPath != null) {
 			// fill in this when load this jobtype
