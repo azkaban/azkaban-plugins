@@ -101,11 +101,19 @@ public class HadoopJavaJob extends JavaProcessJob {
 	protected String getJVMArguments() {
 		String args = super.getJVMArguments();
 
-		String typeUserJVMArgs = getJobProps().getString("jobtype.global.jvm.args", null);
+		String typeUserGlobalJVMArgs = getJobProps().getString("jobtype.global.jvm.args", null);
+		if (typeUserGlobalJVMArgs != null) {
+			args += " " + typeUserGlobalJVMArgs;
+		}
+		String typeSysGlobalJVMArgs = getSysProps().getString("jobtype.global.jvm.args", null);
+		if (typeSysGlobalJVMArgs != null) {
+			args += " " + typeSysGlobalJVMArgs;
+		}
+		String typeUserJVMArgs = getJobProps().getString("jobtype.jvm.args", null);
 		if (typeUserJVMArgs != null) {
 			args += " " + typeUserJVMArgs;
 		}
-		String typeSysJVMArgs = getSysProps().getString("jobtype.global.jvm.args", null);
+		String typeSysJVMArgs = getSysProps().getString("jobtype.jvm.args", null);
 		if (typeSysJVMArgs != null) {
 			args += " " + typeSysJVMArgs;
 		}

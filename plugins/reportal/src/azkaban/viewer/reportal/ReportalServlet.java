@@ -28,6 +28,7 @@ import azkaban.executor.ExecutableFlow;
 import azkaban.executor.ExecutableNode;
 import azkaban.executor.ExecutionOptions;
 import azkaban.executor.ExecutorManager;
+import azkaban.executor.ExecutorManagerAdapter;
 import azkaban.executor.ExecutorManagerException;
 import azkaban.flow.Flow;
 import azkaban.project.Project;
@@ -41,6 +42,7 @@ import azkaban.reportal.util.ReportalHelper;
 import azkaban.reportal.util.ReportalUtil;
 import azkaban.reportal.util.StreamProviderHDFS;
 import azkaban.scheduler.ScheduleManager;
+import azkaban.scheduler.ScheduleManagerException;
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.user.Permission.Type;
 import azkaban.user.User;
@@ -178,7 +180,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					ScheduleManager scheduleManager = server.getScheduleManager();
 					reportal.removeSchedules(scheduleManager);
 					projectManager.removeProject(project, user);
-				} catch (ProjectManagerException e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 					ret.put("error", "An exception occured while deleting this reportal.");
 				}
@@ -253,7 +255,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			int offset = getIntParam(req, "offset");
 			int length = getIntParam(req, "length");
 			ExecutableFlow exec;
-			ExecutorManager executorManager = server.getExecutorManager();
+			ExecutorManagerAdapter executorManager = server.getExecutorManager();
 			try {
 				exec = executorManager.getExecutableFlow(execId);
 			} catch (Exception e) {
@@ -322,7 +324,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		preparePage(page);
 
 		ProjectManager projectManager = server.getProjectManager();
-		ExecutorManager executorManager = server.getExecutorManager();
+		ExecutorManagerAdapter executorManager = server.getExecutorManager();
 
 		Project project = projectManager.getProject(id);
 		Reportal reportal = Reportal.loadFromProject(project);
@@ -811,7 +813,15 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		// Create/Save schedule
 		ScheduleManager scheduleManager = server.getScheduleManager();
-		report.updateSchedules(report, scheduleManager, session.getUser(), flow);
+		try {
+			report.updateSchedules(report, scheduleManager, session.getUser(), flow);
+		} catch (ScheduleManagerException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+			page.add("errorMsg", e2.getMessage());
+			page.render();
+			return;
+		}
 
 		report.saveToProject(project);
 
@@ -875,7 +885,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		options.getFlowParameters().put("reportal.title", report.title);
 
 		try {
-			String message = server.getExecutorManager().submitExecutableFlow(exflow) + ".";
+			String message = server.getExecutorManager().submitExecutableFlow(exflow, session.getUser().getUserId()) + ".";
 			ret.put("message", message);
 			ret.put("result", "success");
 			ret.put("redirect", "/reportal?view&logs&id=" + project.getId() + "&execid=" + exflow.getExecutionId());

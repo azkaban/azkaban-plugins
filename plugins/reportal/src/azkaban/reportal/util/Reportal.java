@@ -23,6 +23,7 @@ import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import azkaban.scheduler.Schedule;
 import azkaban.scheduler.ScheduleManager;
+import azkaban.scheduler.ScheduleManagerException;
 import azkaban.user.Permission;
 import azkaban.user.Permission.Type;
 import azkaban.user.User;
@@ -90,19 +91,17 @@ public class Reportal {
 		project.getMetadata().put("notifications", notifications);
 	}
 
-	public void removeSchedules(ScheduleManager scheduleManager) {
+	public void removeSchedules(ScheduleManager scheduleManager) throws ScheduleManagerException {
 		List<Flow> flows = project.getFlows();
 		for (Flow flow: flows) {
-			Set<Schedule> schedules = scheduleManager.getSchedules(project.getId(), flow.getId());
-			if (schedules != null) {
-				for (Schedule schedule: schedules) {
-					scheduleManager.removeSchedule(schedule);
-				}
+			Schedule sched = scheduleManager.getSchedule(project.getId(), flow.getId());
+			if (sched != null) {
+				scheduleManager.removeSchedule(sched);
 			}
 		}
 	}
 
-	public void updateSchedules(Reportal report, ScheduleManager scheduleManager, User user, Flow flow) {
+	public void updateSchedules(Reportal report, ScheduleManager scheduleManager, User user, Flow flow) throws ScheduleManagerException {
 		// Clear previous schedules
 		removeSchedules(scheduleManager);
 		// Add new schedule
