@@ -25,6 +25,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.io.JsonEncoder;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -92,7 +93,7 @@ public class ParquetFileViewer implements HdfsFileViewer {
       // Initialize JsonGenerator.
       json = new JsonFactory().createJsonGenerator(outputStream, JsonEncoding.UTF8);
       json.useDefaultPrettyPrinter();
-      
+
       // Declare the avroWriter encoder that will be used to output the records
       // as JSON but don't construct them yet because we need the first record
       // in order to get the Schema.
@@ -110,7 +111,7 @@ public class ParquetFileViewer implements HdfsFileViewer {
         if (avroWriter == null) {
           Schema schema = record.getSchema();
           avroWriter = new GenericDatumWriter<GenericRecord>(schema);
-          encoder = new JsonEncoder(schema, json);
+          encoder = EncoderFactory.get().jsonEncoder(schema, json);
         }
 
         if (line >= startLine) {

@@ -74,6 +74,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		
 		defaultViewer = new TextFileViewer();
 		viewers.add(new HdfsAvroFileViewer());
+		viewers.add(new ParquetFileViewer());
 		viewers.add(new JsonSequenceFileViewer());
 		viewers.add(new HdfsImageFileViewer());
 		viewers.add(new BsonFileViewer());
