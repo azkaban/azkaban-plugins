@@ -43,96 +43,96 @@ import parquet.avro.AvroParquetReader;
  * @author David Z. Chen (dchen@linkedin.com)
  */
 public class ParquetFileViewer implements HdfsFileViewer {
-  private static Logger logger = Logger.getLogger(ParquetFileViewer.class);
+	private static Logger logger = Logger.getLogger(ParquetFileViewer.class);
 
-  // Will spend 5 seconds trying to pull data and then stop.
-  final private static long STOP_TIME = 2000l;
+	// Will spend 5 seconds trying to pull data and then stop.
+	final private static long STOP_TIME = 2000l;
 
-  @Override
-  public boolean canReadFile(FileSystem fs, Path path) {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Parquet file path: " + path.toUri().getPath());
-    }
+	@Override
+	public boolean canReadFile(FileSystem fs, Path path) {
+		if (logger.isDebugEnabled()) {
+			logger.debug("Parquet file path: " + path.toUri().getPath());
+		}
 
-    AvroParquetReader<GenericRecord> parquetReader = null;
-    try {
-      parquetReader = new AvroParquetReader<GenericRecord>(path);
-    }
-    catch (IOException e) {
-      if (logger.isDebugEnabled()) {
-        logger.debug(path.toUri().getPath() + " is not a Parquet file.");
-        logger.debug("Error in opening Parquet file: " + e.getLocalizedMessage());
-      }
-      return false;
-    }
-    finally {
-      try {
-        if (parquetReader != null) {
-          parquetReader.close();
-        }
-      }
-      catch (IOException e) {
-        logger.error(e);
-      }
-    }
-    return true;
-  }
+		AvroParquetReader<GenericRecord> parquetReader = null;
+		try {
+			parquetReader = new AvroParquetReader<GenericRecord>(path);
+		}
+		catch (IOException e) {
+			if (logger.isDebugEnabled()) {
+				logger.debug(path.toUri().getPath() + " is not a Parquet file.");
+				logger.debug("Error in opening Parquet file: " + e.getLocalizedMessage());
+			}
+			return false;
+		}
+		finally {
+			try {
+				if (parquetReader != null) {
+					parquetReader.close();
+				}
+			}
+			catch (IOException e) {
+				logger.error(e);
+			}
+		}
+		return true;
+	}
 
-  @Override
-  public void displayFile(FileSystem fs, Path path, OutputStream outputStream,
-      int startLine, int endLine) throws IOException {
-    if (logger.isDebugEnabled()) {
-      logger.debug("Display Parquet file: " + path.toUri().getPath());
-    }
+	@Override
+	public void displayFile(FileSystem fs, Path path, OutputStream outputStream,
+			int startLine, int endLine) throws IOException {
+		if (logger.isDebugEnabled()) {
+			logger.debug("Display Parquet file: " + path.toUri().getPath());
+		}
 
-    JsonGenerator json = null;
-    AvroParquetReader<GenericRecord> parquetReader = null;
-    try {
-      parquetReader = new AvroParquetReader<GenericRecord>(path);
+		JsonGenerator json = null;
+		AvroParquetReader<GenericRecord> parquetReader = null;
+		try {
+			parquetReader = new AvroParquetReader<GenericRecord>(path);
 
-      // Initialize JsonGenerator.
-      json = new JsonFactory().createJsonGenerator(outputStream, JsonEncoding.UTF8);
-      json.useDefaultPrettyPrinter();
+			// Initialize JsonGenerator.
+			json = new JsonFactory().createJsonGenerator(outputStream, JsonEncoding.UTF8);
+			json.useDefaultPrettyPrinter();
 
-      // Declare the avroWriter encoder that will be used to output the records
-      // as JSON but don't construct them yet because we need the first record
-      // in order to get the Schema.
-      DatumWriter<GenericRecord> avroWriter = null;
-      Encoder encoder = null;
+			// Declare the avroWriter encoder that will be used to output the records
+			// as JSON but don't construct them yet because we need the first record
+			// in order to get the Schema.
+			DatumWriter<GenericRecord> avroWriter = null;
+			Encoder encoder = null;
 
-      long endTime = System.currentTimeMillis() + STOP_TIME;
-      int line = 1;
-      while (line <= endLine && System.currentTimeMillis() <= endTime) {
-        GenericRecord record = parquetReader.read();
-        if (record == null) {
-          break;
-        }
+			long endTime = System.currentTimeMillis() + STOP_TIME;
+			int line = 1;
+			while (line <= endLine && System.currentTimeMillis() <= endTime) {
+				GenericRecord record = parquetReader.read();
+				if (record == null) {
+					break;
+				}
 
-        if (avroWriter == null) {
-          Schema schema = record.getSchema();
-          avroWriter = new GenericDatumWriter<GenericRecord>(schema);
-          encoder = EncoderFactory.get().jsonEncoder(schema, json);
-        }
+				if (avroWriter == null) {
+					Schema schema = record.getSchema();
+					avroWriter = new GenericDatumWriter<GenericRecord>(schema);
+					encoder = EncoderFactory.get().jsonEncoder(schema, json);
+				}
 
-        if (line >= startLine) {
-          String recordStr = "\n\nRecord " + line + ":\n";
-          outputStream.write(recordStr.getBytes("UTF-8"));
-          avroWriter.write(record, encoder);
-          encoder.flush();
-        }
-        ++line;
-      }
-    }
-    catch (IOException e) {
-      outputStream.write(("Error in displaying Parquet file: " + 
-          e.getLocalizedMessage()).getBytes("UTF-8"));
-      throw e;
-    }
-    finally {
-      if (json != null) {
-        json.close();
-      }
-      parquetReader.close();
-    }
-  }
+				if (line >= startLine) {
+					String recordStr = "\n\nRecord " + line + ":\n";
+					outputStream.write(recordStr.getBytes("UTF-8"));
+					avroWriter.write(record, encoder);
+					encoder.flush();
+				}
+				++line;
+			}
+		}
+		catch (IOException e) {
+			outputStream.write(("Error in displaying Parquet file: " + 
+					e.getLocalizedMessage()).getBytes("UTF-8"));
+			throw e;
+		}
+		finally {
+			if (json != null) {
+				json.close();
+			}
+			parquetReader.close();
+		}
+	}
 }
