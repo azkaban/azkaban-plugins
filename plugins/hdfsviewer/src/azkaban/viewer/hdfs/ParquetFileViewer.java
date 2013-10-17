@@ -128,6 +128,10 @@ public class ParquetFileViewer implements HdfsFileViewer {
 					e.getLocalizedMessage()).getBytes("UTF-8"));
 			throw e;
 		}
+		catch (Throwable t) {
+			logger.error(t.getMessage());
+			return;
+		}
 		finally {
 			if (json != null) {
 				json.close();
