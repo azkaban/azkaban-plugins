@@ -26,6 +26,7 @@ import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.io.JsonEncoder;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -50,7 +51,7 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 	@Override
 	public boolean canReadFile(FileSystem fs, Path path) {
 
-		if(logger.isDebugEnabled())
+		if (logger.isDebugEnabled())
 			logger.debug("path:" + path.toUri().getPath());
 
 		DataFileStream<Object> avroDataStream = null;
@@ -58,8 +59,8 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 			avroDataStream = getAvroDataStream(fs, path);
 			Schema schema = avroDataStream.getSchema();
 			return schema != null;
-		} catch(IOException e) {
-			if(logger.isDebugEnabled()) {
+		} catch (IOException e) {
+			if (logger.isDebugEnabled()) {
 				logger.debug(path.toUri().getPath() + " is not an avro file.");
 				logger.debug("Error in getting avro schema: " + e.getLocalizedMessage());
 			}
@@ -67,7 +68,7 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 		}
 		finally {
 			try {
-				if(avroDataStream != null) {
+				if (avroDataStream != null) {
 					avroDataStream.close();
 				}
 			} catch (IOException e) {
@@ -77,17 +78,16 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 	}
 
 	private DataFileStream<Object> getAvroDataStream(FileSystem fs, Path path) throws IOException {
-		if(logger.isDebugEnabled())
+		if (logger.isDebugEnabled())
 			logger.debug("path:" + path.toUri().getPath());
 
 		GenericDatumReader<Object> avroReader = new GenericDatumReader<Object>();
-		
 		InputStream hdfsInputStream = null;
-		try{
+		try {
 			hdfsInputStream = fs.open(path);
 		}
-		catch(Exception e) {
-			if(hdfsInputStream != null) {
+		catch (Exception e) {
+			if (hdfsInputStream != null) {
 				hdfsInputStream.close();
 			}
 		}
@@ -97,14 +97,13 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 			avroDataFileStream = new DataFileStream<Object>(hdfsInputStream, avroReader);
 		}
 		catch (IOException e) {
-			if(hdfsInputStream != null) {
+			if (hdfsInputStream != null) {
 				hdfsInputStream.close();
 			}
 			throw e;
 		}
 
 		return avroDataFileStream;
-
 	}
 
 	@Override
@@ -114,7 +113,7 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 			int startLine,
 			int endLine) throws IOException {
 
-		if(logger.isDebugEnabled())
+		if (logger.isDebugEnabled())
 			logger.debug("display avro file:" + path.toUri().getPath());
 
 		DataFileStream<Object> avroDatastream = null;
@@ -127,13 +126,13 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 
 			g = new JsonFactory().createJsonGenerator(outputStream, JsonEncoding.UTF8);
 			g.useDefaultPrettyPrinter();
-			Encoder encoder = new JsonEncoder(schema, g);
+      Encoder encoder = EncoderFactory.get().jsonEncoder(schema, g);
 
 			long endTime = System.currentTimeMillis() + STOP_TIME;
 			int lineno = 1; // line number starts from 1
-			while(avroDatastream.hasNext() && lineno <= endLine && System.currentTimeMillis() <= endTime) {
+			while (avroDatastream.hasNext() && lineno <= endLine && System.currentTimeMillis() <= endTime) {
 				Object datum = avroDatastream.next();
-				if(lineno >= startLine) {
+				if (lineno >= startLine) {
 					String record = "\n\n Record " + lineno + ":\n";
 					outputStream.write(record.getBytes("UTF-8"));
 					avroWriter.write(datum, encoder);
@@ -141,11 +140,11 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 				}
 				lineno++;
 			}
-		} catch(IOException e) {
+		} catch (IOException e) {
 			outputStream.write(("Error in display avro file: " + e.getLocalizedMessage()).getBytes("UTF-8"));
 			throw e;
 		} finally {
-			if(g != null) {
+			if (g != null) {
 				g.close();
 			}
 			avroDatastream.close();
