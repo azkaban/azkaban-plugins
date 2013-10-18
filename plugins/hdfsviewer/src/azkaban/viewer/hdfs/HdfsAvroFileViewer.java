@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 LinkedIn, Inc
+ * Copyright 2012 LinkedIn Corp.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ package azkaban.viewer.hdfs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 
 import org.apache.avro.Schema;
 import org.apache.avro.file.DataFileStream;
