@@ -727,7 +727,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			variableList.add(variable);
 		}
 
-		// Bad title or description
+		// Make sure title isn't empty
 		if (report.title.isEmpty()) {
 			page.add("errorMsg", "Title must not be empty.");
 			page.render();
@@ -736,7 +736,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		// Make sure description isn't empty
 		if (report.description.isEmpty()) {
-			report.description = " ";
+			page.add("errorMsg", "Description must not be empty.");
+			page.render();
+			return;
 		}
 
 		// Empty query check
