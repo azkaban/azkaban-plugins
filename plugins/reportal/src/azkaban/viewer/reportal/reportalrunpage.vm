@@ -79,7 +79,7 @@
 			<div style="text-align: center;">
 				<a class="btn btn-info" href="${context}/reportal">Reportal Home</a>
 #if($project)
-				<a class="btn btn-primary" href="${context}/reportal?view&amp;id=${project.id}">Reportal History</a>
+				<a class="btn btn-primary" href="${context}/reportal?view&amp;id=${project.id}">Report History</a>
 				<a class="btn btn-warning" href="${context}/reportal?edit&amp;id=${project.id}">Edit</a>
 #end
 			</div>
