@@ -40,12 +40,19 @@
 		<echo message="Deleting generated files in dist" />
 		<delete dir="${dist.jar.dir}" />
 		<delete dir="${dist.classes.dir}" />
-        <delete dir="${dist.packages.dir}" />
+		<delete dir="${dist.packages.dir}" />
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+			</fileset>
+		</delete>
 	</target>
 
 	<target name="build" description="Compile main source tree java files">
 		<!-- copy the latest securitymanager jar -->
-		<delete file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar" />
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+			</fileset>
+		</delete>
 		<copy todir="${lib.dir}">
 			<fileset file="${hadoopsecuritymanagerjar}">
 			</fileset>
