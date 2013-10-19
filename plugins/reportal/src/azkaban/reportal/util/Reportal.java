@@ -126,7 +126,7 @@ public class Reportal {
 			firstSchedTime = firstSchedTime.withHourOfDay(scheduleTime).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
 			ReadablePeriod period = Years.ONE;
 			if (scheduleInterval.equals("q")) {
-				period = Months.FOUR;
+				period = Months.THREE;
 			}
 			else if (scheduleInterval.equals("m")) {
 				period = Months.ONE;
