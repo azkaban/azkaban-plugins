@@ -161,6 +161,11 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 				list.add(StringUtils.shellQuote(entry.getKey() + "=" + entry.getValue(), StringUtils.SINGLE_QUOTE));
 			}
 		}
+		
+		if (prop.getString("reportal.output.filesystem", "local").equals("local")) {
+			list.add("-x");
+			list.add("local");
+		}
 
 		list.add(prop.getString(PIG_SCRIPT));
 		return list.toArray(new String[0]);
