@@ -24,6 +24,7 @@ import org.apache.pig.tools.pigstats.PigStats;
 
 import azkaban.jobExecutor.ProcessJob;
 import azkaban.security.commons.HadoopSecurityManager;
+import azkaban.utils.Props;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -40,17 +41,6 @@ public class HadoopSecurePigWrapper {
 	private static boolean securityEnabled;
 	
 	public static void main(final String[] args) throws Exception {
-		
-//		Runtime.getRuntime().addShutdownHook(new Thread() {
-//			public void run() {
-//				try {
-//					cancelJob();
-//				} catch (Exception e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}
-//		});
 		
 		final Logger logger = Logger.getRootLogger();
 
@@ -120,7 +110,7 @@ public class HadoopSecurePigWrapper {
 	}
 	
 	public static void runPigJob(String[] args) throws Exception {
-		PigStats stats = PigRunner.run(args, null);
+		PigStats stats = PigRunner.run(args, new AzkabanPigListener(new Props()));
 		if (!stats.isSuccessful()) {
 			if (pigLogFile != null) {
 				handleError(pigLogFile);
