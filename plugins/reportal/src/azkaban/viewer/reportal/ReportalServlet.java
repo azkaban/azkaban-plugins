@@ -312,12 +312,11 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private void handleListReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportallistpage.vm");
-		preparePage(page);
+		preparePage(page, session);
 
 		List<Project> projects = ReportalHelper.getReportalProjects(server);
 		page.add("ReportalHelper", ReportalHelper.class);
 		page.add("user", session.getUser());
-		page.add("userid", session.getUser().getUserId());
 
 		String startDate = DateTime.now().minusWeeks(1).toString("yyyy-MM-dd");
 		String endDate = DateTime.now().toString("yyyy-MM-dd");
@@ -337,7 +336,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private void handleViewReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, Exception {
 		int id = getIntParam(req, "id");
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaldatapage.vm");
-		preparePage(page);
+		preparePage(page, session);
 
 		ProjectManager projectManager = server.getProjectManager();
 		ExecutorManagerAdapter executorManager = server.getExecutorManager();
@@ -529,7 +528,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		int id = getIntParam(req, "id");
 		ProjectManager projectManager = server.getProjectManager();
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportalrunpage.vm");
-		preparePage(page);
+		preparePage(page, session);
 
 		Project project = projectManager.getProject(id);
 		Reportal reportal = Reportal.loadFromProject(project);
@@ -561,7 +560,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private void handleNewReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
-		preparePage(page);
+		preparePage(page, session);
 
 		page.add("new", true);
 		page.add("project", false);
@@ -592,7 +591,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		ProjectManager projectManager = server.getProjectManager();
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
-		preparePage(page);
+		preparePage(page, session);
 		page.add("ReportalHelper", ReportalHelper.class);
 
 		Project project = projectManager.getProject(id);
@@ -649,7 +648,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		ProjectManager projectManager = server.getProjectManager();
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
-		preparePage(page);
+		preparePage(page, session);
 		page.add("ReportalHelper", ReportalHelper.class);
 
 		boolean isEdit = hasParam(req, "id");
@@ -913,9 +912,10 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 	}
 
-	private void preparePage(Page page) {
+	private void preparePage(Page page, Session session) {
 		page.add("viewerName", viewerName);
 		page.add("hideNavigation", !showNav);
+		page.add("userid", session.getUser().getUserId());
 	}
 
 	private class CleanerThread extends Thread {
