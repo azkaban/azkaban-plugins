@@ -21,9 +21,7 @@
                 <a class="brand" href="${context}/reportal">
                     Reportal
                 </a>
-
-                <!--ul class="nav">
-                </ul-->
+                
                 <div class="login pull-right">
                     <p class="navbar-text">
                         Logged in as $userid | <a href="${context}/reportal?logout">Sign out</a>
