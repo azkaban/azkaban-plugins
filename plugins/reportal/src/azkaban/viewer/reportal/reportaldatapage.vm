@@ -250,12 +250,9 @@
 		#end
 					var original = [
 		#foreach($line in $preview)
-			#set($lineNum = $velocityCount - 1)
-			#if($lineNum > 0)
 						[#foreach($item in $line)"$item", #end],
-			#end
 		#end
-						];
+					];
 					</script>
 	#end
 					<script type="text/javascript" src="${context}/reportal/js/raphael/raphael.js"></script>
