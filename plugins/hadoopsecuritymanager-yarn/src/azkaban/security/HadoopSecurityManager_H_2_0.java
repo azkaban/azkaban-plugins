@@ -315,6 +315,12 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 		}
 	}
 
+  @Override
+  public synchronized void prefetchToken(final File tokenFile, final Props props, final Logger logger)
+      throws HadoopSecurityManagerException {
+    throw new HadoopSecurityManagerException("prefetchToken(File, Props, Logger) not implemented");
+  }
+
 	@Override
 	public void cancelTokens(File tokenFile, String userToProxy, Logger logger) throws HadoopSecurityManagerException {
 		// nntoken
