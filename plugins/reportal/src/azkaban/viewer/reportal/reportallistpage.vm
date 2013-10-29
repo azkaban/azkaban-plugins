@@ -1,5 +1,5 @@
 #*
- * Copyright 2012 LinkedIn, Inc
+ * Copyright 2012 LinkedIn Corp.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,25 +64,9 @@
 #if(!$hideNavigation)
 	#parse("azkaban/webapp/servlet/velocity/nav.vm")
 #end
-		<div class="topbar navbar navbar-fixed-top navbar-inverse">
-			<div class="navbar-inner">
-				<div class="container-fluid">
-					<div class="topbar-content">
-						<a class="brand" href="${context}/reportal">
-						Reportal
-						</a>
-						<ul class="nav">
-						</ul>
-						<div class="login pull-right">
-							<p class="navbar-text">
-								<a href="${context}/reportal?logout">Sign out</a>
-							</p>
-						</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+
+#parse("azkaban/viewer/reportal/reportalnavigation.vm")
+
 		<div class="content" style="margin-top: 41px;">
 			<div id="box-error">
 	#if($errorMsg)

@@ -1,4 +1,4 @@
-/*
+#*
  * Copyright 2012 LinkedIn Corp.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -12,15 +12,22 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*#
 
-package azkaban.reportal.util;
-
-public class ReportalUtil {
-	public static IStreamProvider getStreamProvider(String fileSystem) {
-		if (fileSystem.equalsIgnoreCase("hdfs")) {
-			return new StreamProviderHDFS();
-		}
-		return new StreamProviderLocal();
-	}
-}
+<div class="topbar navbar navbar-fixed-top navbar-inverse">
+    <div class="navbar-inner">
+        <div class="container-fluid">
+            <div class="topbar-content">
+                <a class="brand" href="${context}/reportal">
+                    Reportal
+                </a>
+                
+                <div class="login pull-right">
+                    <p class="navbar-text">
+                        Logged in as $userid | <a href="${context}/reportal?logout">Sign out</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

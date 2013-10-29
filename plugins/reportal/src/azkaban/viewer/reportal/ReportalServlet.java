@@ -1,3 +1,19 @@
+/*
+ * Copyright 2012 LinkedIn Corp.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package azkaban.viewer.reportal;
 
 import java.io.File;
@@ -296,12 +312,11 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private void handleListReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportallistpage.vm");
-		preparePage(page);
+		preparePage(page, session);
 
 		List<Project> projects = ReportalHelper.getReportalProjects(server);
 		page.add("ReportalHelper", ReportalHelper.class);
 		page.add("user", session.getUser());
-		page.add("userid", session.getUser().getUserId());
 
 		String startDate = DateTime.now().minusWeeks(1).toString("yyyy-MM-dd");
 		String endDate = DateTime.now().toString("yyyy-MM-dd");
@@ -321,7 +336,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private void handleViewReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, Exception {
 		int id = getIntParam(req, "id");
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaldatapage.vm");
-		preparePage(page);
+		preparePage(page, session);
 
 		ProjectManager projectManager = server.getProjectManager();
 		ExecutorManagerAdapter executorManager = server.getExecutorManager();
@@ -513,7 +528,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		int id = getIntParam(req, "id");
 		ProjectManager projectManager = server.getProjectManager();
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportalrunpage.vm");
-		preparePage(page);
+		preparePage(page, session);
 
 		Project project = projectManager.getProject(id);
 		Reportal reportal = Reportal.loadFromProject(project);
@@ -545,7 +560,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private void handleNewReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
-		preparePage(page);
+		preparePage(page, session);
 
 		page.add("new", true);
 		page.add("project", false);
@@ -576,7 +591,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		ProjectManager projectManager = server.getProjectManager();
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
-		preparePage(page);
+		preparePage(page, session);
 		page.add("ReportalHelper", ReportalHelper.class);
 
 		Project project = projectManager.getProject(id);
@@ -633,7 +648,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		ProjectManager projectManager = server.getProjectManager();
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
-		preparePage(page);
+		preparePage(page, session);
 		page.add("ReportalHelper", ReportalHelper.class);
 
 		boolean isEdit = hasParam(req, "id");
@@ -711,7 +726,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			variableList.add(variable);
 		}
 
-		// Bad title or description
+		// Make sure title isn't empty
 		if (report.title.isEmpty()) {
 			page.add("errorMsg", "Title must not be empty.");
 			page.render();
@@ -720,7 +735,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		// Make sure description isn't empty
 		if (report.description.isEmpty()) {
-			report.description = " ";
+			page.add("errorMsg", "Description must not be empty.");
+			page.render();
+			return;
 		}
 
 		// Empty query check
@@ -895,9 +912,10 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 	}
 
-	private void preparePage(Page page) {
+	private void preparePage(Page page, Session session) {
 		page.add("viewerName", viewerName);
 		page.add("hideNavigation", !showNav);
+		page.add("userid", session.getUser().getUserId());
 	}
 
 	private class CleanerThread extends Thread {

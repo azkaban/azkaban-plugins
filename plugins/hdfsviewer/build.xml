@@ -23,7 +23,6 @@
 	<property environment="env" />
 
 	<path id="main.classpath">
-		
 		<fileset dir="${ext.lib.dir}">
 			<include name="*.jar" />
 		</fileset>
@@ -49,19 +48,26 @@
 		<delete dir="${dist.jar.dir}" />
 		<delete dir="${dist.classes.dir}" />
 		<delete dir="${dist.packages.dir}" />
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+			</fileset>
+		</delete>
 	</target>
 
 	<target name="build" description="Compile main source tree java files">
 	
 		<!-- copy the latest securitymanager jar -->
-        <delete file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar" />
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+			</fileset>
+		</delete>
 		<copy todir="${lib.dir}">
 			<fileset file="${hadoopsecuritymanagerjar}">
 			</fileset>
 		</copy>
 
 		<delete dir="${dist.classes.dir}" />
-        <mkdir dir="${dist.classes.dir}" />
+		<mkdir dir="${dist.classes.dir}" />
 	
 		<!-- copy non-java files to classes dir to load from classpath -->
 		<copy todir="${dist.classes.dir}">
@@ -78,7 +84,6 @@
 	</target>
 	
 	<target name="jars" depends="build" description="Create azkaban jar">
-
 		<mkdir dir="${dist.jar.dir}" />
 		<jar destfile="${azkaban-hdfs-jar}">
 			<fileset dir="${dist.classes.dir}">

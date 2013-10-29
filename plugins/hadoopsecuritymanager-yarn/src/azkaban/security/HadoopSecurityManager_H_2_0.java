@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 LinkedIn, Inc
+ * Copyright 2011 LinkedIn Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -314,6 +314,12 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 			
 		}
 	}
+
+  @Override
+  public synchronized void prefetchToken(final File tokenFile, final Props props, final Logger logger)
+      throws HadoopSecurityManagerException {
+    throw new HadoopSecurityManagerException("prefetchToken(File, Props, Logger) not implemented");
+  }
 
 	@Override
 	public void cancelTokens(File tokenFile, String userToProxy, Logger logger) throws HadoopSecurityManagerException {
