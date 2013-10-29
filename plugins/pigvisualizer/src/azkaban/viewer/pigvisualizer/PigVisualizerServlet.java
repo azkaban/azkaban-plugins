@@ -36,8 +36,13 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 
 	private Props props;
 
+	private String viewerName;
+	private String viewerPath;
+
 	public PigVisualizerServlet(Props props) {
 		this.props = props;
+		viewerName = props.getString("viewer.name");
+		viewerPath = props.getString("viewer.path");
 	}
 
 	@Override
@@ -52,6 +57,12 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		User user = session.getUser();
 		String username = user.getUserId();
 
+		Page page = newPage(req, resp, session, 
+				"azkaban/viewer/pigvisualizer/pigrunpage.vm");
+		page.add("viewerPath", viewerPath);
+		page.add("viewerName", viewerName);
+
+		page.render();
 	}
 
 	@Override
