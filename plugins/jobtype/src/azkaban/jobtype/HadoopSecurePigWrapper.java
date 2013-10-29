@@ -56,16 +56,15 @@ public class HadoopSecurePigWrapper {
 		pigLogFile = new File(System.getenv("PIG_LOG_FILE"));
 
 		if (shouldProxy(prop)) {
-			
 			UserGroupInformation proxyUser = null;
 			String userToProxy = prop.getProperty("user.to.proxy");
 			
-			if(securityEnabled) {
+			if (securityEnabled) {
 				String filelocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
-				if(filelocation == null) {
+				if (filelocation == null) {
 					throw new RuntimeException("hadoop token information not set.");
 				}		
-				if(!new File(filelocation).exists()) {
+				if (!new File(filelocation).exists()) {
 					throw new RuntimeException("hadoop token file doesn't exist.");			
 				}
 				
@@ -94,28 +93,34 @@ public class HadoopSecurePigWrapper {
 			logger.info("Proxied as user " + userToProxy);
 			
 			proxyUser.doAs(
-					new PrivilegedExceptionAction<Void>() {
-						@Override
-						public Void run() throws Exception {
-								runPigJob(args);
-								return null;
-						}
-					});
+				new PrivilegedExceptionAction<Void>() {
+					@Override
+					public Void run() throws Exception {
+							runPigJob(args);
+							return null;
+					}
+				});
 
 		}
 		else {
-			logger.info("Not proxying. ");
+			logger.info("Not proxying.");
 			runPigJob(args);
 		}
 	}
 	
 	public static void runPigJob(String[] args) throws Exception {
-		PigStats stats = PigRunner.run(args, new AzkabanPigListener(new Props()));
+		PigStats stats = null;
+		// XXX Plumb pig.visualizer from Pig jobtype private.properties.
+		if (true) {
+			stats = PigRunner.run(args, new AzkabanPigListener(new Props()));
+		}
+		else {
+			stats = PigRunner.run(args, null);
+		}
 		if (!stats.isSuccessful()) {
 			if (pigLogFile != null) {
 				handleError(pigLogFile);
 			}
-			
 			
 			// see jira ticket PIG-3313. Will remove these when we use pig binary with that patch.
 			///////////////////////
@@ -136,7 +141,6 @@ public class HadoopSecurePigWrapper {
 		else {
 
 		}
-		
 	}
 	
 //	private static void cancelJob() throws Exception {
