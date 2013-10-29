@@ -23,9 +23,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
+
+import azkaban.user.User;
+import azkaban.utils.Props;
 import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
 import azkaban.webapp.servlet.Page;
-import azkaban.webapp.servlet.Session;
+import azkaban.webapp.session.Session;
 
 public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	private static final String PROXY_USER_SESSION_KEY = 
@@ -57,7 +61,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		User user = session.getUser();
 		String username = user.getUserId();
 
-		Page page = newPage(req, resp, session, 
+		Page page = newPage(request, response, session, 
 				"azkaban/viewer/pigvisualizer/pigrunpage.vm");
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);

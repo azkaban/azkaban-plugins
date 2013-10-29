@@ -14,17 +14,12 @@
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="java.src.dir" value="${basedir}/src" />
 
-	<property name="dist.jobtypes.dir" value="${dist.packages.dir}/jobtypes" />
-
-	
 	<property name="azkaban-pigvisualizer-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="azkaban-pigvisualizer-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
 
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
 	
 	<property environment="env" />
-
-	<property name="dist.jobtypes.pigvisualizerpig" location="${dist.jobtypes.dir}/pigvisualizerpig" />
 
 	<property name="pigvisualizer.exlib.dir" value="${basedir}/extlib" />
 
@@ -124,21 +119,8 @@
 		<!-- Copy Azkaban jars and libs-->
 		<copy file="${azkaban-pigvisualizer-jar}" todir="${dist.packages.dir}/viewer/pigvisualizer/lib" />
 		<copy todir="${dist.packages.dir}/viewer/pigvisualizer/lib" >
-			<fileset dir="${lib.dir}/viewer" />
+			<fileset dir="${lib.dir}" />
 		</copy>
-		<copy todir="${dist.packages.dir}/viewer/pigvisualizer/web" ><fileset dir="${java.src.dir}/web" /></copy>
-
-		<copy file="${azkaban-pigvisualizer-jar}" todir="${dist.jobtypes.pigvisualizerpig}/lib" />
-
-		<copy todir="${dist.jobtypes.dir}" >
-			<fileset dir="${lib.dir}">
-				<include name="**/*.*" />
-				<exclude name="*.*" />
-				<exclude name="viewer/*.*" />
-			</fileset>
-		</copy>
-
-		<copy todir="${dist.jobtypes.pigvisualizerpig}" ><fileset dir="${pigvisualizer.exlib.dir}" /></copy>
 
 		<!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
