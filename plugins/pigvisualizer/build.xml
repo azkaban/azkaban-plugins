@@ -104,21 +104,18 @@
 	<target name="package-pigvisualizer" depends="jars" description="Creates a package for the webserver">
 		<delete dir="${dist.packages.dir}" />
 		<mkdir dir="${dist.packages.dir}" />
-		<mkdir dir="${dist.packages.dir}/viewer" />
-		<mkdir dir="${dist.packages.dir}/viewer/pigvisualizer" />
-		<mkdir dir="${dist.packages.dir}/viewer/pigvisualizer/conf" />
-		<mkdir dir="${dist.packages.dir}/viewer/pigvisualizer/lib" />
-		<mkdir dir="${dist.packages.dir}/viewer/pigvisualizer/web" />
-		<mkdir dir="${dist.packages.dir}/jobtypes" />
+		<mkdir dir="${dist.packages.dir}/conf" />
+		<mkdir dir="${dist.packages.dir}/lib" />
+		<mkdir dir="${dist.packages.dir}/extlib" />
 		
 		<!-- Copy conf files and folder structure -->
-		<copy todir="${dist.packages.dir}">
+		<copy todir="${dist.packages.dir}/conf">
 			<fileset dir="${conf.dir}" />
 		</copy>
 		
 		<!-- Copy Azkaban jars and libs-->
-		<copy file="${azkaban-pigvisualizer-jar}" todir="${dist.packages.dir}/viewer/pigvisualizer/lib" />
-		<copy todir="${dist.packages.dir}/viewer/pigvisualizer/lib" >
+		<copy file="${azkaban-pigvisualizer-jar}" todir="${dist.packages.dir}/lib" />
+		<copy todir="${dist.packages.dir}/lib" >
 			<fileset dir="${lib.dir}" />
 		</copy>
 
