@@ -54,19 +54,58 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		super.init(config);
 	}
 
-	@Override
+  private void handleAllExecutions(HttpServletRequest request,
+      HttpServletResponse response, Session session)
+      throws ServletException, IOException {
+
+		Page page = newPage(request, response, session, 
+				"azkaban/viewer/pigvisualizer/allexecutions.vm");
+		page.add("viewerPath", viewerPath);
+		page.add("viewerName", viewerName);
+
+		page.render();
+  }
+
+  private void handleVisualizer(HttpServletRequest request,
+      HttpServletResponse response, Session session, String path)
+      throws ServletException, IOException {
+
+		Page page = newPage(request, response, session, 
+				"azkaban/viewer/pigvisualizer/visualizer.vm");
+		page.add("viewerPath", viewerPath);
+		page.add("viewerName", viewerName);
+
+    String[] parts = path.split("/");
+    if (!parts[1].equals("execution") || parts.length != 4) {
+      page.add("errorMsg", "Invalid parameters.");
+      page.render();
+      return;
+    }
+
+    int execid = Integer.parseInt(parts[2]);
+    String job = parts[3];
+
+    page.add("execid", execid);
+    page.add("job", job);
+
+		page.render();
+  }
+	
+  @Override
 	protected void handleGet(HttpServletRequest request, 
 			HttpServletResponse response, Session session)
 			throws ServletException, IOException {
 		User user = session.getUser();
 		String username = user.getUserId();
 
-		Page page = newPage(request, response, session, 
-				"azkaban/viewer/pigvisualizer/pigrunpage.vm");
-		page.add("viewerPath", viewerPath);
-		page.add("viewerName", viewerName);
+    String prefix = request.getContextPath() + request.getServletPath();
+    String path = request.getRequestURI().substring(prefix.length());
 
-		page.render();
+    if (path.length() == 0) {
+      handleAllExecutions(request, response, session);
+    } else {
+      handleVisualizer(request, response, session, path);
+    }
 	}
 
 	@Override

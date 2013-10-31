@@ -112,10 +112,8 @@
 			</div>
 			
 			<div class="box">
-				<div class="breadcrumbs">
-					#set($size = $paths.size() - 1)
-					<a class="firstCrumb" href="${context}/hdfs/">/</a>#if($size >= 0)#foreach($i in [0 ..$size])<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span>/</span>#end #end
-				</div>
+				ExecId: ${execid}<br>
+        Job: ${job}
 			</div>	
 		
 		</div>
