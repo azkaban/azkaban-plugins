@@ -113,7 +113,8 @@
 			
 			<div class="box">
 				ExecId: ${execid}<br>
-        Job: ${job}
+				Job: ${job}<br>
+				File: ${file}
 			</div>	
 		
 		</div>

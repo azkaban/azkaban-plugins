@@ -131,8 +131,11 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
+		String pigRunStats = "./executions/" + execId + "/pigrunstats.json";
+
     page.add("execid", execId);
     page.add("job", jobId);
+		page.add("file", pigRunStats);
 		page.render();
   }
 	
