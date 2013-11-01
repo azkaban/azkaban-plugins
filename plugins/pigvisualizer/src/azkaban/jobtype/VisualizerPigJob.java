@@ -76,7 +76,7 @@ public class VisualizerPigJob extends JavaProcessJob {
 		PIG_WRAPPER = VisualizerPigWrapper.class.getName();
 //		PIG_JAVA_CLASS = org.apache.pig.Main.class.getName();
 		
-		
+		getJobProps().put("azkaban.job.id", jobid);
 		
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
 		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));

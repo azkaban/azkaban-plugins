@@ -45,8 +45,8 @@ public class VisualizerPigListener implements PigProgressNotificationListener{
 	private Set<String> completedJobIds = new HashSet<String>();
 	
 	public VisualizerPigListener(Props props) {
-		outputDir = props.getString("pig.listener.output.dir", ".");
-		outputFile = outputDir + "/pigrunstats.json";
+		outputDir = props.getString("pig.listener.output.dir", System.getProperty("java.io.tmpdir"));
+		outputFile = outputDir + "/" + props.getInt("azkaban.flow.execid") + "/" + props.getString("azkaban.job.id") + "/" + "pigrunstats.json";
 	}
 	
 	@Override
@@ -99,6 +99,7 @@ public class VisualizerPigListener implements PigProgressNotificationListener{
 			jsonObj.put("dagNodeNameMap", JSONUtil.toJson(dagNodeNameMap));
 			jsonObj.put("dagNodeJobIdMap", JSONUtil.toJson(dagNodeJobIdMap));
 			jsonObj.put("completedJobIds", JSONUtil.toJson(completedJobIds));
+			jsonObj.put("jobs", JSONUtil.toJson(jobs));
 		} catch (Exception e) {
 			logger.error("Failed to convert to json.");
 		}

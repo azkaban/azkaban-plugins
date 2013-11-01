@@ -110,7 +110,7 @@ public class HadoopSecurePigWrapper {
 	}
 	
 	public static void runPigJob(String[] args) throws Exception {
-		PigStats stats = PigRunner.run(args, new AzkabanPigListener(new Props()));
+		PigStats stats = PigRunner.run(args, null);
 		if (!stats.isSuccessful()) {
 			if (pigLogFile != null) {
 				handleError(pigLogFile);

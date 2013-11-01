@@ -40,13 +40,15 @@ public class VisualizerPigWrapper {
 	
 	private static boolean securityEnabled;
 	
+	private static Props props;
+	
 	public static void main(final String[] args) throws Exception {
 		
 		final Logger logger = Logger.getRootLogger();
 
 		String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
-		Properties prop = new Properties();
-		prop.load(new BufferedReader(new FileReader(propsFile)));
+		props = new Props(null, new File(propsFile));
+//		prop.load(new BufferedReader(new FileReader(propsFile)));
 
 		final Configuration conf = new Configuration();
 		
@@ -55,10 +57,10 @@ public class VisualizerPigWrapper {
 		
 		pigLogFile = new File(System.getenv("PIG_LOG_FILE"));
 
-		if (shouldProxy(prop)) {
+		if (shouldProxy(props)) {
 			
 			UserGroupInformation proxyUser = null;
-			String userToProxy = prop.getProperty("user.to.proxy");
+			String userToProxy = props.getString("user.to.proxy");
 			
 			if(securityEnabled) {
 				String filelocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
@@ -110,7 +112,7 @@ public class VisualizerPigWrapper {
 	}
 	
 	public static void runPigJob(String[] args) throws Exception {
-		PigStats stats = PigRunner.run(args, new VisualizerPigListener(new Props()));
+		PigStats stats = PigRunner.run(args, new VisualizerPigListener(props));
 		if (!stats.isSuccessful()) {
 			if (pigLogFile != null) {
 				handleError(pigLogFile);
@@ -161,8 +163,8 @@ public class VisualizerPigWrapper {
 		}
 	}
 	
-	public static boolean shouldProxy(Properties prop) {
-		String shouldProxy = prop.getProperty(HadoopSecurityManager.ENABLE_PROXYING);
+	public static boolean shouldProxy(Props prop) {
+		String shouldProxy = prop.getString(HadoopSecurityManager.ENABLE_PROXYING);
 
 		return shouldProxy != null && shouldProxy.equals("true");
 	}
