@@ -25,8 +25,17 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 
+import azkaban.executor.ExecutableFlow;
+import azkaban.executor.ExecutableNode;
+import azkaban.executor.ExecutorManagerAdapter;
+import azkaban.executor.ExecutorManagerException;
+import azkaban.project.Project;
+import azkaban.project.ProjectManager;
+import azkaban.user.Permission;
+import azkaban.user.Permission.Type;
 import azkaban.user.User;
 import azkaban.utils.Props;
+import azkaban.webapp.AzkabanWebServer;
 import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
 import azkaban.webapp.servlet.Page;
 import azkaban.webapp.session.Session;
@@ -43,6 +52,9 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	private String viewerName;
 	private String viewerPath;
 
+	private ExecutorManagerAdapter executorManager;
+	private ProjectManager projectManager;
+
 	public PigVisualizerServlet(Props props) {
 		this.props = props;
 		viewerName = props.getString("viewer.name");
@@ -52,6 +64,9 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
+		AzkabanWebServer server = (AzkabanWebServer) getApplication();
+		executorManager = server.getExecutorManager();
+		projectManager = server.getProjectManager();
 	}
 
   private void handleAllExecutions(HttpServletRequest request,
@@ -65,6 +80,18 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 
 		page.render();
   }
+
+	private Project getProjectByPermission(int projectId, User user,
+			Permission.Type type) {
+		Project project = projectManager.getProject(projectId);
+		if (project == null) {
+			return null;
+		}
+		if (!hasPermission(project, user, type)) {
+			return null;
+		}
+		return project;
+	}
 
   private void handleVisualizer(HttpServletRequest request,
       HttpServletResponse response, Session session, String path)
@@ -82,12 +109,30 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
       return;
     }
 
-    int execid = Integer.parseInt(parts[2]);
-    String job = parts[3];
+    int execId = Integer.parseInt(parts[2]);
+    String jobId = parts[3];
+		ExecutableFlow exFlow = null;
+	  try {
+			exFlow = executorManager.getExecutableFlow(execId);
+		}
+		catch (ExecutorManagerException e) {
+			page.add("errorMsg", "Error fetching execution '" + execId + "': " + 
+					e.getMessage());
+			page.render();
+			return;
+		}
+		
+		User user = session.getUser();
+		Project project = getProjectByPermission(
+				exFlow.getProjectId(), user, Type.READ);
+		if (project == null) {
+			page.add("errorMsg", "Error getting project " + exFlow.getProjectId());
+			page.render();
+			return;
+		}
 
-    page.add("execid", execid);
-    page.add("job", job);
-
+    page.add("execid", execId);
+    page.add("job", jobId);
 		page.render();
   }
 	
