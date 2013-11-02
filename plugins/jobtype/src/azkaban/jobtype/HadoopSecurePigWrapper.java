@@ -40,14 +40,15 @@ public class HadoopSecurePigWrapper {
 	private static File pigLogFile;
 	
 	private static boolean securityEnabled;
+
+	private static Props props;
 	
 	public static void main(final String[] args) throws Exception {
 		
 		final Logger logger = Logger.getRootLogger();
 
 		String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
-		Properties prop = new Properties();
-		prop.load(new BufferedReader(new FileReader(propsFile)));
+		props = new Props(null, new File(propsFile));
 
 		final Configuration conf = new Configuration();
 		
@@ -56,9 +57,9 @@ public class HadoopSecurePigWrapper {
 		
 		pigLogFile = new File(System.getenv("PIG_LOG_FILE"));
 
-		if (shouldProxy(prop)) {
+		if (shouldProxy(props)) {
 			UserGroupInformation proxyUser = null;
-			String userToProxy = prop.getProperty("user.to.proxy");
+			String userToProxy = props.getString("user.to.proxy");
 			
 			if (securityEnabled) {
 				String filelocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
@@ -70,19 +71,16 @@ public class HadoopSecurePigWrapper {
 				}
 				
 				logger.info("Found token file " + filelocation);
-
 				logger.info("Setting " + HadoopSecurityManager.MAPREDUCE_JOB_CREDENTIALS_BINARY + " to " + filelocation);
+				
 				System.setProperty(HadoopSecurityManager.MAPREDUCE_JOB_CREDENTIALS_BINARY, filelocation);
-				
 				UserGroupInformation loginUser = null;
-
 				loginUser = UserGroupInformation.getLoginUser();
+				
 				logger.info("Current logged in user is " + loginUser.getUserName());
-				
-				
 				logger.info("Creating proxy user.");
+				
 				proxyUser = UserGroupInformation.createProxyUser(userToProxy, loginUser);
-		
 				for (Token<?> token: loginUser.getTokens()) {
 					proxyUser.addToken(token);
 				}
@@ -93,15 +91,13 @@ public class HadoopSecurePigWrapper {
 			
 			logger.info("Proxied as user " + userToProxy);
 			
-			proxyUser.doAs(
-				new PrivilegedExceptionAction<Void>() {
-					@Override
-					public Void run() throws Exception {
-							runPigJob(args);
-							return null;
-					}
-				});
-
+			proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
+				@Override
+				public Void run() throws Exception {
+					runPigJob(args);
+					return null;
+				}
+			});
 		}
 		else {
 			logger.info("Not proxying.");
@@ -112,8 +108,8 @@ public class HadoopSecurePigWrapper {
 	public static void runPigJob(String[] args) throws Exception {
 		PigStats stats = null;
 		// XXX Plumb pig.visualizer from Pig jobtype private.properties.
-		if (true) {
-			stats = PigRunner.run(args, new AzkabanPigListener(new Props()));
+		if (props.getBoolean("pig.listener.visualizer", false) == true) {
+			stats = PigRunner.run(args, new AzkabanPigListener(props));
 		}
 		else {
 			stats = PigRunner.run(args, null);
@@ -166,8 +162,8 @@ public class HadoopSecurePigWrapper {
 		}
 	}
 	
-	public static boolean shouldProxy(Properties prop) {
-		String shouldProxy = prop.getProperty(HadoopSecurityManager.ENABLE_PROXYING);
+	public static boolean shouldProxy(Props prop) {
+		String shouldProxy = prop.getString(HadoopSecurityManager.ENABLE_PROXYING);
 
 		return shouldProxy != null && shouldProxy.equals("true");
 	}
