@@ -67,18 +67,10 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	private ExecutorManagerAdapter executorManager;
 	private ProjectManager projectManager;
 
-	private String jsonDir;
-	private String outputDagNodeNameFile;
-	private String outputDagNodeJobIdFile;
-	private String outputCompletedJobIdsFile;
-
 	public PigVisualizerServlet(Props props) {
 		this.props = props;
 		viewerName = props.getString("viewer.name");
 		viewerPath = props.getString("viewer.path");
-		outputDagNodeNameFile = "/dagnodemap.json";
-		outputDagNodeJobIdFile = "/dagnodejobidmap.json";
-		outputCompletedJobIdsFile = "/completedjobs.json";
 	}
 
 	@Override
@@ -151,10 +143,16 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
-		String jsonDir = "./executions/" + execId;
-		String dagNodeNameMapJson = JSONUtil.readFile(jsonDir + outputDagNodeNameFile);
-		String dagNodeJobIdMapJson = JSONUtil.readFile(jsonDir + outputDagNodeJobIdFile);
-		String completedJobIdsJson = JSONUtil.readFile(jsonDir + outputCompletedJobIdsFile);
+		// TODO: Refactor getting the json files etc.
+
+		String jsonDir = "./executions/" + execId + "/" + jobId;
+		String outputDagNodeNameFile = jsonDir + "/dagnodemap.json";
+		String outputDagNodeJobIdFile = jsonDir + "/dagnodejobidmap.json";
+		String outputCompletedJobIdsFile = jsonDir + "/completedjobs.json";
+		
+		String dagNodeNameMapJson = JSONUtil.readFile(outputDagNodeNameFile);
+		String dagNodeJobIdMapJson = JSONUtil.readFile(outputDagNodeJobIdFile);
+		String completedJobIdsJson = JSONUtil.readFile(outputCompletedJobIdsFile);
 
 		Map<String, String> dagNodeNameMap = JSONUtil.toObject(dagNodeNameMapJson, 
 				new TypeReference<HashMap<String, String>>() { });
