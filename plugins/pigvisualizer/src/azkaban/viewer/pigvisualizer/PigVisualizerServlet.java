@@ -17,6 +17,10 @@
 package azkaban.viewer.pigvisualizer;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -40,6 +44,14 @@ import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
 import azkaban.webapp.servlet.Page;
 import azkaban.webapp.session.Session;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import com.twitter.ambrose.model.DAGNode;
+import com.twitter.ambrose.model.Job;
+import com.twitter.ambrose.model.hadoop.MapReduceJobState;
+import com.twitter.ambrose.pig.PigJob;
+import com.twitter.ambrose.util.JSONUtil;
+
 public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	private static final String PROXY_USER_SESSION_KEY = 
 			"hdfs.browser.proxy.user";
@@ -55,10 +67,18 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	private ExecutorManagerAdapter executorManager;
 	private ProjectManager projectManager;
 
+	private String jsonDir;
+	private String outputDagNodeNameFile;
+	private String outputDagNodeJobIdFile;
+	private String outputCompletedJobIdsFile;
+
 	public PigVisualizerServlet(Props props) {
 		this.props = props;
 		viewerName = props.getString("viewer.name");
 		viewerPath = props.getString("viewer.path");
+		outputDagNodeNameFile = "/dagnodemap.json";
+		outputDagNodeJobIdFile = "/dagnodejobidmap.json";
+		outputCompletedJobIdsFile = "/completedjobs.json";
 	}
 
 	@Override
@@ -131,11 +151,20 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
-		String pigRunStats = "./executions/" + execId + "/pigrunstats.json";
+		String jsonDir = "./executions/" + execId;
+		String dagNodeNameMapJson = JSONUtil.readFile(jsonDir + outputDagNodeNameFile);
+		String dagNodeJobIdMapJson = JSONUtil.readFile(jsonDir + outputDagNodeJobIdFile);
+		String completedJobIdsJson = JSONUtil.readFile(jsonDir + outputCompletedJobIdsFile);
+
+		Map<String, String> dagNodeNameMap = JSONUtil.toObject(dagNodeNameMapJson, 
+				new TypeReference<HashMap<String, String>>() { });
+		Map<String, String> dagNodeJobIdMap = JSONUtil.toObject(dagNodeJobIdMapJson,
+				new TypeReference<HashMap<String, String>>() { });
+		Set<String> completedJobIds = JSONUtil.toObject(completedJobIdsJson,
+				new TypeReference<HashSet<String>>() { });
 
     page.add("execid", execId);
     page.add("job", jobId);
-		page.add("file", pigRunStats);
 		page.render();
   }
 	

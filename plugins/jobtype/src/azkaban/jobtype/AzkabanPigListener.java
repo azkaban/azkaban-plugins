@@ -53,7 +53,9 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 
 	private static Logger logger = Logger.getLogger(AzkabanPigListener.class);
 	private String outputDir = ".";
-	private String outputFile;
+	private String outputDagNodeFile;
+	private String outputDagNodeJobIdFile;
+	private String outputCompletedJobIdsFile;
 	
 	private List<Job> jobs = new ArrayList<Job>();
 	private Map<String, DAGNode<PigJob>> dagNodeNameMap = new HashMap<String, DAGNode<PigJob>>();
@@ -62,7 +64,9 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 	
 	public AzkabanPigListener(Props props) {
 		outputDir = props.getString("pig.listener.output.dir", ".");
-		outputFile = outputDir + "/pigrunstats.json";
+		outputDagNodeFile = outputDir + "/dagnodemap.json";
+		outputDagNodeJobIdFile = outputDir + "/dagnodejobidmap.json";
+		outputCompletedJobIdsFile = outputDir + "/completedjobs.json";
 	}
 	
 	@Override
@@ -110,16 +114,20 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 	}
 
 	private void updateJsonFile() {
-		Map<String, Object> jsonObj = new HashMap<String, Object>();
+		String dagNodeNameMapJson = null;
+		String dagNodeJobIdMapJson = null;
+		String completedJobIdsJson = null;
 		try{
-			jsonObj.put("dagNodeNameMap", JSONUtil.toJson(dagNodeNameMap));
-			jsonObj.put("dagNodeJobIdMap", JSONUtil.toJson(dagNodeJobIdMap));
-			jsonObj.put("completedJobIds", JSONUtil.toJson(completedJobIds));
+			dagNodeNameMapJson = JSONUtil.toJson(dagNodeNameMap);
+			dagNodeJobIdMapJson = JSONUtil.toJson(dagNodeJobIdMap);
+			completedJobIdsJson = JSONUtil.toJson(completedJobIds);
 		} catch (Exception e) {
 			logger.error("Failed to convert to json.");
 		}
 		try {
-			JSONUtil.writeJson(outputFile, jsonObj);
+			JSONUtil.writeJson(outputDagNodeFile, dagNodeNameMapJson);
+			JSONUtil.writeJson(outputDagNodeJobIdFile, dagNodeJobIdMapJson);
+			JSONUtil.writeJson(outputCompletedJobIdsFile, completedJobIdsJson);
 		} catch (IOException e) {
 			logger.error("Couldn't write json file", e);
 		}
