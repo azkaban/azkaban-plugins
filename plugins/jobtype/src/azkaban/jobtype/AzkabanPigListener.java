@@ -127,18 +127,20 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 		String dagNodeNameMapJson = null;
 		String dagNodeJobIdMapJson = null;
 		String completedJobIdsJson = null;
-		try{
-			dagNodeNameMapJson = JSONUtil.toJson(dagNodeNameMap);
-			dagNodeJobIdMapJson = JSONUtil.toJson(dagNodeJobIdMap);
+		try {
+			dagNodeNameMapJson = JSONUtil.toJson(dagNodeNameMap.entrySet());
+			dagNodeJobIdMapJson = JSONUtil.toJson(dagNodeJobIdMap.entrySet());
 			completedJobIdsJson = JSONUtil.toJson(completedJobIds);
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			logger.error("Failed to convert to json.");
 		}
 		try {
 			JSONUtil.writeJson(outputDagNodeFile, dagNodeNameMapJson);
 			JSONUtil.writeJson(outputDagNodeJobIdFile, dagNodeJobIdMapJson);
 			JSONUtil.writeJson(outputCompletedJobIdsFile, completedJobIdsJson);
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			logger.error("Couldn't write json file", e);
 		}
 	}

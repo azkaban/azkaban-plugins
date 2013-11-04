@@ -17,9 +17,9 @@
 package azkaban.viewer.pigvisualizer;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.ServletConfig;
@@ -146,20 +146,20 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		// TODO: Refactor getting the json files etc.
 
 		String jsonDir = "./executions/" + execId + "/" + jobId;
-		String outputDagNodeNameFile = jsonDir + "/dagnodemap.json";
-		String outputDagNodeJobIdFile = jsonDir + "/dagnodejobidmap.json";
-		String outputCompletedJobIdsFile = jsonDir + "/completedjobs.json";
+		String outputDagNodeNameFile = jsonDir + "-dagnodemap.json";
+		String outputDagNodeJobIdFile = jsonDir + "-dagnodejobidmap.json";
+		String outputCompletedJobIdsFile = jsonDir + "-completedjobs.json";
 		
 		String dagNodeNameMapJson = JSONUtil.readFile(outputDagNodeNameFile);
 		String dagNodeJobIdMapJson = JSONUtil.readFile(outputDagNodeJobIdFile);
 		String completedJobIdsJson = JSONUtil.readFile(outputCompletedJobIdsFile);
 
-		Map<String, String> dagNodeNameMap = JSONUtil.toObject(dagNodeNameMapJson, 
-				new TypeReference<HashMap<String, String>>() { });
-		Map<String, String> dagNodeJobIdMap = JSONUtil.toObject(dagNodeJobIdMapJson,
-				new TypeReference<HashMap<String, String>>() { });
+		List<DAGNode<PigJob>> dagNodeNameMap = JSONUtil.toObject(dagNodeNameMapJson, 
+				new TypeReference<List<DAGNode<PigJob>>>() { });
+		List<DAGNode<PigJob>> dagNodeJobIdMap = JSONUtil.toObject(dagNodeJobIdMapJson,
+				new TypeReference<List<DAGNode<PigJob>>>() { });
 		Set<String> completedJobIds = JSONUtil.toObject(completedJobIdsJson,
-				new TypeReference<HashSet<String>>() { });
+				new TypeReference<Set<String>>() { });
 
     page.add("execid", execId);
     page.add("job", jobId);
