@@ -20,7 +20,11 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.log4j.Logger;
 import org.apache.pig.PigRunner;
+import org.apache.pig.tools.pigstats.PigProgressNotificationListener;
 import org.apache.pig.tools.pigstats.PigStats;
+
+import com.twitter.ambrose.pig.AmbrosePigProgressNotificationListener;
+import com.twitter.ambrose.service.impl.InMemoryStatsService;
 
 import azkaban.jobExecutor.ProcessJob;
 import azkaban.security.commons.HadoopSecurityManager;
@@ -42,6 +46,8 @@ public class VisualizerPigWrapper {
 	
 	private static Props props;
 	
+	private static PigProgressNotificationListener listener = null;
+	
 	public static void main(final String[] args) throws Exception {
 		
 		final Logger logger = Logger.getRootLogger();
@@ -56,6 +62,19 @@ public class VisualizerPigWrapper {
 		securityEnabled = UserGroupInformation.isSecurityEnabled();
 		
 		pigLogFile = new File(System.getenv("PIG_LOG_FILE"));
+		
+		if(props.getBoolean("visualize.with.ambrose", false)) {
+			File outDir = new File(props.getString("pig.listener.output.dir", System.getProperty("java.io.tmpdir")) + "/" + props.getInt("azkaban.flow.execid") + "/" + props.getString("azkaban.job.id"));
+			outDir.mkdirs();
+			logger.info("Visualization output to " + outDir.getAbsolutePath());
+			File dagFile = File.createTempFile("dag", ".json", outDir);
+			File eventsFile = File.createTempFile("events" , ".json", outDir);
+			System.getProperties().setProperty("ambrose.write.dag.file", dagFile.getAbsolutePath());
+			System.getProperties().setProperty("ambrose.write.events.file", eventsFile.getAbsolutePath());
+			listener = new AmbrosePigProgressNotificationListener(new InMemoryStatsService());
+		} else if (props.getBoolean("visualize.with.azkaban", false)) {
+			listener = new VisualizerPigListener(props);
+		}
 
 		if (shouldProxy(props)) {
 			
@@ -112,7 +131,7 @@ public class VisualizerPigWrapper {
 	}
 	
 	public static void runPigJob(String[] args) throws Exception {
-		PigStats stats = PigRunner.run(args, new VisualizerPigListener(props));
+		PigStats stats = PigRunner.run(args, listener);
 		if (!stats.isSuccessful()) {
 			if (pigLogFile != null) {
 				handleError(pigLogFile);
