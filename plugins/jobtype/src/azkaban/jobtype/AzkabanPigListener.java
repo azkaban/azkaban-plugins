@@ -45,9 +45,10 @@ import com.twitter.ambrose.model.DAGNode;
 import com.twitter.ambrose.model.Job;
 import com.twitter.ambrose.model.hadoop.MapReduceJobState;
 import com.twitter.ambrose.pig.PigJob;
-import com.twitter.ambrose.util.JSONUtil;
 
 import azkaban.utils.Props;
+import azkaban.jobtype.javautils.JSONUtils;
+import azkaban.jobtype.visualizer.DAGNodeMapper;
 
 public class AzkabanPigListener implements PigProgressNotificationListener{
 
@@ -127,18 +128,19 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 		String dagNodeNameMapJson = null;
 		String dagNodeJobIdMapJson = null;
 		String completedJobIdsJson = null;
+		DAGNodeMapper mapper = new DAGNodeMapper();
 		try {
-			dagNodeNameMapJson = JSONUtil.toJson(dagNodeNameMap.entrySet());
-			dagNodeJobIdMapJson = JSONUtil.toJson(dagNodeJobIdMap.entrySet());
-			completedJobIdsJson = JSONUtil.toJson(completedJobIds);
+			dagNodeNameMapJson = JSONUtil.toJson(mapper, dagNodeNameMap.entrySet());
+			dagNodeJobIdMapJson = JSONUtil.toJson(mapper, dagNodeJobIdMap.entrySet());
+			completedJobIdsJson = JSONUtil.toJson(mapper, completedJobIds);
 		}
 		catch (Exception e) {
 			logger.error("Failed to convert to json.");
 		}
 		try {
-			JSONUtil.writeJson(outputDagNodeFile, dagNodeNameMapJson);
-			JSONUtil.writeJson(outputDagNodeJobIdFile, dagNodeJobIdMapJson);
-			JSONUtil.writeJson(outputCompletedJobIdsFile, completedJobIdsJson);
+			JSONUtil.writeJson(mapper, outputDagNodeFile, dagNodeNameMapJson);
+			JSONUtil.writeJson(mapper, outputDagNodeJobIdFile, dagNodeJobIdMapJson);
+			JSONUtil.writeJson(mapper, outputCompletedJobIdsFile, completedJobIdsJson);
 		}
 		catch (IOException e) {
 			logger.error("Couldn't write json file", e);
