@@ -72,11 +72,11 @@ public class HadoopPigJob extends JavaProcessJob {
 	
 	public HadoopPigJob(String jobid, Props sysProps, Props jobProps, Logger log) throws IOException {
 		super(jobid, sysProps, jobProps, log);
-
+		
 		HADOOP_SECURE_PIG_WRAPPER = HadoopSecurePigWrapper.class.getName();
 //		PIG_JAVA_CLASS = org.apache.pig.Main.class.getName();
 		
-		
+		getJobProps().put("azkaban.job.id", jobid);
 		
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
 		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
