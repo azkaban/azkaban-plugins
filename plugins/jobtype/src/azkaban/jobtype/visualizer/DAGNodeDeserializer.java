@@ -16,10 +16,13 @@
 
 package azkaban.jobtype.visualizer;
 
+import java.io.IOException;
+
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 
 import com.twitter.ambrose.model.DAGNode;
 
@@ -29,16 +32,17 @@ public class DAGNodeDeserializer extends StdScalarDeserializer<DAGNode> {
 	}
 
 	@Override
-	public DAGNode<T> deserialize(JsonParser parser,
+	public DAGNode deserialize(JsonParser parser,
 			DeserializationContext context)
 			throws IOException, JsonProcessingException {
 
 		if (parser.getCurrentToken() == JsonToken.VALUE_STRING) {
 			String value = parser.getText();
-			DAGNode<T> node = DAGNode.fromJson(value);
+			DAGNode node = DAGNode.fromJson(value);
 			return node;
 		} else {
 			throw context.mappingException(getValueClass(), 
 					parser.getCurrentToken());
+		}
 	}
 }

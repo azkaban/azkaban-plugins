@@ -16,7 +16,9 @@
 
 package azkaban.jobtype.visualizer;
 
-import com.fasterxml.jackson.databind.module.simpleModule;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+
+import com.twitter.ambrose.model.DAGNode;
 
 public class DAGNodeModule extends SimpleModule {
 	private static final long serialVersionUID = 1L;

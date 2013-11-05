@@ -43,6 +43,8 @@ import azkaban.webapp.AzkabanWebServer;
 import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
 import azkaban.webapp.servlet.Page;
 import azkaban.webapp.session.Session;
+import azakban.jobtype.javautils.JSONUtil;
+import azkaban.jobtype.visualizer.DAGNodeMapper;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -50,7 +52,6 @@ import com.twitter.ambrose.model.DAGNode;
 import com.twitter.ambrose.model.Job;
 import com.twitter.ambrose.model.hadoop.MapReduceJobState;
 import com.twitter.ambrose.pig.PigJob;
-import com.twitter.ambrose.util.JSONUtil;
 
 public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	private static final String PROXY_USER_SESSION_KEY = 
@@ -149,17 +150,22 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		String outputDagNodeNameFile = jsonDir + "-dagnodemap.json";
 		String outputDagNodeJobIdFile = jsonDir + "-dagnodejobidmap.json";
 		String outputCompletedJobIdsFile = jsonDir + "-completedjobs.json";
-		
-		String dagNodeNameMapJson = JSONUtil.readFile(outputDagNodeNameFile);
-		String dagNodeJobIdMapJson = JSONUtil.readFile(outputDagNodeJobIdFile);
-		String completedJobIdsJson = JSONUtil.readFile(outputCompletedJobIdsFile);
 
-		List<DAGNode<PigJob>> dagNodeNameMap = JSONUtil.toObject(dagNodeNameMapJson, 
-				new TypeReference<List<DAGNode<PigJob>>>() { });
-		List<DAGNode<PigJob>> dagNodeJobIdMap = JSONUtil.toObject(dagNodeJobIdMapJson,
-				new TypeReference<List<DAGNode<PigJob>>>() { });
-		Set<String> completedJobIds = JSONUtil.toObject(completedJobIdsJson,
-				new TypeReference<Set<String>>() { });
+		DAGNodeMapper mapper = new DAGNodeMapper();
+		
+		String dagNodeNameMapJson = JSONUtil.readFile(mapper, 
+				outputDagNodeNameFile);
+		String dagNodeJobIdMapJson = JSONUtil.readFile(mapper, 
+				outputDagNodeJobIdFile);
+		String completedJobIdsJson = JSONUtil.readFile(mapper, 
+				outputCompletedJobIdsFile);
+
+		List<DAGNode<PigJob>> dagNodeNameMap = JSONUtil.toObject(mapper, 
+				dagNodeNameMapJson, new TypeReference<List<DAGNode<PigJob>>>() { });
+		List<DAGNode<PigJob>> dagNodeJobIdMap = JSONUtil.toObject(mapper, 
+				dagNodeJobIdMapJson, new TypeReference<List<DAGNode<PigJob>>>() { });
+		Set<String> completedJobIds = JSONUtil.toObject(mapper,
+				completedJobIdsJson, new TypeReference<Set<String>>() { });
 
     page.add("execid", execId);
     page.add("job", jobId);

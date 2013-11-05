@@ -47,7 +47,7 @@ import com.twitter.ambrose.model.hadoop.MapReduceJobState;
 import com.twitter.ambrose.pig.PigJob;
 
 import azkaban.utils.Props;
-import azkaban.jobtype.javautils.JSONUtils;
+import azkaban.jobtype.javautils.JSONUtil;
 import azkaban.jobtype.visualizer.DAGNodeMapper;
 
 public class AzkabanPigListener implements PigProgressNotificationListener{
