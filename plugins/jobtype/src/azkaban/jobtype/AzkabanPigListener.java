@@ -46,9 +46,8 @@ import com.twitter.ambrose.model.Job;
 import com.twitter.ambrose.model.hadoop.MapReduceJobState;
 import com.twitter.ambrose.pig.PigJob;
 
+import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
-import azkaban.jobtype.javautils.JSONUtil;
-import azkaban.jobtype.visualizer.DAGNodeMapper;
 
 public class AzkabanPigListener implements PigProgressNotificationListener{
 
@@ -81,7 +80,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 		//logger.info("The plan is " + plan.toString());
 		
 		// borrowed from ambrose
-		Map<OperatorKey, MapReduceOper>  planKeys = plan.getKeys();
+		Map<OperatorKey, MapReduceOper> planKeys = plan.getKeys();
 
 		for (Map.Entry<OperatorKey, MapReduceOper> entry : planKeys.entrySet()) {
 			String nodeName = entry.getKey().toString();
@@ -90,10 +89,8 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 			String[] features = toArray(
 					ScriptState.get().getPigFeature(entry.getValue()).trim());
 
-			DAGNode<PigJob> node = new DAGNode<PigJob>(
-					nodeName, new PigJob(aliases, features));
-
-			this.dagNodeNameMap.put(node.getName(), node);
+			JobDagNode node = new JobDagNode(nodeName, aliases, features);
+			this.dagNodeNameMap.put(node.getJobId(), node);
 
 			// This shows how we can get the basic info about all nameless jobs 
 			// before any execute. We can traverse the plan to build a DAG of this 
@@ -105,19 +102,17 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 
 		// second pass connects the edges
 		for (Map.Entry<OperatorKey, MapReduceOper> entry : planKeys.entrySet()) {
-			DAGNode<PigJob> node = this.dagNodeNameMap.get(entry.getKey().toString());
-			List<DAGNode<? extends Job>> successorNodeList = 
-					new ArrayList<DAGNode<? extends Job>>();
+			JobDagNode node = this.dagNodeNameMap.get(entry.getKey().toString());
+			List<JobDagNode> successorNodeList = 
+					new ArrayList<JobDagNode>();
 			List<MapReduceOper> successors = plan.getSuccessors(entry.getValue());
-
 			if (successors != null) {
 				for (MapReduceOper successor : successors) {
-					DAGNode<? extends Job> successorNode =
+					JobDagNode successorNode =
 							this.dagNodeNameMap.get(successor.getOperatorKey().toString());
 					successorNodeList.add(successorNode);
 				}
 			}
-
 			node.setSuccessors(successorNodeList);
 		}
 
@@ -128,7 +123,6 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 		String dagNodeNameMapJson = null;
 		String dagNodeJobIdMapJson = null;
 		String completedJobIdsJson = null;
-		DAGNodeMapper mapper = new DAGNodeMapper();
 		try {
 			dagNodeNameMapJson = JSONUtil.toJson(mapper, dagNodeNameMap.entrySet());
 			dagNodeJobIdMapJson = JSONUtil.toJson(mapper, dagNodeJobIdMap.entrySet());
@@ -155,7 +149,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 			return;
 		}
 
-		DAGNode<PigJob> node = dagNodeJobIdMap.get(stats.getJobId());
+		JobDagNode node = dagNodeJobIdMap.get(stats.getJobId());
 		if (node == null) {
 			logger.warn("Unrecognized jobId reported for failed job: " + 
 					stats.getJobId());
@@ -168,7 +162,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 
 	@Override
 	public void jobFinishedNotification(String scriptId, JobStats stats) {
-		DAGNode<PigJob> node = dagNodeJobIdMap.get(stats.getJobId());
+		JobDagNode node = dagNodeJobIdMap.get(stats.getJobId());
 		if (node == null) {
 			logger.warn("Unrecognized jobId reported for succeeded job: " + 
 					stats.getJobId());
@@ -186,13 +180,13 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 				", jobGraph:\n" + jobGraph);
 
 		// For each job in the graph, check if the stats for a job with this name 
-		// is found. If so, look up it's scope and bind the jobId to the DAGNode 
+		// is found. If so, look up it's scope and bind the jobId to the JobDagNode
 		// with the same scope.
 		for (JobStats jobStats : jobGraph) {
 			if (assignedJobId.equals(jobStats.getJobId())) {
 				logger.info("jobStartedNotification - scope " + jobStats.getName() + 
 						" is jobId " + assignedJobId);
-				DAGNode<PigJob> node = this.dagNodeNameMap.get(jobStats.getName());
+				JobDagNode node = this.dagNodeNameMap.get(jobStats.getName());
 				
 				if (node == null) {
 					logger.warn("jobStartedNotification - unrecognized operator name " +
@@ -239,9 +233,12 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 	@Override
 	public void progressUpdatedNotification(String scriptId, int progress) {
 		// Then for each running job, we report the job progress.
-		for (DAGNode<PigJob> node : dagNodeNameMap.values()) {
+		for (JobDagNode node : dagNodeNameMap.values()) {
 			// Don't send progress events for unstarted jobs.
-			if (node.getJob().getId() == null) { continue; }
+			if (node.getJobId() == null) {
+				continue;
+			}
+			// XXX
 			addMapReduceJobState(node.getJob());
 
 			// Only push job progress events for a completed job once.
