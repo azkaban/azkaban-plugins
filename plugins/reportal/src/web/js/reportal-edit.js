@@ -177,7 +177,7 @@ $(document).ready(function () {
 
 	//Load starting queries
 	for (var i = 0; i < startQueries.length; i++) {
-		startQueries[i].script = $("#script" + startQueries[i].num).html();
+		startQueries[i].script = $("#script" + startQueries[i].num).text();
 	};
 
 	function addInitialQueries() {
