@@ -27,6 +27,7 @@ import java.util.Set;
 import org.apache.pig.tools.pigstats.JobStats;
 
 public class JobDagNode {
+	private String name;
 	private String jobId;
 	private String[] aliases;
 	private String[] features;
@@ -41,10 +42,18 @@ public class JobDagNode {
 	public JobDagNode() {
 	}
 
-	public JobDagNode(String jobId, String[] aliases, String[] features) {
-		this.jobId = jobId;
+	public JobDagNode(String name, String[] aliases, String[] features) {
+		this.name = name;
 		this.aliases = aliases;
 		this.features = features;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public String getJobId() {
@@ -120,6 +129,7 @@ public class JobDagNode {
 
 	public Object toJson() {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();
+		jsonObj.put("name", name);
 		jsonObj.put("jobId", jobId);
 		jsonObj.put("aliases", Arrays.asList(aliases));
 		jsonObj.put("features", Arrays.asList(features));
@@ -136,11 +146,12 @@ public class JobDagNode {
 	@SuppressWarnings("unchecked")
 	public static JobDagNode fromJson(Object obj) throws Exception {
 		Map<String, Object> jsonObj = (HashMap<String, Object>) obj;
-		String jobId = (String) jsonObj.get("jobId");
+		String name = (String) jsonObj.get("name");
 		List<String> aliases = (ArrayList<String>) jsonObj.get("aliases");
 		List<String> features = (ArrayList<String>) jsonObj.get("features");
-		JobDagNode node = new JobDagNode(jobId, (String[]) aliases.toArray(), 
+		JobDagNode node = new JobDagNode(name, (String[]) aliases.toArray(), 
 				(String[]) features.toArray());
+		node.setJobId((String) jsonObj.get("jobId"));
 		node.setParents((ArrayList<String>) jsonObj.get("parents"));
 		node.setSuccessors((ArrayList<String>) jsonObj.get("successors"));
 		if (jsonObj.containsKey("jobConfiguration")) {

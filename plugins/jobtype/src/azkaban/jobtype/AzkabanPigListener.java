@@ -87,13 +87,13 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 					ScriptState.get().getPigFeature(entry.getValue()).trim());
 
 			JobDagNode node = new JobDagNode(nodeName, aliases, features);
-			this.dagNodeNameMap.put(node.getJobId(), node);
+			this.dagNodeNameMap.put(node.getName(), node);
 
 			// This shows how we can get the basic info about all nameless jobs 
 			// before any execute. We can traverse the plan to build a DAG of this 
 			// info.
 			logger.info("initialPlanNotification: aliases: " + 
-					StringUtils.join(aliases, ",") + ", name: " + node.getJobId() + 
+					StringUtils.join(aliases, ",") + ", name: " + node.getName() + 
 					", features: " + StringUtils.join(features, ","));
 		}
 
@@ -106,7 +106,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 				for (MapReduceOper successor : successors) {
 					JobDagNode successorNode =
 							this.dagNodeNameMap.get(successor.getOperatorKey().toString());
-					successorNodeList.add(successorNode.getJobId());
+					successorNodeList.add(successorNode.getName());
 				}
 			}
 			node.setSuccessors(successorNodeList);
@@ -199,7 +199,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 				} else {
 					node.setJobId(assignedJobId);
 					addMapReduceJobState(node);
-					dagNodeJobIdMap.put(node.getJobId(), node);
+					dagNodeJobIdMap.put(node.getName(), node);
 					updateJsonFile();
 				}
 			}
