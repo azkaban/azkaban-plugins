@@ -16,13 +16,27 @@
 
 package azkaban.viewer.pigvisualizer;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import org.apache.pig.tools.pigstats.JobStats;
+
 public class JobDagNode {
 	private String jobId;
 	private String[] aliases;
 	private String[] features;
 
-	private Set<String> parents = new HashSet<String>();
-	private Set<String> successors = new HashSet<String>();
+	private List<String> parents = new ArrayList<String>();
+	private List<String> successors = new ArrayList<String>();
+	
+	private MapReduceJobState mapReduceJobState;
+	private Properties jobConfiguration;
+	private JobStats jobStats;
 
 	public JobDagNode() {
 	}
@@ -37,6 +51,10 @@ public class JobDagNode {
 		return jobId;
 	}
 
+	public void setJobId(String jobId) {
+		this.jobId = jobId;
+	}
+
 	public String[] getAliases() {
 		return aliases;
 	}
@@ -46,10 +64,87 @@ public class JobDagNode {
 	}
 
 	public void addParent(JobDagNode parent) {
-		parents.put(parent);
+		parents.add(parent.getJobId());
+	}
+
+	public void setParents(List<String> parents) {
+		this.parents = parents;
 	}
 
 	public void addSuccessor(JobDagNode successor) {
-		successors.put(successor);
+		successors.add(successor.getJobId());
+	}
+
+	public void setSuccessors(List<String> successors) {
+		this.successors = successors;
+	}
+
+	public void setMapReduceJobState(MapReduceJobState mapReduceJobState) {
+		this.mapReduceJobState = mapReduceJobState;
+	}
+
+	public MapReduceJobState getMapReduceJobState() {
+		return mapReduceJobState;
+	}
+
+	public void setJobConfiguration(Properties jobConfiguration) {
+		this.jobConfiguration = jobConfiguration;
+	}
+
+	public void setJobStats(JobStats jobStats) {
+		this.jobStats = jobStats;
+	}
+
+	public JobStats getJobStats() {
+		return jobStats;
+	}
+
+	// XXX Refactor this!
+	private static Object propertiesToJson(Properties properties) {
+		Map<String, String> jsonObj = new HashMap<String, String>();
+		Set<String> keys = properties.stringPropertyNames();
+		for (String key : keys) {
+			jsonObj.put(key, properties.getProperty(key));
+		}
+		return jsonObj;
+	}
+
+	private static Properties propertiesFromJson(Object obj) {
+		Map<String, String> jsonObj = (HashMap<String, String>) obj;
+		Properties properties = new Properties();
+		for (Map.Entry<String, String> entry : jsonObj.entrySet()) {
+			properties.setProperty(entry.getKey(), entry.getValue());
+		}
+		return properties;
+	}
+
+	public Object toJson() {
+		Map<String, Object> jsonObj = new HashMap<String, Object>();
+		jsonObj.put("jobId", jobId);
+		jsonObj.put("aliases", Arrays.asList(aliases));
+		jsonObj.put("features", Arrays.asList(features));
+		jsonObj.put("parents", parents);
+		jsonObj.put("successors", successors);
+		jsonObj.put("jobConfiguration", propertiesToJson(jobConfiguration));
+		//jsonObj.put("mapReduceJobState", mapReduceJobState.toJson());
+		//jsonObj.put("jobStats", jobStats.toJson());
+		return jsonObj;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static JobDagNode fromJson(Object obj) throws Exception {
+		Map<String, Object> jsonObj = (HashMap<String, Object>) obj;
+		String jobId = (String) jsonObj.get("jobId");
+		List<String> aliases = (ArrayList<String>) jsonObj.get("aliases");
+		List<String> features = (ArrayList<String>) jsonObj.get("features");
+		JobDagNode node = new JobDagNode(jobId, (String[]) aliases.toArray(), 
+				(String[]) features.toArray());
+		node.setParents((ArrayList<String>) jsonObj.get("parents"));
+		node.setSuccessors((ArrayList<String>) jsonObj.get("successors"));
+		node.setJobConfiguration(
+				propertiesFromJson(jsonObj.get("jobConfiguration")));
+		// XXX mapReduceJobState
+		// XXX jobStats
+		return node;
 	}
 }

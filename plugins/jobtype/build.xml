@@ -16,6 +16,7 @@
 	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
 	<property file="build.properties" />
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-2.2.jar"/>
+	<property name="pigvisualizerjar" value="${base.dir}/dist/pigvisualizer/jars/azkaban-pigvisualizer-1.0.jar"/>
 
 	<property environment="env" />
 
@@ -57,7 +58,15 @@
 			<fileset file="${hadoopsecuritymanagerjar}">
 			</fileset>
 		</copy>
-
+		<!-- copy the latest pigvisualizer jar -->
+		<delete>
+			<fileset file="${lib.dir}/azkaban-pigvisualizer-*.jar">
+			</fileset>
+		</delete>
+		<copy todir="${lib.dir}">
+			<fileset file="${pigvisualizerjar}">
+			</fileset>
+		</copy>
 
 		<delete dir="${dist.classes.dir}" />
 		<mkdir dir="${dist.classes.dir}" />

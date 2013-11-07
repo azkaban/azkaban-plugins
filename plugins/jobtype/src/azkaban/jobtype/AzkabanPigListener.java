@@ -17,6 +17,7 @@
 package azkaban.jobtype;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,13 +42,10 @@ import org.apache.pig.tools.pigstats.PigProgressNotificationListener;
 import org.apache.pig.tools.pigstats.PigStats;
 import org.apache.pig.tools.pigstats.ScriptState;
 
-import com.twitter.ambrose.model.DAGNode;
-import com.twitter.ambrose.model.Job;
-import com.twitter.ambrose.model.hadoop.MapReduceJobState;
-import com.twitter.ambrose.pig.PigJob;
-
 import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
+import azkaban.viewer.pigvisualizer.JobDagNode;
+import azkaban.viewer.pigvisualizer.MapReduceJobState;
 
 public class AzkabanPigListener implements PigProgressNotificationListener{
 
@@ -57,11 +55,10 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 	private String outputDagNodeJobIdFile;
 	private String outputCompletedJobIdsFile;
 	
-	private List<Job> jobs = new ArrayList<Job>();
-	private Map<String, DAGNode<PigJob>> dagNodeNameMap = 
-			new HashMap<String, DAGNode<PigJob>>();
-	private Map<String, DAGNode<PigJob>> dagNodeJobIdMap = 
-			new HashMap<String, DAGNode<PigJob>>();
+	private Map<String, JobDagNode> dagNodeNameMap = 
+			new HashMap<String, JobDagNode>();
+	private Map<String, JobDagNode> dagNodeJobIdMap = 
+			new HashMap<String, JobDagNode>();
 	private Set<String> completedJobIds = new HashSet<String>();
 	
 	public AzkabanPigListener(Props props) {
@@ -96,45 +93,53 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 			// before any execute. We can traverse the plan to build a DAG of this 
 			// info.
 			logger.info("initialPlanNotification: aliases: " + 
-					StringUtils.join(aliases, ",") + ", name: " + node.getName() + 
+					StringUtils.join(aliases, ",") + ", name: " + node.getJobId() + 
 					", features: " + StringUtils.join(features, ","));
 		}
 
 		// second pass connects the edges
 		for (Map.Entry<OperatorKey, MapReduceOper> entry : planKeys.entrySet()) {
 			JobDagNode node = this.dagNodeNameMap.get(entry.getKey().toString());
-			List<JobDagNode> successorNodeList = 
-					new ArrayList<JobDagNode>();
+			List<String> successorNodeList = new ArrayList<String>();
 			List<MapReduceOper> successors = plan.getSuccessors(entry.getValue());
 			if (successors != null) {
 				for (MapReduceOper successor : successors) {
 					JobDagNode successorNode =
 							this.dagNodeNameMap.get(successor.getOperatorKey().toString());
-					successorNodeList.add(successorNode);
+					successorNodeList.add(successorNode.getJobId());
 				}
 			}
 			node.setSuccessors(successorNodeList);
 		}
-
 		updateJsonFile();
 	}
 
+	private Object dagNodeListToJson(Map<String, JobDagNode> nodes) {
+		Map<String, Object> jsonObj = new HashMap<String, Object>();
+		for (Map.Entry<String, JobDagNode> entry : nodes.entrySet()) {
+			jsonObj.put(entry.getKey(), entry.getValue().toJson());
+		}
+		return jsonObj;
+	}
+
 	private void updateJsonFile() {
-		String dagNodeNameMapJson = null;
-		String dagNodeJobIdMapJson = null;
-		String completedJobIdsJson = null;
+		File dagNodeNameMapFile = null;
+		File dagNodeJobIdMapFile = null;
+		File completedJobIdsFile = null;
 		try {
-			dagNodeNameMapJson = JSONUtil.toJson(mapper, dagNodeNameMap.entrySet());
-			dagNodeJobIdMapJson = JSONUtil.toJson(mapper, dagNodeJobIdMap.entrySet());
-			completedJobIdsJson = JSONUtil.toJson(mapper, completedJobIds);
+			dagNodeNameMapFile = new File(outputDagNodeFile);
+			dagNodeJobIdMapFile = new File(outputDagNodeJobIdFile);
+			completedJobIdsFile = new File(outputCompletedJobIdsFile);
 		}
 		catch (Exception e) {
 			logger.error("Failed to convert to json.");
 		}
 		try {
-			JSONUtil.writeJson(mapper, outputDagNodeFile, dagNodeNameMapJson);
-			JSONUtil.writeJson(mapper, outputDagNodeJobIdFile, dagNodeJobIdMapJson);
-			JSONUtil.writeJson(mapper, outputCompletedJobIdsFile, completedJobIdsJson);
+			JSONUtils.toJSON(dagNodeListToJson(dagNodeNameMap), 
+					dagNodeNameMapFile);
+			JSONUtils.toJSON(dagNodeListToJson(dagNodeJobIdMap),
+					dagNodeJobIdMapFile);
+			JSONUtils.toJSON(completedJobIds, completedJobIdsFile);
 		}
 		catch (IOException e) {
 			logger.error("Couldn't write json file", e);
@@ -156,7 +161,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 			return;
 		}
 
-		addCompletedJobStats(node.getJob(), stats);
+		addCompletedJobStats(node, stats);
 		updateJsonFile();
 	}
 
@@ -168,7 +173,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 					stats.getJobId());
 			return;
 		}
-		addCompletedJobStats(node.getJob(), stats);
+		addCompletedJobStats(node, stats);
 		updateJsonFile();
 	}
 
@@ -192,9 +197,9 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 					logger.warn("jobStartedNotification - unrecognized operator name " +
 							"found (" + jobStats.getName() + ") for jobId " + assignedJobId);
 				} else {
-					node.getJob().setId(assignedJobId);
-					addMapReduceJobState(node.getJob());
-					dagNodeJobIdMap.put(node.getJob().getId(), node);
+					node.setJobId(assignedJobId);
+					addMapReduceJobState(node);
+					dagNodeJobIdMap.put(node.getJobId(), node);
 					updateJsonFile();
 				}
 			}
@@ -238,14 +243,12 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 			if (node.getJobId() == null) {
 				continue;
 			}
-			// XXX
-			addMapReduceJobState(node.getJob());
-
+			addMapReduceJobState(node);
 			// Only push job progress events for a completed job once.
-			if (node.getJob().getMapReduceJobState() != null && 
-					!completedJobIds.contains(node.getJob().getId())) {
-				if (node.getJob().getMapReduceJobState().isComplete()) {
-					completedJobIds.add(node.getJob().getId());
+			if (node.getMapReduceJobState() != null && 
+					!completedJobIds.contains(node.getJobId())) {
+				if (node.getMapReduceJobState().isComplete()) {
+					completedJobIds.add(node.getJobId());
 				}
 			}
 		}
@@ -257,20 +260,20 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 	}
 
 	@SuppressWarnings("deprecation")
-	private void addMapReduceJobState(PigJob pigJob) {
+	private void addMapReduceJobState(JobDagNode node) {
 		JobClient jobClient = PigStats.get().getJobClient();
 		
 		try {
-			RunningJob runningJob = jobClient.getJob(pigJob.getId());
+			RunningJob runningJob = jobClient.getJob(node.getJobId());
 			if (runningJob == null) {
-				logger.warn("Couldn't find job status for jobId=" + pigJob.getId());
+				logger.warn("Couldn't find job status for jobId=" + node.getJobId());
 				return;
 			}
 
 			JobID jobID = runningJob.getID();
 			TaskReport[] mapTaskReport = jobClient.getMapTaskReports(jobID);
 			TaskReport[] reduceTaskReport = jobClient.getReduceTaskReports(jobID);
-			pigJob.setMapReduceJobState(
+			node.setMapReduceJobState(
 					new MapReduceJobState(runningJob, mapTaskReport, reduceTaskReport));
 
 			Properties jobConfProperties = new Properties();
@@ -278,14 +281,14 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 			for (Map.Entry<String, String> entry : conf) {
 				jobConfProperties.setProperty(entry.getKey(), entry.getValue());
 			}
-			pigJob.setConfiguration(jobConfProperties);
+			node.setJobConfiguration(jobConfProperties);
 
 		} catch (IOException e) {
 			logger.error("Error getting job info.", e);
 		}
 	}
 	
-	private void addCompletedJobStats(PigJob job, JobStats stats) {
+	private void addCompletedJobStats(JobDagNode node, JobStats stats) {
 		// Put the job conf into a Properties object so we can serialize them.
 		Properties jobConfProperties = new Properties();
 		if (stats.getInputs() != null && stats.getInputs().size() > 0 &&
@@ -295,10 +298,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 				jobConfProperties.setProperty(entry.getKey(), entry.getValue());
 			}
 		}
-		job.setJobStats(stats);
-		job.setConfiguration(jobConfProperties);
-		jobs.add(job);
+		node.setJobStats(stats);
+		node.setJobConfiguration(jobConfProperties);
 	}
-	
 }
-
