@@ -64,7 +64,19 @@ $(document).ready(function () {
 				if(selectType.indexOf("Pig") != -1) {
 					mime = "text/x-pig";
 				}
-				textArea.codeMirror = CodeMirror.fromTextArea(textArea, {lineNumbers: false, theme: "solarized dark", mode: mime});
+				textArea.codeMirror = CodeMirror.fromTextArea(textArea, {
+					lineNumbers: true,
+					lineWrapping: true,
+					theme: "solarized dark",
+					mode: mime
+				});
+
+				// Enable resizing of the CodeMirror code editor.
+				$('.CodeMirror').resizable({
+			        resize: function() {
+			            textArea.codeMirror.setSize($(this).width(), $(this).height());
+			        }
+			    });
 			}
 		});
 
