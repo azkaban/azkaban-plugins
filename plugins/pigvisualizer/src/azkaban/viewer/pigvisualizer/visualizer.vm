@@ -107,7 +107,7 @@
 
 			<div id="all-hdfsbrowser-content">
 				<div class="section-hd">
-					<h2>Pig Job Visualizer</h2>
+					<h2>${job} Pig Job Visualization</h2>
 				</div>
 			</div>
 			

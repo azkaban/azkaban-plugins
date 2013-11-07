@@ -18,10 +18,10 @@ package azkaban.viewer.pigvisualizer;
 
 import java.io.IOException;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -99,6 +99,43 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		return project;
 	}
 
+	private Map<String, JobDagNode> getDagNodeJobNameMap(String jsonDir) 
+			throws Exception {
+		String outputDagNodeNameFile = jsonDir + "-dagnodemap.json";
+		File dagNodeNameMapFile = new File(outputDagNodeNameFile);
+		Map<String, Object> jsonObj = (HashMap<String, Object>) 
+			  JSONUtils.parseJSONFromFile(dagNodeNameMapFile);
+		Map<String, JobDagNode> dagNodeJobNameMap =
+				new HashMap<String, JobDagNode>();
+		for (Map.Entry<String, Object> entry : jsonObj.entrySet()) {
+			dagNodeJobNameMap.put(entry.getKey(),
+					JobDagNode.fromJson(entry.getValue()));
+		}
+		return dagNodeJobNameMap;
+	}
+
+	private Map<String, JobDagNode> getDagNodeJobIdMap(String jsonDir) 
+			throws Exception {
+		String outputDagNodeJobIdFile = jsonDir + "-dagnodejobidmap.json";
+		File dagNodeJobIdMapFile = new File(outputDagNodeJobIdFile);
+		Map<String, Object> jsonObj = (HashMap<String, Object>)
+				JSONUtils.parseJSONFromFile(dagNodeJobIdMapFile);
+		Map<String, JobDagNode> dagNodeJobIdMap = 
+			new HashMap<String, JobDagNode>(); 
+		for (Map.Entry<String, Object> entry : jsonObj.entrySet()) {
+			dagNodeJobIdMap.put(entry.getKey(), 
+					JobDagNode.fromJson(entry.getValue()));
+		}
+		return dagNodeJobIdMap;
+	}
+
+	private List<String> getCompletedJobIds(String jsonDir) 
+			throws Exception {
+		String outputCompletedJobIdsFile = jsonDir + "-completedjobs.json";
+		File completedJobIdsFile = new File(outputCompletedJobIdsFile);
+		return (ArrayList<String>) JSONUtils.parseJSONFromFile(completedJobIdsFile);
+	}
+
   private void handleVisualizer(HttpServletRequest request,
       HttpServletResponse response, Session session, String path)
       throws ServletException, IOException {
@@ -140,23 +177,19 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		// TODO: Refactor getting the json files etc.
 
 		String jsonDir = "./executions/" + execId + "/" + jobId;
-		String outputDagNodeNameFile = jsonDir + "-dagnodemap.json";
-		String outputDagNodeJobIdFile = jsonDir + "-dagnodejobidmap.json";
-		String outputCompletedJobIdsFile = jsonDir + "-completedjobs.json";
-
-		File dagNodeNameMapFile = new File(outputDagNodeNameFile);
-		File dagNodeJobIdMapFile = new File(outputDagNodeJobIdFile);
-		File completedJobIdsFile = new File(outputCompletedJobIdsFile);
-
-		@SuppressWarnings("unchecked")
-		Map<String, Object> dagNodeNameMap = (HashMap<String, Object>) 
-			  JSONUtils.parseJSONFromFile(dagNodeNameMapFile);
-		@SuppressWarnings("unchecked")
-		Map<String, Object> dagNodeJobIdMap = (HashMap<String, Object>)
-				JSONUtils.parseJSONFromFile(dagNodeJobIdMapFile);
-		@SuppressWarnings("unchecked")
-		Set<String> completedJobIds = (HashSet<String>)
-				JSONUtils.parseJSONFromFile(completedJobIdsFile);
+		Map<String, JobDagNode> dagNodeNameMap = null;
+		Map<String, JobDagNode> dagNodeJobIdMap = null;
+		List<String> completedJobIds = null;
+		try {
+			dagNodeNameMap = getDagNodeJobNameMap(jsonDir);
+			dagNodeJobIdMap = getDagNodeJobIdMap(jsonDir);
+			completedJobIds = getCompletedJobIds(jsonDir);
+		}
+		catch (Exception e) {
+			page.add("errorMsag", "Error parsing JSON files " + e.getMessage());
+			page.render();
+			return;
+		}
 
     page.add("execid", execId);
     page.add("job", jobId);
