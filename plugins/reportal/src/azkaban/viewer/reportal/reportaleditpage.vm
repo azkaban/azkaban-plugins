@@ -140,7 +140,7 @@
 										</select>
 									</div>
 								</div>
-								<div id="time-field" class="">
+								<div id="time-field" class="" #if($scheduleInterval=="h") style='display:none;'#end>
 									<div class="control-group">
 										<label for="schedule-time" class="control-label">Hour</label>
 										<div class="controls">

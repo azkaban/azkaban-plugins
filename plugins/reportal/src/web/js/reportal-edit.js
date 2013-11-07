@@ -24,6 +24,8 @@ $(document).ready(function () {
 	var variableTemplate = $("#variable-template").find("li").eq(0);
 	var scheduleFields = $("#schedule-fields");
 	var variableFields = $("#variable-fields");
+	var scheduleInterval = $("#schedule-interval");
+	var hourTimeField = $("#time-field");
 
 	function updateQueryListOrder(){
 		var elements = queryListObject.find("li");
@@ -220,4 +222,14 @@ $(document).ready(function () {
 		updateVariableListOrder();
 	}
 	addInitialVariables();
+
+	scheduleInterval.on('change',function(event){
+		var interval = $(this).val();
+
+		if (interval === 'h') { // hourly
+			hourTimeField.hide();
+		} else {
+			hourTimeField.show();
+		}
+	});
 });
