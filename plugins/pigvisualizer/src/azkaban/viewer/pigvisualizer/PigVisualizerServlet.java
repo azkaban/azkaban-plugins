@@ -136,6 +136,18 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		return (ArrayList<String>) JSONUtils.parseJSONFromFile(completedJobIdsFile);
 	}
 
+	private void checkPermissions(Session session, int execId) 
+			throws ExecutorManagerException, IllegalArgumentException {
+		ExecutableFlow exFlow = exFlow = executorManager.getExecutableFlow(execId);
+		User user = session.getUser();
+		Project project = getProjectByPermission(
+				exFlow.getProjectId(), user, Type.READ);
+		if (project == null) {
+			throw new IllegalArgumentException("Error getting project " + 
+					exFlow.getProjectId());
+		}
+	}
+
   private void handleVisualizer(HttpServletRequest request,
       HttpServletResponse response, Session session, String path)
       throws ServletException, IOException {
@@ -151,30 +163,18 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
       page.render();
       return;
     }
-
     int execId = Integer.parseInt(parts[2]);
     String jobId = parts[3];
-		ExecutableFlow exFlow = null;
-	  try {
-			exFlow = executorManager.getExecutableFlow(execId);
+
+		try {
+			checkPermissions(session, execId);
 		}
-		catch (ExecutorManagerException e) {
-			page.add("errorMsg", "Error fetching execution '" + execId + "': " + 
+		catch (Exception e) {
+			page.add("errorMsg", "Permissions error getting flow: " + 
 					e.getMessage());
 			page.render();
 			return;
 		}
-		
-		User user = session.getUser();
-		Project project = getProjectByPermission(
-				exFlow.getProjectId(), user, Type.READ);
-		if (project == null) {
-			page.add("errorMsg", "Error getting project " + exFlow.getProjectId());
-			page.render();
-			return;
-		}
-
-		// TODO: Refactor getting the json files etc.
 
 		String jsonDir = "./executions/" + execId + "/" + jobId;
 		Map<String, JobDagNode> dagNodeNameMap = null;
