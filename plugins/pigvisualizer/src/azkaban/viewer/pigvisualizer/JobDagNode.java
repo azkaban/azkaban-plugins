@@ -125,7 +125,9 @@ public class JobDagNode {
 		jsonObj.put("features", Arrays.asList(features));
 		jsonObj.put("parents", parents);
 		jsonObj.put("successors", successors);
-		jsonObj.put("jobConfiguration", propertiesToJson(jobConfiguration));
+		if (jobConfiguration != null) {
+			jsonObj.put("jobConfiguration", propertiesToJson(jobConfiguration));
+		}
 		//jsonObj.put("mapReduceJobState", mapReduceJobState.toJson());
 		//jsonObj.put("jobStats", jobStats.toJson());
 		return jsonObj;
@@ -141,8 +143,10 @@ public class JobDagNode {
 				(String[]) features.toArray());
 		node.setParents((ArrayList<String>) jsonObj.get("parents"));
 		node.setSuccessors((ArrayList<String>) jsonObj.get("successors"));
-		node.setJobConfiguration(
-				propertiesFromJson(jsonObj.get("jobConfiguration")));
+		if (jsonObj.containsKey("jobConfiguration")) {
+			node.setJobConfiguration(
+					propertiesFromJson(jsonObj.get("jobConfiguration")));
+		}
 		// XXX mapReduceJobState
 		// XXX jobStats
 		return node;
