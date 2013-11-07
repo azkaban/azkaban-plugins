@@ -23,6 +23,7 @@
 		<script type="text/javascript" src="${context}/js/underscore-1.4.4-min.js"></script>
 		<script type="text/javascript" src="${context}/js/namespace.js"></script>
 		<script type="text/javascript" src="${context}/js/backbone-0.9.10-min.js"></script>
+		<script type="text/javascript" src="${context}/js/d3.v3.min.js"></script>
 		<script type="text/javascript" src="${context}/js/jquery.simplemodal-1.4.4.js"></script>
 
 		<script type="text/javascript" src="${context}/js/azkaban.nav.js"></script>
@@ -107,16 +108,125 @@
 
 			<div id="all-hdfsbrowser-content">
 				<div class="section-hd">
-					<h2>${job} Pig Job Visualization</h2>
+					<h2>${jobid} Pig Job Visualization</h2>
 				</div>
 			</div>
 			
 			<div class="box">
-				ExecId: ${execid}<br>
-				Job: ${job}<br>
-				File: ${file}
+				<div id="graph_container"></div>
 			</div>	
 		
 		</div>
+    
+		<script type="text/javascript">
+        var w = 900;
+        var h = 500;
+        var matrixSize = 8;
+
+        function generateDagAdjacencyList(_size){
+            // Random lower diagonal matrix
+            var dagMatrix = d3.range(_size).map(function(d, i){
+                return d3.range(_size).map(function(d2, i2) {
+                  return (i-i2 > 0) ? +(Math.random() > 0.5): 0;
+                });
+            });
+            dagObjectList = [
+							${dag}
+            ];
+            var sortedList = dagObjectList.sort(function(a, b){return b.link.length - a.link.length;});
+            return sortedList;
+        }
+
+        var randomDag = generateDagAdjacencyList(matrixSize);
+
+        var svg = d3.select('#graph_container')
+            .append('svg')
+            .attr({width: w, height: h, xmlns: 'http://www.w3.org/2000/svg'});
+        var rootGroup = svg.append('g')
+                .classed('root', true)
+                .attr({transform: 'translate(0,'+h/2+')'});
+
+        var markerW = 8;
+        var marker = svg.append('defs')
+            .append('marker')
+            .attr({
+                id: 'Triangle',
+                refX: markerW*2,
+                refY: markerW,
+                markerUnits: 'strokeWidth',
+                markerWidth: markerW + markerW,
+                markerHeight: markerW * 2 + markerW,
+                orient: 'auto'
+            })
+            .append('path')
+            .attr({d: 'M 0 0 '+markerW*2+' '+markerW+' 0 '+markerW*2+' '+markerW/2+' '+markerW});
+
+        var labelW = 60;
+        var labelH = 20;
+        var gap = 20;
+
+        var linkGenerator = d3.svg.line()
+            .x(function(d, i){return d[0];})
+            .y(function(d, i){return d[1];})
+            .interpolate('cardinal')
+            .tension(0);
+
+        var linkPath = function(d, i, pI){
+                var neighbourIdx = randomDag.map(function(d, i){return d.node;}).indexOf(d);
+                var anchor1 = pI*(labelW+gap)+labelW/2;
+                var anchor2 = neighbourIdx*(labelW+gap)+labelW/2;
+                var isBackLink = (anchor2-anchor1) < 0;
+                var deltaAnchors = (anchor2-anchor1)/2;
+                var path = linkGenerator([[anchor1, (isBackLink) ? 0 : labelH],
+                    [anchor1+deltaAnchors, deltaAnchors*0.8],
+                    [anchor2, (isBackLink) ? 0 : labelH]]);
+                return path;
+            };
+        var links = rootGroup.selectAll('g.links')
+            .data(randomDag, function(d, i){return d.idx;})
+            .enter().append('g')
+            .classed('links', true);
+        links.selectAll('path.arrow')
+            .data(function(d, i){return d.link;})
+            .enter().append('path')
+            .classed('arrow', true)
+            .attr({
+                d: linkPath,
+                'marker-end': 'url(#Triangle)'
+            })
+            .style({fill: 'none', stroke: 'black', opacity: 1, 'stroke-width': 1});
+
+        links.selectAll('path.broad')
+                .data(function(d, i){return d.link;})
+                .enter().append('path')
+                .classed('broad', true)
+                .attr({d: linkPath})
+                .style({fill: 'none', stroke: 'orangered', opacity: 0.3, 'stroke-width': 20, 'stroke-linecap': 'round'});
+
+        var labels = rootGroup.selectAll('g.labels')
+                .data(randomDag, function(d, i){return d.node;})
+                .enter().append('g')
+                .classed('labels', true)
+                .attr({transform: function(d, i){return 'translate('+(i*(labelW+gap))+',0)';}});
+        labels.append('rect')
+                .classed('label-frame', true)
+                .attr({
+                    x: 0,
+                    y: 0,
+                    width: labelW,
+                    height: labelH,
+                })
+                .style({fill: 'skyblue', stroke: 'grey'});
+        labels.append('text')
+                .classed('label-text', true)
+                .attr({
+                    x: 4,
+                    y: 0,
+                    dy: '1em'
+                })
+                .style({})
+                .text(function(d, i){return d.nodeName;});
+
+    </script>
 	</body>
 </html>

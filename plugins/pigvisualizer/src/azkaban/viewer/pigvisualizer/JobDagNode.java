@@ -80,12 +80,20 @@ public class JobDagNode {
 		this.parents = parents;
 	}
 
+	public List<String> getParents() {
+		return parents;
+	}
+
 	public void addSuccessor(JobDagNode successor) {
 		successors.add(successor.getJobId());
 	}
 
 	public void setSuccessors(List<String> successors) {
 		this.successors = successors;
+	}
+
+	public List<String> getSuccessors() {
+		return successors;
 	}
 
 	public void setMapReduceJobState(MapReduceJobState mapReduceJobState) {
@@ -149,8 +157,10 @@ public class JobDagNode {
 		String name = (String) jsonObj.get("name");
 		List<String> aliases = (ArrayList<String>) jsonObj.get("aliases");
 		List<String> features = (ArrayList<String>) jsonObj.get("features");
-		JobDagNode node = new JobDagNode(name, (String[]) aliases.toArray(), 
-				(String[]) features.toArray());
+		JobDagNode node = new JobDagNode();
+		node.setName(name);
+		/*JobDagNode node = new JobDagNode(name, (String[]) aliases.toArray(), 
+				(String[]) features.toArray());*/
 		node.setJobId((String) jsonObj.get("jobId"));
 		node.setParents((ArrayList<String>) jsonObj.get("parents"));
 		node.setSuccessors((ArrayList<String>) jsonObj.get("successors"));

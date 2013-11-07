@@ -65,8 +65,6 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 		outputDir = props.getString("pig.listener.output.dir", ".");
 		String jobId = props.getString("azkaban.job.id");
 		outputDagNodeFile = outputDir + "/" + jobId + "-dagnodemap.json";
-		outputDagNodeJobIdFile = outputDir + "/" + jobId + "-dagnodejobidmap.json";
-		outputCompletedJobIdsFile = outputDir + "/" + jobId + "-completedjobs.json";
 	}
 	
 	@Override
@@ -124,12 +122,8 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 
 	private void updateJsonFile() {
 		File dagNodeNameMapFile = null;
-		File dagNodeJobIdMapFile = null;
-		File completedJobIdsFile = null;
 		try {
 			dagNodeNameMapFile = new File(outputDagNodeFile);
-			dagNodeJobIdMapFile = new File(outputDagNodeJobIdFile);
-			completedJobIdsFile = new File(outputCompletedJobIdsFile);
 		}
 		catch (Exception e) {
 			logger.error("Failed to convert to json.");
@@ -137,9 +131,6 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 		try {
 			JSONUtils.toJSON(dagNodeListToJson(dagNodeNameMap), 
 					dagNodeNameMapFile);
-			JSONUtils.toJSON(dagNodeListToJson(dagNodeJobIdMap),
-					dagNodeJobIdMapFile);
-			JSONUtils.toJSON(completedJobIds, completedJobIdsFile);
 		}
 		catch (IOException e) {
 			logger.error("Couldn't write json file", e);
@@ -199,7 +190,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 				} else {
 					node.setJobId(assignedJobId);
 					addMapReduceJobState(node);
-					dagNodeJobIdMap.put(node.getName(), node);
+					dagNodeJobIdMap.put(node.getJobId(), node);
 					updateJsonFile();
 				}
 			}

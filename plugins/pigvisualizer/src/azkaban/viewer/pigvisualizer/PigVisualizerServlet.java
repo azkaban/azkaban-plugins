@@ -114,28 +114,6 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		return dagNodeJobNameMap;
 	}
 
-	private Map<String, JobDagNode> getDagNodeJobIdMap(String jsonDir) 
-			throws Exception {
-		String outputDagNodeJobIdFile = jsonDir + "-dagnodejobidmap.json";
-		File dagNodeJobIdMapFile = new File(outputDagNodeJobIdFile);
-		Map<String, Object> jsonObj = (HashMap<String, Object>)
-				JSONUtils.parseJSONFromFile(dagNodeJobIdMapFile);
-		Map<String, JobDagNode> dagNodeJobIdMap = 
-			new HashMap<String, JobDagNode>(); 
-		for (Map.Entry<String, Object> entry : jsonObj.entrySet()) {
-			dagNodeJobIdMap.put(entry.getKey(), 
-					JobDagNode.fromJson(entry.getValue()));
-		}
-		return dagNodeJobIdMap;
-	}
-
-	private List<String> getCompletedJobIds(String jsonDir) 
-			throws Exception {
-		String outputCompletedJobIdsFile = jsonDir + "-completedjobs.json";
-		File completedJobIdsFile = new File(outputCompletedJobIdsFile);
-		return (ArrayList<String>) JSONUtils.parseJSONFromFile(completedJobIdsFile);
-	}
-
 	private void checkPermissions(Session session, int execId) 
 			throws ExecutorManagerException, IllegalArgumentException {
 		ExecutableFlow exFlow = exFlow = executorManager.getExecutableFlow(execId);
@@ -146,6 +124,31 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			throw new IllegalArgumentException("Error getting project " + 
 					exFlow.getProjectId());
 		}
+	}
+
+	private String getDagJson(Map<String, JobDagNode> dagNodeNameMap) {
+		StringBuilder stringBuilder = new StringBuilder();
+		Map<String, Integer> nodeNameIndexMap = new HashMap<String, Integer>();
+		int i = 0;
+		for (Map.Entry<String, JobDagNode> entry : dagNodeNameMap.entrySet()) {
+			JobDagNode node = entry.getValue();
+			nodeNameIndexMap.put(node.getJobId(), i);
+			++i;
+		}
+
+		for (Map.Entry<String, JobDagNode> entry : dagNodeNameMap.entrySet()) {
+			JobDagNode node = entry.getValue();
+			int index = nodeNameIndexMap.get(node.getJobId());
+			stringBuilder.append("{\"node\": " + String.valueOf(index) + ", ");
+			stringBuilder.append("\"nodeName\": \"" + node.getJobId() + "\", ");
+			stringBuilder.append("\"link\": [");
+			for (String successor : node.getSuccessors()) {
+				int s = nodeNameIndexMap.get(successor);
+				stringBuilder.append(String.valueOf(s) + ", ");
+			}
+			stringBuilder.append("], \"idx\": " + String.valueOf(index) + "},\n");
+		}
+		return stringBuilder.toString();
 	}
 
   private void handleVisualizer(HttpServletRequest request,
@@ -163,6 +166,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
       page.render();
       return;
     }
+
     int execId = Integer.parseInt(parts[2]);
     String jobId = parts[3];
 
@@ -178,21 +182,18 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 
 		String jsonDir = "./executions/" + execId + "/" + jobId;
 		Map<String, JobDagNode> dagNodeNameMap = null;
-		Map<String, JobDagNode> dagNodeJobIdMap = null;
-		List<String> completedJobIds = null;
 		try {
 			dagNodeNameMap = getDagNodeJobNameMap(jsonDir);
-			dagNodeJobIdMap = getDagNodeJobIdMap(jsonDir);
-			completedJobIds = getCompletedJobIds(jsonDir);
 		}
 		catch (Exception e) {
-			page.add("errorMsag", "Error parsing JSON files " + e.getMessage());
+			e.printStackTrace();
+			page.add("errorMsg", "Error parsing JSON file: " + e.getMessage());
 			page.render();
 			return;
 		}
 
-    page.add("execid", execId);
-    page.add("job", jobId);
+    page.add("jobid", jobId);
+		page.add("dag", getDagJson(dagNodeNameMap));
 		page.render();
   }
 	
