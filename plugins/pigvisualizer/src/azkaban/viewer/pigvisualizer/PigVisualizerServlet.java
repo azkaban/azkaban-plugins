@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -132,17 +133,19 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		int i = 0;
 		for (Map.Entry<String, JobDagNode> entry : dagNodeNameMap.entrySet()) {
 			JobDagNode node = entry.getValue();
-			nodeNameIndexMap.put(node.getJobId(), i);
+			nodeNameIndexMap.put(node.getName(), i);
 			++i;
 		}
 
 		for (Map.Entry<String, JobDagNode> entry : dagNodeNameMap.entrySet()) {
 			JobDagNode node = entry.getValue();
-			int index = nodeNameIndexMap.get(node.getJobId());
+			int index = nodeNameIndexMap.get(node.getName());
 			stringBuilder.append("{\"node\": " + String.valueOf(index) + ", ");
 			stringBuilder.append("\"nodeName\": \"" + node.getJobId() + "\", ");
 			stringBuilder.append("\"link\": [");
-			for (String successor : node.getSuccessors()) {
+			List<String> successors = node.getSuccessors();
+			for (Iterator<String> it = successors.iterator(); it.hasNext(); ) {
+				String successor = it.next();
 				int s = nodeNameIndexMap.get(successor);
 				stringBuilder.append(String.valueOf(s) + ", ");
 			}
