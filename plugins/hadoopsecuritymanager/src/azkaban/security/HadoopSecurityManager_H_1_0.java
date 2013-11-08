@@ -507,7 +507,7 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 	}
 	
 	/*
-	 * Gets hadoop tokens for a user to run mapred/pig jobs on a secured cluster
+	 * Gets hadoop tokens for a user to run mapred/hive jobs on a secured cluster
 	 */
 	@Override
 	public synchronized void prefetchToken(final File tokenFile, final Props props, final Logger logger) throws HadoopSecurityManagerException {

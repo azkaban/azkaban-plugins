@@ -58,8 +58,7 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 		injectAllVariables(prop.getString(PIG_SCRIPT));
 
 		String[] args = getParams();
-
-
+		
 		System.out.println("Reportal Pig: Running pig script");
 		PrintStream oldOutputStream = System.out;
 
@@ -74,7 +73,7 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 
 		printStream.close();
 
-		// convert pig output to csv and write it do disk
+		// convert pig output to csv and write it to disk
 		System.out.println("Reportal Pig: Converting output");
 		InputStream tempInputStream = new BufferedInputStream(new FileInputStream(tempOutputFile));
 		Scanner rowScanner = new Scanner(tempInputStream);
@@ -162,19 +161,32 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 			}
 		}
 		
+		// Run in local mode if filesystem is set to local.
 		if (prop.getString("reportal.output.filesystem", "local").equals("local")) {
 			list.add("-x");
 			list.add("local");
+		}
+		
+		// Register any additional Pig jars
+		String additionalPigJars = prop.getString(PIG_ADDITIONAL_JARS, null);
+		if (additionalPigJars != null && additionalPigJars.length() > 0) {
+			list.add("-Dpig.additional.jars=" + additionalPigJars);
+		}
+		
+		// Add UDF import list
+		String udfImportList = prop.getString(UDF_IMPORT_LIST, null);
+		if (udfImportList != null && udfImportList.length() > 0) {
+			list.add("-Dudf.import.list=" + udfImportList);
 		}
 
 		list.add(prop.getString(PIG_SCRIPT));
 		return list.toArray(new String[0]);
 	}
-
+	
 	protected Map<String, String> getPigParams() {
 		return prop.getMapByPrefix(PIG_PARAM_PREFIX);
 	}
-
+	
 	protected String getScript() {
 		return prop.getString(PIG_SCRIPT);
 	}
@@ -211,4 +223,6 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 	public static final String PIG_PARAM_PREFIX = "param.";
 	public static final String PIG_PARAM_FILES = "paramfile";
 	public static final String PIG_SCRIPT = "reportal.pig.script";
+	public static final String UDF_IMPORT_LIST = "udf.import.list";
+	public static final String PIG_ADDITIONAL_JARS = "pig.additional.jars";
 }
