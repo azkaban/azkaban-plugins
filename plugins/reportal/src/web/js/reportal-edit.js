@@ -17,22 +17,27 @@
 $(document).ready(function () {
 
 	var queryListObject = $("#query-list");
-	var queryNumberObject = $("#queryNumber");
-	var queryTemplate = $("#query-template").find("li").eq(0);
-	var variableListObject = $("#variable-list");
-	var variableNumberObject = $("#variableNumber");
-	var variableTemplate = $("#variable-template").find("li").eq(0);
-	var scheduleFields = $("#schedule-fields");
-	var variableFields = $("#variable-fields");
+	queryListObject.numberObject = $("#queryNumber");
+	queryListObject.template = $("#query-template").find("li").eq(0);
+	queryListObject.type = "query";
 
-	function updateQueryListOrder(){
-		var elements = queryListObject.find("li");
+	var variableListObject = $("#variable-list");
+	variableListObject.numberObject = $("#variableNumber");
+	variableListObject.template = $("#variable-template").find("li").eq(0);
+	variableListObject.type = "variable";
+
+	var scheduleFields = $("#schedule-fields");
+	var scheduleInterval = $("#schedule-interval");
+	var hourTimeField = $("#time-field");
+
+	function updateListOrder(listObject){
+		var elements = listObject.find("li");
 		var first = 0;
 		var last = elements.length - 1;
 
 		$.each(elements, function(index){
 			var element = $(this);
-			element.attr("id", "query" + index);
+			element.attr("id", listObject.type + index);
 			$.each(element.find("input").add(element.find("select")).add(element.find("textarea")), function(i){setNameFromTemplate($(this), index);} );
 			var btnBumpUp = element.find('.bump-up');
 			var btnBumpDown = element.find('.bump-down');
@@ -58,31 +63,29 @@ $(document).ready(function () {
 			}
 
 			var textArea = element.find("textarea")[0];
-			if(!textArea.codeMirror) {
+			if(textArea && !textArea.codeMirror) {
 				var selectType = element.find("select").val();
 				var mime = "text/x-sql";
 				if(selectType.indexOf("Pig") != -1) {
 					mime = "text/x-pig";
 				}
-				textArea.codeMirror = CodeMirror.fromTextArea(textArea, {lineNumbers: false, theme: "solarized dark", mode: mime});
+				textArea.codeMirror = CodeMirror.fromTextArea(textArea, {
+					lineNumbers: true,
+					lineWrapping: true,
+					theme: "solarized dark",
+					mode: mime
+				});
+
+				// Enable resizing of the CodeMirror code editor.
+				$('.CodeMirror').resizable({
+			        resize: function() {
+			            textArea.codeMirror.setSize($(this).width(), $(this).height());
+			        }
+			    });
 			}
 		});
 
-		queryNumberObject.attr("value", elements.length);
-	}
-
-	function updateVariableListOrder(){
-		var elements = variableListObject.find("li");
-		var first = 0;
-		var last = elements.length - 1;
-
-		$.each(elements, function(index){
-			var element = $(this);
-			element.attr("id", "query" + index);
-			$.each(element.find("input"), function(i){setNameFromTemplate($(this), index);} );
-		});
-
-		variableNumberObject.attr("value", elements.length);
+		listObject.numberObject.attr("value", elements.length);
 	}
 
 	function setNameFromTemplate(element, index){
@@ -91,24 +94,23 @@ $(document).ready(function () {
 		}
 	}
 
-	function schedulOptionChangeHandler(item) {
+	function scheduleOptionChangeHandler(item) {
 		if(item.checked) {
-			variableFields.hide();
 			scheduleFields.show();
 		} else {
-			variableFields.show();
 			scheduleFields.hide();
 		}
 	};
 
-	queryListObject.delegate(".delete", "click", function (event) {
+	function handleDelete(event, listObject) {
 		event.preventDefault();
 		if (confirm("Are you sure you want to delete this?")) {
 			$(this).closest('li').remove();
-			updateQueryListOrder();
+			updateListOrder(listObject);
 		} 
-	})
-	.delegate('.bump-up', 'click', function (event) {
+	}
+
+	function handleBumpUp(event, listObject) {
 		event.preventDefault();
 		var element = $(this).closest('li');
 		var siblings = element.siblings();
@@ -120,9 +122,10 @@ $(document).ready(function () {
 		}
 
 		$(element).insertBefore(siblings[newIndex]).hide().fadeIn();
-		updateQueryListOrder();
-	})
-	.delegate('.bump-down', 'click', function (event) {
+		updateListOrder(listObject);
+	}
+
+	function handleBumpDown(event, listObject) {
 		event.preventDefault();
 		var element = $(this).closest('li');
 		var siblings = element.siblings();
@@ -134,7 +137,17 @@ $(document).ready(function () {
 		}
 
 		$(element).insertAfter(siblings[index]).hide().fadeIn();
-		updateQueryListOrder();
+		updateListOrder(listObject);
+	}
+
+	queryListObject.delegate(".delete", "click", function (event) {
+		handleDelete.call(this, event, queryListObject);
+	})
+	.delegate('.bump-up', 'click', function (event) {
+		handleBumpUp.call(this, event, queryListObject);
+	})
+	.delegate('.bump-down', 'click', function (event) {
+		handleBumpDown.call(this, event, queryListObject);
 	})
 	.delegate("select", "change", function (event) {
 		var element = $(this).closest('li');
@@ -151,38 +164,43 @@ $(document).ready(function () {
 	});
 
 	variableListObject.delegate(".delete", "click", function (event) {
-		event.preventDefault();
-		if (confirm("Are you sure you want to delete this?")) {
-			$(this).closest('li').remove();
-			updateVariableListOrder();
-		} 
+		handleDelete.call(this, event, variableListObject);
+	})
+	.delegate('.bump-up', 'click', function (event) {
+		handleBumpUp.call(this, event, variableListObject);
+	})
+	.delegate('.bump-down', 'click', function (event) {
+		handleBumpDown.call(this, event, variableListObject);
 	});
 
+	function handleAdd(listObject) {
+		listObject.template.clone().appendTo(listObject);
+		updateListOrder(listObject);
+	}
+
 	$("#buttonAddQuery").click(function(){
-		queryTemplate.clone().appendTo(queryListObject);
-		updateQueryListOrder();
+		handleAdd(queryListObject);
 	});
 
 	$("#buttonAddVariable").click(function(){
-		variableTemplate.clone().appendTo(variableListObject);
-		updateVariableListOrder();
+		handleAdd(variableListObject);
 	});
 
 	$("#schedule-options").change(function (event) {
-		schedulOptionChangeHandler(this);
+		scheduleOptionChangeHandler(this);
 	});
 
 	//Load schedule options
-	schedulOptionChangeHandler($("#schedule-options")[0]);
+	scheduleOptionChangeHandler($("#schedule-options")[0]);
 
 	//Load starting queries
 	for (var i = 0; i < startQueries.length; i++) {
-		startQueries[i].script = $("#script" + startQueries[i].num).html();
+		startQueries[i].script = $("#script" + startQueries[i].num).text();
 	};
 
 	function addInitialQueries() {
 		function addQuery(item) {
-			var element = queryTemplate.clone();
+			var element = queryListObject.template.clone();
 			element.find(".querytitle").eq(0).val(item.title);
 			var select = element.find(".querytype").eq(0).val(item.type);
 			element.find(".queryscript").eq(0).val(item.script);
@@ -191,13 +209,13 @@ $(document).ready(function () {
 		for (var i = 0; i < startQueries.length; i++) {
 			addQuery(startQueries[i]);
 		};
-		updateQueryListOrder();
+		updateListOrder(queryListObject);
 	}
 	addInitialQueries();
 
 	function addInitialVariables() {
 		function addVariable(item) {
-			var element = variableTemplate.clone();
+			var element = variableListObject.template.clone();
 			element.find(".variabletitle").eq(0).val(item.title);
 			element.find(".variablename").eq(0).val(item.name);
 			element.appendTo(variableListObject);
@@ -205,7 +223,17 @@ $(document).ready(function () {
 		for (var i = 0; i < startVariables.length; i++) {
 			addVariable(startVariables[i]);
 		};
-		updateVariableListOrder();
+		updateListOrder(variableListObject);
 	}
 	addInitialVariables();
+
+	scheduleInterval.on('change',function(event){
+		var interval = $(this).val();
+
+		if (interval === 'h') { // hourly
+			hourTimeField.hide();
+		} else {
+			hourTimeField.show();
+		}
+	});
 });
