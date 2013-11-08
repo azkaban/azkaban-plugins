@@ -163,25 +163,23 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
 
-    String[] parts = path.split("/");
-    if (!parts[1].equals("execution") || parts.length != 4) {
-      page.add("errorMsg", "Invalid parameters.");
-      page.render();
-      return;
-    }
-
-    int execId = Integer.parseInt(parts[2]);
-    String jobId = parts[3];
-
+		int execId = Integer.parseInt(getParam(request, "execution"));
+		String jobId = getParam(request, "job");
 		try {
 			checkPermissions(session, execId);
 		}
-		catch (Exception e) {
-			page.add("errorMsg", "Permissions error getting flow: " + 
-					e.getMessage());
+		catch (AccessControlException e) {
+			page.add("errorMsg", e.getMessage());
 			page.render();
 			return;
 		}
+		
+		page.add("execId", execId);
+		page.add("jobId", jobId);
+		page.render();
+	}
+
+	`
 
 		String jsonDir = "./executions/" + execId + "/" + jobId;
 		Map<String, JobDagNode> dagNodeNameMap = null;
