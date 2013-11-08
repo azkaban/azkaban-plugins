@@ -183,6 +183,8 @@
 								<ol id="variable-template" style="display:none;">
 									<li class="reportal-list-item">
 										<div class="query-actions" style="float: right;">
+											<a class="btn btn-icon btn-left bump-up" title="Move the variable up."><span class="icon icon-arrow-up icon-gray-light icon-medium"></span></a>
+											<a class="btn btn-icon btn-right bump-down disabled" title="Move the variable down."><span class="icon icon-arrow-down icon-gray-light icon-medium"></span></a>
 											<a class="btn btn-danger btn-icon delete" style="float: right; margin-left:5px;" title="Remove">Remove</a>
 										</div>
 										<div class="control-group required">
@@ -207,9 +209,9 @@
 							</ol>
 							<ol id="query-template" style="display:none;">
 								<li class="reportal-list-item">
-									<div class="query-actions" style="float: right; margin-top: -1.5em;">
-										<a class="btn btn-icon btn-left bump-up" title="Move the query up in exection order."><span class="icon icon-arrow-up icon-gray-light icon-medium"></span></a>
-										<a class="btn btn-icon btn-right bump-down disabled" title="Move the query down in exection order."><span class="icon icon-arrow-down icon-gray-light icon-medium"></span></a>
+									<div class="query-actions" style="float: right;">
+										<a class="btn btn-icon btn-left bump-up" title="Move the query up in execution order."><span class="icon icon-arrow-up icon-gray-light icon-medium"></span></a>
+										<a class="btn btn-icon btn-right bump-down disabled" title="Move the query down in execution order."><span class="icon icon-arrow-down icon-gray-light icon-medium"></span></a>
 										<a class="btn btn-danger btn-icon delete" style="float: right; margin-left:5px;" title="Remove">Remove</a>
 									</div>
 									<div class="control-group">
