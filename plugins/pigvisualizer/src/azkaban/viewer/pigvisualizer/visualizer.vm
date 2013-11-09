@@ -57,14 +57,19 @@
 			#end
 		#end
 
-			<div id="all-hdfsbrowser-content">
+			<div id="visualizer-content">
 				<div class="section-hd">
 					<h2>${jobid} Pig Job Visualization</h2>
 				</div>
 			</div>
 			
 			<div class="box">
-				<div id="graph_container"></div>
+				<div id="graphView">
+					<div id="svgDiv" class="svgDiv">
+						<svg id="svgGraph" class="svgGraph" xmlns="http://www.w3.org/2000/svg" version="1.1" shape-rendering="optimize-speed" text-rendering="optimize-speed">
+						</svg>
+					</div>
+				</div>
 			</div>	
 		</div>
 	</body>
