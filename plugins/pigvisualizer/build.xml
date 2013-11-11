@@ -107,6 +107,7 @@
 		<mkdir dir="${dist.packages.dir}/conf" />
 		<mkdir dir="${dist.packages.dir}/lib" />
 		<mkdir dir="${dist.packages.dir}/extlib" />
+		<mkdir dir="${dist.packages.dir}/web" />
 		
 		<!-- Copy conf files and folder structure -->
 		<copy todir="${dist.packages.dir}/conf">
@@ -117,6 +118,9 @@
 		<copy file="${azkaban-pigvisualizer-jar}" todir="${dist.packages.dir}/lib" />
 		<copy todir="${dist.packages.dir}/lib" >
 			<fileset dir="${lib.dir}" />
+		</copy>
+		<copy todir="${dist.packages.dir}/web" >
+			<fileset dir="${java.src.dir}/web" />
 		</copy>
 
 		<!-- Tarball it -->

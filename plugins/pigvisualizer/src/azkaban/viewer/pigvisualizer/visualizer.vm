@@ -29,16 +29,23 @@
 		<script type="text/javascript" src="${context}/js/azkaban.ajax.utils.js"></script>
 		<script type="text/javascript" src="${context}/js/azkaban.nav.js"></script>
 		<script type="text/javascript" src="${context}/js/graph/azkaban.layout.js"></script>
+		<script type="text/javascript" src="${context}/js/graph/azkaban.context.menu.js"></script>
+		<script type="text/javascript" src="${context}/js/graph/azkaban.svg.graph.helper.js"></script>
+		<script type="text/javascript" src="${context}/js/graph/azkaban.svg.graph.view.js"></script>
 		<script type="text/javascript" src="${context}/js/graph/svgNavigate.js"></script>
+		<script type="text/javascript" src="${context}/js/azkaban.jobvisualizer.view.js"></script>
 		<script type="text/javascript">
 			var errorMessage = null;
 			var successMessage = null;
+			var contextURL = "${context}";
 
 			var execId = ${execId};
-			var jobId = ${jobId};
+			var jobId = "${jobId}";
+			var flowId = "${flowId}";
+			var projectName = "${projectName}";
 		</script>
 
-		<style rel="stylesheet" type="text/css" href="${context}/css/graph/azkaban-graph.css" />
+		<link rel="stylesheet" type="text/css" href="${context}/css/graph/azkaban-graph.css" />
 	</head>
 	<body>
 
@@ -59,7 +66,7 @@
 
 			<div id="visualizer-content">
 				<div class="section-hd">
-					<h2>${jobid} Pig Job Visualization</h2>
+					<h2>${jobId} Pig Job Visualization</h2>
 				</div>
 			</div>
 			

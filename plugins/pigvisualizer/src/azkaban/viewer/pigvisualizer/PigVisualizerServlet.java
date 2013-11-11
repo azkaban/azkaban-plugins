@@ -100,6 +100,43 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		return project;
 	}
 
+  private void handleVisualizer(HttpServletRequest request,
+      HttpServletResponse response, Session session)
+      throws ServletException, IOException {
+
+		Page page = newPage(request, response, session, 
+				"azkaban/viewer/pigvisualizer/visualizer.vm");
+		page.add("viewerPath", viewerPath);
+		page.add("viewerName", viewerName);
+
+		int execId = Integer.parseInt(getParam(request, "execid"));
+		String jobId = getParam(request, "jobid");
+	
+		ExecutableFlow exFlow = null;
+		Project project = null;
+		try {
+			exFlow = executorManager.getExecutableFlow(execId);
+			project = getProjectByPermission(
+					exFlow.getProjectId(), session.getUser(), Type.READ);
+		}
+		catch (ExecutorManagerException e) {
+			page.add("errorMsg", "Error getting project '" + e.getMessage() + "'");
+			page.render();
+			return;
+		}
+
+		if (project == null) {
+			page.add("errorMsg", "Error getting project " + exFlow.getProjectId());
+			page.render();
+			return;
+		}
+		page.add("projectName", project.getName());
+		page.add("execId", execId);
+		page.add("jobId", jobId);
+		page.add("flowId", exFlow.getFlowId());
+		page.render();
+	}
+	
 	private Map<String, JobDagNode> getDagNodeJobNameMap(String jsonDir) 
 			throws Exception {
 		String outputDagNodeNameFile = jsonDir + "-dagnodemap.json";
@@ -113,42 +150,6 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 					JobDagNode.fromJson(entry.getValue()));
 		}
 		return dagNodeJobNameMap;
-	}
-
-	private void checkPermissions(Session session, int execId) 
-			throws ExecutorManagerException, IllegalArgumentException {
-		ExecutableFlow exFlow = exFlow = executorManager.getExecutableFlow(execId);
-		User user = session.getUser();
-		Project project = getProjectByPermission(
-				exFlow.getProjectId(), user, Type.READ);
-		if (project == null) {
-			throw new IllegalArgumentException("Error getting project " + 
-					exFlow.getProjectId());
-		}
-	}
-
-  private void handleVisualizer(HttpServletRequest request,
-      HttpServletResponse response, Session session)
-      throws ServletException, IOException {
-
-		Page page = newPage(request, response, session, 
-				"azkaban/viewer/pigvisualizer/visualizer.vm");
-		page.add("viewerPath", viewerPath);
-		page.add("viewerName", viewerName);
-
-		int execId = Integer.parseInt(getParam(request, "execid"));
-		String jobId = getParam(request, "jobid");
-		try {
-			checkPermissions(session, execId);
-		}
-		catch (Exception e) {
-			page.add("errorMsg", e.getMessage());
-			page.render();
-			return;
-		}
-		page.add("execId", execId);
-		page.add("jobId", jobId);
-		page.render();
 	}
 
 	private void ajaxFetchJobDag(HttpServletRequest request,
@@ -209,10 +210,14 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			if (exFlow == null) {
 				ret.put("error", "Cannot find execution '" + execId + "'");
 			} else {
-				if (ajaxName.equals("fetchJobDag")) {
+				if (ajaxName.equals("fetchjobdag")) {
 					ajaxFetchJobDag(request, response, ret, session.getUser(), exFlow);
 				}
 			}
+		}
+
+		if (ret != null) {
+			this.writeJSON(response, ret);
 		}
 	}
 		
@@ -221,12 +226,15 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			HttpServletResponse response, Session session)
 			throws ServletException, IOException {
 		if (hasParam(request, "ajax")) {
+			System.out.println("#### Handle ajax get");
 			handleAjaxAction(request, response, session);
 		}
 		else if (hasParam(request, "execid") && hasParam(request, "jobid")) {
+			System.out.println("#### Handle visualizer");
       handleVisualizer(request, response, session);
 		}
 		else {
+			System.out.println("#### Handle all executions");
       handleAllExecutions(request, response, session);
     }
 	}

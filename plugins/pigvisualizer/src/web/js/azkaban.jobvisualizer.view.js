@@ -19,6 +19,7 @@ var graphModel;
 azkaban.GraphModel = Backbone.Model.extend({});
 
 var mainSvgGraphView;
+var contextMenuView;
 
 $(function() {
 	graphModel = new azkaban.GraphModel();
@@ -32,10 +33,11 @@ $(function() {
 		}
 	});
 
+	var requestURL = contextURL + "/pigvisualizer";
 	var request = {
-		"project": projectName,
-		"ajax": "fetchflowgraph",
-		"flow": flowId
+		"ajax": "fetchjobdag",
+		"execid": execId,
+		"jobid": jobId
 	};
 
 	var successHandler = function (data) {
@@ -43,5 +45,5 @@ $(function() {
 		graphModel.trigger("change:graph");
 	};
 
-	$.get(requestUrl, request, successHandler, "json");
+	$.get(requestURL, request, successHandler, "json");
 });
