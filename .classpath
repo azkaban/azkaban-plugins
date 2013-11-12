@@ -10,7 +10,5 @@
 	<classpathentry kind="lib" path="extlib/servlet-api-2.5.jar"/>
 	<classpathentry kind="lib" path="extlib/velocity-1.7.jar"/>
 	<classpathentry kind="lib" path="extlib/azkaban-2.2.jar"/>
-	<classpathentry kind="lib" path="dist/jobtype/packages/java/azkaban-hadoopsecuritymanager-2.2.jar"/>
-	<classpathentry kind="lib" path="dist/jobtype/packages/pig-0.10.0/pig-0.10.0-withouthadoop.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
