@@ -165,7 +165,6 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			dagNodeNameMap = getDagNodeJobNameMap(jsonDir);
 		}
 		catch (Exception e) {
-			e.printStackTrace();
 			ret.put("error", "Error parsing JSON file: " + e.getMessage());
 			return;
 		}
@@ -176,13 +175,20 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			JobDagNode node = entry.getValue();
 			HashMap<String, Object> nodeObj = new HashMap<String, Object>();
 			nodeObj.put("id", node.getJobId());
+			nodeObj.put("level", "0");
+			nodeObj.put("type", "pig");
 			nodeList.add(nodeObj);
 
 			// Add edges.
 			for (String successor : node.getSuccessors()) {
 				HashMap<String, Object> edgeObj = new HashMap<String, Object>();
+				JobDagNode targetNode = dagNodeNameMap.get(successor);
+				if (targetNode == null) {
+					ret.put("error", "Node " + successor + " not found.");
+					return;
+				}
 				edgeObj.put("from", node.getJobId());
-				edgeObj.put("target", successor);
+				edgeObj.put("target", targetNode.getJobId());
 				edgeList.add(edgeObj);
 			}
 		}
@@ -226,15 +232,12 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			HttpServletResponse response, Session session)
 			throws ServletException, IOException {
 		if (hasParam(request, "ajax")) {
-			System.out.println("#### Handle ajax get");
 			handleAjaxAction(request, response, session);
 		}
 		else if (hasParam(request, "execid") && hasParam(request, "jobid")) {
-			System.out.println("#### Handle visualizer");
       handleVisualizer(request, response, session);
 		}
 		else {
-			System.out.println("#### Handle all executions");
       handleAllExecutions(request, response, session);
     }
 	}

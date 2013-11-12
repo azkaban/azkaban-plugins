@@ -66,7 +66,18 @@
 
 			<div id="visualizer-content">
 				<div class="section-hd">
-					<h2>${jobId} Pig Job Visualization</h2>
+					<h2><a href="${context}pigvisualizer?execid=${execId}&jobid=${jobId}">${jobId} Pig Job Visualization</a></h2>
+					<div class="section-sub-hd">
+						<h4><a href="${context}/manager?project=${projectName}">Project <span>$projectName</span></a></h4>
+						<h4 class="separator">&gt;</h4>
+						<h4><a href="${context}/manager?project=${projectName}&flow=${flowId}">Flow <span>$flowId</span></a></h4>
+						<h4 class="separator">&gt;</h4>
+						<h4><a href="${context}/executor?execid=${execId}">Execution <span>$execId</span></a></h4>
+						<h4 class="separator">&gt;</h4>
+						<h4><a href="${context}/manager?project=${projectName}&flow=${flowId}&job=${jobId}">Job <span>$jobId</span></a></h4>
+						<h4 class="separator">&gt;</h4>
+						<h4><a href="${context}pigvisualizer?execid=${execId}&jobid=${jobId}">Job Visualization</a></h4>
+					</div>
 				</div>
 			</div>
 			
