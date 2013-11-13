@@ -55,6 +55,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	private static Logger logger = Logger.getLogger(PigVisualizerServlet.class);
 
 	private Props props;
+	private File webResourcesPath;
 
 	private String viewerName;
 	private String viewerPath;
@@ -66,6 +67,10 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		this.props = props;
 		viewerName = props.getString("viewer.name");
 		viewerPath = props.getString("viewer.path");
+
+		webResourcesPath = new File(new File(props.getSource()).getParentFile().getParentFile(), "web");
+		webResourcesPath.mkdirs();
+		setResourceDirectory(webResourcesPath);
 	}
 
 	@Override
@@ -74,6 +79,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		AzkabanWebServer server = (AzkabanWebServer) getApplication();
 		executorManager = server.getExecutorManager();
 		projectManager = server.getProjectManager();
+
 	}
 
   private void handleAllExecutions(HttpServletRequest request,

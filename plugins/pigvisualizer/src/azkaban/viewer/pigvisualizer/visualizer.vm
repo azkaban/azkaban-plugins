@@ -17,9 +17,24 @@
 <!DOCTYPE html> 
 <html>
 	<head>
-#parse( "azkaban/webapp/servlet/velocity/style.vm" )
+		<title>#appname()</title>
+		<link rel="stylesheet" type="text/css" href="${context}/pigvisualizer/css/azkaban.css" /> 
+		<link rel="shortcut icon" href="${context}/favicon.ico" />
+		<style type="text/css">
+			.enviro-name {
+				color: ${azkaban_color};
+			}
+			.header {
+				border-top-color: ${azkaban_color};
+			}
+			.nav .selected a {
+				border-bottom-color: ${azkaban_color};
+			}
+		</style>
+		<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
 		<script type="text/javascript" src="${context}/js/jquery/jquery-1.9.1.js"></script>    
 		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/dust-full-2.2.0.js"></script>
 		
 		<script type="text/javascript" src="${context}/js/underscore-1.4.4-min.js"></script>
 		<script type="text/javascript" src="${context}/js/namespace.js"></script>
@@ -28,12 +43,12 @@
 
 		<script type="text/javascript" src="${context}/js/azkaban.ajax.utils.js"></script>
 		<script type="text/javascript" src="${context}/js/azkaban.nav.js"></script>
-		<script type="text/javascript" src="${context}/js/graph/azkaban.layout.js"></script>
-		<script type="text/javascript" src="${context}/js/graph/azkaban.context.menu.js"></script>
-		<script type="text/javascript" src="${context}/js/graph/azkaban.svg.graph.helper.js"></script>
-		<script type="text/javascript" src="${context}/js/graph/azkaban.svg.graph.view.js"></script>
-		<script type="text/javascript" src="${context}/js/graph/svgNavigate.js"></script>
-		<script type="text/javascript" src="${context}/js/azkaban.jobvisualizer.view.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.layout.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.context.menu.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.svg.graph.helper.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.svg.graph.view.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/svgNavigate.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.jobvisualizer.view.js"></script>
 		<script type="text/javascript">
 			var errorMessage = null;
 			var successMessage = null;
@@ -45,7 +60,7 @@
 			var projectName = "${projectName}";
 		</script>
 
-		<link rel="stylesheet" type="text/css" href="${context}/css/graph/azkaban-graph.css" />
+		<link rel="stylesheet" type="text/css" href="${context}/pigvisualizer/css/azkaban-graph.css" />
 	</head>
 	<body>
 
@@ -81,14 +96,78 @@
 				</div>
 			</div>
 			
-			<div class="box">
+			<div class="visualizer-content">
 				<div id="graphView">
-					<div id="svgDiv" class="svgDiv">
-						<svg id="svgGraph" class="svgGraph" xmlns="http://www.w3.org/2000/svg" version="1.1" shape-rendering="optimize-speed" text-rendering="optimize-speed">
-						</svg>
+					<div class="relative">
+						<div id="jobDetails" class="jobDetails">
+							<table id="node-stats" class="parameters">
+								<thead>
+									<tr>
+										<th class="tb-pname">Stat</th>
+										<th class="tb-pvalue">Value</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td class="first">Job ID</td>
+										<td></td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+						<div id="svgDiv" class="svgDiv">
+							<svg id="svgGraph" class="svgGraph" xmlns="http://www.w3.org/2000/svg" version="1.1" shape-rendering="optimize-speed" text-rendering="optimize-speed">
+							</svg>
+						</div>
 					</div>
 				</div>
 			</div>	
+		</div>
+		<div id="contextMenu">
 		</div>
 	</body>
 </html>

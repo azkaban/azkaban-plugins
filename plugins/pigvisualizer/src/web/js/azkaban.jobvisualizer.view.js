@@ -21,6 +21,81 @@ azkaban.GraphModel = Backbone.Model.extend({});
 var mainSvgGraphView;
 var contextMenuView;
 
+var nodeClickCallback = function (event, model, type) {
+	console.log("Node clicked callback");
+	var nodeId = event.currentTarget.jobid;
+	var jobRequestURL = contextURL + "/pigvisualizer?execid=" + execId + 
+			"&jobid=" + jobId + "&nodeId=" + nodeId;
+	var menu = [
+		{
+			title: "Open Node...", 
+			callback: function() { 
+				window.location.href = jobRequestURL; 
+			}
+		},
+		{
+			title: "Open Node in New Window...", 
+			callback: function() { 
+				window.open(jobRequestURL); 
+			}
+		},
+		{break: 1},
+		{
+			title: "Center Job", 
+			callback: function() {
+				model.trigger("centerNode", nodeId); 
+			}
+		}
+	];
+	contextMenuView.show(event, menu);
+}
+
+var jobClickCallback = function (event, model) {
+	console.log("Job clicked callback");
+	var nodeId = event.currentTarget.jobid;
+	var jobRequestURL = contextURL + "/pigvisualizer?execid=" + execId + 
+			"&jobid=" + jobId + "&nodeId=" + nodeId;
+	var menu = [
+		{
+			title: "Open Job...", 
+			callback: function() { 
+				window.location.href = jobRequestURL; 
+			}
+		},
+		{
+			title: "Open Job in New Window...", 
+			callback: function() { 
+				window.open(jobRequestURL);
+			}
+		},
+		{break: 1},
+		{
+			title: "Center Job", 
+			callback: function() { 
+				model.trigger("centerNode", nodeId);
+			}
+		}
+	];
+	contextMenuView.show(event, menu);
+}
+
+var edgeClickCallback = function (event, model) {
+	console.log("Edge clicked callback");
+}
+
+var graphClickCallback = function (event, model) {
+	console.log("Graph clicked callback");
+	var menu = [
+		{
+			title: "Center graph", 
+			callback: function() { 
+				model.trigger("resetPanZoom"); 
+			}
+		}
+	];
+	contextMenuView.show(event, menu);
+}
+
 $(function() {
 	graphModel = new azkaban.GraphModel();
 	mainSvgGraphView = new azkaban.SvgGraphView({
