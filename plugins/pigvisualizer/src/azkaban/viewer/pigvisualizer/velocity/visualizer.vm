@@ -100,64 +100,6 @@
 				<div id="graphView">
 					<div class="relative">
 						<div id="jobDetails" class="jobDetails">
-							<table id="node-stats" class="parameters">
-								<thead>
-									<tr>
-										<th class="tb-pname">Stat</th>
-										<th class="tb-pvalue">Value</th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-									<tr>
-										<td class="first">Job ID</td>
-										<td></td>
-									</tr>
-								</tbody>
-							</table>
 						</div>
 						<div id="svgDiv" class="svgDiv">
 							<svg id="svgGraph" class="svgGraph" xmlns="http://www.w3.org/2000/svg" version="1.1" shape-rendering="optimize-speed" text-rendering="optimize-speed">

@@ -109,9 +109,8 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
   private void handleVisualizer(HttpServletRequest request,
       HttpServletResponse response, Session session)
       throws ServletException, IOException {
-
 		Page page = newPage(request, response, session, 
-				"azkaban/viewer/pigvisualizer/visualizer.vm");
+				"azkaban/viewer/pigvisualizer/velocity/visualizer.vm");
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
 
@@ -140,6 +139,17 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		page.add("execId", execId);
 		page.add("jobId", jobId);
 		page.add("flowId", exFlow.getFlowId());
+		page.render();
+	}
+
+	private void handleJobDetails(HttpServletRequest request,
+			HttpServletResponse response, Session session)
+			throws ServletException, IOException {
+		Page page = newPage(request, response, session,
+				"azkaban/viewer/pigvisualizer/velocity/jobdetails.vm");
+		page.add("viewerPath", viewerPath);
+		page.add("viewerName", viewerName);
+
 		page.render();
 	}
 	
@@ -221,9 +231,13 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 
 			if (exFlow == null) {
 				ret.put("error", "Cannot find execution '" + execId + "'");
-			} else {
+			}
+			else {
 				if (ajaxName.equals("fetchjobdag")) {
 					ajaxFetchJobDag(request, response, ret, session.getUser(), exFlow);
+				}
+				else if (ajaxName.equals("fetchjobdetails")) {
+					ajaxFetchJobDetails(request, response, ret, session.getUser(), exFlow);
 				}
 			}
 		}
@@ -241,7 +255,12 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			handleAjaxAction(request, response, session);
 		}
 		else if (hasParam(request, "execid") && hasParam(request, "jobid")) {
-      handleVisualizer(request, response, session);
+			if (!hasParam(request, "nodeid")) {
+				handleVisualizer(request, response, session);
+			}
+			else {
+				handleJobDetails(request, response, session);
+			}
 		}
 		else {
       handleAllExecutions(request, response, session);

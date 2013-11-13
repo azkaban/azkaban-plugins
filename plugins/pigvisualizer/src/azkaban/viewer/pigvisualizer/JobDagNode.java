@@ -29,20 +29,26 @@ import org.apache.pig.tools.pigstats.JobStats;
 public class JobDagNode {
 	private String name;
 	private String jobId;
-	private String[] aliases;
-	private String[] features;
+	private List<String> aliases;
+	private List<String> features;
 
 	private List<String> parents = new ArrayList<String>();
 	private List<String> successors = new ArrayList<String>();
+	private Map<String, String> metrics;;
 	
 	private MapReduceJobState mapReduceJobState;
 	private Properties jobConfiguration;
-	private JobStats jobStats;
 
 	public JobDagNode() {
 	}
 
 	public JobDagNode(String name, String[] aliases, String[] features) {
+		this.name = name;
+		this.aliases = Arrays.asList(aliases);
+		this.features = Arrays.asList(features);
+	}
+
+	public JobDagNode(String name, List<String> aliases, List<String> features) {
 		this.name = name;
 		this.aliases = aliases;
 		this.features = features;
@@ -64,11 +70,11 @@ public class JobDagNode {
 		this.jobId = jobId;
 	}
 
-	public String[] getAliases() {
+	public List<String> getAliases() {
 		return aliases;
 	}
 
-	public String[] getFeatures() {
+	public List<String> getFeatures() {
 		return features;
 	}
 
@@ -108,12 +114,42 @@ public class JobDagNode {
 		this.jobConfiguration = jobConfiguration;
 	}
 
-	public void setJobStats(JobStats jobStats) {
-		this.jobStats = jobStats;
+	public void setJobStats(JobStats stats) {
+		Map<String, String> jobMetrics = new HashMap<String, String>();
+		jobMetrics.put("numberMaps", String.valueOf(stats.getNumberMaps()));
+		jobMetrics.put("numberReduces", String.valueOf(stats.getNumberReduces()));
+		jobMetrics.put("minMapTime", String.valueOf(stats.getMinMapTime()));
+		jobMetrics.put("maxMapTime", String.valueOf(stats.getMaxMapTime()));
+		jobMetrics.put("avgMapTime", String.valueOf(stats.getAvgMapTime()));
+		jobMetrics.put("minReduceTime", String.valueOf(stats.getMinReduceTime()));
+		jobMetrics.put("maxReduceTime", String.valueOf(stats.getMaxReduceTime()));
+		jobMetrics.put("avgReduceTime", String.valueOf(stats.getAvgREduceTime()));
+		jobMetrics.put("bytesWritten", String.valueOf(stats.getBytesWritten()));
+		jobMetrics.put("hdfsBytesWritten", 
+				String.valueOf(stats.getHdfsBytesWritten()));
+		jobMetrics.put("mapInputRecords", 
+				String.valueOf(stats.getMapInputRecords()));
+		jobMetrics.put("mapOutputRecords", 
+				String.valueOf(stats.getMapOutputRecords()));
+		jobMetrics.put("reduceInputRecords", 
+				String.valueOf(stats.getReduceInputRecords()));
+		jobMetrics.put("reduceOutputRecords", 
+				String.valueOf(stats.getReduceOutputRecords()));
+		jobMetrics.put("proactiveSpillCountObjects", 
+				String.valueOf(stats.getProactiveSpillCountObjects()));
+		jobMetrics.put("proactiveSpillCountRecs", 
+				String.valueOf(stats.getProactiveSpillCountRecs()));
+		jobMetrics.put("recordWritten", String.valueOf(stats.getRecordWrittern()));
+		jobMetrics.put("SMMSpillCount", String.valueOf(stats.getSMMSpillCount()));
+		setMetrics(jobMetrics);
 	}
 
-	public JobStats getJobStats() {
-		return jobStats;
+	public void setMetrics(Map<String, String> metrics) {
+		this.metrics = metrics;
+	}
+
+	public Map<String, String> getMetrics() {
+		return metrics;
 	}
 
 	// XXX Refactor this!
@@ -146,8 +182,8 @@ public class JobDagNode {
 		if (jobConfiguration != null) {
 			jsonObj.put("jobConfiguration", propertiesToJson(jobConfiguration));
 		}
+		jsonObj.put("metrics", metrics);
 		//jsonObj.put("mapReduceJobState", mapReduceJobState.toJson());
-		//jsonObj.put("jobStats", jobStats.toJson());
 		return jsonObj;
 	}
 
@@ -157,10 +193,7 @@ public class JobDagNode {
 		String name = (String) jsonObj.get("name");
 		List<String> aliases = (ArrayList<String>) jsonObj.get("aliases");
 		List<String> features = (ArrayList<String>) jsonObj.get("features");
-		JobDagNode node = new JobDagNode();
-		node.setName(name);
-		/*JobDagNode node = new JobDagNode(name, (String[]) aliases.toArray(), 
-				(String[]) features.toArray());*/
+		JobDagNode node = new JobDagNode(name, aliases, features);
 		node.setJobId((String) jsonObj.get("jobId"));
 		node.setParents((ArrayList<String>) jsonObj.get("parents"));
 		node.setSuccessors((ArrayList<String>) jsonObj.get("successors"));
@@ -168,8 +201,11 @@ public class JobDagNode {
 			node.setJobConfiguration(
 					propertiesFromJson(jsonObj.get("jobConfiguration")));
 		}
+		Map<String, String> jobMetrics = (HashMap<String, String>)
+				jsonObj.get("metrics");
+		node.setMetrics(jobMetrics);
+		
 		// XXX mapReduceJobState
-		// XXX jobStats
 		return node;
 	}
 }
