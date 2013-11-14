@@ -87,7 +87,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
       throws ServletException, IOException {
 
 		Page page = newPage(request, response, session, 
-				"azkaban/viewer/pigvisualizer/allexecutions.vm");
+				"azkaban/viewer/pigvisualizer/velocity/allexecutions.vm");
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
 
@@ -149,45 +149,52 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 				"azkaban/viewer/pigvisualizer/velocity/jobdetails.vm");
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
-
 		page.render();
 	}
 	
-	private Map<String, JobDagNode> getDagNodeJobNameMap(String jsonDir) 
+	private Map<String, JobDagNode> getDagNodeMap(String jsonDir) 
 			throws Exception {
 		String outputDagNodeNameFile = jsonDir + "-dagnodemap.json";
-		File dagNodeNameMapFile = new File(outputDagNodeNameFile);
+		File dagNodeMapFile = new File(outputDagNodeNameFile);
 		Map<String, Object> jsonObj = (HashMap<String, Object>) 
-			  JSONUtils.parseJSONFromFile(dagNodeNameMapFile);
-		Map<String, JobDagNode> dagNodeJobNameMap =
-				new HashMap<String, JobDagNode>();
+			  JSONUtils.parseJSONFromFile(dagNodeMapFile);
+		Map<String, JobDagNode> dagNodeMap = new HashMap<String, JobDagNode>();
 		for (Map.Entry<String, Object> entry : jsonObj.entrySet()) {
-			dagNodeJobNameMap.put(entry.getKey(),
-					JobDagNode.fromJson(entry.getValue()));
+			dagNodeMap.put(entry.getKey(), JobDagNode.fromJson(entry.getValue()));
 		}
-		return dagNodeJobNameMap;
+		return dagNodeMap;
+	}
+
+	private Map<String, String> getNameToJobIdMap(
+			Map<String, JobDagNode> dagNodeMap) {
+		Map<String, String> nameToJobId = new HashMap<String, String>();
+		for (Map.Entry<String, JobDagNode> entry : dagNodeMap.entrySet()) {
+			JobDagNode node = entry.getValue();
+			nameToJobId.put(node.getName(), node.getJobId());
+		}
+		return nameToJobId;
 	}
 
 	private void ajaxFetchJobDag(HttpServletRequest request,
 			HttpServletResponse response, HashMap<String, Object> ret, User user,
 			ExecutableFlow exFlow) throws ServletException {
-
 		int execId = getIntParam(request, "execid");
 		String jobId = getParam(request, "jobid");
 		
 		String jsonDir = "./executions/" + execId + "/" + jobId;
-		Map<String, JobDagNode> dagNodeNameMap = null;
+		Map<String, JobDagNode> dagNodeMap = null;
 		try {
-			dagNodeNameMap = getDagNodeJobNameMap(jsonDir);
+			dagNodeMap = getDagNodeMap(jsonDir);
 		}
 		catch (Exception e) {
 			ret.put("error", "Error parsing JSON file: " + e.getMessage());
 			return;
 		}
 
+		Map<String, String> nameToJobId = getNameToJobIdMap(dagNodeMap);
 		ArrayList<Map<String, Object>> nodeList = new ArrayList<Map<String, Object>>();
 		ArrayList<Map<String, Object>> edgeList = new ArrayList<Map<String, Object>>();
-		for (Map.Entry<String, JobDagNode> entry : dagNodeNameMap.entrySet()) {
+		for (Map.Entry<String, JobDagNode> entry : dagNodeMap.entrySet()) {
 			JobDagNode node = entry.getValue();
 			HashMap<String, Object> nodeObj = new HashMap<String, Object>();
 			nodeObj.put("id", node.getJobId());
@@ -198,11 +205,13 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			// Add edges.
 			for (String successor : node.getSuccessors()) {
 				HashMap<String, Object> edgeObj = new HashMap<String, Object>();
-				JobDagNode targetNode = dagNodeNameMap.get(successor);
-				if (targetNode == null) {
+				String successorJobId = nameToJobId.get(successor);
+				if (successorJobId == null) {
 					ret.put("error", "Node " + successor + " not found.");
 					return;
 				}
+
+				JobDagNode targetNode = dagNodeMap.get(successorJobId);
 				edgeObj.put("from", node.getJobId());
 				edgeObj.put("target", targetNode.getJobId());
 				edgeList.add(edgeObj);
@@ -213,6 +222,60 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		ret.put("edges", edgeList);
 	}
 
+	private void ajaxFetchJobStats(HttpServletRequest request,
+			HttpServletResponse response, HashMap<String, Object> ret, User user,
+			ExecutableFlow exFlow) throws ServletException {
+		int execId = getIntParam(request, "execid");
+		String jobId = getParam(request, "jobid");
+		String nodeId = getParam(request, "nodeid");
+		
+		String jsonDir = "./executions/" + execId + "/" + jobId;
+		Map<String, JobDagNode> dagNodeMap = null;
+		try {
+			dagNodeMap = getDagNodeMap(jsonDir);
+		}
+		catch (Exception e) {
+			ret.put("error", "Error parsing JSON file: " + e.getMessage());
+			return;
+		}
+	
+		JobDagNode node = dagNodeMap.get(nodeId);
+		if (node == null) {
+			ret.put("error", "Node " + nodeId + " not found.");
+			return;
+		}
+
+		ret.put("metrics", node.getMetrics());
+	}
+
+	private void ajaxFetchJobDetails(HttpServletRequest request,
+			HttpServletResponse response, HashMap<String, Object> ret, User user,
+			ExecutableFlow exFlow) throws ServletException {
+		int execId = getIntParam(request, "execid");
+		String jobId = getParam(request, "jobid");
+		String nodeId = getParam(request, "nodeid");
+		
+		String jsonDir = "./executions/" + execId + "/" + jobId;
+		Map<String, JobDagNode> dagNodeMap = null;
+		try {
+			dagNodeMap = getDagNodeMap(jsonDir);
+		}
+		catch (Exception e) {
+			ret.put("error", "Error parsing JSON file: " + e.getMessage());
+			return;
+		}
+	
+		JobDagNode node = dagNodeMap.get(nodeId);
+		if (node == null) {
+			ret.put("error", "Node " + nodeId + " not found.");
+			return;
+		}
+
+		ret.put("metrics", node.getMetrics());
+		ret.put("features", node.getFeatures());
+		ret.put("aliases", node.getAliases());
+	}
+	
 	private void handleAjaxAction(HttpServletRequest request,
 			HttpServletResponse response, Session session) 
 			throws ServletException, IOException {
@@ -234,15 +297,23 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			}
 			else {
 				if (ajaxName.equals("fetchjobdag")) {
+					System.out.println("fetchjobdag");
 					ajaxFetchJobDag(request, response, ret, session.getUser(), exFlow);
 				}
+				else if (ajaxName.equals("fetchjobstats")) {
+					System.out.println("fetchjobstats");
+					ajaxFetchJobStats(request, response, ret, session.getUser(), exFlow);
+				}
 				else if (ajaxName.equals("fetchjobdetails")) {
+					System.out.println("fetchjobdetails");
 					ajaxFetchJobDetails(request, response, ret, session.getUser(), exFlow);
 				}
 			}
 		}
 
 		if (ret != null) {
+			String s = JSONUtils.toJSON(ret, true);
+			System.out.println(s);
 			this.writeJSON(response, ret);
 		}
 	}

@@ -19,6 +19,7 @@ var graphModel;
 azkaban.GraphModel = Backbone.Model.extend({});
 
 var mainSvgGraphView;
+//var jobStatsView;
 var contextMenuView;
 
 var nodeClickCallback = function (event, model, type) {
@@ -96,6 +97,60 @@ var graphClickCallback = function (event, model) {
 	contextMenuView.show(event, menu);
 }
 
+/*azkaban.JobStatsView = Backbone.View.extend({
+	events: {
+		"click li": "handleJobClick",
+		"click .resetPanZoomBtn": "handleResetPanZoom",
+		"contextMenu li": "handleContextMenuClick"
+	},
+
+	initialize: function (settings) {
+		this.model.bind('change:selected', this.handleSelectionChange, this);
+		this.model.bind('change:graph', this.render, this);
+
+		this.contextMenu = settings.contextMenuCallback;
+		this.listNodes = {};
+	},
+
+	handleJobClick: function (evt) {
+		if (!evt.currentTarget.jobid) {
+			return;
+		}
+		var jobid = evt.currentTarget.jobid;
+
+		if (this.model.has("selected")) {
+			var selected = this.model.get("selected");
+			if (selected == jobid) {
+				this.model.unset("selected");
+			}
+			else {
+				this.model.set({"selected": jobid});
+			}
+		}
+		else {
+			this.model.set({"selected": jobid});
+		}
+	},
+
+	handleSelectionChange: function (evt) {
+		if (!this.model.hasChanged("selected")) {
+			return;
+		}
+		var previous = this.model.previous("selected");
+		var current = this.model.get("selected");
+
+		// XXX Update sidebar.
+	},
+
+	handleResetPanZoom: function (evt) {
+		this.model.trigget("resetPanZoom");
+	},
+
+	render: function (self) {
+
+	}
+});*/
+
 $(function() {
 	graphModel = new azkaban.GraphModel();
 	mainSvgGraphView = new azkaban.SvgGraphView({
@@ -107,6 +162,12 @@ $(function() {
 			"graph": graphClickCallback
 		}
 	});
+
+	/*jobStatsView = new azkaban.JobStatsView({
+		el: $('#jobStats'),
+		model: graphModel,
+		contextMenuCallback: jobClickCallback
+	});*/
 
 	var requestURL = contextURL + "/pigvisualizer";
 	var request = {
