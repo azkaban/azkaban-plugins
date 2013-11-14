@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -148,6 +149,7 @@ public class ReportalMailCreator implements MailCreator {
 
 			// Get file list
 			String[] fileList = ReportalHelper.filterCSVFile(streamProvider.getFileList(locationFull));
+			Arrays.sort(fileList);
 
 			File tempFolder = new File(reportalMailDirectory + "/" + flow.getExecutionId());
 			tempFolder.mkdirs();

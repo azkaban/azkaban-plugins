@@ -59,9 +59,13 @@ public class ReportalDataCollector extends ReportalAbstractRunner {
 				String jobTitle = prop.getString("reportal.job." + i);
 				System.out.println("Reportal Data Collector: Job name=" + jobTitle);
 
-				String subPath = "/" + execId + "/" + jobTitle + ".csv";
+				String tempFileName = jobTitle + ".csv";
+				// We add the job index to the beginning of the job title to allow us to sort the files correctly. 
+				String persistentFileName = i + "-" + tempFileName;
+				
+				String subPath = "/" + execId + "/" + persistentFileName;
 				String locationFull = (outputBase + subPath).replace("//", "/");
-				String locationTemp = ("./reportal/" + jobTitle + ".csv").replace("//", "/");
+				String locationTemp = ("./reportal/" + tempFileName).replace("//", "/");
 				File tempOutput = new File(locationTemp);
 				if(!tempOutput.exists()) {
 					throw new FileNotFoundException("File: " + tempOutput.getAbsolutePath() + " does not exist.");

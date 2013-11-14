@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -464,6 +465,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 						try {
 							String[] fileList = streamProvider.getFileList(locationFull);
 							String[] dataList = ReportalHelper.filterCSVFile(fileList);
+							Arrays.sort(dataList);
 							if (dataList.length > 0) {
 								page.add("files", dataList);
 							}
