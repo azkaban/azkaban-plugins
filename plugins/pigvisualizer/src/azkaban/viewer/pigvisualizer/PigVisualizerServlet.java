@@ -152,12 +152,13 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		page.render();
 	}
 	
-	private Map<String, JobDagNode> getDagNodeMap(String jsonDir) 
+	private Map<String, JobDagNode> getDagNodeMap(int execId, String jobId) 
 			throws Exception {
-		String outputDagNodeNameFile = jsonDir + "-dagnodemap.json";
-		File dagNodeMapFile = new File(outputDagNodeNameFile);
+		String dagFilePath = "./executions/" + execId + "/" + jobId + 
+				"-dagnodemap.json";
+		File dagFile = new File(dagFilePath);
 		Map<String, Object> jsonObj = (HashMap<String, Object>) 
-			  JSONUtils.parseJSONFromFile(dagNodeMapFile);
+			  JSONUtils.parseJSONFromFile(dagFile);
 		Map<String, JobDagNode> dagNodeMap = new HashMap<String, JobDagNode>();
 		for (Map.Entry<String, Object> entry : jsonObj.entrySet()) {
 			dagNodeMap.put(entry.getKey(), JobDagNode.fromJson(entry.getValue()));
@@ -180,11 +181,9 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			ExecutableFlow exFlow) throws ServletException {
 		int execId = getIntParam(request, "execid");
 		String jobId = getParam(request, "jobid");
-		
-		String jsonDir = "./executions/" + execId + "/" + jobId;
 		Map<String, JobDagNode> dagNodeMap = null;
 		try {
-			dagNodeMap = getDagNodeMap(jsonDir);
+			dagNodeMap = getDagNodeMap(execId, jobId);
 		}
 		catch (Exception e) {
 			ret.put("error", "Error parsing JSON file: " + e.getMessage());
@@ -228,11 +227,9 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		int execId = getIntParam(request, "execid");
 		String jobId = getParam(request, "jobid");
 		String nodeId = getParam(request, "nodeid");
-		
-		String jsonDir = "./executions/" + execId + "/" + jobId;
 		Map<String, JobDagNode> dagNodeMap = null;
 		try {
-			dagNodeMap = getDagNodeMap(jsonDir);
+			dagNodeMap = getDagNodeMap(execId, jobId);
 		}
 		catch (Exception e) {
 			ret.put("error", "Error parsing JSON file: " + e.getMessage());
@@ -254,11 +251,9 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		int execId = getIntParam(request, "execid");
 		String jobId = getParam(request, "jobid");
 		String nodeId = getParam(request, "nodeid");
-		
-		String jsonDir = "./executions/" + execId + "/" + jobId;
 		Map<String, JobDagNode> dagNodeMap = null;
 		try {
-			dagNodeMap = getDagNodeMap(jsonDir);
+			dagNodeMap = getDagNodeMap(execId, jobId);
 		}
 		catch (Exception e) {
 			ret.put("error", "Error parsing JSON file: " + e.getMessage());

@@ -19,7 +19,7 @@ var graphModel;
 azkaban.GraphModel = Backbone.Model.extend({});
 
 var mainSvgGraphView;
-//var jobStatsView;
+var jobStatsView;
 var contextMenuView;
 
 var nodeClickCallback = function (event, model, type) {
@@ -97,7 +97,7 @@ var graphClickCallback = function (event, model) {
 	contextMenuView.show(event, menu);
 }
 
-/*azkaban.JobStatsView = Backbone.View.extend({
+azkaban.JobStatsView = Backbone.View.extend({
 	events: {
 		"click li": "handleJobClick",
 		"click .resetPanZoomBtn": "handleResetPanZoom",
@@ -147,9 +147,52 @@ var graphClickCallback = function (event, model) {
 	},
 
 	render: function (self) {
+		var data = this.model.get("data");
+		var nodes = data.nodes;
+		var edges = data.edges;
 
+		this.listNodes = {};
+		if (nodes.length == 0) {
+			console.log("No results");
+			return;
+		}
+
+		var nodeArray = nodes.slice(0);
+		nodeArray.sort(function(a, b) {
+			var diff = a.y - b.y;
+			if (diff == 0) {
+				return a.x - b.x;
+			} 
+			else {
+				return diff;
+			}
+		});
+
+		var ul = document.createElement("ul");
+		$(ul).attr("class", "jobs");
+		this.jobs = $(ul);
+		for (var i = 0; i < nodeArray.length; ++i) {
+			var li = document.createElement("li");
+			li.jobid = jodeArray[i].id;
+
+			var iconDiv = document.createElement("div");
+			$(iconDiv).addClass("icon");
+			li.appendChild(iconDiv);
+
+			var a = document.createElement("a");
+			$(a).text(nodeArray[i].id);
+			li.appendChild(a);
+			ul.appendChild(li);
+			li.jobid = nodeArray[i].id;
+
+			this.listNodes[nodeArray[i].id] = li;
+		}
+
+		this.list.append(ul);
+		this.assignInitialStatus(self);
+		this.handleDisabledChange(self);
 	}
-});*/
+});
 
 $(function() {
 	graphModel = new azkaban.GraphModel();
@@ -163,11 +206,11 @@ $(function() {
 		}
 	});
 
-	/*jobStatsView = new azkaban.JobStatsView({
+	jobStatsView = new azkaban.JobStatsView({
 		el: $('#jobStats'),
 		model: graphModel,
 		contextMenuCallback: jobClickCallback
-	});*/
+	});
 
 	var requestURL = contextURL + "/pigvisualizer";
 	var request = {
