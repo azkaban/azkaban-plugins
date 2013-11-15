@@ -63,6 +63,8 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	private ExecutorManagerAdapter executorManager;
 	private ProjectManager projectManager;
 
+	private String outputDir;
+
 	public PigVisualizerServlet(Props props) {
 		this.props = props;
 		viewerName = props.getString("viewer.name");
@@ -71,6 +73,9 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		webResourcesPath = new File(new File(props.getSource()).getParentFile().getParentFile(), "web");
 		webResourcesPath.mkdirs();
 		setResourceDirectory(webResourcesPath);
+
+		outputDir = props.getString("pig.listener.output.dir",
+				System.getProperty("java.io.tmpdir"));
 	}
 
 	@Override
@@ -154,8 +159,9 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	
 	private Map<String, JobDagNode> getDagNodeMap(int execId, String jobId) 
 			throws Exception {
-		String dagFilePath = "./executions/" + execId + "/" + jobId + 
+		String dagFilePath = outputDir + "/" + execId + "-" + jobId + 
 				"-dagnodemap.json";
+
 		File dagFile = new File(dagFilePath);
 		Map<String, Object> jsonObj = (HashMap<String, Object>) 
 			  JSONUtils.parseJSONFromFile(dagFile);

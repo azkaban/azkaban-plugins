@@ -107,7 +107,6 @@ public class HadoopSecurePigWrapper {
 	
 	public static void runPigJob(String[] args) throws Exception {
 		PigStats stats = null;
-		// XXX Plumb pig.visualizer from Pig jobtype private.properties.
 		if (props.getBoolean("pig.listener.visualizer", false) == true) {
 			stats = PigRunner.run(args, new AzkabanPigListener(props));
 		}

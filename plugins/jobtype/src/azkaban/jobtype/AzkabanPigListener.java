@@ -60,9 +60,13 @@ public class AzkabanPigListener implements PigProgressNotificationListener{
 	private Set<String> completedJobIds = new HashSet<String>();
 	
 	public AzkabanPigListener(Props props) {
-		outputDir = props.getString("pig.listener.output.dir", ".");
+		outputDir = props.getString("pig.listener.output.dir", 
+				System.getProperty("java.io.tmpdir"));
 		String jobId = props.getString("azkaban.job.id");
-		outputDagNodeFile = outputDir + "/" + jobId + "-dagnodemap.json";
+		String execId = props.getString("azkaban.flow.execid");
+		String attempt = props.getString("azkaban.job.attempt");
+		outputDagNodeFile = outputDir + "/" + execId + "-"
+				+ jobId + "-dagnodemap.json";
 	}
 	
 	@Override

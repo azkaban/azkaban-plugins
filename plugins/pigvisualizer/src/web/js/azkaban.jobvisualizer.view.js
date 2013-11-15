@@ -110,6 +110,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 
 		this.contextMenu = settings.contextMenuCallback;
 		this.listNodes = {};
+		this.list = $(this.el).find(".list");
 	},
 
 	handleJobClick: function (evt) {
@@ -143,7 +144,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 	},
 
 	handleResetPanZoom: function (evt) {
-		this.model.trigget("resetPanZoom");
+		this.model.trigger("resetPanZoom");
 	},
 
 	render: function (self) {
@@ -173,7 +174,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 		this.jobs = $(ul);
 		for (var i = 0; i < nodeArray.length; ++i) {
 			var li = document.createElement("li");
-			li.jobid = jodeArray[i].id;
+			li.jobid = nodeArray[i].id;
 
 			var iconDiv = document.createElement("div");
 			$(iconDiv).addClass("icon");
@@ -189,8 +190,13 @@ azkaban.JobStatsView = Backbone.View.extend({
 		}
 
 		this.list.append(ul);
-		this.assignInitialStatus(self);
-		this.handleDisabledChange(self);
+	},
+
+	handleContextMenuClick: function(evt) {
+		if (this.contextMenu) {
+			this.contextMenu(evt);
+			return false;
+		}
 	}
 });
 

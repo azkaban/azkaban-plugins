@@ -1825,12 +1825,17 @@ tr:hover td {
 	padding-left: 20px;
 }
 
-#jobDetails {
+#jobStats {
 	position: absolute;
 	top: 0px;
 	left: 0px;
 	height: 100%;
 	width: 390px;
+}
+
+#jobStats .list {
+	width: 390px;
+	top: 0px;
 }
 
 #jobList {
