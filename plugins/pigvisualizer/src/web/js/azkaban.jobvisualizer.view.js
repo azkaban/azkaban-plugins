@@ -140,7 +140,23 @@ azkaban.JobStatsView = Backbone.View.extend({
 		var previous = this.model.previous("selected");
 		var current = this.model.get("selected");
 
-		// XXX Update sidebar.
+		var requestURL = contextURL + "/pigvisualizer";
+		var request = {
+			"ajax": "fetchjobstats",
+			"execid": execId,
+			"jobid": jobId,
+			"nodeid": current
+		};
+		var successHandler = function(data) {
+			dust.render("jobdetails", data.metrics, function (err, out) {
+				console.log("jobdetails: " + err);
+				console.log("jobdetails: " + out);
+				$('#jobstats-list').hide();
+				$('#jobstats-details').show();
+				$('#jobstats-details').html(out);
+			});
+		};
+		$.get(requestURL, request, successHandler, "json");
 	},
 
 	handleResetPanZoom: function (evt) {
@@ -148,6 +164,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 	},
 
 	render: function (self) {
+		$('#jobstats-details').hide();
 		var data = this.model.get("data");
 		var nodes = data.nodes;
 		var edges = data.edges;

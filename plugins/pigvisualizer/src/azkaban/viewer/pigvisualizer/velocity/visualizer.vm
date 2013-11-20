@@ -49,6 +49,7 @@
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.svg.graph.view.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/svgNavigate.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.jobvisualizer.view.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/jobdetails.js"></script>
 		<script type="text/javascript">
 			var errorMessage = null;
 			var successMessage = null;
@@ -99,24 +100,35 @@
 			<div class="visualizer-content">
 				<div id="graphView">
 					<div class="relative">
+
+## Sidebar for displaying list of jobs and stats.
+
 						<div id="jobStats" class="jobStats">
-							<div id="list" class="list">
+							<div id="jobstats-list">
+								<div id="list" class="list">
+								</div>
+								<div id="flowGraphOptions">
+									<div id="autoPanZoom">
+										<input type="checkbox" id="autoPanZoomCheckbox" class="autoPanZoom" value="autoPanZoom" /><label for="autoPanZoom">Auto Pan Zoom</label>
+									</div>
+									<div id="resetPanZoomBtn" class="btn5 resetPanZoomBtn">Reset Pan Zoom</div>
+								</div>
 							</div>
-							<div id="flowGraphOptions">
-								<div id="autoPanZoom">
-									<input type="checkbox" id="autoPanZoomCheckbox" class="autoPanZoom" value="autoPanZoom" /><label for="autoPanZoom">Auto Pan Zoom</label>
-							  </div>
-								<div id="resetPanZoomBtn" class="btn5 resetPanZoomBtn">Reset Pan Zoom</div>
+							<div id="jobstats-details">
 							</div>
 						</div>
+
+## SVG graph.
+
 						<div id="svgDiv" class="svgDiv">
 							<svg id="svgGraph" class="svgGraph" xmlns="http://www.w3.org/2000/svg" version="1.1" shape-rendering="optimize-speed" text-rendering="optimize-speed">
 							</svg>
 						</div>
-					</div>
-				</div>
-			</div>	
-		</div>
+
+					</div><!-- /relative -->
+				</div><!-- /graphview -->
+			</div><!-- /visualizer-content -->
+		</div><!-- /content -->
 		<div id="contextMenu">
 		</div>
 	</body>

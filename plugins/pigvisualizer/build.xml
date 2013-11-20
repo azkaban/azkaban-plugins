@@ -6,6 +6,7 @@
 	<property name="dist.dir" value="${base.dir}/dist/pigvisualizer" />
 	<property name="dist.conf.dir" value="${dist.dir}/conf" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
+	<property name="dist.dust.dir" value="${dist.dir}/dust" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
 		
@@ -13,18 +14,15 @@
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="java.src.dir" value="${basedir}/src" />
+	<property name="pigvisualizer.exlib.dir" value="${basedir}/extlib" />
 
 	<property name="azkaban-pigvisualizer-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="azkaban-pigvisualizer-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
-
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
-	
+
 	<property environment="env" />
 
-	<property name="pigvisualizer.exlib.dir" value="${basedir}/extlib" />
-
 	<path id="main.classpath">
-		
 		<fileset dir="${ext.lib.dir}">
 			<include name="*.jar" />
 		</fileset>
@@ -65,7 +63,9 @@
 		</copy>
 
 		<delete dir="${dist.classes.dir}" />
-        <mkdir dir="${dist.classes.dir}" />
+    <mkdir dir="${dist.classes.dir}" />
+		<delete dir="${dist.dust.dir}" />
+    <mkdir dir="${dist.dust.dir}" />
 	
 		<!-- copy non-java files to classes dir to load from classpath -->
 		<copy todir="${dist.classes.dir}">
@@ -79,10 +79,20 @@
 			<src path="${java.src.dir}" />
 			<classpath refid="main.classpath" />
 		</javac>
+
+		<!-- Compile dustjs templates -->
+		<apply executable="dustc">
+			<mapper type="glob" from="*" to="${dist.dust.dir}/*.js" />
+			<arg value="--name=${basename}" />
+			<targetfile suffix="-tl" />
+			<srcfile />
+			<targetfile suffix=".js" />
+			<fileset dir="${java.src.dir}/tl" includes="*.tl" />
+		</apply>
+
 	</target>
 	
 	<target name="jars" depends="build" description="Create azkaban jar">
-
 		<mkdir dir="${dist.jar.dir}" />
 		<jar destfile="${azkaban-pigvisualizer-jar}">
 			<fileset dir="${dist.classes.dir}">
@@ -116,11 +126,14 @@
 		
 		<!-- Copy Azkaban jars and libs-->
 		<copy file="${azkaban-pigvisualizer-jar}" todir="${dist.packages.dir}/lib" />
-		<copy todir="${dist.packages.dir}/lib" >
+		<copy todir="${dist.packages.dir}/lib">
 			<fileset dir="${lib.dir}" />
 		</copy>
-		<copy todir="${dist.packages.dir}/web" >
+		<copy todir="${dist.packages.dir}/web">
 			<fileset dir="${java.src.dir}/web" />
+		</copy>
+		<copy todir="${dist.packages.dir}/web/js">
+			<fileset dir="${dist.dust.dir}" includes="*.js" />
 		</copy>
 
 		<!-- Tarball it -->

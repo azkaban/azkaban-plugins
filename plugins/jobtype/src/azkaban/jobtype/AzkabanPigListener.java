@@ -47,7 +47,7 @@ import azkaban.utils.Props;
 import azkaban.viewer.pigvisualizer.JobDagNode;
 import azkaban.viewer.pigvisualizer.MapReduceJobState;
 
-public class AzkabanPigListener implements PigProgressNotificationListener{
+public class AzkabanPigListener implements PigProgressNotificationListener {
 
 	private static Logger logger = Logger.getLogger(AzkabanPigListener.class);
 	private String outputDir = ".";
