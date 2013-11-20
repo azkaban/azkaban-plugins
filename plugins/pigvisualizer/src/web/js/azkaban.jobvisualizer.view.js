@@ -101,6 +101,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 	events: {
 		"click li": "handleJobClick",
 		"click .resetPanZoomBtn": "handleResetPanZoom",
+		"click #jobstats-back-btn": "handleBackButton",
 		"contextMenu li": "handleContextMenuClick"
 	},
 
@@ -133,24 +134,29 @@ azkaban.JobStatsView = Backbone.View.extend({
 		}
 	},
 
+	handleBackButton: function (evt) {
+		this.model.unset("selected");
+		$('#jobstats-details').hide();
+		$('#jobstats-list').show();
+	},
+
 	handleSelectionChange: function (evt) {
-		if (!this.model.hasChanged("selected")) {
+		if (!this.model.hasChanged("selected") || !this.model.has("selected")) {
 			return;
 		}
+
 		var previous = this.model.previous("selected");
 		var current = this.model.get("selected");
 
 		var requestURL = contextURL + "/pigvisualizer";
 		var request = {
-			"ajax": "fetchjobstats",
+			"ajax": "fetchjobdetails",
 			"execid": execId,
 			"jobid": jobId,
 			"nodeid": current
 		};
 		var successHandler = function(data) {
-			dust.render("jobdetails", data.metrics, function (err, out) {
-				console.log("jobdetails: " + err);
-				console.log("jobdetails: " + out);
+			dust.render("jobdetails", data, function (err, out) {
 				$('#jobstats-list').hide();
 				$('#jobstats-details').show();
 				$('#jobstats-details').html(out);

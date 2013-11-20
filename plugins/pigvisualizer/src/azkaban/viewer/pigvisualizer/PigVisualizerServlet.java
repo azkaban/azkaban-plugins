@@ -227,30 +227,6 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		ret.put("edges", edgeList);
 	}
 
-	private void ajaxFetchJobStats(HttpServletRequest request,
-			HttpServletResponse response, HashMap<String, Object> ret, User user,
-			ExecutableFlow exFlow) throws ServletException {
-		int execId = getIntParam(request, "execid");
-		String jobId = getParam(request, "jobid");
-		String nodeId = getParam(request, "nodeid");
-		Map<String, JobDagNode> dagNodeMap = null;
-		try {
-			dagNodeMap = getDagNodeMap(execId, jobId);
-		}
-		catch (Exception e) {
-			ret.put("error", "Error parsing JSON file: " + e.getMessage());
-			return;
-		}
-	
-		JobDagNode node = dagNodeMap.get(nodeId);
-		if (node == null) {
-			ret.put("error", "Node " + nodeId + " not found.");
-			return;
-		}
-
-		ret.put("metrics", node.getMetrics());
-	}
-
 	private void ajaxFetchJobDetails(HttpServletRequest request,
 			HttpServletResponse response, HashMap<String, Object> ret, User user,
 			ExecutableFlow exFlow) throws ServletException {
@@ -272,6 +248,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
+		ret.put("jobId", nodeId);
 		ret.put("metrics", node.getMetrics());
 		ret.put("features", node.getFeatures());
 		ret.put("aliases", node.getAliases());
@@ -298,23 +275,15 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			}
 			else {
 				if (ajaxName.equals("fetchjobdag")) {
-					System.out.println("fetchjobdag");
 					ajaxFetchJobDag(request, response, ret, session.getUser(), exFlow);
 				}
-				else if (ajaxName.equals("fetchjobstats")) {
-					System.out.println("fetchjobstats");
-					ajaxFetchJobStats(request, response, ret, session.getUser(), exFlow);
-				}
 				else if (ajaxName.equals("fetchjobdetails")) {
-					System.out.println("fetchjobdetails");
 					ajaxFetchJobDetails(request, response, ret, session.getUser(), exFlow);
 				}
 			}
 		}
 
 		if (ret != null) {
-			String s = JSONUtils.toJSON(ret, true);
-			System.out.println(s);
 			this.writeJSON(response, ret);
 		}
 	}
