@@ -1,7 +1,7 @@
 							<p>
 								<button type="button" id="jobstats-back-btn" class="btn5">&lt; Back</button>
 							</p>
-						
+
 							<table class="parameters">
 								<thead>
 									<tr>
@@ -17,6 +17,14 @@
 									<tr>
 										<td class="first">Aliases</td>
 										<td>{#aliases}{.}{/aliases}</td>
+									</tr>
+									<tr>
+										<td class="first">State</td>
+										<td>{jobState}</td>
+									</tr>
+									<tr>
+										<td class="first">JobTracker URL</td>
+										<td><a href="{state.trackingURL}">{state.trackingURL}</a></td>
 									</tr>
 								</tbody>
 							</table>

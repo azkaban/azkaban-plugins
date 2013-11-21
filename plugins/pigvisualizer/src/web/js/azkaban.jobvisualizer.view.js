@@ -156,6 +156,16 @@ azkaban.JobStatsView = Backbone.View.extend({
 			"nodeid": current
 		};
 		var successHandler = function(data) {
+			if (data.state.isComplete == "false") {
+				data.jobState = "In Progress";
+			}
+			else if (data.state.isSuccessful == "true") {
+				data.jobState = "Succeeded";
+			}
+			else {
+				data.jobState = "Failed";
+			}
+
 			dust.render("jobdetails", data, function (err, out) {
 				$('#jobstats-list').hide();
 				$('#jobstats-details').show();

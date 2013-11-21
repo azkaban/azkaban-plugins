@@ -252,6 +252,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		ret.put("metrics", node.getMetrics());
 		ret.put("features", node.getFeatures());
 		ret.put("aliases", node.getAliases());
+		ret.put("state", node.getMapReduceJobState().toJson());
 	}
 	
 	private void handleAjaxAction(HttpServletRequest request,

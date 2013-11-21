@@ -118,12 +118,15 @@ public class JobDagNode {
 		Map<String, String> jobMetrics = new HashMap<String, String>();
 		jobMetrics.put("numberMaps", String.valueOf(stats.getNumberMaps()));
 		jobMetrics.put("numberReduces", String.valueOf(stats.getNumberReduces()));
-		jobMetrics.put("minMapTime", String.valueOf(stats.getMinMapTime()));
-		jobMetrics.put("maxMapTime", String.valueOf(stats.getMaxMapTime()));
-		jobMetrics.put("avgMapTime", String.valueOf(stats.getAvgMapTime()));
-		jobMetrics.put("minReduceTime", String.valueOf(stats.getMinReduceTime()));
-		jobMetrics.put("maxReduceTime", String.valueOf(stats.getMaxReduceTime()));
-		jobMetrics.put("avgReduceTime", String.valueOf(stats.getAvgREduceTime()));
+		jobMetrics.put("minMapTime", String.valueOf(stats.getMinMapTime() / 1000));
+		jobMetrics.put("maxMapTime", String.valueOf(stats.getMaxMapTime() / 1000));
+		jobMetrics.put("avgMapTime", String.valueOf(stats.getAvgMapTime() / 1000));
+		jobMetrics.put("minReduceTime", 
+				String.valueOf(stats.getMinReduceTime() / 1000));
+		jobMetrics.put("maxReduceTime", 
+				String.valueOf(stats.getMaxReduceTime() / 1000));
+		jobMetrics.put("avgReduceTime", 
+				String.valueOf(stats.getAvgREduceTime() / 1000));
 		jobMetrics.put("bytesWritten", String.valueOf(stats.getBytesWritten()));
 		jobMetrics.put("hdfsBytesWritten", 
 				String.valueOf(stats.getHdfsBytesWritten()));
@@ -183,7 +186,7 @@ public class JobDagNode {
 			jsonObj.put("jobConfiguration", propertiesToJson(jobConfiguration));
 		}
 		jsonObj.put("metrics", metrics);
-		//jsonObj.put("mapReduceJobState", mapReduceJobState.toJson());
+		jsonObj.put("mapReduceJobState", mapReduceJobState.toJson());
 		return jsonObj;
 	}
 
@@ -205,7 +208,10 @@ public class JobDagNode {
 				jsonObj.get("metrics");
 		node.setMetrics(jobMetrics);
 		
-		// XXX mapReduceJobState
+		// Grab MapReduceJobState.
+		MapReduceJobState mapReduceJobState = 
+				MapReduceJobState.fromJson(jsonObj.get("mapReduceJobState"));
+		node.setMapReduceJobState(mapReduceJobState);
 		return node;
 	}
 }
