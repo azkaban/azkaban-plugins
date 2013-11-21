@@ -96,6 +96,16 @@
 					</div>
 				</div>
 			</div>
+
+			<div id="headertabs" class="headertabs">
+				<ul>
+					<li><a id="jobSummaryViewLink" href="${context}/executor?execid=${execId}&job=${jobId}#jobsummary">Summary</a></li>
+					<li class="lidividier">|</li>
+					<li><a id="jobLogViewLink" href="${context}/executor?execid=${execId}&job=${jobId}#joblog">Log</a></li>
+					<li class="lidividier">|</li>
+					<li><a href="${context}/pigvisualizer?execid=${execid}&jobid=${jobid}" class="selected">Visualization</a></li>
+				</ul>
+			</div>
 			
 			<div class="visualizer-content">
 				<div id="graphView">
