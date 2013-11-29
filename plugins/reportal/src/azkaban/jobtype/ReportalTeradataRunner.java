@@ -57,6 +57,7 @@ public class ReportalTeradataRunner extends ReportalAbstractRunner {
 			System.out.println("Reportal Teradata: Configuration incomplete");
 			throw new RuntimeException("The reportal.teradata.password variable was not defined.");
 		}
+
 		DataSource teraDataSource = new TeradataDataSource(connectionString, user, pass);
 		Connection conn = teraDataSource.getConnection();
 
@@ -71,7 +72,8 @@ public class ReportalTeradataRunner extends ReportalAbstractRunner {
 				// Only store results from the last statement
 				if (i == numQueries - 1) {
 					PreparedStatement stmt = prepareStatement(conn, queryLine);
-					ResultSet rs = stmt.executeQuery();
+					stmt.execute();
+					ResultSet rs = stmt.getResultSet();
 					outputQueryResult(rs, outputStream);
 					stmt.close();
 				}
