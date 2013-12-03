@@ -51,6 +51,8 @@ public class ReportalMailCreator implements MailCreator {
 	public static String reportalStorageUser = "";
 	public static File reportalMailDirectory;
 	public static final String REPORTAL_MAIL_CREATOR = "ReportalMailCreator";
+	public static final int NUM_PREVIEW_ROWS = 50;
+
 	static {
 		DefaultMailCreator.registerCreator(REPORTAL_MAIL_CREATOR, new ReportalMailCreator());
 	}
@@ -189,7 +191,7 @@ public class ReportalMailCreator implements MailCreator {
 					csvInputStream = new BufferedInputStream(new FileInputStream(tempOutputFile));
 					Scanner rowScanner = new Scanner(csvInputStream);
 					int lineNumber = 0;
-					while (rowScanner.hasNextLine() && lineNumber <= 20) {
+					while (rowScanner.hasNextLine() && lineNumber <= NUM_PREVIEW_ROWS) {
 						String csvLine = rowScanner.nextLine();
 						String[] data = csvLine.split(",");
 						message.println("<tr>");
@@ -197,7 +199,7 @@ public class ReportalMailCreator implements MailCreator {
 							message.println("<td>" + item.replace("\"", "") + "</td>");
 						}
 						message.println("</tr>");
-						if (lineNumber == 20 && rowScanner.hasNextLine()) {
+						if (lineNumber == NUM_PREVIEW_ROWS && rowScanner.hasNextLine()) {
 							message.println("<tr>");
 							message.println("<td colspan=\"" + data.length + "\">...</td>");
 							message.println("</tr>");
