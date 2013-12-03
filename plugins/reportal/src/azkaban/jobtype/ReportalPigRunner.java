@@ -193,7 +193,10 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 
 	private String transformDescriptionLine(String line) {
 		int start = line.indexOf(':');
-		String cleanLine = line.substring(start + 3, line.length() - 1);
+		String cleanLine = line;
+		if (start != -1 && start + 3 < line.length()) {
+			cleanLine = line.substring(start + 3, line.length() - 1);
+		}
 		return "\"" + cleanLine.replace("\"", "").replace(",", "\",\"") + "\"";
 	}
 
