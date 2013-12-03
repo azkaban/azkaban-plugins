@@ -193,7 +193,7 @@ public class ReportalMailCreator implements MailCreator {
 					int lineNumber = 0;
 					while (rowScanner.hasNextLine() && lineNumber <= NUM_PREVIEW_ROWS) {
 						String csvLine = rowScanner.nextLine();
-						String[] data = csvLine.split(",");
+						String[] data = csvLine.split("\",\"");
 						message.println("<tr>");
 						for (String item : data) {
 							message.println("<td>" + item.replace("\"", "") + "</td>");

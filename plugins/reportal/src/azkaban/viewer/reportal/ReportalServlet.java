@@ -442,7 +442,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 						int lineNumber = 0;
 						while (rowScanner.hasNextLine() && lineNumber < 100) {
 							String csvLine = rowScanner.nextLine();
-							String[] data = csvLine.split(",");
+							String[] data = csvLine.split("\",\"");
 							ArrayList<String> line = new ArrayList<String>();
 							for (String item: data) {
 								line.add(item.replace("\"", ""));
