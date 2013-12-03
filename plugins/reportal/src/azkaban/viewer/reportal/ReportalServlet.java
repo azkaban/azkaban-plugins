@@ -26,6 +26,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -386,6 +388,19 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				else {
 					page.add("view-logs", true);
 					List<ExecutableNode> jobs = exec.getExecutableNodes();
+					
+					// Sort list of jobs by level (which is the same as execution order
+					// since Reportal flows are all linear).
+					Collections.sort(jobs, new Comparator<ExecutableNode>() {
+						public int compare(ExecutableNode a, ExecutableNode b) {
+							return a.getLevel() < b.getLevel() ? -1 : 1;
+						}
+						
+						public boolean equals(Object obj) {
+							return this.equals(obj);
+						}
+					});
+					
 					List<String> logList = new ArrayList<String>();
 					boolean showDataCollector = hasParam(req, "debug");
 					for (ExecutableNode node: jobs) {
