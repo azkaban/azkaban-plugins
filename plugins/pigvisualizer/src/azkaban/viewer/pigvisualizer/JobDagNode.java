@@ -38,6 +38,7 @@ public class JobDagNode {
 	
 	private MapReduceJobState mapReduceJobState;
 	private Properties jobConfiguration;
+	private int level = 0;
 
 	public JobDagNode() {
 	}
@@ -60,6 +61,14 @@ public class JobDagNode {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
 	}
 
 	public String getJobId() {
@@ -178,6 +187,7 @@ public class JobDagNode {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();
 		jsonObj.put("name", name);
 		jsonObj.put("jobId", jobId);
+		jsonObj.put("level", Integer.toString(level));
 		jsonObj.put("aliases", Arrays.asList(aliases));
 		jsonObj.put("features", Arrays.asList(features));
 		jsonObj.put("parents", parents);
@@ -207,6 +217,7 @@ public class JobDagNode {
 		Map<String, String> jobMetrics = (HashMap<String, String>)
 				jsonObj.get("metrics");
 		node.setMetrics(jobMetrics);
+		node.setLevel(Integer.parseInt((String) jsonObj.get("level")));
 		
 		// Grab MapReduceJobState.
 		MapReduceJobState mapReduceJobState = 

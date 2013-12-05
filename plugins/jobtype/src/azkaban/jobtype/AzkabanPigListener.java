@@ -52,6 +52,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 	private static Logger logger = Logger.getLogger(AzkabanPigListener.class);
 	private String outputDir = ".";
 	private String outputDagNodeFile;
+	private int nodeOrder = 0;
 	
 	private Map<String, JobDagNode> dagNodeNameMap = 
 			new HashMap<String, JobDagNode>();
@@ -160,6 +161,8 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 	@Override
 	public void jobFinishedNotification(String scriptId, JobStats stats) {
 		JobDagNode node = dagNodeJobIdMap.get(stats.getJobId());
+		node.setLevel(nodeOrder);
+		nodeOrder++;
 		if (node == null) {
 			logger.warn("Unrecognized jobId reported for succeeded job: " + 
 					stats.getJobId());
