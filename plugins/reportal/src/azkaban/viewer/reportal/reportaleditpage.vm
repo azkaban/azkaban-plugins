@@ -216,7 +216,7 @@
 									</div>
 									<div class="control-group">
 										<label class="control-label">Title</label>
-										<div class="controls"><input type="text" class="querytitle" nametemplate="query#title" value=""></div>
+										<div class="controls"><input type="text" class="querytitle" nametemplate="query#title" value="" maxlength="122"></div>
 									</div>
 									<div class="control-group required">
 										<label class="control-label">Type<abbr title="Required" class="required-mark">*</abbr></label>
