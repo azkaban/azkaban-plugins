@@ -885,8 +885,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		ProjectManager projectManager = server.getProjectManager();
 		Project project = projectManager.getProject(id);
 		Reportal report = Reportal.loadFromProject(project);
+		User user = session.getUser();
 
-		if (!project.hasPermission(session.getUser(), Type.EXECUTE)) {
+		if (!project.hasPermission(user, Type.EXECUTE)) {
 			ret.put("error", "You are not allowed to run this report.");
 			return;
 		}
@@ -894,7 +895,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		for (Query query: report.queries) {
 			String jobType = query.type;
 			ReportalType type = ReportalType.getTypeByName(jobType);
-			if (!type.checkPermission(session.getUser())) {
+			if (!type.checkPermission(user)) {
 				ret.put("error", "You are not allowed to run this report as you don't have permission to run job type " + type.toString() + ".");
 				return;
 			}
@@ -903,7 +904,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Flow flow = project.getFlows().get(0);
 
 		ExecutableFlow exflow = new ExecutableFlow(flow);
-		exflow.setSubmitUser(session.getUser().getUserId());
+		exflow.setSubmitUser(user.getUserId());
 		exflow.addAllProxyUsers(project.getProxyUsers());
 
 		ExecutionOptions options = exflow.getExecutionOptions();
@@ -914,7 +915,16 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			options.getFlowParameters().put(REPORTAL_VARIABLE_PREFIX + i + ".to", getParam(req, "variable" + i));
 			i++;
 		}
-		options.getFlowParameters().put("reportal.execution.user", session.getUser().getUserId());
+		
+		options.getFlowParameters().put("reportal.execution.user", user.getUserId());
+		
+		// Add the execution user's email to the list of success and failure emails.
+		String email = user.getEmail();
+		if (email != null) {
+			options.getSuccessEmails().add(email);
+			options.getFailureEmails().add(email);
+		}
+		
 		options.getFlowParameters().put("reportal.title", report.title);
 
 		try {
