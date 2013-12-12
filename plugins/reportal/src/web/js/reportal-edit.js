@@ -30,7 +30,7 @@ $(document).ready(function () {
 	var scheduleInterval = $("#schedule-interval");
 	var hourTimeField = $("#time-field");
 
-	function updateListOrder(listObject){
+	function updateListOrder(listObject, requireAtLeastOneElement){
 		var elements = listObject.find("li");
 		var first = 0;
 		var last = elements.length - 1;
@@ -55,7 +55,7 @@ $(document).ready(function () {
 				element.addClass('last');
 				$(btnBumpDown).addClass('disabled');
 			}
-			if(last == first) {
+			if(last == first && requireAtLeastOneElement) {
 				$(btnDelete).hide();
 			}
 			else {
@@ -102,11 +102,11 @@ $(document).ready(function () {
 		}
 	};
 
-	function handleDelete(event, listObject) {
+	function handleDelete(event, listObject, requireAtLeastOneElement) {
 		event.preventDefault();
 		if (confirm("Are you sure you want to delete this?")) {
 			$(this).closest('li').remove();
-			updateListOrder(listObject);
+			updateListOrder(listObject, requireAtLeastOneElement);
 		} 
 	}
 
@@ -141,7 +141,7 @@ $(document).ready(function () {
 	}
 
 	queryListObject.delegate(".delete", "click", function (event) {
-		handleDelete.call(this, event, queryListObject);
+		handleDelete.call(this, event, queryListObject, true);
 	})
 	.delegate('.bump-up', 'click', function (event) {
 		handleBumpUp.call(this, event, queryListObject);
@@ -209,7 +209,7 @@ $(document).ready(function () {
 		for (var i = 0; i < startQueries.length; i++) {
 			addQuery(startQueries[i]);
 		};
-		updateListOrder(queryListObject);
+		updateListOrder(queryListObject, true);
 	}
 	addInitialQueries();
 
