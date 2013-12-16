@@ -92,10 +92,10 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
       throws ServletException, IOException {
 
 		Page page = newPage(request, response, session, 
-				"azkaban/viewer/pigvisualizer/velocity/allexecutions.vm");
+				"azkaban/viewer/pigvisualizer/visualizer.vm");
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
-
+    page.add("errorMsg", "No job execution specified.");
 		page.render();
   }
 
@@ -115,7 +115,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
       HttpServletResponse response, Session session)
       throws ServletException, IOException {
 		Page page = newPage(request, response, session, 
-				"azkaban/viewer/pigvisualizer/velocity/visualizer.vm");
+				"azkaban/viewer/pigvisualizer/visualizer.vm");
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
 
@@ -147,16 +147,6 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		page.render();
 	}
 
-	private void handleJobDetails(HttpServletRequest request,
-			HttpServletResponse response, Session session)
-			throws ServletException, IOException {
-		Page page = newPage(request, response, session,
-				"azkaban/viewer/pigvisualizer/velocity/jobdetails.vm");
-		page.add("viewerPath", viewerPath);
-		page.add("viewerName", viewerName);
-		page.render();
-	}
-	
 	private Map<String, JobDagNode> getDagNodeMap(int execId, String jobId) 
 			throws Exception {
 		String dagFilePath = outputDir + "/" + execId + "-" + jobId + 
@@ -298,12 +288,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			handleAjaxAction(request, response, session);
 		}
 		else if (hasParam(request, "execid") && hasParam(request, "jobid")) {
-			if (!hasParam(request, "nodeid")) {
-				handleVisualizer(request, response, session);
-			}
-			else {
-				handleJobDetails(request, response, session);
-			}
+      handleVisualizer(request, response, session);
 		}
 		else {
       handleAllExecutions(request, response, session);

@@ -1,0 +1,136 @@
+#*
+ * Copyright 2012 LinkedIn Corp.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*#
+
+<!DOCTYPE html> 
+<html lang="en">
+	<head>
+
+#parse ("azkaban/webapp/servlet/velocity/style.vm")
+#parse ("azkaban/webapp/servlet/velocity/javascript.vm")
+
+		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
+		<script type="text/javascript" src="${context}/js/dust-core-2.2.2.min.js"></script>
+		
+		<script type="text/javascript" src="${context}/js/azkaban.ajax.utils.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.layout.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.context.menu.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.svg.graph.helper.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.svg.graph.view.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/svgNavigate.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.jobvisualizer.view.js"></script>
+		<script type="text/javascript" src="${context}/pigvisualizer/js/jobdetails.js"></script>
+		<script type="text/javascript">
+			var errorMessage = null;
+			var successMessage = null;
+			var contextURL = "${context}";
+
+			var execId = ${execId};
+			var jobId = "${jobId}";
+			var flowId = "${flowId}";
+			var projectName = "${projectName}";
+		</script>
+
+		<link rel="stylesheet" type="text/css" href="${context}/pigvisualizer/css/azkaban-graph.css" />
+	</head>
+	<body>
+
+#set($current_page = "$viewerName")
+#parse("azkaban/webapp/servlet/velocity/nav.vm")
+
+	
+## Page header.
+
+		<div class="az-page-header">
+			<div class="container">
+        <h1><a href="${context}pigvisualizer?execid=${execId}&jobid=${jobId}">Job Execution <small>${jobId}</small></a></h1>
+			</div>
+		</div>
+
+    <div class="container">
+#if ($errorMsg)
+			<div class="panel panel-danger">
+				<div class="panel-heading">Error</div>
+				<div class="panel-body">
+					$errorMsg
+				</div>
+			</div>
+#else
+	#if ($error_message != "null")
+			<div class="alert alert-danger">$error_message</div>
+	#elseif ($success_message != "null")
+			<div class="alert alert-success">$success_message</div>
+	#end
+
+			<ol class="breadcrumb">
+				<li><a href="${context}/manager?project=${projectName}"><strong>Project</strong> $projectName</a></li>
+				<li><a href="${context}/manager?project=${projectName}&flow=${flowId}"><strong>Flow</strong> $flowId</a></li>
+				<li><a href="${context}/executor?execid=${execId}#jobslist"><strong>Execution</strong> $execId</a></li>
+        <li class="active"><strong>Job</strong> $jobId</li>
+			</ol>
+      
+      <div class="row">
+				<div class="col-lg-8">
+					<ul class="nav nav-pills" id="headertabs">
+            <li id="jobSummaryViewLink"><a href="${context}/executor?execid=${execId}&job=${jobId}#jobsummary">Summary</a></li>
+            <li id="jobLogViewLink"><a href="${context}/executor?execid=${execId}&job=${jobId}#joblog">Log</a></li>
+            <li class="active"><a href="${context}/pigvisualizer?execid=${execId}&jobid=${jobId}">Visualization</a></li>
+					</ul>
+				</div>
+				<div class="col-lg-4">
+					<div class="pull-right">
+            <a href="${context}/manager?project=${projectName}&flow=${flowId}&job=$jobId" class="btn btn-default">Job Properties</a>
+					</div>
+					<div class="clearfix"></div>
+				</div>
+      </div><!-- /.row -->
+
+      <div class="row" id="graphView">
+        <div class="col-lg-4" id="jobStats">
+
+  ## Sidebar for displaying list of jobs and stats.
+
+          <div class="panel panel-default" id="jobstats-list">
+            <div class="panel-heading">
+							<input id="filter" type="text" placeholder="Job Filter" class="form-control">
+            </div>
+            <ul id="list" class="list-group"></ul>
+            <div class="panel-footer">
+              <input type="checkbox" id="autoPanZoomCheckbox" class="autoPanZoom" value="autoPanZoom">
+              <label for="autoPanZoom">Auto Pan Zoom</label>
+              <div id="resetPanZoomBtn" class="btn btn-sm btn-default">Reset Pan Zoom</div>
+            </div>
+          </div>
+          <div id="jobstats-details">
+          </div>
+        </div>
+
+  ## SVG Graph.
+
+        <div class="col-lg-8">
+          <div id="svgDiv" class="well well-clear well-sm">
+            <svg id="flow-graph" xmlns="http://www.w3.org/2000/svg" version="1.1" shape-rendering="optimize-speed" text-rendering="optimize-speed">
+            </svg>
+          </div>
+        </div>
+      </div><!-- /.row -->
+      
+      <div id="contextMenu"></div>
+#end
+
+#parse("azkaban/webapp/servlet/velocity/footer.vm")
+    </div><!-- /.container -->
+  </body>
+</html>

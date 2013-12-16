@@ -111,7 +111,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 
 		this.contextMenu = settings.contextMenuCallback;
 		this.listNodes = {};
-		this.list = $(this.el).find(".list");
+		this.list = $(this.el).find("#list");
 	},
 
 	handleJobClick: function (evt) {
@@ -135,6 +135,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 	},
 
 	handleBackButton: function (evt) {
+    console.log("handleBackButton");
 		this.model.unset("selected");
 		$('#jobstats-details').hide();
 		$('#jobstats-list').show();
@@ -202,11 +203,11 @@ azkaban.JobStatsView = Backbone.View.extend({
 			}
 		});
 
-		var ul = document.createElement("ul");
-		$(ul).attr("class", "jobs");
-		this.jobs = $(ul);
+		var ul = this.list;
+		this.jobs = ul;
 		for (var i = 0; i < nodeArray.length; ++i) {
 			var li = document.createElement("li");
+      $(li).addClass("list-group-item");
 			li.jobid = nodeArray[i].id;
 
 			var iconDiv = document.createElement("div");
@@ -214,15 +215,14 @@ azkaban.JobStatsView = Backbone.View.extend({
 			li.appendChild(iconDiv);
 
 			var a = document.createElement("a");
+      $(a).attr('href', '#');
 			$(a).text(nodeArray[i].id);
 			li.appendChild(a);
-			ul.appendChild(li);
+			$(ul).append(li);
 			li.jobid = nodeArray[i].id;
 
 			this.listNodes[nodeArray[i].id] = li;
 		}
-
-		this.list.append(ul);
 	},
 
 	handleContextMenuClick: function(evt) {
