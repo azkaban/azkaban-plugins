@@ -55,7 +55,17 @@
 
 		<div class="az-page-header">
 			<div class="container">
-        <h1><a href="${context}pigvisualizer?execid=${execId}&jobid=${jobId}">Job Execution <small>${jobId}</small></a></h1>
+				<div class="row">
+					<div class="col-lg-6">
+						<h1><a href="${context}pigvisualizer?execid=${execId}&jobid=${jobId}">Job Execution <small>${jobId}</small></a></h1>
+					</div>
+					<div class="col-lg-6">
+						<div class="pull-right az-page-header-form">
+							<a href="${context}/manager?project=${projectName}&flow=${flowId}&job=$jobId" class="btn btn-default">Job Properties</a>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
 			</div>
 		</div>
 
@@ -81,21 +91,11 @@
         <li class="active"><strong>Job</strong> $jobId</li>
 			</ol>
       
-      <div class="row">
-				<div class="col-lg-8">
-					<ul class="nav nav-pills" id="headertabs">
-            <li id="jobSummaryViewLink"><a href="${context}/executor?execid=${execId}&job=${jobId}#jobsummary">Summary</a></li>
-            <li id="jobLogViewLink"><a href="${context}/executor?execid=${execId}&job=${jobId}#joblog">Log</a></li>
-            <li class="active"><a href="${context}/pigvisualizer?execid=${execId}&jobid=${jobId}">Visualization</a></li>
-					</ul>
-				</div>
-				<div class="col-lg-4">
-					<div class="pull-right">
-            <a href="${context}/manager?project=${projectName}&flow=${flowId}&job=$jobId" class="btn btn-default">Job Properties</a>
-					</div>
-					<div class="clearfix"></div>
-				</div>
-      </div><!-- /.row -->
+			<ul class="nav nav-tabs" id="headertabs">
+				<li id="jobSummaryViewLink"><a href="${context}/executor?execid=${execId}&job=${jobId}#jobsummary">Summary</a></li>
+				<li id="jobLogViewLink"><a href="${context}/executor?execid=${execId}&job=${jobId}#joblog">Log</a></li>
+				<li class="active"><a href="${context}/pigvisualizer?execid=${execId}&jobid=${jobId}">Visualization</a></li>
+			</ul>
 
       <div class="row" id="graphView">
         <div class="col-lg-4" id="jobStats">
