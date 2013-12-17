@@ -25,8 +25,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 
@@ -61,7 +62,7 @@ public class ReportalMailCreator implements MailCreator {
 	public boolean createFirstErrorMessage(ExecutableFlow flow, EmailMessage message, String azkabanName, String clientHostname, String clientPortNumber, String... vars) {
 
 		ExecutionOptions option = flow.getExecutionOptions();
-		List<String> emailList = option.getFailureEmails();
+		Set<String> emailList = new HashSet<String>(option.getFailureEmails());
 
 		return createEmail(flow, emailList, message, "failed", azkabanName, clientHostname, clientPortNumber, false);
 	}
@@ -70,7 +71,7 @@ public class ReportalMailCreator implements MailCreator {
 	public boolean createErrorEmail(ExecutableFlow flow, EmailMessage message, String azkabanName, String clientHostname, String clientPortNumber, String... vars) {
 
 		ExecutionOptions option = flow.getExecutionOptions();
-		List<String> emailList = option.getFailureEmails();
+		Set<String> emailList = new HashSet<String>(option.getFailureEmails());
 
 		return createEmail(flow, emailList, message, "failed", azkabanName, clientHostname, clientPortNumber, false);
 	}
@@ -79,12 +80,12 @@ public class ReportalMailCreator implements MailCreator {
 	public boolean createSuccessEmail(ExecutableFlow flow, EmailMessage message, String azkabanName, String clientHostname, String clientPortNumber, String... vars) {
 
 		ExecutionOptions option = flow.getExecutionOptions();
-		List<String> emailList = option.getSuccessEmails();
+		Set<String> emailList = new HashSet<String>(option.getSuccessEmails());
 		
 		return createEmail(flow, emailList, message, "succeeded", azkabanName, clientHostname, clientPortNumber, true);
 	}
 	
-	private boolean createEmail(ExecutableFlow flow, List<String> emailList, EmailMessage message, String status, String azkabanName, String clientHostname, String clientPortNumber, boolean printData) {
+	private boolean createEmail(ExecutableFlow flow, Set<String> emailList, EmailMessage message, String status, String azkabanName, String clientHostname, String clientPortNumber, boolean printData) {
 		
 		Project project = azkaban.getProjectManager().getProject(flow.getProjectId());
 
