@@ -21,9 +21,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Queue;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -52,7 +54,6 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 	private static Logger logger = Logger.getLogger(AzkabanPigListener.class);
 	private String outputDir = ".";
 	private String outputDagNodeFile;
-	private int nodeOrder = 0;
 	
 	private Map<String, JobDagNode> dagNodeNameMap = 
 			new HashMap<String, JobDagNode>();
@@ -80,6 +81,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 		// borrowed from ambrose
 		Map<OperatorKey, MapReduceOper> planKeys = plan.getKeys();
 
+    // First pass: generate dagNodeNameMap.
 		for (Map.Entry<OperatorKey, MapReduceOper> entry : planKeys.entrySet()) {
 			String nodeName = entry.getKey().toString();
 			String[] aliases = toArray(
@@ -98,7 +100,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 					", features: " + StringUtils.join(features, ","));
 		}
 
-		// second pass connects the edges
+		// Second pass: connect the edges
 		for (Map.Entry<OperatorKey, MapReduceOper> entry : planKeys.entrySet()) {
 			JobDagNode node = this.dagNodeNameMap.get(entry.getKey().toString());
 			List<String> successorNodeList = new ArrayList<String>();
@@ -108,10 +110,45 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 					JobDagNode successorNode =
 							this.dagNodeNameMap.get(successor.getOperatorKey().toString());
 					successorNodeList.add(successorNode.getName());
+          successorNode.addParent(node);
 				}
 			}
 			node.setSuccessors(successorNodeList);
 		}
+
+    // Third pass: find roots.
+    Queue<JobDagNode> parentQueue = new LinkedList<JobDagNode>();
+    Queue<JobDagNode> childQueue = new LinkedList<JobDagNode>();
+    for (Map.Entry<String, JobDagNode> entry : this.dagNodeNameMap.entrySet()) {
+      JobDagNode node = entry.getValue();
+      if (node.getParents().isEmpty()) {
+        node.setLevel(0);
+        parentQueue.add(node);
+      }
+    }
+
+    // Final pass: BFS to set levels.
+    int level = 0;
+    Set<JobDagNode> visited = new HashSet<JobDagNode>();
+    while (parentQueue.peek() != null) {
+      JobDagNode node = null;
+      while ((node = parentQueue.poll()) != null) {
+        if (visited.contains(node)) {
+          continue;
+        }
+        node.setLevel(level);
+        for (String jobName : node.getSuccessors()) {
+          JobDagNode successorNode = this.dagNodeNameMap.get(jobName);
+          childQueue.add(successorNode);
+        }
+      }
+      
+      Queue<JobDagNode> tmp = childQueue;
+      childQueue = parentQueue;
+      parentQueue = tmp;
+      ++level;
+    }
+
 		updateJsonFile();
 	}
 
@@ -161,8 +198,6 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 	@Override
 	public void jobFinishedNotification(String scriptId, JobStats stats) {
 		JobDagNode node = dagNodeJobIdMap.get(stats.getJobId());
-		node.setLevel(nodeOrder);
-		nodeOrder++;
 		if (node == null) {
 			logger.warn("Unrecognized jobId reported for succeeded job: " + 
 					stats.getJobId());
