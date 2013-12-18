@@ -6,6 +6,7 @@
 	<property name="dist.dir" value="${base.dir}/dist/pigvisualizer" />
 	<property name="dist.conf.dir" value="${dist.dir}/conf" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
+	<property name="dist.dust.dir" value="${dist.dir}/dust" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
 		
@@ -13,23 +14,15 @@
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="java.src.dir" value="${basedir}/src" />
-
-	<property name="dist.jobtypes.dir" value="${dist.packages.dir}/jobtypes" />
-
-	
-	<property name="azkaban-pigvisualizer-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
-	<property name="azkaban-pigvisualizer-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
-
-	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
-	
-	<property environment="env" />
-
-	<property name="dist.jobtypes.pigvisualizerpig" location="${dist.jobtypes.dir}/pigvisualizerpig" />
-
 	<property name="pigvisualizer.exlib.dir" value="${basedir}/extlib" />
 
+	<property name="azkaban-pigvisualizer-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
+	<property name="azkaban-pigvisualizer-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
+	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
+
+	<property environment="env" />
+
 	<path id="main.classpath">
-		
 		<fileset dir="${ext.lib.dir}">
 			<include name="*.jar" />
 		</fileset>
@@ -51,19 +44,28 @@
 		<delete dir="${dist.jar.dir}" />
 		<delete dir="${dist.classes.dir}" />
 		<delete dir="${dist.packages.dir}" />
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+			</fileset>
+		</delete>
 	</target>
 
 	<target name="build" description="Compile main source tree java files">
 	
 		<!-- copy the latest securitymanager jar -->
-        <delete file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar" />
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+			</fileset>
+		</delete>
 		<copy todir="${lib.dir}">
 			<fileset file="${hadoopsecuritymanagerjar}">
 			</fileset>
 		</copy>
 
 		<delete dir="${dist.classes.dir}" />
-        <mkdir dir="${dist.classes.dir}" />
+    <mkdir dir="${dist.classes.dir}" />
+		<delete dir="${dist.dust.dir}" />
+    <mkdir dir="${dist.dust.dir}" />
 	
 		<!-- copy non-java files to classes dir to load from classpath -->
 		<copy todir="${dist.classes.dir}">
@@ -77,10 +79,25 @@
 			<src path="${java.src.dir}" />
 			<classpath refid="main.classpath" />
 		</javac>
+
+		<!-- Compile dustjs templates -->
+		<!-- Note: Because apply does not support multiple srcfile and targetfile
+				 elements, and for and foreach requires ant-contrib, we use targetfile 
+				 for the template name parameter and then redirect the output of dustc
+				 to the final output file -->
+		<apply dir="${java.src.dir}/tl" executable="dustc" relative="true">
+			<mapper type="glob" from="*.tl" to="*" />
+			<targetfile prefix="--name=" />
+			<srcfile />
+			<fileset dir="${java.src.dir}/tl" includes="*.tl" />
+			<redirector>
+				<outputmapper id="out" type="glob" from="*.tl" to="${dist.dust.dir}/*.js" />
+			</redirector>
+		</apply>
+
 	</target>
 	
 	<target name="jars" depends="build" description="Create azkaban jar">
-
 		<mkdir dir="${dist.jar.dir}" />
 		<jar destfile="${azkaban-pigvisualizer-jar}">
 			<fileset dir="${dist.classes.dir}">
@@ -102,36 +119,27 @@
 	<target name="package-pigvisualizer" depends="jars" description="Creates a package for the webserver">
 		<delete dir="${dist.packages.dir}" />
 		<mkdir dir="${dist.packages.dir}" />
-		<mkdir dir="${dist.packages.dir}/viewer" />
-		<mkdir dir="${dist.packages.dir}/viewer/pigvisualizer" />
-		<mkdir dir="${dist.packages.dir}/viewer/pigvisualizer/conf" />
-		<mkdir dir="${dist.packages.dir}/viewer/pigvisualizer/lib" />
-		<mkdir dir="${dist.packages.dir}/viewer/pigvisualizer/web" />
-		<mkdir dir="${dist.packages.dir}/jobtypes" />
+		<mkdir dir="${dist.packages.dir}/conf" />
+		<mkdir dir="${dist.packages.dir}/lib" />
+		<mkdir dir="${dist.packages.dir}/extlib" />
+		<mkdir dir="${dist.packages.dir}/web" />
 		
 		<!-- Copy conf files and folder structure -->
-		<copy todir="${dist.packages.dir}">
+		<copy todir="${dist.packages.dir}/conf">
 			<fileset dir="${conf.dir}" />
 		</copy>
 		
 		<!-- Copy Azkaban jars and libs-->
-		<copy file="${azkaban-pigvisualizer-jar}" todir="${dist.packages.dir}/viewer/pigvisualizer/lib" />
-		<copy todir="${dist.packages.dir}/viewer/pigvisualizer/lib" >
-			<fileset dir="${lib.dir}/viewer" />
+		<copy file="${azkaban-pigvisualizer-jar}" todir="${dist.packages.dir}/lib" />
+		<copy todir="${dist.packages.dir}/lib">
+			<fileset dir="${lib.dir}" />
 		</copy>
-		<copy todir="${dist.packages.dir}/viewer/pigvisualizer/web" ><fileset dir="${java.src.dir}/web" /></copy>
-
-		<copy file="${azkaban-pigvisualizer-jar}" todir="${dist.jobtypes.pigvisualizerpig}/lib" />
-
-		<copy todir="${dist.jobtypes.dir}" >
-			<fileset dir="${lib.dir}">
-				<include name="**/*.*" />
-				<exclude name="*.*" />
-				<exclude name="viewer/*.*" />
-			</fileset>
+		<copy todir="${dist.packages.dir}/web">
+			<fileset dir="${java.src.dir}/web" />
 		</copy>
-
-		<copy todir="${dist.jobtypes.pigvisualizerpig}" ><fileset dir="${pigvisualizer.exlib.dir}" /></copy>
+		<copy todir="${dist.packages.dir}/web/js">
+			<fileset dir="${dist.dust.dir}" includes="*.js" />
+		</copy>
 
 		<!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">

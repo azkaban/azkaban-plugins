@@ -16,6 +16,7 @@
 	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
 	<property file="build.properties" />
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-2.2.jar"/>
+	<property name="pigvisualizerjar" value="${base.dir}/dist/pigvisualizer/jars/azkaban-pigvisualizer-1.0.jar"/>
 
 	<property environment="env" />
 
@@ -40,17 +41,32 @@
 		<echo message="Deleting generated files in dist" />
 		<delete dir="${dist.jar.dir}" />
 		<delete dir="${dist.classes.dir}" />
-        <delete dir="${dist.packages.dir}" />
+		<delete dir="${dist.packages.dir}" />
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+			</fileset>
+			<fileset file="${lib.dir}/azkaban-pigvisualizer-*.jar">
+			</fileset>
+		</delete>
 	</target>
 
 	<target name="build" description="Compile main source tree java files">
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+			</fileset>
+			<fileset file="${lib.dir}/azkaban-pigvisualizer-*.jar">
+			</fileset>
+		</delete>
 		<!-- copy the latest securitymanager jar -->
-		<delete file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar" />
 		<copy todir="${lib.dir}">
 			<fileset file="${hadoopsecuritymanagerjar}">
 			</fileset>
 		</copy>
-
+		<!-- copy the latest pigvisualizer jar -->
+		<copy todir="${lib.dir}">
+			<fileset file="${pigvisualizerjar}">
+			</fileset>
+		</copy>
 
 		<delete dir="${dist.classes.dir}" />
 		<mkdir dir="${dist.classes.dir}" />
@@ -85,11 +101,11 @@
 
 		<!-- Build jobtypes directory-->
 		<copy todir="${dist.packages.dir}" >
-            <fileset dir="${jobtypes.dir}" >
+			<fileset dir="${jobtypes.dir}" >
 			</fileset>
 		</copy>
 
-        <!-- Copy jobtype jar-->
+		<!-- Copy jobtype jar-->
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/java" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hadoopJava" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.9.2" />
@@ -106,15 +122,17 @@
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.10.1" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.11.0" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive-0.8.1" />
+		
+		<!-- Copy pigvisualizerjar to pig-0.11.0 jar -->
+		<copy file="${pigvisualizerjar}" todir="${dist.packages.dir}/pig-0.11.0/lib" />
 
-        <!-- Tarball it -->
-        <tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
+		<!-- Tarball it -->
+		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
 			<tarfileset dir="${dist.packages.dir}" prefix="${name}-${version}" filemode="755" />
 		</tar>
 	</target>
 
-    <target name="package" depends="package-jobtype" description="Create all packages">
+	<target name="package" depends="package-jobtype" description="Create all packages">
 	</target>
-
 
 </project>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 LinkedIn, Inc
+ * Copyright 2011 LinkedIn Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -507,7 +507,7 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 	}
 	
 	/*
-	 * Gets hadoop tokens for a user to run mapred/pig jobs on a secured cluster
+	 * Gets hadoop tokens for a user to run mapred/hive jobs on a secured cluster
 	 */
 	@Override
 	public synchronized void prefetchToken(final File tokenFile, final Props props, final Logger logger) throws HadoopSecurityManagerException {
