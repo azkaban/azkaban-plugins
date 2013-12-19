@@ -16,7 +16,6 @@
 	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
 	<property file="build.properties" />
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-2.2.jar"/>
-	<property name="pigvisualizerjar" value="${base.dir}/dist/pigvisualizer/jars/azkaban-pigvisualizer-1.0.jar"/>
 
 	<property environment="env" />
 
@@ -45,8 +44,6 @@
 		<delete>
 			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
 			</fileset>
-			<fileset file="${lib.dir}/azkaban-pigvisualizer-*.jar">
-			</fileset>
 		</delete>
 	</target>
 
@@ -54,17 +51,10 @@
 		<delete>
 			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
 			</fileset>
-			<fileset file="${lib.dir}/azkaban-pigvisualizer-*.jar">
-			</fileset>
 		</delete>
 		<!-- copy the latest securitymanager jar -->
 		<copy todir="${lib.dir}">
 			<fileset file="${hadoopsecuritymanagerjar}">
-			</fileset>
-		</copy>
-		<!-- copy the latest pigvisualizer jar -->
-		<copy todir="${lib.dir}">
-			<fileset file="${pigvisualizerjar}">
 			</fileset>
 		</copy>
 
@@ -123,9 +113,6 @@
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.11.0" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive-0.8.1" />
 		
-		<!-- Copy pigvisualizerjar to pig-0.11.0 jar -->
-		<copy file="${pigvisualizerjar}" todir="${dist.packages.dir}/pig-0.11.0/lib" />
-
 		<!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
 			<tarfileset dir="${dist.packages.dir}" prefix="${name}-${version}" filemode="755" />

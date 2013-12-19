@@ -18,7 +18,9 @@
 
 	<property name="azkaban-pigvisualizer-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="azkaban-pigvisualizer-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
+
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
+	<property name="jobtypejar" value="${base.dir}/dist/jobtype/jars/azkaban-jobtype-*.jar" />
 
 	<property environment="env" />
 
@@ -47,6 +49,8 @@
 		<delete>
 			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
 			</fileset>
+			<fileset file="${lib.dir}/azkaban-jobtype-*.jar">
+			</fileset>
 		</delete>
 	</target>
 
@@ -56,9 +60,13 @@
 		<delete>
 			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
 			</fileset>
+			<fileset file="${lib.dir}/azkaban-jobtype-*.jar">
+			</fileset>
 		</delete>
 		<copy todir="${lib.dir}">
 			<fileset file="${hadoopsecuritymanagerjar}">
+			</fileset>
+			<fileset file="${jobtypejar}">
 			</fileset>
 		</copy>
 

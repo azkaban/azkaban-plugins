@@ -46,8 +46,6 @@ import org.apache.pig.tools.pigstats.ScriptState;
 
 import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
-import azkaban.viewer.pigvisualizer.JobDagNode;
-import azkaban.viewer.pigvisualizer.MapReduceJobState;
 
 public class AzkabanPigListener implements PigProgressNotificationListener {
 
