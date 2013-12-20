@@ -1,0 +1,9 @@
+ Azkaban 3 Plugins UI Issues
+ ===================
+ 
+ - Some UI elements get distorted due to responsive.
+ - Make visualizer graph fit screen size.
+ - "No Files in this Directory" does not span all columns in HDFS browser.
+ - Unify error messages.
+ - HDFS browser: "Change proxy User"
+ - HDFS browser: change user screen - add label to form.

@@ -162,7 +162,7 @@
 				</div><!-- /.col-lg-12 -->
 			</div><!-- /.row -->
 
-			<div class="modal fade" id="messageDialog">
+			<div class="modal" id="messageDialog">
 				<div class="modal-dialog">
 					<div class="modal-content">
 						<div class="modal-header" id="messageTitle">
