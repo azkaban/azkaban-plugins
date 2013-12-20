@@ -65,7 +65,7 @@ public class ReportalMailCreator implements MailCreator {
 		ExecutionOptions option = flow.getExecutionOptions();
 		Set<String> emailList = new HashSet<String>(option.getFailureEmails());
 
-		return createEmail(flow, emailList, message, "failed", azkabanName, clientHostname, clientPortNumber, false);
+		return createEmail(flow, emailList, message, "Failure", azkabanName, clientHostname, clientPortNumber, false);
 	}
 
 	@Override
@@ -74,7 +74,7 @@ public class ReportalMailCreator implements MailCreator {
 		ExecutionOptions option = flow.getExecutionOptions();
 		Set<String> emailList = new HashSet<String>(option.getFailureEmails());
 
-		return createEmail(flow, emailList, message, "failed", azkabanName, clientHostname, clientPortNumber, false);
+		return createEmail(flow, emailList, message, "Failure", azkabanName, clientHostname, clientPortNumber, false);
 	}
 
 	@Override
@@ -83,7 +83,7 @@ public class ReportalMailCreator implements MailCreator {
 		ExecutionOptions option = flow.getExecutionOptions();
 		Set<String> emailList = new HashSet<String>(option.getSuccessEmails());
 		
-		return createEmail(flow, emailList, message, "succeeded", azkabanName, clientHostname, clientPortNumber, true);
+		return createEmail(flow, emailList, message, "Success", azkabanName, clientHostname, clientPortNumber, true);
 	}
 	
 	private boolean createEmail(ExecutableFlow flow, Set<String> emailList, EmailMessage message, String status, String azkabanName, String clientHostname, String clientPortNumber, boolean printData) {
@@ -93,7 +93,7 @@ public class ReportalMailCreator implements MailCreator {
 		if (emailList != null && !emailList.isEmpty()) {
 			message.addAllToAddress(emailList);
 			message.setMimeType("text/html");
-			message.setSubject("Report '" + project.getMetadata().get("title") + "' has " + status + " on " + azkabanName);
+			message.setSubject("Report " + status + ": " + project.getMetadata().get("title"));
 			String urlPrefix = "https://" + clientHostname + ":" + clientPortNumber + "/reportal";
 			try {
 				return createMessage(project, flow, message, urlPrefix, printData);
