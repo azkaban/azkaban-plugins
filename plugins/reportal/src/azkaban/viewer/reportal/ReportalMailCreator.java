@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Scanner;
 import java.util.Set;
@@ -152,7 +153,21 @@ public class ReportalMailCreator implements MailCreator {
 
 			// Get file list
 			String[] fileList = ReportalHelper.filterCSVFile(streamProvider.getFileList(locationFull));
-			Arrays.sort(fileList);
+			
+			// Sort files in execution order.
+			// File names are in the format {EXECUTION_ORDER}-{QUERY_TITLE}.csv
+			// E.g.: 1-queryTitle.csv
+			Arrays.sort(fileList, new Comparator<String>() {
+				public int compare(String a, String b) {
+					Integer aExecutionOrder = Integer.parseInt(a.substring(0, a.indexOf('-')));
+					Integer bExecutionOrder = Integer.parseInt(b.substring(0, b.indexOf('-')));
+					return aExecutionOrder.compareTo(bExecutionOrder);
+				}
+				
+				public boolean equals(Object obj) {
+					return this.equals(obj);
+				}
+			});
 
 			File tempFolder = new File(reportalMailDirectory + "/" + flow.getExecutionId());
 			tempFolder.mkdirs();
