@@ -35,6 +35,8 @@ import azkaban.executor.ExecutableFlow;
 import azkaban.executor.ExecutableNode;
 import azkaban.executor.ExecutorManagerAdapter;
 import azkaban.executor.ExecutorManagerException;
+import azkaban.jobtype.JobDagNode;
+import azkaban.jobtype.MapReduceJobState;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import azkaban.user.Permission;

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package azkaban.viewer.pigvisualizer;
+package azkaban.jobtype;
 
 import java.io.IOException;
 import java.util.HashMap;

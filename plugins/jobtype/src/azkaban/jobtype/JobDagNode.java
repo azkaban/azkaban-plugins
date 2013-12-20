@@ -14,7 +14,7 @@
  * the License.
  */
 
-package azkaban.viewer.pigvisualizer;
+package azkaban.jobtype;
 
 import java.util.ArrayList;
 import java.util.Arrays;
