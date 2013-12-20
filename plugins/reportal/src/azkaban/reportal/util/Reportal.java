@@ -19,8 +19,10 @@ package azkaban.reportal.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
@@ -47,6 +49,7 @@ import azkaban.viewer.reportal.ReportalMailCreator;
 import azkaban.viewer.reportal.ReportalTypeManager;
 
 public class Reportal {
+	private static final String ACCESS_LIST_SPLIT_REGEX = "\\s*,\\s*|\\s*;\\s*|\\s+";
 
 	public String reportalUser;
 	public String ownerEmail;
@@ -152,9 +155,9 @@ public class Reportal {
 
 	public void updatePermissions() {
 		// Save permissions
-		String[] accessViewerList = accessViewer.trim().split("\\s*,\\s*|\\s*;\\s*|\\s+");
-		String[] accessExecutorList = accessExecutor.trim().split("\\s*,\\s*|\\s*;\\s*|\\s+");
-		String[] accessOwnerList = accessOwner.trim().split("\\s*,\\s*|\\s*;\\s*|\\s+");
+		String[] accessViewerList = accessViewer.trim().split(ACCESS_LIST_SPLIT_REGEX);
+		String[] accessExecutorList = accessExecutor.trim().split(ACCESS_LIST_SPLIT_REGEX);
+		String[] accessOwnerList = accessOwner.trim().split(ACCESS_LIST_SPLIT_REGEX);
 		// Prepare permission types
 		Permission admin = new Permission();
 		admin.addPermission(Type.READ);
@@ -242,6 +245,33 @@ public class Reportal {
 	public void loadImmutableFromProject(Project project) {
 		reportalUser = stringGetter.get(project.getMetadata().get("reportal-user"));
 		ownerEmail = stringGetter.get(project.getMetadata().get("owner-email"));
+	}
+	
+	/**
+	 * @return A set of users explicitly granted viewer access to the report.
+	 */
+	public Set<String> getAccessViewers() {
+		Set<String> viewers = new HashSet<String>();
+		for (String user : accessViewer.trim().split(ACCESS_LIST_SPLIT_REGEX)) {
+			if (!user.isEmpty()) {
+				viewers.add(user);
+			}
+		}
+		return viewers;
+	}
+	
+	/**
+	 * @return A set of users explicitly granted executor access to the report.
+	 */
+	public Set<String> getAccessExecutors() {
+		Set<String> executors = new HashSet<String>();
+		for (String user : accessExecutor.trim().split(ACCESS_LIST_SPLIT_REGEX)) {
+			if (!user.isEmpty()) {
+				executors.add(user);
+		
+			}
+		}
+		return executors;
 	}
 	
 	public static Reportal loadFromProject(Project project) {

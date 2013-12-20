@@ -243,11 +243,11 @@
 							<legend>Access</legend>
 							<div class="control-group">
 								<label class="control-label">Viewer</label>
-								<div class="controls"><textarea class="span8" name="access-viewer">$accessViewer</textarea><br><span>Separate entries by commas, spaces or semicolons.</span></div>
+								<div class="controls"><textarea class="span8" name="access-viewer">$accessViewer</textarea><br><span>Separate entries by commas, spaces or semicolons. If left blank, the runs of this report are viewable by everyone.</span></div>
 							</div>
 							<div class="control-group">
 								<label class="control-label">Executor</label>
-								<div class="controls"><textarea class="span8" name="access-executor">$accessExecutor</textarea><br><span>Separate entries by commas, spaces or semicolons.</span></div>
+								<div class="controls"><textarea class="span8" name="access-executor">$accessExecutor</textarea><br><span>Separate entries by commas, spaces or semicolons.  If left blank, anyone can execute this report.</span></div>
 							</div>
 							<div class="control-group">
 								<label class="control-label">Owner</label>

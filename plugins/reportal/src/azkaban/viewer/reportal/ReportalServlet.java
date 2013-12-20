@@ -250,7 +250,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 		// Set graph
 		else if (ajaxName.equals("graph")) {
-			if (!project.hasPermission(user, Type.READ)) {
+			if (reportal.getAccessViewers().size() > 0 && !project.hasPermission(user, Type.READ)) {
 				ret.put("error", "You do not have permissions to view this reportal.");
 			}
 			else {
@@ -353,7 +353,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
-		if (!project.hasPermission(session.getUser(), Type.READ)) {
+		if (reportal.getAccessViewers().size() > 0 && !project.hasPermission(session.getUser(), Type.READ)) {
 			page.add("errorMsg", "You are not allowed to view this report.");
 			page.render();
 			return;
@@ -555,7 +555,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
-		if (!project.hasPermission(session.getUser(), Type.EXECUTE)) {
+		if (reportal.getAccessExecutors().size() > 0 && !project.hasPermission(session.getUser(), Type.EXECUTE)) {
 			page.add("errorMsg", "You are not allowed to run this report.");
 			page.render();
 			return;
@@ -887,7 +887,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Reportal report = Reportal.loadFromProject(project);
 		User user = session.getUser();
 
-		if (!project.hasPermission(user, Type.EXECUTE)) {
+		if (report.getAccessExecutors().size() > 0 && !project.hasPermission(user, Type.EXECUTE)) {
 			ret.put("error", "You are not allowed to run this report.");
 			return;
 		}
