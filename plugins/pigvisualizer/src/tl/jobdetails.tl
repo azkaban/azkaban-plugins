@@ -25,7 +25,7 @@
                     </tr>
                     <tr>
                       <td class="first">JobTracker URL</td>
-                      <td><a href="{state.trackingURL}">{state.trackingURL}</a></td>
+                      <td><a href="{state.trackingURL}" class="btn btn-primary btn-xs">View on JobTracker</a></td>
                     </tr>
                   </tbody>
                 </table>

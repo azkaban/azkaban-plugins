@@ -72,14 +72,9 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 	@Override
 	public void initialPlanNotification(String scriptId, MROperPlan plan) {
 		logger.info("**********initialPlanNotification!**********");
-		
-		//logger.info("The script id is " + scriptId);
-		//logger.info("The plan is " + plan.toString());
-		
-		// borrowed from ambrose
-		Map<OperatorKey, MapReduceOper> planKeys = plan.getKeys();
 
     // First pass: generate dagNodeNameMap.
+		Map<OperatorKey, MapReduceOper> planKeys = plan.getKeys();
 		for (Map.Entry<OperatorKey, MapReduceOper> entry : planKeys.entrySet()) {
 			String nodeName = entry.getKey().toString();
 			String[] aliases = toArray(
