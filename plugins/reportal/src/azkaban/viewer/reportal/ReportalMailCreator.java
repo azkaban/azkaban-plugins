@@ -96,17 +96,16 @@ public class ReportalMailCreator implements MailCreator {
 			message.setSubject("Report '" + project.getMetadata().get("title") + "' has " + status + " on " + azkabanName);
 			String urlPrefix = "https://" + clientHostname + ":" + clientPortNumber + "/reportal";
 			try {
-				createMessage(project, flow, message, urlPrefix, printData);
+				return createMessage(project, flow, message, urlPrefix, printData);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			return true;
 		}
 
 		return false;
 	}
 
-	private void createMessage(Project project, ExecutableFlow flow, EmailMessage message, String urlPrefix, boolean printData) throws Exception {
+	private boolean createMessage(Project project, ExecutableFlow flow, EmailMessage message, String urlPrefix, boolean printData) throws Exception {
 		message.println("<html>");
 		message.println("<head></head>");
 		message.println("<body style='font-family: verdana; color: #000000; background-color: #cccccc; padding: 20px;'>");
@@ -127,18 +126,6 @@ public class ReportalMailCreator implements MailCreator {
 		// Description
 		message.println(project.getDescription());
 		message.println("</div>");
-
-		// message.println("{% if queue.vars|length > 0 %}");
-		// message.println("<div style='margin-top: 10px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-weight: bold;'>");
-		// message.println("Variables");
-		// message.println("</div>");
-		// message.println("");
-		// message.println("<div>");
-		// message.println("{% for qv in queue.vars %}");
-		// message.println("{{ qv.var.title }}: {{ qv.value}}<br/>");
-		// message.println("{% endfor %}");
-		// message.println("</div>");
-		// message.println("{% endif %}");
 
 		if (printData) {
 			String locationFull = (outputLocation + "/" + flow.getExecutionId()).replace("//", "/");
@@ -194,6 +181,8 @@ public class ReportalMailCreator implements MailCreator {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			
+			boolean emptyResults = true;
 
 			for (String file : fileList) {
 				message.println("<div style='margin-top: 10px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-weight: bold;'>");
@@ -208,6 +197,7 @@ public class ReportalMailCreator implements MailCreator {
 					Scanner rowScanner = new Scanner(csvInputStream);
 					int lineNumber = 0;
 					while (rowScanner.hasNextLine() && lineNumber <= NUM_PREVIEW_ROWS) {
+						emptyResults = false;
 						String csvLine = rowScanner.nextLine();
 						String[] data = csvLine.split("\",\"");
 						message.println("<tr>");
@@ -230,18 +220,15 @@ public class ReportalMailCreator implements MailCreator {
 				}
 				message.addAttachment(file, tempOutputFile);
 			}
+			
+			// Don't send an email if there are no results.
+			if (emptyResults) {
+				return false;
+			}
 		}
 
 		message.println("</div>").println("</body>").println("</html>");
 
-		// message.println("<h2> Execution '" + flow.getExecutionId() + "' of flow '" + flow.getFlowId() + "' has succeeded on " + azkabanName + "</h2>");
-		// message.println("<table>");
-		// message.println("<tr><td>Start Time</td><td>" + flow.getStartTime() + "</td></tr>");
-		// message.println("<tr><td>End Time</td><td>" + flow.getEndTime() + "</td></tr>");
-		// message.println("<tr><td>Duration</td><td>" + Utils.formatDuration(flow.getStartTime(), flow.getEndTime()) + "</td></tr>");
-		// message.println("</table>");
-		// message.println("");
-		// String executionUrl = "https://" + clientHostname + ":" + clientPortNumber + "/" + "executor?" + "execid=" + execId;
-		// message.println("<a href=\"" + executionUrl + "\">" + flow.getFlowId() + " Execution Link</a>");
+		return true;
 	}
 }
