@@ -34,7 +34,7 @@ public class JobDagNode {
 
 	private List<String> parents = new ArrayList<String>();
 	private List<String> successors = new ArrayList<String>();
-	private Map<String, String> metrics;;
+  private PigJobStats jobStats;
 	
 	private MapReduceJobState mapReduceJobState;
 	private Properties jobConfiguration;
@@ -123,45 +123,16 @@ public class JobDagNode {
 		this.jobConfiguration = jobConfiguration;
 	}
 
-	public void setJobStats(JobStats stats) {
-		Map<String, String> jobMetrics = new HashMap<String, String>();
-		jobMetrics.put("numberMaps", String.valueOf(stats.getNumberMaps()));
-		jobMetrics.put("numberReduces", String.valueOf(stats.getNumberReduces()));
-		jobMetrics.put("minMapTime", String.valueOf(stats.getMinMapTime() / 1000));
-		jobMetrics.put("maxMapTime", String.valueOf(stats.getMaxMapTime() / 1000));
-		jobMetrics.put("avgMapTime", String.valueOf(stats.getAvgMapTime() / 1000));
-		jobMetrics.put("minReduceTime", 
-				String.valueOf(stats.getMinReduceTime() / 1000));
-		jobMetrics.put("maxReduceTime", 
-				String.valueOf(stats.getMaxReduceTime() / 1000));
-		jobMetrics.put("avgReduceTime", 
-				String.valueOf(stats.getAvgREduceTime() / 1000));
-		jobMetrics.put("bytesWritten", String.valueOf(stats.getBytesWritten()));
-		jobMetrics.put("hdfsBytesWritten", 
-				String.valueOf(stats.getHdfsBytesWritten()));
-		jobMetrics.put("mapInputRecords", 
-				String.valueOf(stats.getMapInputRecords()));
-		jobMetrics.put("mapOutputRecords", 
-				String.valueOf(stats.getMapOutputRecords()));
-		jobMetrics.put("reduceInputRecords", 
-				String.valueOf(stats.getReduceInputRecords()));
-		jobMetrics.put("reduceOutputRecords", 
-				String.valueOf(stats.getReduceOutputRecords()));
-		jobMetrics.put("proactiveSpillCountObjects", 
-				String.valueOf(stats.getProactiveSpillCountObjects()));
-		jobMetrics.put("proactiveSpillCountRecs", 
-				String.valueOf(stats.getProactiveSpillCountRecs()));
-		jobMetrics.put("recordWritten", String.valueOf(stats.getRecordWrittern()));
-		jobMetrics.put("SMMSpillCount", String.valueOf(stats.getSMMSpillCount()));
-		setMetrics(jobMetrics);
+	public void setJobStats(PigJobStats pigJobStats) {
+		this.jobStats = pigJobStats;
 	}
 
-	public void setMetrics(Map<String, String> metrics) {
-		this.metrics = metrics;
-	}
+  public void setJobStats(JobStats jobStats) {
+    this.jobStats = new PigJobStats(jobStats);
+  }
 
-	public Map<String, String> getMetrics() {
-		return metrics;
+	public PigJobStats getJobStats() {
+		return jobStats;
 	}
 
 	// XXX Refactor this!
@@ -195,7 +166,7 @@ public class JobDagNode {
 		if (jobConfiguration != null) {
 			jsonObj.put("jobConfiguration", propertiesToJson(jobConfiguration));
 		}
-		jsonObj.put("metrics", metrics);
+		jsonObj.put("jobStats", jobStats.toJson());
 		jsonObj.put("mapReduceJobState", mapReduceJobState.toJson());
 		return jsonObj;
 	}
@@ -206,23 +177,28 @@ public class JobDagNode {
 		String name = (String) jsonObj.get("name");
 		List<String> aliases = (ArrayList<String>) jsonObj.get("aliases");
 		List<String> features = (ArrayList<String>) jsonObj.get("features");
+
 		JobDagNode node = new JobDagNode(name, aliases, features);
 		node.setJobId((String) jsonObj.get("jobId"));
 		node.setParents((ArrayList<String>) jsonObj.get("parents"));
 		node.setSuccessors((ArrayList<String>) jsonObj.get("successors"));
+
+    // Grab configuration if it is available.
 		if (jsonObj.containsKey("jobConfiguration")) {
 			node.setJobConfiguration(
 					propertiesFromJson(jsonObj.get("jobConfiguration")));
 		}
-		Map<String, String> jobMetrics = (HashMap<String, String>)
-				jsonObj.get("metrics");
-		node.setMetrics(jobMetrics);
 		node.setLevel(Integer.parseInt((String) jsonObj.get("level")));
+
+    // Grab PigJobStats;
+    PigJobStats pigJobStats = PigJobStats.fromJson(jsonObj.get("jobStats"));
+    node.setJobStats(pigJobStats);
 		
 		// Grab MapReduceJobState.
 		MapReduceJobState mapReduceJobState = 
 				MapReduceJobState.fromJson(jsonObj.get("mapReduceJobState"));
 		node.setMapReduceJobState(mapReduceJobState);
+
 		return node;
 	}
 }

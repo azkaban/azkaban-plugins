@@ -31,6 +31,7 @@ public class MapReduceJobState {
 	private String jobId;
 	private String jobName;
 	private String trackingURL;
+	private String failureInfo;
 	private boolean isComplete;
 	private boolean isSuccessful;
 	private float mapProgress;
@@ -58,6 +59,7 @@ public class MapReduceJobState {
 		isSuccessful = runningJob.isSuccessful();
 		mapProgress = runningJob.mapProgress();
 		reduceProgress = runningJob.reduceProgress();
+		failureInfo = runningJob.getFailureInfo();
 
 		totalMappers = mapTaskReport.length;
 		totalReducers = reduceTaskReport.length;
@@ -113,6 +115,14 @@ public class MapReduceJobState {
 
 	public void setTrackingURL(String trackingURL) {
 		this.trackingURL = trackingURL;
+	}
+
+	public String getFailureInfo() {
+		return failureInfo;
+	}
+
+	public void setFailureInfo(String failureInfo) {
+		this.failureInfo = failureInfo;
 	}
 
 	public boolean isComplete() {
@@ -197,9 +207,11 @@ public class MapReduceJobState {
 
 	public Object toJson() {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();
+		jsonObj.put("jobName", jobName);
 		jsonObj.put("trackingURL", trackingURL);
 		jsonObj.put("isComplete", String.valueOf(isComplete));
 		jsonObj.put("isSuccessful", String.valueOf(isSuccessful));
+		jsonObj.put("failureInfo", failureInfo);
 		return jsonObj;
 	}
 
@@ -212,6 +224,8 @@ public class MapReduceJobState {
 				Boolean.parseBoolean((String) jsonObj.get("isComplete")));
 		state.setSuccessful(
 				Boolean.parseBoolean((String) jsonObj.get("isSuccessful")));
+		state.setJobName((String) jsonObj.get("jobName"));
+		state.setFailureInfo((String) jsonObj.get("failureInfo"));
 		return state;
 	}
 }
