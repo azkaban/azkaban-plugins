@@ -196,7 +196,6 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			HashMap<String, Object> nodeObj = new HashMap<String, Object>();
 			nodeObj.put("id", node.getJobId());
 			nodeObj.put("level", node.getLevel());
-			System.out.println("level for " + node.getJobId() + ": " + node.getLevel());
 			nodeObj.put("type", "pig");
 			nodeList.add(nodeObj);
 
@@ -242,7 +241,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		ret.put("jobId", nodeId);
-		ret.put("metrics", node.getMetrics());
+		ret.put("stats", node.getJobStats().toJson());
 		ret.put("features", node.getFeatures());
 		ret.put("aliases", node.getAliases());
 		ret.put("state", node.getMapReduceJobState().toJson());

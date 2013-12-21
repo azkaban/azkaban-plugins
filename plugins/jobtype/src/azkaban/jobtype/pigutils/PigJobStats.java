@@ -16,7 +16,9 @@
 
 package azkaban.jobtype.pigutils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.pig.tools.pigstats.JobStats;
@@ -139,7 +141,7 @@ public class PigJobStats {
     List<InputStats> inputs = stats.getInputs();
     inputStats = new ArrayList<PigIoStats>();
     for (InputStats input : inputs) {
-      inputStats.add(new PigIoStat(
+      inputStats.add(new PigIoStats(
           input.getName(),
           input.getLocation(),
           input.getBytes(),
@@ -149,7 +151,7 @@ public class PigJobStats {
     List<OutputStats> outputs = stats.getOutputs();
     outputStats = new ArrayList<PigIoStats>();
     for (OutputStats output : outputs) {
-      outputStats.add(new PigIoStat(
+      outputStats.add(new PigIoStats(
           output.getName(),
           output.getLocation(),
           output.getBytes(),
@@ -189,7 +191,25 @@ public class PigJobStats {
   public String getErrorMessage() { return errorMessage; }
   public List<PigIoStats> getInputStats() { return inputStats; }
   public List<PigIoStats> getOutputStats() { return outputStats; }
-	
+
+  private static List<Object> statsToJson(
+      List<PigIoStats> stats) {
+    List<Object> jsonObj = new ArrayList<Object>();
+    for (PigIoStats stat : stats) {
+      jsonObj.add(stat.toJson());
+    }
+    return jsonObj;
+  }
+
+  private static List<PigIoStats> statsFromJson(Object obj) {
+    List<PigIoStats> stats = new ArrayList<PigIoStats>();
+    List<Object> jsonStats = (ArrayList<Object>) obj;
+    for (Object jsonStat : jsonStats) {
+      stats.add(PigIoStats.fromJson(jsonStat));
+    }
+    return stats;
+  }
+
   public Object toJson() {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();
 		jsonObj.put("numberMaps", Integer.toString(numberMaps));
@@ -213,6 +233,8 @@ public class PigJobStats {
 		jsonObj.put("recordsWritten", Long.toString(recordsWritten));
 		jsonObj.put("smmSpillCount", Long.toString(smmSpillCount));
     jsonObj.put("errorMessage", errorMessage);
+    jsonObj.put("inputStats", statsToJson(inputStats));
+    jsonObj.put("outputStats", statsToJson(outputStats));
     return jsonObj;
   }
 
@@ -246,6 +268,8 @@ public class PigJobStats {
     long recordsWritten =
         Long.parseLong((String) jsonObj.get("recordsWritten"));
     long smmSpillCount = Long.parseLong((String) jsonObj.get("smmSpillCount"));
+    List<PigIoStats> inputs = statsFromJson(jsonObj.get("inputStats"));
+    List<PigIoStats> outputs = statsFromJson(jsonObj.get("outputStats"));
     String errorMessage = (String) jsonObj.get("errorMessage");
     
     return new PigJobStats(
@@ -267,6 +291,8 @@ public class PigJobStats {
         proactiveSpillCountRecs,
         recordsWritten,
         smmSpillCount,
-        errorMessage);
+        errorMessage,
+        inputs,
+        outputs);
   }
 }

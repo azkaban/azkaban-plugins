@@ -14,7 +14,7 @@
  * the License.
  */
 
-package azkaban.jobtype.pigutils.PigJobUtils;
+package azkaban.jobtype.pigutils;
 
 import java.io.IOException;
 import java.util.Collection;

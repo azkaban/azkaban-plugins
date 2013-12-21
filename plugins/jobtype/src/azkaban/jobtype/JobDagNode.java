@@ -36,10 +36,11 @@ public class JobDagNode {
 
 	private List<String> parents = new ArrayList<String>();
 	private List<String> successors = new ArrayList<String>();
+  
   private PigJobStats jobStats;
-	
 	private MapReduceJobState mapReduceJobState;
 	private Properties jobConfiguration;
+
 	private int level = 0;
 
 	public JobDagNode() {
@@ -90,7 +91,7 @@ public class JobDagNode {
 	}
 
 	public void addParent(JobDagNode parent) {
-		parents.add(parent.getJobId());
+		parents.add(parent.getName());
 	}
 
 	public void setParents(List<String> parents) {
@@ -102,7 +103,7 @@ public class JobDagNode {
 	}
 
 	public void addSuccessor(JobDagNode successor) {
-		successors.add(successor.getJobId());
+		successors.add(successor.getName());
 	}
 
 	public void setSuccessors(List<String> successors) {
@@ -168,8 +169,12 @@ public class JobDagNode {
 		if (jobConfiguration != null) {
 			jsonObj.put("jobConfiguration", propertiesToJson(jobConfiguration));
 		}
-		jsonObj.put("jobStats", jobStats.toJson());
-		jsonObj.put("mapReduceJobState", mapReduceJobState.toJson());
+    if (jobStats != null) {
+      jsonObj.put("jobStats", jobStats.toJson());
+    }
+    if (mapReduceJobState != null) {
+      jsonObj.put("mapReduceJobState", mapReduceJobState.toJson());
+    }
 		return jsonObj;
 	}
 
@@ -184,22 +189,26 @@ public class JobDagNode {
 		node.setJobId((String) jsonObj.get("jobId"));
 		node.setParents((ArrayList<String>) jsonObj.get("parents"));
 		node.setSuccessors((ArrayList<String>) jsonObj.get("successors"));
+		node.setLevel(Integer.parseInt((String) jsonObj.get("level")));
 
     // Grab configuration if it is available.
 		if (jsonObj.containsKey("jobConfiguration")) {
 			node.setJobConfiguration(
 					propertiesFromJson(jsonObj.get("jobConfiguration")));
 		}
-		node.setLevel(Integer.parseInt((String) jsonObj.get("level")));
 
     // Grab PigJobStats;
-    PigJobStats pigJobStats = PigJobStats.fromJson(jsonObj.get("jobStats"));
-    node.setJobStats(pigJobStats);
+    if (jsonObj.containsKey("jobStats")) {
+      PigJobStats pigJobStats = PigJobStats.fromJson(jsonObj.get("jobStats"));
+      node.setJobStats(pigJobStats);
+    }
 		
 		// Grab MapReduceJobState.
-		MapReduceJobState mapReduceJobState = 
-				MapReduceJobState.fromJson(jsonObj.get("mapReduceJobState"));
-		node.setMapReduceJobState(mapReduceJobState);
+    if (jsonObj.containsKey("mapReduceJobState")) {
+      MapReduceJobState mapReduceJobState = 
+          MapReduceJobState.fromJson(jsonObj.get("mapReduceJobState"));
+      node.setMapReduceJobState(mapReduceJobState);
+    }
 
 		return node;
 	}

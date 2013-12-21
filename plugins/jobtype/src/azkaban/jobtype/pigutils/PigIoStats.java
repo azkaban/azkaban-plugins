@@ -56,14 +56,14 @@ public class PigIoStats {
 
   public Object toJson() {
     Map<String, String> jsonObj = new HashMap<String, String>();
-    jsonObj.put("bytes", Long.toString(stats.getBytes()));
-    jsonObj.put("location", stats.getLocation());
-    jsonObj.put("name", stats.getName());
-    jsonObj.put("numberRecords", Long.toString(stats.getNumberRecords()));
+    jsonObj.put("bytes", Long.toString(bytes));
+    jsonObj.put("location", location);
+    jsonObj.put("name", name);
+    jsonObj.put("numberRecords", Long.toString(records));
     return jsonObj;
   }
 
-  public static PigOutputStats fromJson(Object obj) {
+  public static PigIoStats fromJson(Object obj) {
     Map<String, Object> jsonObj = (HashMap<String, Object>) obj;
     String name = (String) jsonObj.get("name");
     long bytes = Long.parseLong((String) jsonObj.get("bytes"));
