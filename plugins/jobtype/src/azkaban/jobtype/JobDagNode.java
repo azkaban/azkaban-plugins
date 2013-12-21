@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import azkaban.jobtype.pigutils.PigJobStats;
+
 import org.apache.pig.tools.pigstats.JobStats;
 
 public class JobDagNode {

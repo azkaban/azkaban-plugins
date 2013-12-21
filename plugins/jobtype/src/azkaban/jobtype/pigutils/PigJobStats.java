@@ -14,12 +14,14 @@
  * the License.
  */
 
-package azkaban.jobtype;
+package azkaban.jobtype.pigutils;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.pig.tools.pigstats.JobStats;
+import org.apache.pig.tools.pigstats.InputStats;
+import org.apache.pig.tools.pigstats.OutputStats;
 
 public class PigJobStats {
   private int numberMaps;
@@ -49,6 +51,9 @@ public class PigJobStats {
 
   private String errorMessage;
 
+  private List<PigIoStats> inputStats;
+  private List<PigIoStats> outputStats;
+
   public PigJobStats() {
   }
   
@@ -71,7 +76,9 @@ public class PigJobStats {
       long proactiveSpillCountRecs,
       long recordsWritten,
       long smmSpillCount,
-      String errorMessage) {
+      String errorMessage,
+      List<PigIoStats> inputStats,
+      List<PigIoStats> outputStats) {
     this.numberMaps = numberMaps;
     this.numberReduces = numberReduces;;
 
@@ -98,6 +105,8 @@ public class PigJobStats {
     this.smmSpillCount = smmSpillCount;
 
     this.errorMessage = errorMessage;
+    this.inputStats = inputStats;
+    this.outputStats = outputStats;
   }
 
   public PigJobStats(JobStats stats) {
@@ -126,38 +135,60 @@ public class PigJobStats {
     smmSpillCount = stats.getSMMSpillCount();
 
     errorMessage = stats.getErrorMessage();
+
+    List<InputStats> inputs = stats.getInputs();
+    inputStats = new ArrayList<PigIoStats>();
+    for (InputStats input : inputs) {
+      inputStats.add(new PigIoStat(
+          input.getName(),
+          input.getLocation(),
+          input.getBytes(),
+          input.getNumberRecords()));
+    }
+    
+    List<OutputStats> outputs = stats.getOutputs();
+    outputStats = new ArrayList<PigIoStats>();
+    for (OutputStats output : outputs) {
+      outputStats.add(new PigIoStat(
+          output.getName(),
+          output.getLocation(),
+          output.getBytes(),
+          output.getNumberRecords()));
+    }
   }
 
-  private int getNumberMaps() { return numberMaps; }
-  private int getNumberReduces() { return numberReduces; }
+  public int getNumberMaps() { return numberMaps; }
+  public int getNumberReduces() { return numberReduces; }
   
-  private long getMinMapTime() { return minMapTime; }
-  private long getMaxMapTime() { return maxMapTime; }
-  private long getAvgMapTime() { return avgMapTime; }
+  public long getMinMapTime() { return minMapTime; }
+  public long getMaxMapTime() { return maxMapTime; }
+  public long getAvgMapTime() { return avgMapTime; }
 
-  private long getMinReduceTime() { return minReduceTime; }
-  private long getMaxReduceTime() { return maxReduceTime; }
-  private long getAvgReduceTime() { return avgReduceTime; }
+  public long getMinReduceTime() { return minReduceTime; }
+  public long getMaxReduceTime() { return maxReduceTime; }
+  public long getAvgReduceTime() { return avgReduceTime; }
 
-  private long getBytesWritten() { return bytesWritten; }
-  private long getHdfsBytesWritten() { return hdfsBytesWritten; }
+  public long getBytesWritten() { return bytesWritten; }
+  public long getHdfsBytesWritten() { return hdfsBytesWritten; }
 
-  private long getMapInputRecords() { return mapInputRecords; }
-  private long getMapOutputRecords() { return mapOutputRecords; }
-  private long getReduceInputRecords() { return reduceInputRecords; }
-  private long getReduceOutputRecords() { return reduceOutputRecords; }
+  public long getMapInputRecords() { return mapInputRecords; }
+  public long getMapOutputRecords() { return mapOutputRecords; }
+  public long getReduceInputRecords() { return reduceInputRecords; }
+  public long getReduceOutputRecords() { return reduceOutputRecords; }
 
-  private long getProactiveSpillCountObjects() { 
+  public long getProactiveSpillCountObjects() { 
     return proactiveSpillCountObjects;
   }
-  private long getProactiveSpillCountRecs() {
+  public long getProactiveSpillCountRecs() {
     return proactiveSpillCountRecs;
   }
 
-  private long getRecordsWritten() { return recordsWritten; }
-  private long getSmmSpillCount() { return smmSpillCount; }
+  public long getRecordsWritten() { return recordsWritten; }
+  public long getSmmSpillCount() { return smmSpillCount; }
 
-  private String getErrorMessage() { return errorMessage; }
+  public String getErrorMessage() { return errorMessage; }
+  public List<PigIoStats> getInputStats() { return inputStats; }
+  public List<PigIoStats> getOutputStats() { return outputStats; }
 	
   public Object toJson() {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();

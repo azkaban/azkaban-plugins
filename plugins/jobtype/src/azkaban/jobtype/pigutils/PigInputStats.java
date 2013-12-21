@@ -14,7 +14,7 @@
  * the License.
  */
 
-package azkaban.jobtype;
+package azkaban.jobtype.pigutils;
 
 import org.apache.pig.tools.pigstats.OutputStats;
 
