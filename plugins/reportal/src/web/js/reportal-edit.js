@@ -193,11 +193,6 @@ $(document).ready(function () {
 	//Load schedule options
 	scheduleOptionChangeHandler($("#schedule-options")[0]);
 
-	//Load starting queries
-	for (var i = 0; i < startQueries.length; i++) {
-		startQueries[i].script = $("#script" + startQueries[i].num).text();
-	};
-
 	function addInitialQueries() {
 		function addQuery(item) {
 			var element = queryListObject.template.clone();
