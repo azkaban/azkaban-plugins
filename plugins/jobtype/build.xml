@@ -48,16 +48,15 @@
 	</target>
 
 	<target name="build" description="Compile main source tree java files">
-		<!-- copy the latest securitymanager jar -->
 		<delete>
 			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
 			</fileset>
 		</delete>
+		<!-- copy the latest securitymanager jar -->
 		<copy todir="${lib.dir}">
 			<fileset file="${hadoopsecuritymanagerjar}">
 			</fileset>
 		</copy>
-
 
 		<delete dir="${dist.classes.dir}" />
 		<mkdir dir="${dist.classes.dir}" />
@@ -92,11 +91,11 @@
 
 		<!-- Build jobtypes directory-->
 		<copy todir="${dist.packages.dir}" >
-            <fileset dir="${jobtypes.dir}" >
+			<fileset dir="${jobtypes.dir}" >
 			</fileset>
 		</copy>
 
-        <!-- Copy jobtype jar-->
+		<!-- Copy jobtype jar-->
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/java" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hadoopJava" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.9.2" />
@@ -113,15 +112,14 @@
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.10.1" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.11.0" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive-0.8.1" />
-
-        <!-- Tarball it -->
-        <tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
+		
+		<!-- Tarball it -->
+		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
 			<tarfileset dir="${dist.packages.dir}" prefix="${name}-${version}" filemode="755" />
 		</tar>
 	</target>
 
-    <target name="package" depends="package-jobtype" description="Create all packages">
+	<target name="package" depends="package-jobtype" description="Create all packages">
 	</target>
-
 
 </project>

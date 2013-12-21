@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.pig.PigRunner;
 
@@ -62,6 +61,8 @@ public class HadoopPigJob extends JavaProcessJob {
 	private String userToProxy = null;
 	private boolean shouldProxy = false;
 	private boolean obtainTokens = false;
+	
+	private boolean userPigJar;
 
 	private HadoopSecurityManager hadoopSecurityManager;
 	
@@ -71,15 +72,16 @@ public class HadoopPigJob extends JavaProcessJob {
 	
 	public HadoopPigJob(String jobid, Props sysProps, Props jobProps, Logger log) throws IOException {
 		super(jobid, sysProps, jobProps, log);
-
+		
 		HADOOP_SECURE_PIG_WRAPPER = HadoopSecurePigWrapper.class.getName();
 //		PIG_JAVA_CLASS = org.apache.pig.Main.class.getName();
 		
-		
+		getJobProps().put("azkaban.job.id", jobid);
 		
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
 		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
+		userPigJar = getJobProps().getBoolean("use.user.pig.jar", false);
 		
 		if(shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
@@ -266,30 +268,13 @@ public class HadoopPigJob extends JavaProcessJob {
 		
 		List<String> classPath = super.getClassPaths();
 
-		// Add hadoop home setting.
-//		String hadoopHome = System.getenv("HADOOP_HOME");
-//		if (hadoopHome == null) {
-//			info("HADOOP_HOME not set, using default hadoop config.");
-//		} else {
-//			info("Using hadoop config found in " + hadoopHome);
-//			classPath.add(new File(hadoopHome, "conf").getPath());
-//		}
-
-//		// add pig jar
-//		getLog().info("Getting pigmain from");
-//		classPath.add(getSourcePathFromClass(org.apache.pig.Main.class));
-//		// add hadoop jar
-//		classPath.add(getSourcePathFromClass(Configuration.class));
-//		
-//		if(shouldProxy(getSysProps())) {
-//			classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
-//			classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
-//		}
 		classPath.add(getSourcePathFromClass(Props.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 		//assuming pig 0.8 and up
-		classPath.add(getSourcePathFromClass(PigRunner.class));
+		if(!userPigJar) {
+			classPath.add(getSourcePathFromClass(PigRunner.class));
+		}
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
 		if(typeClassPath != null) {
 			// fill in this when load this jobtype

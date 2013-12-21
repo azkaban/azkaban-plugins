@@ -16,15 +16,12 @@
 
 <!DOCTYPE html> 
 <html>
-	<head>
-#parse( "azkaban/webapp/servlet/velocity/style.vm" )
-		<script type="text/javascript" src="${context}/js/jquery/jquery-1.9.1.js"></script>    
-		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
-		<script type="text/javascript" src="${context}/js/underscore-1.4.4-min.js"></script>
-		<script type="text/javascript" src="${context}/js/namespace.js"></script>
-		<script type="text/javascript" src="${context}/js/backbone-0.9.10-min.js"></script>
-		<script type="text/javascript" src="${context}/js/jquery.simplemodal-1.4.4.js"></script>
+	<head lang="en">
 
+#parse ("azkaban/webapp/servlet/velocity/style.vm")
+#parse ("azkaban/webapp/servlet/velocity/javascript.vm")
+
+		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
 		<script type="text/javascript" src="${context}/js/azkaban.nav.js"></script>
 		<script type="text/javascript">
 			var contextURL = "${context}";
@@ -32,20 +29,10 @@
 			var timezone = "${timezone}";
 			var homeDir = "${homedir}";
 
-#if($allowproxy)
+#if ($allowproxy)
 			$(function() {
 				$('#changeUserBtn').click( function() {
-				  $('#messageDialog').modal({
-				      closeHTML: "<a href='#' title='Close' class='modal-close'>x</a>",
-				      position: ["20%",],
-				      containerId: 'confirm-container',
-				      containerCss: {
-				        'height': '200px',
-				        'width': '400px'
-				      },
-				      onShow: function (dialog) {
-				      }
-				    });
+				  $('#messageDialog').modal();
 				});
 				
 				$('#submitChangeUserBtn').click( function() {
@@ -66,177 +53,134 @@
 			});
 #end
 		</script>
-		<style>
-			.logout-label {
-				float: right;
-				margin: 3px;
-			}
-			#changeUserBtn {
-				float: right;
-			}
-			
-			#rightBox {
-				float: right;
-				margin-top: 20px;
-				margin-right: 10px;
-			}
-			
-			#proxyBox {
-				float: right;
-				height: 40px;
-			}
-			
-			#proxyname {
-				width: 100%;
-			}
-			
-			#goHomeLink {
-				clear: both;
-				float: right;
-				text-decoration: none;
-				margin-top: 10px;
-				margin-left: 1px;
-				margin-right: 1px;
-				font-weight: bold;
-				color: #0571A6;
-			}
-			
-			#goHomeLink:hover {
-				color: #009FC9;
-			}
-			
-			.breadcrumbs {
-				margin-left: 20px;
-				font-size: 14pt;
-				margin-bottom: 10px;
-			}
-			
-			.breadcrumbs a {
-				text-decoration: none;
-				margin-left: 1px;
-				margin-right: 1px;
-				font-weight: bold;
-				color: #0571A6;
-			}
-			
-			.breadcrumbs a:hover {
-				color: #009FC9;
-			}
-			
-			.breadcrumbs a.firstCrumb {
-				font-size: 16pt;
-			}
-		</style>
 	</head>
 	<body>
 
-#set($current_page="$viewerName")
+#set ($current_page="$viewerName")
+#parse ("azkaban/webapp/servlet/velocity/nav.vm")
 
-#parse( "azkaban/webapp/servlet/velocity/nav.vm" )
-		<div class="content">
-		
-		#if($errorMsg)
-                	<div class="box-error-message">$errorMsg</div>
-		#else
-			#if($error_message != "null")
-	                <div class="box-error-message">$error_message</div>
-			#elseif($success_message != "null")
-        	        <div class="box-success-message">$success_message</div>
-			#end
-		#end
-
-
-		<div id="rightBox">
-			<div id="proxyBox">
-	#if($allowproxy)			
-				<button id="changeUserBtn" class="btn3">Change User</button>
-				<p class="logout-label">Proxy user '${user}'</p>
+    <div class="az-page-header">
+			<div class="container">
+        <div class="row">
+          <div class="col-lg-6">
+            <h1>HDFS Browser</h1>
+          </div>
+          <div class="col-lg-6">
+            <div class="az-page-header-form pull-right">
+	#if ($allowproxy)
+              <strong>Proxy user</strong> ${user}
+              <button type="button" id="changeUserBtn" class="btn btn-sm btn-primary">Change User</button>
 	#end
-	
-			</div>
-			<a id="goHomeLink" class="homelink" href="${context}/hdfs${homedir}">Home Directory</a>
-		</div>
-
-
-		<div id="all-hdfsbrowser-content">
-			<div class="section-hd">
-				<h2>HDFS Browser</h2>
-			</div>
-		</div>
-		
-		#if(!$no_fs)
-			<div class="box">
-				<div class="breadcrumbs">
-					#set($size = $paths.size() - 1)
-					<a class="firstCrumb" href="${context}/hdfs/">/</a>#if($size >= 0)#foreach($i in [0 ..$size])<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span>/</span>#end #end
-				</div>
-			
-				<div class="subdirs">
-					<table id="hdfs-dir" class="fileTable">
-					<thead>
-						<tr>
-							<th>File</th>
-							<th>Permission</th>
-							<th>Owner/Group</th>
-							<th>Size</th>
-							<th>Block Size</th>
-							<th>Reps</th>
-							<th>Modified Date</th>
-						</tr>
-					</thead>
-					<tbody>
-						#if($subdirs)
-							#foreach($status in $subdirs)
-						<tr>
-							<td>
-								<a href="${context}/hdfs${status.getPath().toUri().getPath()}">${status.path.name}#if($status.isDir())/#end</a>
-							</td>
-							<td>${status.permission}</td>
-							<td>${status.owner}/${status.group}</td>
-							<td>
-								#if($status.isDir())
-									&ndash;
-								#else
-									$utils.displayBytes(${status.len})
-								#end
-							</td>
-							<td>
-							#if($status.isDir())
-								&ndash;
-							#else
-								$utils.displayBytes(${status.getBlockSize()})
-							#end
-							</td>
-							<td>
-								#if($status.isDir())
-								&ndash;
-							#else
-								${status.getReplication()}
-							#end
-							</td>
-							<td>$utils.formatDateTime(${status.modificationTime})</td>
-						</tr>
-							#end
-						#else
-						<tr><td>No Files In This Directory</td></tr>
-						#end
-					</tbody>
-				</table>
-				
-			</div>	
-		</div>
-		#end
-		</div>
-		
-		<div id="messageDialog" class="modal">
-			<h3 id="messageTitle">Change Proxy User</h3>
-			<div class="messageDiv">
-				<p id="messageBox">Enter the proxy user id</p>
-				<input id="proxyname" type="text" name="proxyname" val="${user}"></input>
-			</div>
-            <div class="actions">
-				<button id="submitChangeUserBtn" class="btn3">Change User</button>
             </div>
-		</div>
+            <div class="clearfix"></div>
+          </div>
+        </div>
+			</div>
+    </div>
+
+    <div class="container">
+
+#if ($errorMsg)
+			<div class="panel panel-danger">
+				<div class="panel-heading">Error</div>
+				<div class="panel-body">
+					$errorMsg
+				</div>
+			</div>
+#else
+	#if ($error_message != "null")
+			<div class="alert alert-danger">$error_message</div>
+	#elseif ($success_message != "null")
+			<div class="alert alert-success">$success_message</div>
+	#end
+#end
+
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="panel panel-default" id="all-hdfsbrowser-content">
+						<div class="panel-heading">
+#set ($size = $paths.size() - 1)
+							<a class="firstCrumb" href="${context}/hdfs/">/</a>#if($size >= 0)#foreach($i in [0 ..$size])<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span>/</span>#end #end
+              <div class="pull-right">
+                <a id="goHomeLink" class="btn btn-xs btn-default" href="${context}/hdfs${homedir}">Home Directory</a>
+              </div>
+						</div>
+#if (!$no_fs)
+						<table id="hdfs-dir" class="table table-condensed table-striped table-hover table-bordered">
+							<thead>
+								<tr>
+									<th>File</th>
+									<th>Permission</th>
+									<th>Owner/Group</th>
+									<th>Size</th>
+									<th>Block Size</th>
+									<th>Reps</th>
+									<th>Modified Date</th>
+								</tr>
+							</thead>
+							<tbody>
+	#if ($subdirs)
+		#foreach ($status in $subdirs)
+								<tr>
+									<td>
+										<a href="${context}/hdfs${status.getPath().toUri().getPath()}">${status.path.name}#if($status.isDir())/#end</a>
+									</td>
+									<td>${status.permission}</td>
+									<td>${status.owner}/${status.group}</td>
+									<td>
+			#if ($status.isDir())
+										&ndash;
+			#else
+										$utils.displayBytes(${status.len})
+			#end
+									</td>
+									<td>
+			#if ($status.isDir())
+										&ndash;
+			#else
+										$utils.displayBytes(${status.getBlockSize()})
+			#end
+									</td>
+									<td>
+			#if ($status.isDir())
+										&ndash;
+			#else
+										${status.getReplication()}
+			#end
+									</td>
+									<td>$utils.formatDateTime(${status.modificationTime})</td>
+								</tr>
+		#end
+	#else
+								<tr><td>No Files In This Directory</td></tr>
+	#end
+							</tbody>
+						</table>
+#end
+
+					</div><!-- /.panel -->
+				</div><!-- /.col-lg-12 -->
+			</div><!-- /.row -->
+
+			<div class="modal fade" id="messageDialog">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header" id="messageTitle">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+							<h4 class="modal-title">Change proxy User</h4>
+						</div>
+						<div class="modal-body" id="messageDiv">
+							<input id="proxyname" type="text" name="proxyname" val="${user}" class="form-control">
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+							<button id="submitChangeUserBtn" class="btn btn-primary">Change User</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+#parse ("azkaban/webapp/servlet/velocity/footer.vm")
+		</div><!-- /.container -->
 	</body>
 </html>
