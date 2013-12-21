@@ -728,7 +728,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("variables", variableList);
 		report.variables = variableList;
 
-		boolean variableErrorOccured = false;
+		boolean variableErrorOccurred = false;
 		for (int i = 0; i < variables; i++) {
 			Variable variable = new Variable();
 
@@ -736,7 +736,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			variable.name = getParam(req, "variable" + i + "name");
 
 			if (variable.title.isEmpty() || variable.name.isEmpty()) {
-				variableErrorOccured = true;
+				variableErrorOccurred = true;
 			}
 
 			variableList.add(variable);
@@ -775,7 +775,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 		// Variable error check
-		if (variableErrorOccured) {
+		if (variableErrorOccurred) {
 			page.add("errorMsg", "Variable title and name cannot be empty.");
 			page.render();
 			return;
