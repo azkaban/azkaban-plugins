@@ -7,28 +7,28 @@
               <table class="table table-striped table-condensed table-bordered">
                 <tbody>
                   <tr>
-                    <td><strong>Num Maps</strong></td>
-                    <td>{stats.numberMaps}</td>
-                    <td><strong>Num Reduces</strong></td>
-                    <td>{stats.numberReduces}</td>
+                    <td class="property-key"><strong>Num Maps</strong></td>
+                    <td class="property-value-half">{stats.numberMaps}</td>
+                    <td class="property-key"><strong>Num Reduces</strong></td>
+                    <td class="property-value-half">{stats.numberReduces}</td>
                   </tr>
                   <tr>
-                    <td><strong>Min Map Time</strong></td>
-                    <td>{stats.minMapTime}</td>
-                    <td><strong>Min Reduce Time</strong></td>
-                    <td>{stats.minReduceTime}</td>
+                    <td class="property-key"><strong>Min Map Time</strong></td>
+                    <td class="property-value-half">{stats.minMapTime}</td>
+                    <td class="property-key"><strong>Min Reduce Time</strong></td>
+                    <td class="property-value-half">{stats.minReduceTime}</td>
                   </tr>
                   <tr>
-                    <td><strong>Max Map Time</strong></td>
-                    <td>{stats.maxMapTime}</td>
-                    <td><strong>Nax Reduce Time</strong></td>
-                    <td>{stats.maxReduceTime}</td>
+                    <td class="property-key"><strong>Max Map Time</strong></td>
+                    <td class="property-value-half">{stats.maxMapTime}</td>
+                    <td class="property-key"><strong>Nax Reduce Time</strong></td>
+                    <td class="property-value-half">{stats.maxReduceTime}</td>
                   </tr>
                   <tr>
-                    <td><strong>Avg Map Time</strong></td>
-                    <td>{stats.avgMapTime}</td>
-                    <td><strong>Avg Reduce Time</strong></td>
-                    <td>{stats.avgReduceTime}</td>
+                    <td class="property-key"><strong>Avg Map Time</strong></td>
+                    <td class="property-value-half">{stats.avgMapTime}</td>
+                    <td class="property-key"><strong>Avg Reduce Time</strong></td>
+                    <td class="property-value-half">{stats.avgReduceTime}</td>
                   </tr>
                 </tbody>
               </table>
@@ -37,34 +37,34 @@
               <table class="table table-striped table-condensed table-bordered">
                 <tbody>
                   <tr>
-                    <td><strong>Map Input Records</strong></td>
-                    <td>{stats.mapInputRecords}</td>
-                    <td><strong>Reduce Input Records</strong></td>
-                    <td>{stats.reduceInputRecords}</td>
+                    <td class="property-key"><strong>Map Input Records</strong></td>
+                    <td class="property-value-half">{stats.mapInputRecords}</td>
+                    <td class="property-key"><strong>Reduce Input Records</strong></td>
+                    <td class="property-value-half">{stats.reduceInputRecords}</td>
                   </tr>
                   <tr>
-                    <td><strong>Map Output Records</strong></td>
-                    <td>{stats.mapOutputRecords}</td>
-                    <td><strong>Reduce Output Records</strong></td>
-                    <td>{stats.reduceOutputRecords}</td>
+                    <td class="property-key"><strong>Map Output Records</strong></td>
+                    <td class="property-value-half">{stats.mapOutputRecords}</td>
+                    <td class="property-key"><strong>Reduce Output Records</strong></td>
+                    <td class="property-value-half">{stats.reduceOutputRecords}</td>
                   </tr>
                   <tr>
-                    <td><strong>Bytes Written</strong></td>
-                    <td>{stats.bytesWritten}</td>
-                    <td><strong>HDFS Bytes Written</strong></td>
-                    <td>{stats.hdfsBytesWritten}</td>
+                    <td class="property-key"><strong>Bytes Written</strong></td>
+                    <td class="property-value-half">{stats.bytesWritten}</td>
+                    <td class="property-key"><strong>HDFS Bytes Written</strong></td>
+                    <td class="property-value-half">{stats.hdfsBytesWritten}</td>
                   </tr>
                   <tr>
-                    <td><strong>Records Written</strong></td>
-                    <td>{stats.recordsWritten}</td>
-                    <td><strong>SMM Spill Count</strong></td>
-                    <td>{stats.smmSpillCount}</td>
+                    <td class="property-key"><strong>Records Written</strong></td>
+                    <td class="property-value-half">{stats.recordsWritten}</td>
+                    <td class="property-key"><strong>SMM Spill Count</strong></td>
+                    <td class="property-value-half">{stats.smmSpillCount}</td>
                   </tr>
                   <tr>
-                    <td><strong>Proactive Spill Count Recs</strong></td>
-                    <td>{stats.proactiveSpillCountRecs}</td>
-                    <td><strong>Proactive Spill Count Objects</strong></td>
-                    <td>{stats.proactiveSpillCountObjects}</td>
+                    <td class="property-key"><strong>Proactive Spill Count Recs</strong></td>
+                    <td class="property-value-half">{stats.proactiveSpillCountRecs}</td>
+                    <td class="property-key"><strong>Proactive Spill Count Objects</strong></td>
+                    <td class="property-value-half">{stats.proactiveSpillCountObjects}</td>
                   </tr>
                 </tbody>
               </table>
