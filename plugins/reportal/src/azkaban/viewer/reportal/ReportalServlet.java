@@ -695,15 +695,15 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		report.notifications = getParam(req, "notifications");
 		page.add("notifications", report.notifications);
 
-		int queries = getIntParam(req, "queryNumber");
-		page.add("queryNumber", queries);
-		List<Query> queryList = new ArrayList<Query>(queries);
+		int numQueries = getIntParam(req, "queryNumber");
+		page.add("queryNumber", numQueries);
+		List<Query> queryList = new ArrayList<Query>(numQueries);
 		page.add("queries", queryList);
 		report.queries = queryList;
 
 		String typeError = null;
 		String typePermissionError = null;
-		for (int i = 0; i < queries; i++) {
+		for (int i = 0; i < numQueries; i++) {
 			Query query = new Query();
 
 			query.title = getParam(req, "query" + i + "title");
@@ -757,7 +757,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		// Empty query check
-		if (queries <= 0) {
+		if (numQueries <= 0) {
 			page.add("errorMsg", "There needs to have at least one query.");
 			page.render();
 			return;

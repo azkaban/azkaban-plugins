@@ -229,7 +229,7 @@
 										<div class="controls">
 											<select class="querytype" nametemplate="query#type">
 												<option value="ReportalHive">Hive</option>
-												<option value="ReportalTeraData">Tera Data</option>
+												<option value="ReportalTeraData">Teradata</option>
 												<option value="ReportalPig">Pig</option>
 											</select>
 										</div>
