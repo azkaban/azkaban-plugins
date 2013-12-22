@@ -94,7 +94,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
       throws ServletException, IOException {
 
 		Page page = newPage(request, response, session, 
-				"azkaban/viewer/pigvisualizer/visualizer.vm");
+				"azkaban/viewer/pigvisualizer/pigvisualizer.vm");
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
     page.add("errorMsg", "No job execution specified.");
@@ -117,7 +117,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
       HttpServletResponse response, Session session)
       throws ServletException, IOException {
 		Page page = newPage(request, response, session, 
-				"azkaban/viewer/pigvisualizer/visualizer.vm");
+				"azkaban/viewer/pigvisualizer/pigvisualizer.vm");
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
 
