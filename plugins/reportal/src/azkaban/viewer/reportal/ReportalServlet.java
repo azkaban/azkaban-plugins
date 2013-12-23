@@ -920,7 +920,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		
 		// Add the execution user's email to the list of success and failure emails.
 		String email = user.getEmail();
-		if (email != null) {
+		if (email != null && !email.isEmpty()) {
 			options.getSuccessEmails().add(email);
 			options.getFailureEmails().add(email);
 		}

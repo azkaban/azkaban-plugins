@@ -85,7 +85,11 @@ public class ReportalHelper {
 		if (subscription == null) {
 			subscription = new HashMap<String, String>();
 		}
-		subscription.put(user.getUserId(), email);
+		
+		if (email != null && !email.isEmpty()) {
+			subscription.put(user.getUserId(), email);
+		}
+		
 		project.getMetadata().put("subscription", subscription);
 		updateProjectNotifications(project, server.getProjectManager());
 		server.getProjectManager().updateProjectSetting(project);
