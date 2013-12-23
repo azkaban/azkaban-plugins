@@ -227,7 +227,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		// Subscribe reportal
 		else if (ajaxName.equals("subscribe")) {
 			boolean wasSubscribed = ReportalHelper.isSubscribeProject(project, user);
-			if (!wasSubscribed && !project.hasPermission(user, Type.READ)) {
+			if (!wasSubscribed && reportal.getAccessViewers().size() > 0 && !project.hasPermission(user, Type.READ)) {
 				ret.put("error", "You do not have permissions to view this reportal.");
 			}
 			else {
