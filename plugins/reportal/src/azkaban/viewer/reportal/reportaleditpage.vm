@@ -272,7 +272,7 @@
 							<input type="submit" class="btn btn-primary" value="Save">
 							<a href="${context}/reportal" class="btn">Cancel</a>
 						</div>
-					<form>
+					</form>
 				</div>
 			</div>
 #end
