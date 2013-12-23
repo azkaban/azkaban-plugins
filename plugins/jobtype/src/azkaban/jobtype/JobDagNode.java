@@ -24,38 +24,24 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import azkaban.jobtype.pigutils.PigJobStats;
-
 import org.apache.pig.tools.pigstats.JobStats;
 
 public class JobDagNode {
-	private String name;
-	private String jobId;
-	private List<String> aliases;
-	private List<String> features;
+	protected String name;
 
-	private List<String> parents = new ArrayList<String>();
-	private List<String> successors = new ArrayList<String>();
+	protected List<String> parents = new ArrayList<String>();
+	protected List<String> successors = new ArrayList<String>();
   
-  private PigJobStats jobStats;
-	private MapReduceJobState mapReduceJobState;
-	private Properties jobConfiguration;
+	protected MapReduceJobState mapReduceJobState;
+	protected Properties jobConfiguration;
 
-	private int level = 0;
+	protected int level = 0;
 
 	public JobDagNode() {
 	}
 
-	public JobDagNode(String name, String[] aliases, String[] features) {
+	public JobDagNode(String name) {
 		this.name = name;
-		this.aliases = Arrays.asList(aliases);
-		this.features = Arrays.asList(features);
-	}
-
-	public JobDagNode(String name, List<String> aliases, List<String> features) {
-		this.name = name;
-		this.aliases = aliases;
-		this.features = features;
 	}
 
 	public String getName() {
@@ -72,22 +58,6 @@ public class JobDagNode {
 
 	public void setLevel(int level) {
 		this.level = level;
-	}
-
-	public String getJobId() {
-		return jobId;
-	}
-
-	public void setJobId(String jobId) {
-		this.jobId = jobId;
-	}
-
-	public List<String> getAliases() {
-		return aliases;
-	}
-
-	public List<String> getFeatures() {
-		return features;
 	}
 
 	public void addParent(JobDagNode parent) {
@@ -126,20 +96,8 @@ public class JobDagNode {
 		this.jobConfiguration = jobConfiguration;
 	}
 
-	public void setJobStats(PigJobStats pigJobStats) {
-		this.jobStats = pigJobStats;
-	}
-
-  public void setJobStats(JobStats jobStats) {
-    this.jobStats = new PigJobStats(jobStats);
-  }
-
-	public PigJobStats getJobStats() {
-		return jobStats;
-	}
-
 	// XXX Refactor this!
-	private static Object propertiesToJson(Properties properties) {
+	protected static Object propertiesToJson(Properties properties) {
 		Map<String, String> jsonObj = new HashMap<String, String>();
 		Set<String> keys = properties.stringPropertyNames();
 		for (String key : keys) {
@@ -148,7 +106,7 @@ public class JobDagNode {
 		return jsonObj;
 	}
 
-	private static Properties propertiesFromJson(Object obj) {
+	protected static Properties propertiesFromJson(Object obj) {
 		Map<String, String> jsonObj = (HashMap<String, String>) obj;
 		Properties properties = new Properties();
 		for (Map.Entry<String, String> entry : jsonObj.entrySet()) {
@@ -160,18 +118,12 @@ public class JobDagNode {
 	public Object toJson() {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();
 		jsonObj.put("name", name);
-		jsonObj.put("jobId", jobId);
 		jsonObj.put("level", Integer.toString(level));
-		jsonObj.put("aliases", Arrays.asList(aliases));
-		jsonObj.put("features", Arrays.asList(features));
 		jsonObj.put("parents", parents);
 		jsonObj.put("successors", successors);
 		if (jobConfiguration != null) {
 			jsonObj.put("jobConfiguration", propertiesToJson(jobConfiguration));
 		}
-    if (jobStats != null) {
-      jsonObj.put("jobStats", jobStats.toJson());
-    }
     if (mapReduceJobState != null) {
       jsonObj.put("mapReduceJobState", mapReduceJobState.toJson());
     }
@@ -182,11 +134,8 @@ public class JobDagNode {
 	public static JobDagNode fromJson(Object obj) throws Exception {
 		Map<String, Object> jsonObj = (HashMap<String, Object>) obj;
 		String name = (String) jsonObj.get("name");
-		List<String> aliases = (ArrayList<String>) jsonObj.get("aliases");
-		List<String> features = (ArrayList<String>) jsonObj.get("features");
 
-		JobDagNode node = new JobDagNode(name, aliases, features);
-		node.setJobId((String) jsonObj.get("jobId"));
+		JobDagNode node = new JobDagNode(name);
 		node.setParents((ArrayList<String>) jsonObj.get("parents"));
 		node.setSuccessors((ArrayList<String>) jsonObj.get("successors"));
 		node.setLevel(Integer.parseInt((String) jsonObj.get("level")));
@@ -196,12 +145,6 @@ public class JobDagNode {
 			node.setJobConfiguration(
 					propertiesFromJson(jsonObj.get("jobConfiguration")));
 		}
-
-    // Grab PigJobStats;
-    if (jsonObj.containsKey("jobStats")) {
-      PigJobStats pigJobStats = PigJobStats.fromJson(jsonObj.get("jobStats"));
-      node.setJobStats(pigJobStats);
-    }
 		
 		// Grab MapReduceJobState.
     if (jsonObj.containsKey("mapReduceJobState")) {

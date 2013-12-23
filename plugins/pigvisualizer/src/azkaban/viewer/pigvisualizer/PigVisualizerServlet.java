@@ -35,7 +35,7 @@ import azkaban.executor.ExecutableFlow;
 import azkaban.executor.ExecutableNode;
 import azkaban.executor.ExecutorManagerAdapter;
 import azkaban.executor.ExecutorManagerException;
-import azkaban.jobtype.JobDagNode;
+import azkaban.jobtype.pigutils.PigJobDagNode;
 import azkaban.jobtype.MapReduceJobState;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
@@ -149,7 +149,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		page.render();
 	}
 
-	private Map<String, JobDagNode> getDagNodeMap(int execId, String jobId) 
+	private Map<String, PigJobDagNode> getDagNodeMap(int execId, String jobId) 
 			throws Exception {
 		String dagFilePath = outputDir + "/" + execId + "-" + jobId + 
 				"-dagnodemap.json";
@@ -157,18 +157,18 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		File dagFile = new File(dagFilePath);
 		Map<String, Object> jsonObj = (HashMap<String, Object>) 
 			  JSONUtils.parseJSONFromFile(dagFile);
-		Map<String, JobDagNode> dagNodeMap = new HashMap<String, JobDagNode>();
+		Map<String, PigJobDagNode> dagNodeMap = new HashMap<String, PigJobDagNode>();
 		for (Map.Entry<String, Object> entry : jsonObj.entrySet()) {
-			dagNodeMap.put(entry.getKey(), JobDagNode.fromJson(entry.getValue()));
+			dagNodeMap.put(entry.getKey(), PigJobDagNode.fromJson(entry.getValue()));
 		}
 		return dagNodeMap;
 	}
 
 	private Map<String, String> getNameToJobIdMap(
-			Map<String, JobDagNode> dagNodeMap) {
+			Map<String, PigJobDagNode> dagNodeMap) {
 		Map<String, String> nameToJobId = new HashMap<String, String>();
-		for (Map.Entry<String, JobDagNode> entry : dagNodeMap.entrySet()) {
-			JobDagNode node = entry.getValue();
+		for (Map.Entry<String, PigJobDagNode> entry : dagNodeMap.entrySet()) {
+			PigJobDagNode node = entry.getValue();
 			nameToJobId.put(node.getName(), node.getJobId());
 		}
 		return nameToJobId;
@@ -179,7 +179,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			ExecutableFlow exFlow) throws ServletException {
 		int execId = getIntParam(request, "execid");
 		String jobId = getParam(request, "jobid");
-		Map<String, JobDagNode> dagNodeMap = null;
+		Map<String, PigJobDagNode> dagNodeMap = null;
 		try {
 			dagNodeMap = getDagNodeMap(execId, jobId);
 		}
@@ -191,8 +191,8 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		Map<String, String> nameToJobId = getNameToJobIdMap(dagNodeMap);
 		ArrayList<Map<String, Object>> nodeList = new ArrayList<Map<String, Object>>();
 		ArrayList<Map<String, Object>> edgeList = new ArrayList<Map<String, Object>>();
-		for (Map.Entry<String, JobDagNode> entry : dagNodeMap.entrySet()) {
-			JobDagNode node = entry.getValue();
+		for (Map.Entry<String, PigJobDagNode> entry : dagNodeMap.entrySet()) {
+			PigJobDagNode node = entry.getValue();
 			HashMap<String, Object> nodeObj = new HashMap<String, Object>();
 			nodeObj.put("id", node.getJobId());
 			nodeObj.put("level", node.getLevel());
@@ -208,7 +208,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 					return;
 				}
 
-				JobDagNode targetNode = dagNodeMap.get(successorJobId);
+				PigJobDagNode targetNode = dagNodeMap.get(successorJobId);
 				edgeObj.put("from", node.getJobId());
 				edgeObj.put("target", targetNode.getJobId());
 				edgeList.add(edgeObj);
@@ -225,7 +225,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		int execId = getIntParam(request, "execid");
 		String jobId = getParam(request, "jobid");
 		String nodeId = getParam(request, "nodeid");
-		Map<String, JobDagNode> dagNodeMap = null;
+		Map<String, PigJobDagNode> dagNodeMap = null;
 		try {
 			dagNodeMap = getDagNodeMap(execId, jobId);
 		}
@@ -234,7 +234,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 	
-		JobDagNode node = dagNodeMap.get(nodeId);
+		PigJobDagNode node = dagNodeMap.get(nodeId);
 		if (node == null) {
 			ret.put("error", "Node " + nodeId + " not found.");
 			return;
