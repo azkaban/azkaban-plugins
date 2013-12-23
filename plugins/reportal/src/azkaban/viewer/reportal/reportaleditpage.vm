@@ -50,10 +50,11 @@
 #set($num = $velocityCount - 1)
 
 ## Add backslashes before carriage returns (\r) and newlines (\n)
-## to allow for a multi-line JavaScript string.
+## to allow for a multi-line JavaScript string. Also escape quotes (").
 #set($script = ${query.script})
 #set($script = $script.replaceAll("\r","\\\r"))
 #set($script = $script.replaceAll("\n","\\\n"))
+#set($script = $script.replaceAll('"','\\"'))
 				{
 					"num" : "${num}",
 					"title" : "${query.title}",
