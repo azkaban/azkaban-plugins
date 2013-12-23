@@ -68,4 +68,56 @@
                   </tr>
                 </tbody>
               </table>
+
+              {?stats.inputStats}
+              <h4>Inputs</h4>
+              <table class="table table-striped table-condensed table-bordered">
+                <thead>
+                  <tr>
+                    <th>Bytes</th>
+                    <th>Location</th>
+                    <th>Name</th>
+                    <th>Num Records</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {#stats.inputStats}
+                  <tr>
+                    <td>{bytes}</td>
+                    <td>{location}</td>
+                    <td>{name}</td>
+                    <td>{numberRecords}</td>
+                  </tr>
+                {/stats.inputStats}
+                </tbody>
+              </table>
+              {/stats.inputStats}
+
+              {?stats.outputStats}
+              <h4>Outputs</h4>
+              <table class="table table-striped table-condensed table-bordered">
+                <thead>
+                  <tr>
+                    <th>Bytes</th>
+                    <th>Location</th>
+                    <th>Name</th>
+                    <th>Num Records</th>
+                  </tr>
+                </thead>
+                <tbody>
+                {#stats.outputStats}
+                  <tr>
+                    <td>{bytes}</td>
+                    <td>{location}</td>
+                    <td>{name}</td>
+                    <td>{numberRecords}</td>
+                  </tr>
+                {/stats.outputStats}
+                </tbody>
+              </table>
+              {/stats.outputStats}
+            </div><!-- /.modal-body -->
+            <div class="modal-footer">
+              <a href="{state.trackingURL}" class="btn btn-info" target="_blank">View on JobTracker</a>
+              <div type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             </div>

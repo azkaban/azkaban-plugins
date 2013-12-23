@@ -25,7 +25,7 @@
                     </tr>
                     <tr>
                       <td class="first">JobTracker URL</td>
-                      <td><a href="{state.trackingURL}" class="btn btn-primary btn-xs">View on JobTracker</a></td>
+                      <td><a href="{state.trackingURL}" class="btn btn-info btn-xs" target="blank">View on JobTracker</a></td>
                     </tr>
                   </tbody>
                 </table>
@@ -81,4 +81,4 @@
                 </table>
               </div>
 
-              <button type="button" id="jobstats-details-btn" class="btn btn-primary btn-block">More Details &raquo;</button>
+              <button type="button" id="jobstats-details-btn" class="btn btn-info btn-block">More Details &raquo;</button>
