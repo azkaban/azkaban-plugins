@@ -14,13 +14,8 @@
  * the License.
  */
 
-var svgGraphView;
-var graphModel;
-azkaban.GraphModel = Backbone.Model.extend({});
-
-var mainSvgGraphView;
-var jobStatsView;
-var contextMenuView;
+var visualizerGraphModel;
+azkaban.VisualizerGraphModel = Backbone.Model.extend({});
 
 var nodeClickCallback = function (event, model, type) {
 	console.log("Node clicked callback");
@@ -97,13 +92,18 @@ var graphClickCallback = function (event, model) {
 	contextMenuView.show(event, menu);
 }
 
+var jobStatsView;
 azkaban.JobStatsView = Backbone.View.extend({
 	events: {
-		"click li": "handleJobClick",
+		"click .job": "handleJobClick",
 		"click .resetPanZoomBtn": "handleResetPanZoom",
 		"click #jobstats-back-btn": "handleBackButton",
-		"contextMenu li": "handleContextMenuClick"
+		"contextMenu li": "handleContextMenuClick",
+    "click #jobstats-details-btn": "handleJobDetailsModal"
 	},
+
+  jobCache: {
+  },
 
 	initialize: function (settings) {
 		this.model.bind('change:selected', this.handleSelectionChange, this);
@@ -148,6 +148,10 @@ azkaban.JobStatsView = Backbone.View.extend({
 
 		var previous = this.model.previous("selected");
 		var current = this.model.get("selected");
+    if (this.jobCache[current] != null) {
+      jobStatsView.renderSidebar(current);
+      return;
+    }
 
 		var requestURL = contextURL + "/pigvisualizer";
 		var request = {
@@ -156,25 +160,46 @@ azkaban.JobStatsView = Backbone.View.extend({
 			"jobid": jobId,
 			"nodeid": current
 		};
+    var jobCache = this.jobCache;
 		var successHandler = function(data) {
-			if (data.state.isComplete == "false") {
-				data.jobState = "In Progress";
-			}
-			else if (data.state.isSuccessful == "true") {
-				data.jobState = "Succeeded";
-			}
-			else {
-				data.jobState = "Failed";
-			}
-
-			dust.render("jobdetails", data, function (err, out) {
-				$('#jobstats-list').hide();
-				$('#jobstats-details').show();
-				$('#jobstats-details').html(out);
-			});
-		};
+      if (data.state.isComplete == "false") {
+        data.jobState = "In Progress";
+      }
+      else if (data.state.isSuccessful == "true") {
+        data.jobState = "Succeeded";
+      }
+      else {
+        data.jobState = "Failed";
+      }
+      jobCache[current] = data;
+      jobStatsView.renderSidebar(current);
+    };
 		$.get(requestURL, request, successHandler, "json");
 	},
+
+  renderSidebar: function(nodeId) {
+    if (this.jobCache[nodeId] == null) {
+      return;
+    }
+    var data = this.jobCache[nodeId];
+    dust.render("jobstats", data, function (err, out) {
+      $('#jobstats-list').hide();
+      $('#jobstats-details').show();
+      $('#jobstats-details').html(out);
+    });
+  },
+
+  handleJobDetailsModal: function(evt) {
+		var current = this.model.get("selected");
+    if (this.jobCache[current] == null) {
+      return;
+    }
+    var data = this.jobCache[current];
+    dust.render("jobdetails", data, function (err, out) {
+      $('#job-details-modal-content').html(out);
+      $('#job-details-modal').modal();
+    });
+  },
 
 	handleResetPanZoom: function (evt) {
 		this.model.trigger("resetPanZoom");
@@ -203,25 +228,17 @@ azkaban.JobStatsView = Backbone.View.extend({
 			}
 		});
 
-		var ul = this.list;
-		this.jobs = ul;
+		var list = this.list;
+		this.jobs = list;
 		for (var i = 0; i < nodeArray.length; ++i) {
-			var li = document.createElement("li");
-      $(li).addClass("list-group-item");
-			li.jobid = nodeArray[i].id;
-
-			var iconDiv = document.createElement("div");
-			$(iconDiv).addClass("icon");
-			li.appendChild(iconDiv);
-
 			var a = document.createElement("a");
+      $(a).addClass("list-group-item");
+      $(a).addClass("job");
       $(a).attr('href', '#');
 			$(a).text(nodeArray[i].id);
-			li.appendChild(a);
-			$(ul).append(li);
-			li.jobid = nodeArray[i].id;
-
-			this.listNodes[nodeArray[i].id] = li;
+			$(list).append(a);
+			a.jobid = nodeArray[i].id;
+			this.listNodes[nodeArray[i].id] = a;
 		}
 	},
 
@@ -233,11 +250,13 @@ azkaban.JobStatsView = Backbone.View.extend({
 	}
 });
 
+var contextMenuView;
+
 $(function() {
-	graphModel = new azkaban.GraphModel();
-	mainSvgGraphView = new azkaban.SvgGraphView({
+	visualizerGraphModel = new azkaban.VisualizerGraphModel();
+	visualizerGraphView = new azkaban.VisualizerGraphView({
 		el: $('#svgDiv'),
-		model: graphModel,
+		model: visualizerGraphModel,
 		rightClick: {
 			"node": nodeClickCallback,
 			"edge": edgeClickCallback,
@@ -247,7 +266,7 @@ $(function() {
 
 	jobStatsView = new azkaban.JobStatsView({
 		el: $('#jobStats'),
-		model: graphModel,
+		model: visualizerGraphModel,
 		contextMenuCallback: jobClickCallback
 	});
 
@@ -259,8 +278,8 @@ $(function() {
 	};
 
 	var successHandler = function (data) {
-		createModelFromAjaxCall(data, graphModel);
-		graphModel.trigger("change:graph");
+		createModelFromAjaxCall(data, visualizerGraphModel);
+		visualizerGraphModel.trigger("change:graph");
 	};
 
 	$.get(requestURL, request, successHandler, "json");
