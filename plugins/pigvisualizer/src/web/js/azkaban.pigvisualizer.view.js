@@ -95,7 +95,7 @@ var graphClickCallback = function (event, model) {
 var jobStatsView;
 azkaban.JobStatsView = Backbone.View.extend({
 	events: {
-		"click li": "handleJobClick",
+		"click .job": "handleJobClick",
 		"click .resetPanZoomBtn": "handleResetPanZoom",
 		"click #jobstats-back-btn": "handleBackButton",
 		"contextMenu li": "handleContextMenuClick",
@@ -228,25 +228,17 @@ azkaban.JobStatsView = Backbone.View.extend({
 			}
 		});
 
-		var ul = this.list;
-		this.jobs = ul;
+		var list = this.list;
+		this.jobs = list;
 		for (var i = 0; i < nodeArray.length; ++i) {
-			var li = document.createElement("li");
-      $(li).addClass("list-group-item");
-			li.jobid = nodeArray[i].id;
-
-			var iconDiv = document.createElement("div");
-			$(iconDiv).addClass("icon");
-			li.appendChild(iconDiv);
-
 			var a = document.createElement("a");
+      $(a).addClass("list-group-item");
+      $(a).addClass("job");
       $(a).attr('href', '#');
 			$(a).text(nodeArray[i].id);
-			li.appendChild(a);
-			$(ul).append(li);
-			li.jobid = nodeArray[i].id;
-
-			this.listNodes[nodeArray[i].id] = li;
+			$(list).append(a);
+			a.jobid = nodeArray[i].id;
+			this.listNodes[nodeArray[i].id] = a;
 		}
 	},
 
