@@ -167,10 +167,17 @@
 					<div class="modal-content">
 						<div class="modal-header" id="messageTitle">
 							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-							<h4 class="modal-title">Change proxy User</h4>
+							<h4 class="modal-title">Change Proxy User</h4>
 						</div>
 						<div class="modal-body" id="messageDiv">
-							<input id="proxyname" type="text" name="proxyname" val="${user}" class="form-control">
+              <fieldset>
+                <div class="form-group">
+                  <label for="proxyname" class="col-sm-3 control-label">Proxy User</label>
+                  <div class="col-sm-9">
+                    <input id="proxyname" type="text" name="proxyname" val="${user}" class="form-control">
+                  </div>
+                </div>
+              </fieldset>
 						</div>
 						<div class="modal-footer">
 							<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
