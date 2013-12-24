@@ -92,6 +92,37 @@ var graphClickCallback = function (event, model) {
 	contextMenuView.show(event, menu);
 }
 
+var jobDetailsView;
+azkaban.JobDetailsView = Backbone.View.extend({
+	events: {
+    "click #details-tab": "handleDetailsTabClick",
+    "click #jobconf-tab": "handleJobConfTabClick"
+  },
+	
+  initialize: function (settings) {
+  },
+  
+  handleDetailsTabClick: function() {
+    console.log("handle details tab click");
+    $('#jobconf-tab').removeClass('active');
+    $('#details-tab').addClass('active');
+    $('#jobconf-tab-pane').hide();
+    $('#details-tab-pane').show();
+  },
+
+  handleJobConfTabClick: function() {
+    console.log("handle details tab click");
+    $('#details-tab').removeClass('active');
+    $('#jobconf-tab').addClass('active');
+    $('#details-tab-pane').hide();
+    $('#jobconf-tab-pane').show();
+  },
+
+  render: function() {
+
+  }
+});
+
 var jobStatsView;
 azkaban.JobStatsView = Backbone.View.extend({
 	events: {
@@ -99,7 +130,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 		"click .resetPanZoomBtn": "handleResetPanZoom",
 		"click #jobstats-back-btn": "handleBackButton",
 		"contextMenu li": "handleContextMenuClick",
-    "click #jobstats-details-btn": "handleJobDetailsModal"
+    "click #jobstats-details-btn": "handleJobDetailsModal",
 	},
 
   jobCache: {
@@ -171,6 +202,13 @@ azkaban.JobStatsView = Backbone.View.extend({
       else {
         data.jobState = "Failed";
       }
+      var jobConf = [];
+      for (key in data.conf) {
+        jobConf.push({"key": key, "value": data.conf[key]});
+      }
+      data.conf = null;
+      data.conf = jobConf;
+
       jobCache[current] = data;
       jobStatsView.renderSidebar(current);
     };
@@ -187,6 +225,12 @@ azkaban.JobStatsView = Backbone.View.extend({
       $('#jobstats-details').show();
       $('#jobstats-details').html(out);
     });
+    dust.render("jobdetails", data, function (err, out) {
+      $('#job-details-modal-content').html(out);
+      $('#job-details-modal').on('shown.bs.modal', function(e) {
+        jobDetailsView.handleDetailsTabClick();
+      });
+    });
   },
 
   handleJobDetailsModal: function(evt) {
@@ -195,11 +239,9 @@ azkaban.JobStatsView = Backbone.View.extend({
       return;
     }
     var data = this.jobCache[current];
-    dust.render("jobdetails", data, function (err, out) {
-      $('#job-details-modal-content').html(out);
-      $('#job-details-modal').modal();
-    });
+    $('#job-details-modal').modal();
   },
+
 
 	handleResetPanZoom: function (evt) {
 		this.model.trigger("resetPanZoom");
@@ -269,6 +311,10 @@ $(function() {
 		model: visualizerGraphModel,
 		contextMenuCallback: jobClickCallback
 	});
+        
+  jobDetailsView = new azkaban.JobDetailsView({
+    el: $('#job-details-modal'), 
+  });
 
 	var requestURL = contextURL + "/pigvisualizer";
 	var request = {

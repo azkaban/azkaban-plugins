@@ -96,8 +96,12 @@ public class JobDagNode {
 		this.jobConfiguration = jobConfiguration;
 	}
 
+  public Properties getJobConfiguration() {
+    return jobConfiguration;
+  }
+
 	// XXX Refactor this!
-	protected static Object propertiesToJson(Properties properties) {
+	public static Object propertiesToJson(Properties properties) {
 		Map<String, String> jsonObj = new HashMap<String, String>();
 		Set<String> keys = properties.stringPropertyNames();
 		for (String key : keys) {
@@ -106,7 +110,7 @@ public class JobDagNode {
 		return jsonObj;
 	}
 
-	protected static Properties propertiesFromJson(Object obj) {
+	public static Properties propertiesFromJson(Object obj) {
 		Map<String, String> jsonObj = (HashMap<String, String>) obj;
 		Properties properties = new Properties();
 		for (Map.Entry<String, String> entry : jsonObj.entrySet()) {

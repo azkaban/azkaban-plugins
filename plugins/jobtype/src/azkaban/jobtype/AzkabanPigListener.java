@@ -18,6 +18,8 @@ package azkaban.jobtype;
 
 import java.io.IOException;
 import java.io.File;
+import java.io.InputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,6 +32,8 @@ import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.RunningJob;
@@ -38,6 +42,7 @@ import org.apache.log4j.Logger;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.MapReduceOper;
 import org.apache.pig.backend.hadoop.executionengine.mapReduceLayer.plans.MROperPlan;
 import org.apache.pig.impl.plan.OperatorKey;
+import org.apache.pig.impl.util.ObjectSerializer;
 import org.apache.pig.tools.pigstats.JobStats;
 import org.apache.pig.tools.pigstats.OutputStats;
 import org.apache.pig.tools.pigstats.PigProgressNotificationListener;
@@ -300,17 +305,43 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 			node.setMapReduceJobState(
 					new MapReduceJobState(runningJob, mapTaskReport, reduceTaskReport));
 
-			Properties jobConfProperties = new Properties();
-			Configuration conf = jobClient.getConf();
-			for (Map.Entry<String, String> entry : conf) {
-				jobConfProperties.setProperty(entry.getKey(), entry.getValue());
-			}
-			node.setJobConfiguration(jobConfProperties);
-
+			Properties jobConfProperties = getJobConf(runningJob);
+      if (jobConfProperties != null && jobConfProperties.size() > 0) {
+        node.setJobConfiguration(jobConfProperties);
+      }
 		} catch (IOException e) {
 			logger.error("Error getting job info.", e);
 		}
 	}
+
+  private Properties getJobConf(RunningJob runningJob) {
+    Properties jobConfProperties = new Properties();
+    try {
+      Path path = new Path(runningJob.getJobFile());
+      Configuration conf = new Configuration(false);
+      FileSystem fs = FileSystem.get(new Configuration());
+      InputStream in = fs.open(path);
+      conf.addResource(in);
+
+      for (Map.Entry<String, String> entry : conf) {
+        if (entry.getKey().equals("pig.mapPlan") ||
+            entry.getKey().equals("pig.reducePlan")) {
+          jobConfProperties.setProperty(entry.getKey(),
+              ObjectSerializer.deserialize(entry.getValue()).toString());
+        }
+        else {
+          jobConfProperties.setProperty(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+    catch (FileNotFoundException e) {
+      logger.warn("Job conf not found.");
+    }
+    catch (IOException e) {
+      logger.warn("Error while retrieving job conf: " + e.getMessage());
+    }
+    return jobConfProperties;
+  }
 	
 	private void addCompletedJobStats(PigJobDagNode node, JobStats stats) {
 		// Put the job conf into a Properties object so we can serialize them.
