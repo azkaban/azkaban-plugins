@@ -249,23 +249,42 @@
 						<fieldset>
 							<legend>Access</legend>
 							<div class="control-group">
-								<label class="control-label">Viewer</label>
-								<div class="controls"><textarea class="span8" name="access-viewer">$accessViewer</textarea><br><span>Separate entries by commas, spaces or semicolons. If left blank, the runs of this report are viewable by everyone.</span></div>
+								<label class="control-label">Viewers</label>
+								<div class="controls">
+									<textarea class="span8" name="access-viewer">$accessViewer</textarea>
+									<br/>Separate entries by commas, spaces or semicolons. If left blank, the runs of this report are viewable by everyone.
+								</div>
 							</div>
 							<div class="control-group">
-								<label class="control-label">Executor</label>
-								<div class="controls"><textarea class="span8" name="access-executor">$accessExecutor</textarea><br><span>Separate entries by commas, spaces or semicolons.  If left blank, anyone can execute this report.</span></div>
+								<label class="control-label">Executors</label>
+								<div class="controls">
+									<textarea class="span8" name="access-executor">$accessExecutor</textarea>
+									<br/>Separate entries by commas, spaces or semicolons. If left blank, anyone can execute this report.
+								</div>
 							</div>
 							<div class="control-group">
-								<label class="control-label">Owner</label>
-								<div class="controls"><textarea class="span8" name="access-owner">$accessOwner</textarea><br><span>Separate entries by commas, spaces or semicolons.</span></div>
+								<label class="control-label">Owners</label>
+								<div class="controls">
+									<textarea class="span8" name="access-owner">$accessOwner</textarea>
+									<br/>Separate entries by commas, spaces or semicolons.
+								</div>
 							</div>
 						</fieldset>
 						<fieldset>
 							<legend>Notification</legend>
 							<div class="control-group">
-								<label class="control-label">Emails</label>
-								<div class="controls"><textarea class="span8" name="notifications">$notifications</textarea><br><span>Separate entries by commas, spaces or semicolons.</span></div>
+								<label class="control-label">Success Emails</label>
+								<div class="controls">
+									<textarea class="span8" name="notifications">$notifications</textarea>
+									<br/>Separate entries by commas, spaces or semicolons. Note: If the report returns no results, no email is sent.
+								</div>
+							</div>
+							<div class="control-group">
+								<label class="control-label">Failure Emails</label>
+								<div class="controls">
+									<textarea class="span8" name="failure-notifications">$failureNotifications</textarea>
+									<br/>Separate entries by commas, spaces or semicolons.
+								</div>
 							</div>
 						</fieldset>
 						<div class="form-actions">

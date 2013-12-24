@@ -116,34 +116,53 @@ public class ReportalHelper {
 		return subscription.containsKey(user.getUserId());
 	}
 
+	/**
+	 * Updates the email notifications saved in the project's flow.
+	 * @param project
+	 * @param pm
+	 * @throws ProjectManagerException
+	 */
 	public static void updateProjectNotifications(Project project, ProjectManager pm) throws ProjectManagerException {
 		Flow flow = project.getFlows().get(0);
-		ArrayList<String> emails = new ArrayList<String>();
-		String notifications = (String) project.getMetadata().get("notifications");
-		String[] emailSplit = notifications.split("\\s*,\\s*|\\s*;\\s*|\\s+");
-		emails.addAll(Arrays.asList(emailSplit));
-		// Add notification emails
+		
+		// Get all success emails.
+		ArrayList<String> successEmails = new ArrayList<String>();
+		String successNotifications = (String) project.getMetadata().get("notifications");
+		String[] successEmailSplit = successNotifications.split("\\s*,\\s*|\\s*;\\s*|\\s+");
+		successEmails.addAll(Arrays.asList(successEmailSplit));
+		
+		// Get all failure emails.
+		ArrayList<String> failureEmails = new ArrayList<String>();
+		String failureNotifications = (String) project.getMetadata().get("failureNotifications");
+		String[] failureEmailSplit = failureNotifications.split("\\s*,\\s*|\\s*;\\s*|\\s+");
+		failureEmails.addAll(Arrays.asList(failureEmailSplit));
+		
+		// Add subscription emails to success emails list.
 		@SuppressWarnings("unchecked")
 		Map<String, String> subscription = (Map<String, String>) project.getMetadata().get("subscription");
 		if (subscription != null) {
-			emails.addAll(subscription.values());
+			successEmails.addAll(subscription.values());
 		}
-		ArrayList<String> emailList = new ArrayList<String>();
-		for (String email : emails) {
-			email = email.trim();
-			if (!email.isEmpty()) {
-				emailList.add(email);
+		
+		ArrayList<String> successEmailList = new ArrayList<String>();
+		for (String email : successEmails) {
+			if (!email.trim().isEmpty()) {
+				successEmailList.add(email);
 			}
 		}
-		Object ownerEmail = project.getMetadata().get("owner-email");
-		if(ownerEmail != null && !ownerEmail.toString().trim().isEmpty()) {
-			emailList.add(ownerEmail.toString().trim());
+		
+		ArrayList<String> failureEmailList = new ArrayList<String>();
+		for (String email : failureEmails) {
+			if (!email.trim().isEmpty()) {
+				failureEmailList.add(email);
+			}
 		}
-		// Put notifications on the flow
+		
+		// Save notifications in the flow.
 		flow.getSuccessEmails().clear();
 		flow.getFailureEmails().clear();
-		flow.addSuccessEmails(emailList);
-		flow.addFailureEmails(emailList);
+		flow.addSuccessEmails(successEmailList);
+		flow.addFailureEmails(failureEmailList);
 		pm.updateFlow(project, flow);
 	}
 

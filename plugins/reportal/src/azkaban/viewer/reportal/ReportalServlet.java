@@ -598,6 +598,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("accessExecutor", "");
 		page.add("accessOwner", "");
 		page.add("notifications", "");
+		page.add("failureNotifications", "");
 
 		page.render();
 	}
@@ -637,6 +638,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("scheduleInterval", reportal.scheduleInterval);
 		page.add("scheduleTime", reportal.scheduleTime);
 		page.add("notifications", reportal.notifications);
+		page.add("failureNotifications", reportal.failureNotifications);
 		page.add("accessViewer", reportal.accessViewer);
 		page.add("accessExecutor", reportal.accessExecutor);
 		page.add("accessOwner", reportal.accessOwner);
@@ -693,7 +695,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("accessOwner", report.accessOwner);
 
 		report.notifications = getParam(req, "notifications");
+		report.failureNotifications = getParam(req, "failure-notifications");
 		page.add("notifications", report.notifications);
+		page.add("failureNotifications", report.failureNotifications);
 
 		int numQueries = getIntParam(req, "queryNumber");
 		page.add("queryNumber", numQueries);
