@@ -221,8 +221,10 @@ public class ReportalMailCreator implements MailCreator {
 				message.addAttachment(file, tempOutputFile);
 			}
 			
-			// Don't send an email if there are no results.
-			if (emptyResults) {
+			// Don't send an email if there are no results, unless this is an unscheduled run.
+			String unscheduledRun = flow.getExecutionOptions().getFlowParameters().get("reportal.unscheduled.run");
+			boolean isUnscheduledRun = unscheduledRun != null && unscheduledRun.trim().equalsIgnoreCase("true");
+			if (emptyResults && !isUnscheduledRun) {
 				return false;
 			}
 		}

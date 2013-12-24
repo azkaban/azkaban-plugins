@@ -276,7 +276,7 @@
 								<label class="control-label">Success Emails</label>
 								<div class="controls">
 									<textarea class="span8" name="notifications">$notifications</textarea>
-									<br/>Separate entries by commas, spaces or semicolons. Note: If the report returns no results, no email is sent.
+									<br/>Separate entries by commas, spaces or semicolons. Note: If the report returns no results, no email is sent, except for unscheduled runs.
 								</div>
 							</div>
 							<div class="control-group">

@@ -930,6 +930,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 		
 		options.getFlowParameters().put("reportal.title", report.title);
+		
+		options.getFlowParameters().put("reportal.unscheduled.run", "true");
 
 		try {
 			String message = server.getExecutorManager().submitExecutableFlow(exflow, session.getUser().getUserId()) + ".";
