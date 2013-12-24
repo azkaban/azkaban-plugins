@@ -125,7 +125,7 @@
               </div>
               <div id="jobconf-tab-pane">
                 <h4>Job Configuration</h4>
-                <table class="table table-striped table-condensed table-bordered">
+                <table class="table table-striped table-condensed table-bordered table-properties">
                   <tbody>
                   {#conf}
                     <tr>
