@@ -49,7 +49,7 @@ import org.apache.pig.tools.pigstats.PigProgressNotificationListener;
 import org.apache.pig.tools.pigstats.PigStats;
 import org.apache.pig.tools.pigstats.ScriptState;
 
-import azkaban.jobtype.pigutils.PigJobDagNode;
+import azkaban.jobtype.pig.PigJobDagNode;
 import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
 
