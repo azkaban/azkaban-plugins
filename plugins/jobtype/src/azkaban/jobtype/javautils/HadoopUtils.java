@@ -37,8 +37,7 @@ public class HadoopUtils {
 	
 	private static final Logger logger = Logger.getLogger(HadoopUtils.class);
 	
-	public static void setClassLoaderAndJar(JobConf conf, Class<?> jobClass)
-	{
+	public static void setClassLoaderAndJar(JobConf conf, Class<?> jobClass) {
 		conf.setClassLoader(Thread.currentThread().getContextClassLoader());
 		String jar = findContainingJar(jobClass, Thread.currentThread().getContextClassLoader());
 		if (jar != null)
@@ -47,19 +46,14 @@ public class HadoopUtils {
 		}
 	}
 	
-	public static String findContainingJar(String fileName, ClassLoader loader)
-	{
-		try
-		{
-			for (Enumeration<?> itr = loader.getResources(fileName); itr.hasMoreElements();)
-			{
+	public static String findContainingJar(String fileName, ClassLoader loader) {
+		try {
+			for (Enumeration<?> itr = loader.getResources(fileName); itr.hasMoreElements();) {
 				URL url = (URL) itr.nextElement();
 				logger.info("findContainingJar finds url:" + url);
-				if ("jar".equals(url.getProtocol()))
-				{
+				if ("jar".equals(url.getProtocol())) {
 					String toReturn = url.getPath();
-					if (toReturn.startsWith("file:"))
-					{
+					if (toReturn.startsWith("file:")) {
 						toReturn = toReturn.substring("file:".length());
 					}
 					toReturn = URLDecoder.decode(toReturn, "UTF-8");
@@ -67,35 +61,31 @@ public class HadoopUtils {
 				}
 			}
 		}
-		catch (IOException e)
-		{
+		catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 		return null;
 	}
 
-	public static String findContainingJar(Class<?> my_class, ClassLoader loader)
-	{
+	public static String findContainingJar(Class<?> my_class, ClassLoader loader) {
 		String class_file = my_class.getName().replaceAll("\\.", "/") + ".class";
 		return findContainingJar(class_file, loader);
 	}
 
-	public static boolean shouldPathBeIgnored(Path path) throws IOException
-	{
+	public static boolean shouldPathBeIgnored(Path path) throws IOException {
 		return path.getName().startsWith("_");
 	}
 	
-	public static JobConf addAllSubPaths(JobConf conf, Path path) throws IOException
-	{
+	public static JobConf addAllSubPaths(JobConf conf, Path path) throws IOException {
 		if (shouldPathBeIgnored(path)) {
 			throw new IllegalArgumentException(String.format("Path[%s] should be ignored.", path));
 		}
 
 		final FileSystem fs = path.getFileSystem(conf);
 
-		if(fs.exists(path)) {
+		if (fs.exists(path)) {
 			for (FileStatus status : fs.listStatus(path)) {
-				if (! shouldPathBeIgnored(status.getPath())) {
+				if (!shouldPathBeIgnored(status.getPath())) {
 					if (status.isDir()) {
 						addAllSubPaths(conf, status.getPath());
 					}
@@ -108,21 +98,18 @@ public class HadoopUtils {
 		return conf;
 	}
 	
-	public static void setPropsInJob(Configuration conf, Props props)
-	{
+	public static void setPropsInJob(Configuration conf, Props props) {
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		try
-		{
+		try {
 			props.storeFlattened(output);
 			conf.set("azkaban.props", new String(output.toByteArray(), "UTF-8"));
 		}
-		catch (IOException e)
-		{
+		catch (IOException e) {
 			throw new RuntimeException("This is not possible!", e);
 		}
 	}
 	
-	public static void saveProps(Props props, String file)  throws IOException{
+	public static void saveProps(Props props, String file)	throws IOException{
 		Path path = new Path(file);
 
 		FileSystem fs = null;
@@ -131,8 +118,8 @@ public class HadoopUtils {
 		saveProps(fs, props, file);
 	}
 
-	public static void saveProps(FileSystem fs, Props props, String file) throws IOException
-	{
+	public static void saveProps(FileSystem fs, Props props, String file) 
+			throws IOException {
 		Path path = new Path(file);
 
 		// create directory if it does not exist.
@@ -142,12 +129,10 @@ public class HadoopUtils {
 
 		// write out properties
 		OutputStream output = fs.create(path);
-		try
-		{
+		try {
 			props.storeFlattened(output);
 		}
-		finally
-		{
+		finally {
 			output.close();
 		}
 	}
