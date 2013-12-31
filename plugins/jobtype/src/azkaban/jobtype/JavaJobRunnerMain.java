@@ -102,7 +102,8 @@ public class JavaJobRunnerMain {
 			// Create the object using proxy
 			if (SecurityUtils.shouldProxy(prop)) {
 				_javaObject = getObjectAsProxyUser(prop, _logger, _jobName, className);
-			} else {
+			} 
+      else {
 				_javaObject = getObject(_jobName, className, prop, _logger);
 			}
 			if (_javaObject == null) {
@@ -118,7 +119,8 @@ public class JavaJobRunnerMain {
 			if (SecurityUtils.shouldProxy(prop)) {
 				_logger.info("Proxying enabled.");
 				runMethodAsProxyUser(prop, _javaObject, runMethod);
-			} else {
+			} 
+      else {
 				_logger.info("Proxy check failed, not proxying run.");
 				runMethod(_javaObject, runMethod);
 			}
@@ -141,13 +143,15 @@ public class JavaJobRunnerMain {
 					outputGeneratedProperties(new Props());
 				}
 				
-			} catch (NoSuchMethodException e) {
+			} 
+      catch (NoSuchMethodException e) {
 				_logger.info(String.format(
 						"Apparently there isn't a method[%s] on object[%s], using empty Props object instead.",
 						GET_GENERATED_PROPERTIES_METHOD, _javaObject));
 				outputGeneratedProperties(new Props());
 			}
-		} catch (Exception e) {
+		} 
+    catch (Exception e) {
 			_isFinished = true;
 			throw e;
 		}
@@ -198,13 +202,16 @@ public class JavaJobRunnerMain {
 		try {
 			writer = new BufferedWriter(new FileWriter(outputFileStr));
 			JSONUtils.writePropsNoJarDependency(properties, writer);
-		} catch (Exception e) {
+		} 
+    catch (Exception e) {
 			new RuntimeException("Unable to store output properties to: " + outputFileStr);
-		} finally {
+		} 
+    finally {
 			if (writer != null) {
 				try {
 					writer.close();
-				} catch (IOException e) {
+				} 
+        catch (IOException e) {
 				}
 			}
 		}
@@ -215,39 +222,43 @@ public class JavaJobRunnerMain {
 			return;
 		}
 		_logger.info("Attempting to call cancel on this job");
-		if (_javaObject != null) {
-			Method method = null;
+		if (_javaObject == null) {
+      return;
+    }
+    
+    Method method = null;
+    try {
+      method = _javaObject.getClass().getMethod(_cancelMethod);
+    } 
+    catch (SecurityException e) {
+    } 
+    catch (NoSuchMethodException e) {
+    }
 
-			try {
-				method = _javaObject.getClass().getMethod(_cancelMethod);
-			} catch (SecurityException e) {
-			} catch (NoSuchMethodException e) {
-			}
-
-			if (method != null)
-				try {
-					method.invoke(_javaObject);
-				} catch (Exception e) {
-					if (_logger != null) {
-						_logger.error("Cancel method failed! ", e);
-					}
-				}
-			else {
-				throw new RuntimeException("Job " + _jobName + " does not have cancel method " + _cancelMethod);
-			}
-		}
+    if (method != null) {
+      try {
+        method.invoke(_javaObject);
+      } 
+      catch (Exception e) {
+        if (_logger != null) {
+          _logger.error("Cancel method failed! ", e);
+        }
+      }
+    }
+    else {
+      throw new RuntimeException("Job " + _jobName + " does not have cancel method " + _cancelMethod);
+    }
 	}
 
 	private static Object getObjectAsProxyUser(final Properties prop, final Logger logger, final String jobName,
 			final String className) throws Exception {
-
 		Object obj = SecurityUtils.getProxiedUser(prop, logger, new Configuration()).doAs(
-				new PrivilegedExceptionAction<Object>() {
-					@Override
-					public Object run() throws Exception {
-						return getObject(jobName, className, prop, logger);
-					}
-				});
+        new PrivilegedExceptionAction<Object>() {
+      @Override
+      public Object run() throws Exception {
+        return getObject(jobName, className, prop, logger);
+      }
+    });
 
 		return obj;
 	}
@@ -285,12 +296,13 @@ public class JavaJobRunnerMain {
 			Constructor<?> con = getConstructor(runningClass, String.class, propsClass);
 			logger.info("Constructor found " + con.toGenericString());
 			obj = con.newInstance(jobName, props);
-		} else if (getConstructor(runningClass, String.class, Properties.class) != null) {
-			
+		} 
+    else if (getConstructor(runningClass, String.class, Properties.class) != null) {
 			Constructor<?> con = getConstructor(runningClass, String.class, Properties.class);
 			logger.info("Constructor found " + con.toGenericString());
 			obj = con.newInstance(jobName, properties);
-		} else if (getConstructor(runningClass, String.class, Map.class) != null) {
+		} 
+    else if (getConstructor(runningClass, String.class, Map.class) != null) {
 			Constructor<?> con = getConstructor(runningClass, String.class, Map.class);
 			logger.info("Constructor found " + con.toGenericString());
 
@@ -299,15 +311,18 @@ public class JavaJobRunnerMain {
 				map.put(entry.getKey(), entry.getValue());
 			}
 			obj = con.newInstance(jobName, map);
-		} else if (getConstructor(runningClass, String.class) != null) {
+		} 
+    else if (getConstructor(runningClass, String.class) != null) {
 			Constructor<?> con = getConstructor(runningClass, String.class);
 			logger.info("Constructor found " + con.toGenericString());
 			obj = con.newInstance(jobName);
-		} else if (getConstructor(runningClass) != null) {
+		} 
+    else if (getConstructor(runningClass) != null) {
 			Constructor<?> con = getConstructor(runningClass);
 			logger.info("Constructor found " + con.toGenericString());
 			obj = con.newInstance();
-		} else {
+		} 
+    else {
 			logger.error("Constructor not found. Listing available Constructors.");
 			for (Constructor<?> c : runningClass.getConstructors()) {
 				logger.info(c.toGenericString());
@@ -320,9 +335,9 @@ public class JavaJobRunnerMain {
 		try {
 			Constructor<?> cons = c.getConstructor(args);
 			return cons;
-		} catch (NoSuchMethodException e) {
+		}
+    catch (NoSuchMethodException e) {
 			return null;
 		}
 	}
-
 }
