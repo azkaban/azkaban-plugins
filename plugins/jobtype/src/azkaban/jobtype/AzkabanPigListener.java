@@ -79,7 +79,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 	public void initialPlanNotification(String scriptId, MROperPlan plan) {
 		logger.info("**********initialPlanNotification!**********");
 
-    // First pass: generate dagNodeNameMap.
+		// First pass: generate dagNodeNameMap.
 		Map<OperatorKey, MapReduceOper> planKeys = plan.getKeys();
 		for (Map.Entry<OperatorKey, MapReduceOper> entry : planKeys.entrySet()) {
 			String nodeName = entry.getKey().toString();
@@ -109,44 +109,44 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 					PigJobDagNode successorNode =
 							this.dagNodeNameMap.get(successor.getOperatorKey().toString());
 					successorNodeList.add(successorNode.getName());
-          successorNode.addParent(node);
+					successorNode.addParent(node);
 				}
 			}
 			node.setSuccessors(successorNodeList);
 		}
 
-    // Third pass: find roots.
-    Queue<PigJobDagNode> parentQueue = new LinkedList<PigJobDagNode>();
-    Queue<PigJobDagNode> childQueue = new LinkedList<PigJobDagNode>();
-    for (Map.Entry<String, PigJobDagNode> entry : this.dagNodeNameMap.entrySet()) {
-      PigJobDagNode node = entry.getValue();
-      if (node.getParents().isEmpty()) {
-        node.setLevel(0);
-        parentQueue.add(node);
-      }
-    }
+		// Third pass: find roots.
+		Queue<PigJobDagNode> parentQueue = new LinkedList<PigJobDagNode>();
+		Queue<PigJobDagNode> childQueue = new LinkedList<PigJobDagNode>();
+		for (Map.Entry<String, PigJobDagNode> entry : this.dagNodeNameMap.entrySet()) {
+			PigJobDagNode node = entry.getValue();
+			if (node.getParents().isEmpty()) {
+				node.setLevel(0);
+				parentQueue.add(node);
+			}
+		}
 
-    // Final pass: BFS to set levels.
-    int level = 0;
-    Set<PigJobDagNode> visited = new HashSet<PigJobDagNode>();
-    while (parentQueue.peek() != null) {
-      PigJobDagNode node = null;
-      while ((node = parentQueue.poll()) != null) {
-        if (visited.contains(node)) {
-          continue;
-        }
-        node.setLevel(level);
-        for (String jobName : node.getSuccessors()) {
-          PigJobDagNode successorNode = this.dagNodeNameMap.get(jobName);
-          childQueue.add(successorNode);
-        }
-      }
-      
-      Queue<PigJobDagNode> tmp = childQueue;
-      childQueue = parentQueue;
-      parentQueue = tmp;
-      ++level;
-    }
+		// Final pass: BFS to set levels.
+		int level = 0;
+		Set<PigJobDagNode> visited = new HashSet<PigJobDagNode>();
+		while (parentQueue.peek() != null) {
+			PigJobDagNode node = null;
+			while ((node = parentQueue.poll()) != null) {
+				if (visited.contains(node)) {
+					continue;
+				}
+				node.setLevel(level);
+				for (String jobName : node.getSuccessors()) {
+					PigJobDagNode successorNode = this.dagNodeNameMap.get(jobName);
+					childQueue.add(successorNode);
+				}
+			}
+			
+			Queue<PigJobDagNode> tmp = childQueue;
+			childQueue = parentQueue;
+			parentQueue = tmp;
+			++level;
+		}
 
 		updateJsonFile();
 	}
@@ -305,55 +305,48 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 			node.setMapReduceJobState(
 					new MapReduceJobState(runningJob, mapTaskReport, reduceTaskReport));
 
-			Properties jobConfProperties = getJobConf(runningJob);
-      if (jobConfProperties != null && jobConfProperties.size() > 0) {
-        node.setJobConfiguration(jobConfProperties);
-      }
+			if (node.getJobConfiguration() == null) {
+				Properties jobConfProperties = getJobConf(runningJob);
+				if (jobConfProperties != null && jobConfProperties.size() > 0) {
+					node.setJobConfiguration(jobConfProperties);
+				}
+			}
 		} catch (IOException e) {
 			logger.error("Error getting job info.", e);
 		}
 	}
 
-  private Properties getJobConf(RunningJob runningJob) {
-    Properties jobConfProperties = new Properties();
-    try {
-      Path path = new Path(runningJob.getJobFile());
-      Configuration conf = new Configuration(false);
-      FileSystem fs = FileSystem.get(new Configuration());
-      InputStream in = fs.open(path);
-      conf.addResource(in);
+	private Properties getJobConf(RunningJob runningJob) {
+		Properties jobConfProperties = null;
+		try {
+			Path path = new Path(runningJob.getJobFile());
+			Configuration conf = new Configuration(false);
+			FileSystem fs = FileSystem.get(new Configuration());
+			InputStream in = fs.open(path);
+			conf.addResource(in);
 
-      for (Map.Entry<String, String> entry : conf) {
-        if (entry.getKey().equals("pig.mapPlan") ||
-            entry.getKey().equals("pig.reducePlan")) {
-          jobConfProperties.setProperty(entry.getKey(),
-              ObjectSerializer.deserialize(entry.getValue()).toString());
-        }
-        else {
-          jobConfProperties.setProperty(entry.getKey(), entry.getValue());
-        }
-      }
-    }
-    catch (FileNotFoundException e) {
-      logger.warn("Job conf not found.");
-    }
-    catch (IOException e) {
-      logger.warn("Error while retrieving job conf: " + e.getMessage());
-    }
-    return jobConfProperties;
-  }
-	
-	private void addCompletedJobStats(PigJobDagNode node, JobStats stats) {
-		// Put the job conf into a Properties object so we can serialize them.
-		Properties jobConfProperties = new Properties();
-		if (stats.getInputs() != null && stats.getInputs().size() > 0 &&
-				stats.getInputs().get(0).getConf() != null) {
-			Configuration conf = stats.getInputs().get(0).getConf();
+			jobConfProperties = new Properties();
 			for (Map.Entry<String, String> entry : conf) {
-				jobConfProperties.setProperty(entry.getKey(), entry.getValue());
+				if (entry.getKey().equals("pig.mapPlan") ||
+						entry.getKey().equals("pig.reducePlan")) {
+					jobConfProperties.setProperty(entry.getKey(),
+							ObjectSerializer.deserialize(entry.getValue()).toString());
+				}
+				else {
+					jobConfProperties.setProperty(entry.getKey(), entry.getValue());
+				}
 			}
 		}
+		catch (FileNotFoundException e) {
+			logger.warn("Job conf not found.");
+		}
+		catch (IOException e) {
+			logger.warn("Error while retrieving job conf: " + e.getMessage());
+		}
+		return jobConfProperties;
+	}
+	
+	private void addCompletedJobStats(PigJobDagNode node, JobStats stats) {
 		node.setJobStats(stats);
-		node.setJobConfiguration(jobConfProperties);
 	}
 }
