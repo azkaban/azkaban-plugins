@@ -93,6 +93,7 @@
 				 elements, and for and foreach requires ant-contrib, we use targetfile 
 				 for the template name parameter and then redirect the output of dustc
 				 to the final output file -->
+		<echo message="Compiling Dust templates." />
 		<apply dir="${java.src.dir}/tl" executable="dustc" relative="true">
 			<mapper type="glob" from="*.tl" to="*" />
 			<targetfile prefix="--name=" />
