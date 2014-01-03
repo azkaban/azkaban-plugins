@@ -49,9 +49,11 @@
 #foreach($query in $queries)
 #set($num = $velocityCount - 1)
 
+## Escape backslashes.
 ## Add backslashes before carriage returns (\r) and newlines (\n)
 ## to allow for a multi-line JavaScript string. Also escape quotes (").
 #set($script = ${query.script})
+#set($script = $script.replaceAll("\\","\\\\"))
 #set($script = $script.replaceAll("\r","\\\r"))
 #set($script = $script.replaceAll("\n","\\\n"))
 #set($script = $script.replaceAll('"','\\"'))
