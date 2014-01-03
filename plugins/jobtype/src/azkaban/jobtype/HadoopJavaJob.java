@@ -272,7 +272,4 @@ public class HadoopJavaJob extends JavaProcessJob {
 				+ ", _javaObject=" + _javaObject + ", props="
 				+ getJobProps() + '}';
 	}
-	
-	
 }
-
