@@ -70,6 +70,7 @@ public class Reportal {
 	public String accessOwner;
 
 	public String notifications;
+	public String failureNotifications;
 
 	public Project project;
 
@@ -107,6 +108,7 @@ public class Reportal {
 		}
 
 		project.getMetadata().put("notifications", notifications);
+		project.getMetadata().put("failureNotifications", failureNotifications);
 	}
 
 	public void removeSchedules(ScheduleManager scheduleManager) throws ScheduleManagerException {
@@ -304,6 +306,7 @@ public class Reportal {
 		reportal.accessOwner = stringGetter.get(project.getMetadata().get("accessOwner"));
 
 		reportal.notifications = stringGetter.get(project.getMetadata().get("notifications"));
+		reportal.failureNotifications = stringGetter.get(project.getMetadata().get("failureNotifications"));
 
 		reportal.queries = new ArrayList<Query>();
 

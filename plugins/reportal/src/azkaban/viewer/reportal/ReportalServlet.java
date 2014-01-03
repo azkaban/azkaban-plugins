@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.apache.velocity.tools.generic.EscapeTool;
 import org.joda.time.DateTime;
 
 import azkaban.executor.ExecutableFlow;
@@ -227,7 +228,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		// Subscribe reportal
 		else if (ajaxName.equals("subscribe")) {
 			boolean wasSubscribed = ReportalHelper.isSubscribeProject(project, user);
-			if (!wasSubscribed && !project.hasPermission(user, Type.READ)) {
+			if (!wasSubscribed && reportal.getAccessViewers().size() > 0 && !project.hasPermission(user, Type.READ)) {
 				ret.put("error", "You do not have permissions to view this reportal.");
 			}
 			else {
@@ -598,6 +599,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("accessExecutor", "");
 		page.add("accessOwner", "");
 		page.add("notifications", "");
+		page.add("failureNotifications", "");
 
 		page.render();
 	}
@@ -609,6 +611,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
 		preparePage(page, session);
 		page.add("ReportalHelper", ReportalHelper.class);
+		page.add("esc", new EscapeTool());
 
 		Project project = projectManager.getProject(id);
 		Reportal reportal = Reportal.loadFromProject(project);
@@ -637,6 +640,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("scheduleInterval", reportal.scheduleInterval);
 		page.add("scheduleTime", reportal.scheduleTime);
 		page.add("notifications", reportal.notifications);
+		page.add("failureNotifications", reportal.failureNotifications);
 		page.add("accessViewer", reportal.accessViewer);
 		page.add("accessExecutor", reportal.accessExecutor);
 		page.add("accessOwner", reportal.accessOwner);
@@ -666,6 +670,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
 		preparePage(page, session);
 		page.add("ReportalHelper", ReportalHelper.class);
+		page.add("esc", new EscapeTool());
 
 		boolean isEdit = hasParam(req, "id");
 		Project project = null;
@@ -693,17 +698,19 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("accessOwner", report.accessOwner);
 
 		report.notifications = getParam(req, "notifications");
+		report.failureNotifications = getParam(req, "failure-notifications");
 		page.add("notifications", report.notifications);
+		page.add("failureNotifications", report.failureNotifications);
 
-		int queries = getIntParam(req, "queryNumber");
-		page.add("queryNumber", queries);
-		List<Query> queryList = new ArrayList<Query>(queries);
+		int numQueries = getIntParam(req, "queryNumber");
+		page.add("queryNumber", numQueries);
+		List<Query> queryList = new ArrayList<Query>(numQueries);
 		page.add("queries", queryList);
 		report.queries = queryList;
 
 		String typeError = null;
 		String typePermissionError = null;
-		for (int i = 0; i < queries; i++) {
+		for (int i = 0; i < numQueries; i++) {
 			Query query = new Query();
 
 			query.title = getParam(req, "query" + i + "title");
@@ -757,7 +764,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		// Empty query check
-		if (queries <= 0) {
+		if (numQueries <= 0) {
 			page.add("errorMsg", "There needs to have at least one query.");
 			page.render();
 			return;
@@ -920,12 +927,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		
 		// Add the execution user's email to the list of success and failure emails.
 		String email = user.getEmail();
-		if (email != null) {
+		if (email != null && !email.isEmpty()) {
 			options.getSuccessEmails().add(email);
 			options.getFailureEmails().add(email);
 		}
 		
 		options.getFlowParameters().put("reportal.title", report.title);
+		
+		options.getFlowParameters().put("reportal.unscheduled.run", "true");
 
 		try {
 			String message = server.getExecutorManager().submitExecutableFlow(exflow, session.getUser().getUserId()) + ".";

@@ -48,11 +48,14 @@
 #if($queries)
 #foreach($query in $queries)
 #set($num = $velocityCount - 1)
+
+## Escape the script string as a JavaScript string before storing it.
+#set($script = $esc.javascript(${query.script}))
 				{
 					"num" : "${num}",
 					"title" : "${query.title}",
 					"type" : "${query.type}",
-					"script" : "",
+					"script" : "$script"
 				},
 #end
 #end
@@ -223,7 +226,7 @@
 										<div class="controls">
 											<select class="querytype" nametemplate="query#type">
 												<option value="ReportalHive">Hive</option>
-												<option value="ReportalTeraData">Tera Data</option>
+												<option value="ReportalTeraData">Teradata</option>
 												<option value="ReportalPig">Pig</option>
 											</select>
 										</div>
@@ -242,41 +245,52 @@
 						<fieldset>
 							<legend>Access</legend>
 							<div class="control-group">
-								<label class="control-label">Viewer</label>
-								<div class="controls"><textarea class="span8" name="access-viewer">$accessViewer</textarea><br><span>Separate entries by commas, spaces or semicolons. If left blank, the runs of this report are viewable by everyone.</span></div>
+								<label class="control-label">Viewers</label>
+								<div class="controls">
+									<textarea class="span8" name="access-viewer">$accessViewer</textarea>
+									<br/>Separate entries by commas, spaces or semicolons. If left blank, the runs of this report are viewable by everyone.
+								</div>
 							</div>
 							<div class="control-group">
-								<label class="control-label">Executor</label>
-								<div class="controls"><textarea class="span8" name="access-executor">$accessExecutor</textarea><br><span>Separate entries by commas, spaces or semicolons.  If left blank, anyone can execute this report.</span></div>
+								<label class="control-label">Executors</label>
+								<div class="controls">
+									<textarea class="span8" name="access-executor">$accessExecutor</textarea>
+									<br/>Separate entries by commas, spaces or semicolons. If left blank, anyone can execute this report.
+								</div>
 							</div>
 							<div class="control-group">
-								<label class="control-label">Owner</label>
-								<div class="controls"><textarea class="span8" name="access-owner">$accessOwner</textarea><br><span>Separate entries by commas, spaces or semicolons.</span></div>
+								<label class="control-label">Owners</label>
+								<div class="controls">
+									<textarea class="span8" name="access-owner">$accessOwner</textarea>
+									<br/>Separate entries by commas, spaces or semicolons.
+								</div>
 							</div>
 						</fieldset>
 						<fieldset>
 							<legend>Notification</legend>
 							<div class="control-group">
-								<label class="control-label">Emails</label>
-								<div class="controls"><textarea class="span8" name="notifications">$notifications</textarea><br><span>Separate entries by commas, spaces or semicolons.</span></div>
+								<label class="control-label">Success Emails</label>
+								<div class="controls">
+									<textarea class="span8" name="notifications">$notifications</textarea>
+									<br/>Separate entries by commas, spaces or semicolons. Note: If the report returns no results, no email is sent, except for unscheduled runs.
+								</div>
+							</div>
+							<div class="control-group">
+								<label class="control-label">Failure Emails</label>
+								<div class="controls">
+									<textarea class="span8" name="failure-notifications">$failureNotifications</textarea>
+									<br/>Separate entries by commas, spaces or semicolons.
+								</div>
 							</div>
 						</fieldset>
 						<div class="form-actions">
 							<input type="submit" class="btn btn-primary" value="Save">
 							<a href="${context}/reportal" class="btn">Cancel</a>
 						</div>
-					<form>
+					</form>
 				</div>
 			</div>
-		</div>
-		<div id="reportalScriptContainer" style="display:none;">
-#if($queries)
-#foreach($query in $queries)
-#set($queryNum = $velocityCount - 1)
-			<div id="script${queryNum}">${query.script}</div>
-#end
 #end
 		</div>
-#end
 	</body>
 </html>
