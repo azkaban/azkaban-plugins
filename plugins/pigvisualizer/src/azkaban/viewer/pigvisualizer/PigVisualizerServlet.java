@@ -36,7 +36,7 @@ import azkaban.executor.ExecutableNode;
 import azkaban.executor.ExecutorManagerAdapter;
 import azkaban.executor.ExecutorManagerException;
 import azkaban.jobtype.JobDagNode;
-import azkaban.jobtype.pigutils.PigJobDagNode;
+import azkaban.jobtype.pig.PigJobDagNode;
 import azkaban.jobtype.MapReduceJobState;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;

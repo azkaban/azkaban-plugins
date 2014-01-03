@@ -36,11 +36,9 @@ import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.log4j.Logger;
 
-
 import azkaban.utils.Props;
 
-public abstract class AbstractHadoopJob
-{
+public abstract class AbstractHadoopJob {
 	private static final Logger logger = Logger.getLogger(AbstractHadoopJob.class);
 	
 	public static String COMMON_FILE_DATE_PATTERN = "yyyy-MM-dd-HH-mm";
@@ -53,8 +51,7 @@ public abstract class AbstractHadoopJob
 	private JobConf jobconf;
 	private Configuration conf;
 
-	public AbstractHadoopJob(String name, Props props)
-	{
+	public AbstractHadoopJob(String name, Props props) {
 		this.props = props;
 		this.jobName = name;
 		conf = new Configuration();
@@ -74,8 +71,7 @@ public abstract class AbstractHadoopJob
 		return this.jobName;
 	}
 
-	public void run()	throws Exception
-	{
+	public void run()	throws Exception {
 		JobConf conf = getJobConf();
 		
 		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
@@ -89,15 +85,13 @@ public abstract class AbstractHadoopJob
 		
 //		runningJob.waitForCompletion();
 
-		if (!runningJob.isSuccessful())
-		{
+		if (!runningJob.isSuccessful()) {
 			throw new Exception("Hadoop job:" + getJobName() + " failed!");
 		}
 
 		// dump all counters
 		Counters counters = runningJob.getCounters();
-		for(String groupName: counters.getGroupNames())
-		{
+		for(String groupName: counters.getGroupNames()) {
 			Counters.Group group = counters.getGroup(groupName);
 			logger.info("Group: " + group.getDisplayName());
 			for(Counter counter: group)
@@ -130,16 +124,14 @@ public abstract class AbstractHadoopJob
 			conf.setReducerClass(reducerClass);
 		}
 
-		if (props.getBoolean("is.local", false))
-		{
+		if (props.getBoolean("is.local", false)) {
 			conf.set("mapred.job.tracker", "local");
 			conf.set("fs.default.name", "file:///");
 			conf.set("mapred.local.dir", "/tmp/map-red");
 
 			logger.info("Running locally, no hadoop jar set.");
 		}
-		else
-		{
+		else {
 			HadoopUtils.setClassLoaderAndJar(conf, getClass());
 			logger.info("Setting hadoop jar file for class:" + getClass() + "  to " + conf.getJar());
 			logger.info("*************************************************************************");
@@ -149,15 +141,13 @@ public abstract class AbstractHadoopJob
 		}
 
 		// set JVM options if present
-		if (props.containsKey("mapred.child.java.opts"))
-		{
+		if (props.containsKey("mapred.child.java.opts")) {
 			conf.set("mapred.child.java.opts", props.getString("mapred.child.java.opts"));
 			logger.info("mapred.child.java.opts set to " + props.getString("mapred.child.java.opts"));
 		}
 
 		// set input and output paths if they are present
-		if (props.containsKey("input.paths"))
-		{
+		if (props.containsKey("input.paths")) {
 			List<String> inputPaths = props.getStringList("input.paths");
 			if (inputPaths.size() == 0)
 				throw new IllegalArgumentException("Must specify at least one value for property 'input.paths'");
@@ -166,8 +156,7 @@ public abstract class AbstractHadoopJob
 			}
 		}
 
-		if (props.containsKey("output.path"))
-		{
+		if (props.containsKey("output.path")) {
 			String location = props.get("output.path");
 			FileOutputFormat.setOutputPath(conf, new Path(location));
 
@@ -181,12 +170,10 @@ public abstract class AbstractHadoopJob
 
 		// Adds External jars to hadoop classpath
 		String externalJarList = props.getString("hadoop.external.jarFiles", null);
-		if (externalJarList != null)
-		{
+		if (externalJarList != null) {
 			FileSystem fs = FileSystem.get(conf);
 			String[] jarFiles = externalJarList.split(",");
-			for (String jarFile : jarFiles)
-			{
+			for (String jarFile : jarFiles) {
 				logger.info("Adding extenral jar File:" + jarFile);
 				DistributedCache.addFileToClassPath(new Path(jarFile), conf, fs);
 			}
@@ -194,11 +181,9 @@ public abstract class AbstractHadoopJob
 
 		// Adds distributed cache files
 		String cacheFileList = props.getString("hadoop.cache.files", null);
-		if (cacheFileList != null)
-		{
+		if (cacheFileList != null) {
 			String[] cacheFiles = cacheFileList.split(",");
-			for (String cacheFile : cacheFiles)
-			{
+			for (String cacheFile : cacheFiles) {
 				logger.info("Adding Distributed Cache File:" + cacheFile);
 				DistributedCache.addCacheFile(new URI(cacheFile), conf);
 			}
@@ -206,26 +191,22 @@ public abstract class AbstractHadoopJob
 
 		// Adds distributed cache files
 		String archiveFileList = props.getString("hadoop.cache.archives", null);
-		if (archiveFileList != null)
-		{
+		if (archiveFileList != null) {
 			String[] archiveFiles = archiveFileList.split(",");
-			for (String archiveFile : archiveFiles)
-			{
+			for (String archiveFile : archiveFiles) {
 				logger.info("Adding Distributed Cache Archive File:" + archiveFile);
 				DistributedCache.addCacheArchive(new URI(archiveFile), conf);
 			}
 		}
 
 		String hadoopCacheJarDir = props.getString("hdfs.default.classpath.dir", null);
-		if (hadoopCacheJarDir != null)
-		{
+		if (hadoopCacheJarDir != null) {
 			FileSystem fs = FileSystem.get(conf);
 			if ( fs != null ) {
 				FileStatus[] status = fs.listStatus(new Path(hadoopCacheJarDir));
 
 				if (status != null ) {
-					for ( int i = 0; i < status.length; ++i )
-					{
+					for ( int i = 0; i < status.length; ++i ) {
 						if (!status[i].isDir()) {
 							Path path = new Path( hadoopCacheJarDir, status[i].getPath().getName() );
 							logger.info("Adding Jar to Distributed Cache Archive File:" + path);
@@ -261,27 +242,23 @@ public abstract class AbstractHadoopJob
 		return conf;
 	}
 
-	public Props getProps()
-	{
+	public Props getProps() {
 		return this.props;
 	}
 
-	public void cancel() throws Exception
-	{
+	public void cancel() throws Exception {
 		if (runningJob != null)
 			runningJob.killJob();
 	}
 
-	public double getProgress() throws IOException
-	{
+	public double getProgress() throws IOException {
 		if (runningJob == null)
 			return 0.0;
 		else
 			return (double) (runningJob.mapProgress() + runningJob.reduceProgress()) / 2.0d;
 	}
 
-	public Counters getCounters() throws IOException
-	{
+	public Counters getCounters() throws IOException {
 		return runningJob.getCounters();
 	}
 

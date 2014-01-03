@@ -14,7 +14,7 @@
  * the License.
  */
 
-package azkaban.jobtype.pigutils;
+package azkaban.jobtype.pig;
 
 import java.util.Arrays;
 import java.util.ArrayList;
