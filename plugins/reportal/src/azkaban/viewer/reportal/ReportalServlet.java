@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.apache.velocity.tools.generic.EscapeTool;
 import org.joda.time.DateTime;
 
 import azkaban.executor.ExecutableFlow;
@@ -610,6 +611,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
 		preparePage(page, session);
 		page.add("ReportalHelper", ReportalHelper.class);
+		page.add("esc", new EscapeTool());
 
 		Project project = projectManager.getProject(id);
 		Reportal reportal = Reportal.loadFromProject(project);
@@ -668,6 +670,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
 		preparePage(page, session);
 		page.add("ReportalHelper", ReportalHelper.class);
+		page.add("esc", new EscapeTool());
 
 		boolean isEdit = hasParam(req, "id");
 		Project project = null;
