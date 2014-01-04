@@ -46,18 +46,18 @@
 		<script type="text/javascript">
 			var startQueries = [
 #if($queries)
-#foreach($query in $queries)
-#set($num = $velocityCount - 1)
+	#foreach($query in $queries)
+		#set($num = $velocityCount - 1)
 
-## Escape the script string as a JavaScript string before storing it.
-#set($script = $esc.javascript(${query.script}))
-				{
-					"num" : "${num}",
-					"title" : "${query.title}",
-					"type" : "${query.type}",
-					"script" : "$script"
-				},
-#end
+		## Escape the script string as a JavaScript string before storing it.
+		#set($script = $esc.javascript(${query.script}))
+		{
+			"num" : "${num}",
+			"title" : "${query.title}",
+			"type" : "${query.type}",
+			"script" : #if($script && $script != "") "$script" #else "" #end
+		},
+	#end
 #end
 			];
 			var startVariables = [
