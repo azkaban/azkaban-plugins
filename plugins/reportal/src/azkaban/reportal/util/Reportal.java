@@ -26,13 +26,15 @@ import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
 import org.joda.time.Hours;
-import org.joda.time.LocalDateTime;
+import org.joda.time.Minutes;
 import org.joda.time.Months;
 import org.joda.time.ReadablePeriod;
 import org.joda.time.Weeks;
 import org.joda.time.Years;
+import org.joda.time.format.DateTimeFormat;
 
 import azkaban.executor.ExecutionOptions;
 import azkaban.flow.Flow;
@@ -61,9 +63,14 @@ public class Reportal {
 	public List<Variable> variables;
 
 	public boolean schedule;
-	public boolean scheduleEnabled;
+	public String scheduleHour;
+	public String scheduleMinute;
+	public String scheduleAmPm;
+	public String scheduleTimeZone;
+	public String scheduleDate;
+	public boolean scheduleRepeat;
+	public String scheduleIntervalQuantity;
 	public String scheduleInterval;
-	public int scheduleTime;
 
 	public String accessViewer;
 	public String accessExecutor;
@@ -84,9 +91,14 @@ public class Reportal {
 		project.setDescription(description);
 
 		project.getMetadata().put("schedule", schedule);
-		project.getMetadata().put("scheduleEnabled", scheduleEnabled);
+		project.getMetadata().put("scheduleHour", scheduleHour);
+		project.getMetadata().put("scheduleMinute", scheduleMinute);
+		project.getMetadata().put("scheduleAmPm", scheduleAmPm);
+		project.getMetadata().put("scheduleTimeZone", scheduleTimeZone);
+		project.getMetadata().put("scheduleDate", scheduleDate);
+		project.getMetadata().put("scheduleRepeat", scheduleRepeat);
+		project.getMetadata().put("scheduleIntervalQuantity", scheduleIntervalQuantity);
 		project.getMetadata().put("scheduleInterval", scheduleInterval);
-		project.getMetadata().put("scheduleTime", scheduleTime);
 
 		project.getMetadata().put("accessViewer", accessViewer);
 		project.getMetadata().put("accessExecutor", accessExecutor);
@@ -125,25 +137,37 @@ public class Reportal {
 		// Clear previous schedules
 		removeSchedules(scheduleManager);
 		// Add new schedule
-		if (schedule && scheduleEnabled) {
-			DateTime firstSchedTime = new LocalDateTime().toDateTime();
-			firstSchedTime = firstSchedTime.withHourOfDay(scheduleTime).withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0);
-			ReadablePeriod period = Years.ONE;
-			if (scheduleInterval.equals("q")) {
-				period = Months.THREE;
+		if (schedule) {
+			int hour = (Integer.parseInt(scheduleHour) % 12) + (scheduleAmPm.equalsIgnoreCase("pm") ? 12 : 0);
+			int minute = Integer.parseInt(scheduleMinute) % 60;
+			DateTimeZone timeZone = scheduleTimeZone.equalsIgnoreCase("UTC") ? DateTimeZone.UTC : DateTimeZone.getDefault();
+			DateTime firstSchedTime = DateTimeFormat.forPattern("MM/dd/yyyy").withZone(timeZone).parseDateTime(scheduleDate);
+			firstSchedTime = firstSchedTime.withHourOfDay(hour).withMinuteOfHour(minute).withSecondOfMinute(0).withMillisOfSecond(0);
+			
+			ReadablePeriod period = null;
+			if (scheduleRepeat) {
+				int intervalQuantity = Integer.parseInt(scheduleIntervalQuantity);
+				
+				if (scheduleInterval.equals("y")) {
+					period = Years.years(intervalQuantity);
+				}
+				else if (scheduleInterval.equals("m")) {
+					period = Months.months(intervalQuantity);
+				}
+				else if (scheduleInterval.equals("w")) {
+					period = Weeks.weeks(intervalQuantity);
+				}
+				else if (scheduleInterval.equals("d")) {
+					period = Days.days(intervalQuantity);
+				}
+				else if (scheduleInterval.equals("h")) {
+					period = Hours.hours(intervalQuantity);
+				}
+				else if (scheduleInterval.equals("M")) {
+					period = Minutes.minutes(intervalQuantity);
+				}
 			}
-			else if (scheduleInterval.equals("m")) {
-				period = Months.ONE;
-			}
-			else if (scheduleInterval.equals("w")) {
-				period = Weeks.ONE;
-			}
-			else if (scheduleInterval.equals("d")) {
-				period = Days.ONE;
-			}
-			else if (scheduleInterval.equals("h")) {
-				period = Hours.ONE;
-			}
+			
 			ExecutionOptions options = new ExecutionOptions();
 			options.getFlowParameters().put("reportal.execution.user", user.getUserId());
 			options.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
@@ -297,9 +321,14 @@ public class Reportal {
 		int variables = intGetter.get(project.getMetadata().get("variableNumber"));
 
 		reportal.schedule = boolGetter.get(project.getMetadata().get("schedule"));
-		reportal.scheduleEnabled = boolGetter.get(project.getMetadata().get("scheduleEnabled"));
+		reportal.scheduleHour = stringGetter.get(project.getMetadata().get("scheduleHour"));
+		reportal.scheduleMinute = stringGetter.get(project.getMetadata().get("scheduleMinute"));
+		reportal.scheduleAmPm = stringGetter.get(project.getMetadata().get("scheduleAmPm"));
+		reportal.scheduleTimeZone = stringGetter.get(project.getMetadata().get("scheduleTimeZone"));
+		reportal.scheduleDate = stringGetter.get(project.getMetadata().get("scheduleDate"));
+		reportal.scheduleRepeat = boolGetter.get(project.getMetadata().get("scheduleRepeat"));
+		reportal.scheduleIntervalQuantity = stringGetter.get(project.getMetadata().get("scheduleIntervalQuantity"));
 		reportal.scheduleInterval = stringGetter.get(project.getMetadata().get("scheduleInterval"));
-		reportal.scheduleTime = intGetter.get(project.getMetadata().get("scheduleTime"));
 
 		reportal.accessViewer = stringGetter.get(project.getMetadata().get("accessViewer"));
 		reportal.accessExecutor = stringGetter.get(project.getMetadata().get("accessExecutor"));

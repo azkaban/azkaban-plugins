@@ -47,17 +47,17 @@ $(document).ready(function () {
 				var time = displayReportals[i].time;
 				var timeText = displayReportals[i].timeText;
 				var user = displayReportals[i].user;
-				var schedule = displayReportals[i].schedule;
-				var scheduleEnabled = displayReportals[i].scheduleEnabled;
+				var scheduled = displayReportals[i].scheduled;
+				var scheduledRepeating = displayReportals[i].scheduledRepeating;
 				var bookmark = displayReportals[i].bookmark;
 				var subscribe = displayReportals[i].subscribe;
 
-				if(schedule) {
-					if(scheduleEnabled) {
-						title = title + " <span class=\"label\">Scheduled</span>";
+				if(scheduled) {
+					if(scheduledRepeating) {
+						title = title + " <span class=\"label\">Scheduled Repeating</span>";
 					}
 					else {
-						title = title + " <span class=\"label\">Schedule Disabled</span>";
+						title = title + " <span class=\"label\">Scheduled</span>";
 					}
 				}
 
