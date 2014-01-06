@@ -274,8 +274,6 @@ public abstract class AbstractHadoopJob {
 
   private void updateMapReduceJobState() {
     if (runningJob == null || visualizer == false) {
-      System.out.println("runningjob null: " + (runningJob == null));
-      System.out.println("visualizer false: " + (visualizer == false));
       return;
     }
 
@@ -294,7 +292,6 @@ public abstract class AbstractHadoopJob {
 
   private void writeMapReduceJobState() {
     File mrStateFile = null;
-    System.out.println("### Writing visualizer file: " + mrStateFileName);
     try {
       mrStateFile = new File(mrStateFileName);
       JSONUtils.toJSON(mapReduceJobState.toJson(), mrStateFile);
