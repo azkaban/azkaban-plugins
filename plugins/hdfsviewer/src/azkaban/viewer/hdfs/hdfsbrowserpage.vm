@@ -60,7 +60,7 @@
 #parse ("azkaban/webapp/servlet/velocity/nav.vm")
 
     <div class="az-page-header">
-			<div class="container">
+			<div class="container-full">
         <div class="row">
           <div class="col-lg-6">
             <h1><a href="${context}/hdfs">HDFS Browser</a></h1>
@@ -78,7 +78,7 @@
 			</div>
     </div>
 
-    <div class="container">
+    <div class="container-full">
 
 #if ($errorMsg)
 			<div class="panel panel-danger">
@@ -188,6 +188,6 @@
 			</div>
 
 #parse ("azkaban/webapp/servlet/velocity/footer.vm")
-		</div><!-- /.container -->
+		</div><!-- /.container-full -->
 	</body>
 </html>
