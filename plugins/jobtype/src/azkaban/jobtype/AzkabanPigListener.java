@@ -163,14 +163,9 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 		File dagNodeFile = null;
 		try {
 			dagNodeFile = new File(outputDagNodeFile);
-		}
-		catch (Exception e) {
-			logger.error("Failed to convert to json.");
-		}
-		try {
 			JSONUtils.toJSON(dagNodeListToJson(dagNodeJobIdMap), dagNodeFile);
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			logger.error("Couldn't write json file", e);
 		}
 	}

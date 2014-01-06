@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.mapred.Counters.Counter;
+import org.apache.hadoop.mapred.Counters.Group;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TIPStatus;
 import org.apache.hadoop.mapred.TaskReport;
@@ -44,6 +47,8 @@ public class MapReduceJobState {
 
 	private int totalReducers;
 	private int finishedReducersCount;
+
+  private Counters counters;
 
 	public MapReduceJobState() {
 	}
@@ -91,6 +96,8 @@ public class MapReduceJobState {
 				jobLastUpdateTime == 0) {
 			jobLastUpdateTime = System.currentTimeMillis();
 		}
+
+    counters = runningJob.getCounters();
 	}
 
 	public String getJobId() {
