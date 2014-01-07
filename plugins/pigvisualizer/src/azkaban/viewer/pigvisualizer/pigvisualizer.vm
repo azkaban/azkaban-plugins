@@ -97,9 +97,11 @@
 				<li id="jobLogViewLink"><a href="${context}/executor?execid=${execId}&job=${jobId}#joblog">Log</a></li>
 				<li class="active"><a href="${context}/pigvisualizer?execid=${execId}&jobid=${jobId}">Visualization</a></li>
 			</ul>
+    </div>
 
-      <div class="row" id="graphView">
-        <div class="col-lg-4" id="jobStats">
+    <div class="container-full container-fill" id="graphView">
+			<div class="row row-offcanvas row-offcanvas-left">
+				<div class="col-xs-6 col-sm-3 sidebar-offcanvas graph-sidebar" id="jobStats">
 
   ## Sidebar for displaying list of jobs and stats.
 
@@ -120,16 +122,18 @@
 
   ## SVG Graph.
 
-        <div class="col-lg-8">
+				<div class="col-xs-12 col-sm-9 col-content">
           <div id="svgDiv" class="well well-clear well-sm">
             <svg id="flow-graph" xmlns="http://www.w3.org/2000/svg" version="1.1" shape-rendering="optimize-speed" text-rendering="optimize-speed">
             </svg>
           </div>
         </div>
       </div><!-- /.row -->
+    </div>
 
   ## Job Details Modal
   
+    <div class="container-full">
       <div class="modal modal-wide" id="job-details-modal">
 				<div class="modal-dialog">
 					<div class="modal-content" id="job-details-modal-content">
@@ -139,8 +143,6 @@
       
       <div id="contextMenu"></div>
 #end
-
-#parse("azkaban/webapp/servlet/velocity/footer.vm")
     </div><!-- /.container-full -->
   </body>
 </html>
