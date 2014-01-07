@@ -52,11 +52,10 @@
 #set($current_page = "$viewerName")
 #parse("azkaban/webapp/servlet/velocity/nav.vm")
 
-	
 ## Page header.
 
 		<div class="az-page-header">
-			<div class="container">
+			<div class="container-full">
 				<div class="row">
 					<div class="col-lg-6">
 						<h1><a href="${context}pigvisualizer?execid=${execId}&jobid=${jobId}">Job Execution <small>${jobId}</small></a></h1>
@@ -71,7 +70,7 @@
 			</div>
 		</div>
 
-    <div class="container">
+    <div class="container-full">
 #if ($errorMsg)
 			<div class="panel panel-danger">
 				<div class="panel-heading">Error</div>
@@ -142,6 +141,6 @@
 #end
 
 #parse("azkaban/webapp/servlet/velocity/footer.vm")
-    </div><!-- /.container -->
+    </div><!-- /.container-full -->
   </body>
 </html>
