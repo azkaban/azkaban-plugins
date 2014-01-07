@@ -55,7 +55,7 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 	protected void runReportal() throws Exception {
 		System.out.println("Reportal Pig: Setting up Pig");
 
-		injectAllVariables(prop.getString(PIG_SCRIPT));
+		injectAllVariables();
 
 		String[] args = getParams();
 		
@@ -179,16 +179,14 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 			list.add("-Dudf.import.list=" + udfImportList);
 		}
 
-		list.add(prop.getString(PIG_SCRIPT));
+		// Add the script to execute
+		list.add("-e");
+		list.add(jobQuery);
 		return list.toArray(new String[0]);
 	}
 	
 	protected Map<String, String> getPigParams() {
 		return prop.getMapByPrefix(PIG_PARAM_PREFIX);
-	}
-	
-	protected String getScript() {
-		return prop.getString(PIG_SCRIPT);
 	}
 
 	private String transformDescriptionLine(String line) {
@@ -205,27 +203,14 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 		return "\"" + cleanLine.replace("\"", "").replace(",", "\",\"") + "\"";
 	}
 
-	private void injectAllVariables(String file) throws FileNotFoundException {
+	private void injectAllVariables() {
 		// Inject variables into the script
 		System.out.println("Reportal Pig: Replacing variables");
-		File inputFile = new File(file);
-		File outputFile = new File(file + ".bak");
-		InputStream scriptInputStream = new BufferedInputStream(new FileInputStream(inputFile));
-		Scanner rowScanner = new Scanner(scriptInputStream);
-		PrintStream scriptOutputStream = new PrintStream(new BufferedOutputStream(new FileOutputStream(outputFile)));
-		while (rowScanner.hasNextLine()) {
-			String line = rowScanner.nextLine();
-			line = injectVariables(line);
-			scriptOutputStream.println(line);
-		}
-		rowScanner.close();
-		scriptOutputStream.close();
-		outputFile.renameTo(inputFile);
+		jobQuery = injectVariables(jobQuery);
 	}
 
 	public static final String PIG_PARAM_PREFIX = "param.";
 	public static final String PIG_PARAM_FILES = "paramfile";
-	public static final String PIG_SCRIPT = "reportal.pig.script";
 	public static final String UDF_IMPORT_LIST = "udf.import.list";
 	public static final String PIG_ADDITIONAL_JARS = "pig.additional.jars";
 }
