@@ -187,7 +187,6 @@
 				</div>
 			</div>
 
-#parse ("azkaban/webapp/servlet/velocity/footer.vm")
 		</div><!-- /.container-full -->
 	</body>
 </html>
