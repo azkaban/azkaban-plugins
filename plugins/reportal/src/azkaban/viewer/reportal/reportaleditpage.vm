@@ -54,13 +54,14 @@
 	#foreach($query in $queries)
 		#set($num = $velocityCount - 1)
 
-		## Escape the script string as a JavaScript string before storing it.
-		#set($script = $esc.javascript(${query.script}))
+		## Escape the query title and script strings as JavaScript strings before loading them.
+		#set($queryTitle = $esc.javascript(${query.title}))
+		#set($queryScript = $esc.javascript(${query.script}))
 		{
 			"num" : "${num}",
-			"title" : "${query.title}",
+			"title" : "$queryTitle",
 			"type" : "${query.type}",
-			"script" : #if($script && $script != "") "$script" #else "" #end
+			"script" : #if($queryScript && $queryScript != "") "$queryScript" #else "" #end
 		},
 	#end
 #end
@@ -111,6 +112,7 @@
 #end
 			</div>
 #if($project || $new)
+	#set($title = $esc.html($title))
 			<div>&nbsp;</div>
 			<div class="container">
 				<div>
@@ -122,7 +124,7 @@
 							<legend>Report</legend>
 							<div class="control-group required">
 								<label class="control-label">Title<abbr title="Required" class="required-mark">*</abbr></label>
-								<div class="controls"><input type="text" name="title" value="${title}"></div>
+								<div class="controls"><input type="text" name="title" value="$title"></div>
 							</div>
 							<div class="control-group required">
 								<label class="control-label">Description<abbr title="Required" class="required-mark">*</abbr></label>
