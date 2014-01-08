@@ -320,6 +320,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		List<Project> projects = ReportalHelper.getReportalProjects(server);
 		page.add("ReportalHelper", ReportalHelper.class);
+		page.add("esc", new EscapeTool());
 		page.add("user", session.getUser());
 
 		String startDate = DateTime.now().minusWeeks(1).toString("yyyy-MM-dd");

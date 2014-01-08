@@ -38,9 +38,10 @@
 			var reportals = [
 #if($projects)
 #foreach($project in $projects)
+	#set($title = $esc.javascript(${project.getMetadata().title}))
 				{
 					"id" : "${project.id}",
-					"title" : "${project.getMetadata().title}",
+					"title" : "$title",
 					"time" : $project.createTimestamp,
 					"timeText" : "$utils.formatDateTime($project.createTimestamp)",
 					"user" : "$project.getMetadata().get("reportal-user")",

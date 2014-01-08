@@ -59,9 +59,9 @@
 		#set($queryScript = $esc.javascript(${query.script}))
 		{
 			"num" : "${num}",
-			"title" : "$queryTitle",
+			"title" : #if($queryTitle) "$queryTitle" #else "" #end,
 			"type" : "${query.type}",
-			"script" : #if($queryScript && $queryScript != "") "$queryScript" #else "" #end
+			"script" : #if($queryScript) "$queryScript" #else "" #end
 		},
 	#end
 #end
@@ -124,7 +124,7 @@
 							<legend>Report</legend>
 							<div class="control-group required">
 								<label class="control-label">Title<abbr title="Required" class="required-mark">*</abbr></label>
-								<div class="controls"><input type="text" name="title" value="$title"></div>
+								<div class="controls"><input type="text" name="title"#if($title) value="$title"#end></div>
 							</div>
 							<div class="control-group required">
 								<label class="control-label">Description<abbr title="Required" class="required-mark">*</abbr></label>
