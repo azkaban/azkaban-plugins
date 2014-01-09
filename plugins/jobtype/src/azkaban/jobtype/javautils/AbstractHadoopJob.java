@@ -20,7 +20,10 @@ import java.io.IOException;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -40,6 +43,7 @@ import org.apache.hadoop.mapred.Reducer;
 import org.apache.log4j.Logger;
 
 import azkaban.jobtype.MapReduceJobState;
+import azkaban.jobtype.StatsUtils;
 import azkaban.utils.Props;
 import azkaban.utils.JSONUtils;
 
@@ -59,7 +63,7 @@ public abstract class AbstractHadoopJob {
 
   private boolean visualizer;
   private MapReduceJobState mapReduceJobState;
-  private String mrStateFileName;
+  private String jobStatsFileName;
 
 	public AbstractHadoopJob(String name, Props props) {
 		this.props = props;
@@ -74,8 +78,8 @@ public abstract class AbstractHadoopJob {
           System.getProperty("java.io.tmpdir"));
       String jobId = props.getString("azkaban.job.id");
       String execId = props.getString("azkaban.flow.execid");
-      mrStateFileName = outputDir + "/" + execId + "-" +
-          jobId + "-mrstate.json";
+      jobStatsFileName = outputDir + "/" + execId + "-" +
+          jobId + "-stats.json";
     }
 	}
 	
@@ -290,17 +294,26 @@ public abstract class AbstractHadoopJob {
     }
   }
 
+  private Object statsToJson() {
+    List<Object> jsonObj = new ArrayList<Object>();
+    Map<String, Object> jobJsonObj = new HashMap<String, Object>();
+    jobJsonObj.put("state", mapReduceJobState.toJson());
+    jobJsonObj.put("conf", StatsUtils.getJobConf(runningJob));
+    jsonObj.add(jobJsonObj);
+    return jsonObj;
+  }
+
   private void writeMapReduceJobState() {
     File mrStateFile = null;
     try {
-      mrStateFile = new File(mrStateFileName);
-      JSONUtils.toJSON(mapReduceJobState.toJson(), mrStateFile);
+      mrStateFile = new File(jobStatsFileName);
+      JSONUtils.toJSON(statsToJson(), mrStateFile);
     }
     catch (Exception e) {
       logger.error("Cannot write JSON file.");
     }
   }
-
+	
 	public double getProgress() throws IOException {
 		if (runningJob == null) {
 			return 0.0;

@@ -24,6 +24,7 @@ import java.util.Map;
 
 import azkaban.jobtype.JobDagNode;
 import azkaban.jobtype.MapReduceJobState;
+import azkaban.jobtype.StatsUtils;
 
 import org.apache.pig.tools.pigstats.JobStats;
 
@@ -86,7 +87,8 @@ public class PigJobDagNode extends JobDagNode {
 		jsonObj.put("parents", parents);
 		jsonObj.put("successors", successors);
 		if (jobConfiguration != null) {
-			jsonObj.put("jobConfiguration", propertiesToJson(jobConfiguration));
+			jsonObj.put("jobConfiguration", 
+          StatsUtils.propertiesToJson(jobConfiguration));
 		}
     if (jobStats != null) {
       jsonObj.put("jobStats", jobStats.toJson());
@@ -113,7 +115,7 @@ public class PigJobDagNode extends JobDagNode {
     // Grab configuration if it is available.
 		if (jsonObj.containsKey("jobConfiguration")) {
 			node.setJobConfiguration(
-					propertiesFromJson(jsonObj.get("jobConfiguration")));
+					StatsUtils.propertiesFromJson(jsonObj.get("jobConfiguration")));
 		}
 
     // Grab PigJobStats;
