@@ -16,7 +16,12 @@
 
 package azkaban.viewer.reportal;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 
 import azkaban.reportal.util.Reportal;
@@ -25,12 +30,41 @@ import azkaban.utils.Props;
 
 public enum ReportalType {
 
-	PigJob("ReportalPig", "reportalpig", "hadoop"),
-	HiveJob("ReportalHive", "reportalhive", "hadoop"),
-	TeraDataJob("ReportalTeraData", "reportalteradata", "teradata"),
+	PigJob("ReportalPig", "reportalpig", "hadoop") {
+		@Override
+		public void buildJobFiles(Reportal reportal, Props propertiesFile,
+				File jobFile, String jobName, String queryScript, String proxyUser) {
+			File resFolder = new File(jobFile.getParentFile(), "res");
+			resFolder.mkdirs();
+			File scriptFile = new File(resFolder, jobName + ".pig");
+
+			OutputStream fileOutput = null;
+			try {
+				scriptFile.createNewFile();
+				fileOutput = new BufferedOutputStream(new FileOutputStream(scriptFile));
+				fileOutput.write(queryScript.getBytes(Charset.forName("UTF-8")));
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				if (fileOutput != null) {
+					try {
+						fileOutput.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+
+			propertiesFile.put("reportal.pig.script", "res/" + jobName + ".pig");
+		}
+	},
+	HiveJob("ReportalHive", "reportalhive", "hadoop"), 
+	TeraDataJob("ReportalTeraData", "reportalteradata", "teradata"), 
 	DataCollectorJob(ReportalTypeManager.DATA_COLLECTOR_JOB, ReportalTypeManager.DATA_COLLECTOR_JOB_TYPE, "") {
 		@Override
-		public void buildJobFiles(Reportal reportal, Props propertiesFile, File jobFile, String jobName, String queryScript, String proxyUser) {
+		public void buildJobFiles(Reportal reportal, Props propertiesFile,
+				File jobFile, String jobName, String queryScript,
+				String proxyUser) {
 			propertiesFile.put("user.to.proxy", proxyUser);
 		}
 	};
@@ -45,7 +79,8 @@ public enum ReportalType {
 		this.permissionName = permissionName;
 	}
 
-	public void buildJobFiles(Reportal reportal, Props propertiesFile, File jobFile, String jobName, String queryScript, String proxyUser) {
+	public void buildJobFiles(Reportal reportal, Props propertiesFile,
+			File jobFile, String jobName, String queryScript, String proxyUser) {
 
 	}
 
@@ -56,7 +91,7 @@ public enum ReportalType {
 	private static HashMap<String, ReportalType> reportalTypes = new HashMap<String, ReportalType>();
 
 	static {
-		for (ReportalType type: ReportalType.values()) {
+		for (ReportalType type : ReportalType.values()) {
 			reportalTypes.put(type.typeName, type);
 		}
 	}

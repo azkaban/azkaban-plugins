@@ -55,7 +55,7 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 	protected void runReportal() throws Exception {
 		System.out.println("Reportal Pig: Setting up Pig");
 
-		injectAllVariables();
+		injectAllVariables(prop.getString(PIG_SCRIPT));
 
 		String[] args = getParams();
 		
@@ -180,8 +180,7 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 		}
 
 		// Add the script to execute
-		list.add("-e");
-		list.add(jobQuery);
+		list.add(prop.getString(PIG_SCRIPT));
 		return list.toArray(new String[0]);
 	}
 	
@@ -203,14 +202,27 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 		return "\"" + cleanLine.replace("\"", "").replace(",", "\",\"") + "\"";
 	}
 
-	private void injectAllVariables() {
+	private void injectAllVariables(String file) throws FileNotFoundException {
 		// Inject variables into the script
 		System.out.println("Reportal Pig: Replacing variables");
-		jobQuery = injectVariables(jobQuery);
+		File inputFile = new File(file);
+		File outputFile = new File(file + ".bak");
+		InputStream scriptInputStream = new BufferedInputStream(new FileInputStream(inputFile));
+		Scanner rowScanner = new Scanner(scriptInputStream);
+		PrintStream scriptOutputStream = new PrintStream(new BufferedOutputStream(new FileOutputStream(outputFile)));
+		while (rowScanner.hasNextLine()) {
+			String line = rowScanner.nextLine();
+			line = injectVariables(line);
+			scriptOutputStream.println(line);
+		}
+		rowScanner.close();
+		scriptOutputStream.close();
+		outputFile.renameTo(inputFile);
 	}
 
 	public static final String PIG_PARAM_PREFIX = "param.";
 	public static final String PIG_PARAM_FILES = "paramfile";
+	public static final String PIG_SCRIPT = "reportal.pig.script";
 	public static final String UDF_IMPORT_LIST = "udf.import.list";
 	public static final String PIG_ADDITIONAL_JARS = "pig.additional.jars";
 }
