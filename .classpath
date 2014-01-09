@@ -21,5 +21,6 @@
 	<classpathentry kind="lib" path="plugins/reportal/lib/pig-0.11.0-withouthadoop.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-io-2.4.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-dbcp-1.4.jar"/>
+	<classpathentry kind="lib" path="plugins/reportal/lib/commons-lang-2.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
