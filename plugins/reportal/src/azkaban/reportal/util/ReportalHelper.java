@@ -174,8 +174,8 @@ public class ReportalHelper {
 		return (boolean) (Boolean) schedule;
 	}
 
-	public static boolean isScheduleEnabledProject(Project project) {
-		Object schedule = project.getMetadata().get("scheduleEnabled");
+	public static boolean isScheduledRepeatingProject(Project project) {
+		Object schedule = project.getMetadata().get("scheduleRepeat");
 		if (schedule == null || !(schedule instanceof Boolean)) {
 			return false;
 		}

@@ -26,9 +26,14 @@ $(document).ready(function () {
 	variableListObject.template = $("#variable-template").find("li").eq(0);
 	variableListObject.type = "variable";
 
+	var scheduleOptions = $("#schedule-options");
 	var scheduleFields = $("#schedule-fields");
-	var scheduleInterval = $("#schedule-interval");
-	var hourTimeField = $("#time-field");
+	var scheduleDate = $("#schedule-date");
+	var scheduleRepeat = $("#schedule-repeat");
+	var scheduleRepeatFields = $("#schedule-repeat-fields");
+	
+	var buttonAddQuery = $("#buttonAddQuery");
+	var buttonAddVariable = $("#buttonAddVariable");
 
 	function updateListOrder(listObject, requireAtLeastOneElement){
 		var elements = listObject.find("li");
@@ -101,6 +106,14 @@ $(document).ready(function () {
 			scheduleFields.hide();
 		}
 	};
+
+	function scheduleRepeatOptionChangeHandler(item) {
+		if (item.checked) {
+			scheduleRepeatFields.show();
+		} else {
+			scheduleRepeatFields.hide();
+		}
+	}
 
 	function handleDelete(event, listObject, requireAtLeastOneElement) {
 		event.preventDefault();
@@ -178,20 +191,25 @@ $(document).ready(function () {
 		updateListOrder(listObject);
 	}
 
-	$("#buttonAddQuery").click(function(){
+	buttonAddQuery.click(function(){
 		handleAdd(queryListObject);
 	});
 
-	$("#buttonAddVariable").click(function(){
+	buttonAddVariable.click(function(){
 		handleAdd(variableListObject);
 	});
 
-	$("#schedule-options").change(function (event) {
+	scheduleOptions.change(function (event) {
 		scheduleOptionChangeHandler(this);
 	});
 
+	scheduleRepeat.change(function(){
+		scheduleRepeatOptionChangeHandler(this);
+	})
+
 	//Load schedule options
-	scheduleOptionChangeHandler($("#schedule-options")[0]);
+	scheduleOptionChangeHandler(scheduleOptions[0]);
+	scheduleRepeatOptionChangeHandler(scheduleRepeat[0])
 
 	function addInitialQueries() {
 		function addQuery(item) {
@@ -221,14 +239,6 @@ $(document).ready(function () {
 		updateListOrder(variableListObject);
 	}
 	addInitialVariables();
-
-	scheduleInterval.on('change',function(event){
-		var interval = $(this).val();
-
-		if (interval === 'h') { // hourly
-			hourTimeField.hide();
-		} else {
-			hourTimeField.show();
-		}
-	});
+	
+	scheduleDate.datetimepicker({pickTime: false});
 });

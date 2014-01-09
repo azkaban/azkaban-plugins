@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.apache.velocity.tools.generic.EscapeTool;
 import org.joda.time.DateTime;
@@ -319,6 +320,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		List<Project> projects = ReportalHelper.getReportalProjects(server);
 		page.add("ReportalHelper", ReportalHelper.class);
+		page.add("esc", new EscapeTool());
 		page.add("user", session.getUser());
 
 		String startDate = DateTime.now().minusWeeks(1).toString("yyyy-MM-dd");
@@ -636,9 +638,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("variableNumber", reportal.variables.size());
 		page.add("variables", reportal.variables);
 		page.add("schedule", reportal.schedule);
-		page.add("scheduleEnabled", reportal.scheduleEnabled);
+		page.add("scheduleHour", reportal.scheduleHour);
+		page.add("scheduleMinute", reportal.scheduleMinute);
+		page.add("scheduleAmPm", reportal.scheduleAmPm);
+		page.add("scheduleTimeZone", reportal.scheduleTimeZone);
+		page.add("scheduleDate", reportal.scheduleDate);
+		page.add("scheduleRepeat", reportal.scheduleRepeat);
+		page.add("scheduleIntervalQuantity", reportal.scheduleIntervalQuantity);
 		page.add("scheduleInterval", reportal.scheduleInterval);
-		page.add("scheduleTime", reportal.scheduleTime);
 		page.add("notifications", reportal.notifications);
 		page.add("failureNotifications", reportal.failureNotifications);
 		page.add("accessViewer", reportal.accessViewer);
@@ -682,13 +689,23 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("description", report.description);
 
 		report.schedule = hasParam(req, "schedule");
-		report.scheduleEnabled = hasParam(req, "scheduleEnabled");
+		report.scheduleHour = getParam(req, "schedule-hour");
+		report.scheduleMinute = getParam(req, "schedule-minute");
+		report.scheduleAmPm = getParam(req, "schedule-am_pm");
+		report.scheduleTimeZone = getParam(req, "schedule-timezone");
+		report.scheduleDate = getParam(req, "schedule-date");
+		report.scheduleRepeat = hasParam(req, "schedule-repeat");
+		report.scheduleIntervalQuantity = getParam(req, "schedule-interval-quantity");
 		report.scheduleInterval = getParam(req, "schedule-interval");
-		report.scheduleTime = getIntParam(req, "schedule-time");
 		page.add("schedule", report.schedule);
-		page.add("scheduleEnabled", report.scheduleEnabled);
+		page.add("scheduleHour", report.scheduleHour);
+		page.add("scheduleMinute", report.scheduleMinute);
+		page.add("scheduleAmPm", report.scheduleAmPm);
+		page.add("scheduleTimeZone", report.scheduleTimeZone);
+		page.add("scheduleDate", report.scheduleDate);
+		page.add("scheduleRepeat", report.scheduleRepeat);
+		page.add("scheduleIntervalQuantity", report.scheduleIntervalQuantity);
 		page.add("scheduleInterval", report.scheduleInterval);
-		page.add("scheduleTime", report.scheduleTime);
 
 		report.accessViewer = getParam(req, "access-viewer");
 		report.accessExecutor = getParam(req, "access-executor");
@@ -762,6 +779,33 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			page.render();
 			return;
 		}
+		
+		// Verify schedule and repeat
+		if (report.schedule) {
+			// Verify schedule time
+			if (!NumberUtils.isDigits(report.scheduleHour) ||
+					!NumberUtils.isDigits(report.scheduleMinute)) {
+				page.add("errorMsg", "Schedule time is invalid.");
+				page.render();
+				return;
+			}
+			
+			// Verify schedule date is not empty
+			if (report.scheduleDate.isEmpty()) {
+				page.add("errorMsg", "Schedule date must not be empty.");
+				page.render();
+				return;
+			}
+			
+			if (report.scheduleRepeat) {
+				// Verify repeat interval
+				if (!NumberUtils.isDigits(report.scheduleIntervalQuantity)) {
+					page.add("errorMsg", "Repeat interval quantity is invalid.");
+					page.render();
+					return;
+				}
+			}
+		}
 
 		// Empty query check
 		if (numQueries <= 0) {
@@ -776,7 +820,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 		// Type permission check
-		if (typePermissionError != null && report.schedule && report.scheduleEnabled) {
+		if (typePermissionError != null && report.schedule) {
 			page.add("errorMsg", "You do not have permission to schedule Type " + typePermissionError + ".");
 			page.render();
 			return;
@@ -856,7 +900,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		try {
 			report.updateSchedules(report, scheduleManager, session.getUser(), flow);
 		} catch (ScheduleManagerException e2) {
-			// TODO Auto-generated catch block
 			e2.printStackTrace();
 			page.add("errorMsg", e2.getMessage());
 			page.render();
