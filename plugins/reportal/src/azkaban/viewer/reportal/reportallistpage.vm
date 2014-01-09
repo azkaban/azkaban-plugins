@@ -38,14 +38,15 @@
 			var reportals = [
 #if($projects)
 #foreach($project in $projects)
+	#set($title = $esc.javascript(${project.getMetadata().title}))
 				{
 					"id" : "${project.id}",
-					"title" : "${project.getMetadata().title}",
+					"title" : "$title",
 					"time" : $project.createTimestamp,
 					"timeText" : "$utils.formatDateTime($project.createTimestamp)",
 					"user" : "$project.getMetadata().get("reportal-user")",
-					"schedule" : $ReportalHelper.isScheduledProject($project),
-					"scheduleEnabled" : $ReportalHelper.isScheduleEnabledProject($project),
+					"scheduled" : $ReportalHelper.isScheduledProject($project),
+					"scheduledRepeating" : $ReportalHelper.isScheduledRepeatingProject($project),
 					"bookmark" : $ReportalHelper.isBookmarkProject($project, $user),
 					"subscribe" : $ReportalHelper.isSubscribeProject($project, $user),
 					"shown" : true

@@ -18,16 +18,20 @@
 <html>
 	<head>
 		<title>Reportal</title>
+		
 		<link href="${context}/reportal/css/bootstrap.min.css" rel="stylesheet">
-		<script type="text/javascript" src="${context}/reportal/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="${context}/js/bootstrap.min.js"></script>
 
 		<link href="${context}/css/jquery-ui.css" rel="stylesheet">
-		<script type="text/javascript" src="${context}/js/jquery/jquery-1.9.1.js"></script>    
+		<script type="text/javascript" src="${context}/js/jquery/jquery-1.9.1.js"></script>
 		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
 		<script type="text/javascript" src="${context}/js/underscore-1.4.4-min.js"></script>
 		<script type="text/javascript" src="${context}/js/namespace.js"></script>
 		<script type="text/javascript" src="${context}/js/backbone-0.9.10-min.js"></script>
-		<script type="text/javascript" src="${context}/js/jquery.simplemodal-1.4.4.js"></script>
+		
+		<link href="${context}/css/bootstrap-datetimepicker.css" rel="stylesheet">
+		<script type="text/javascript" src="${context}/js/moment.min.js"></script>
+		<script type="text/javascript" src="${context}/js/bootstrap-datetimepicker.min.js"></script>
 
 		<link href="${context}/reportal/css/codemirror.css" rel="stylesheet">
 		<link href="${context}/reportal/css/solarized.css" rel="stylesheet">
@@ -35,29 +39,31 @@
 		<script type="text/javascript" src="${context}/reportal/js/mode/sql/sql.js"></script>
 		<script type="text/javascript" src="${context}/reportal/js/mode/pig/pig.js"></script>
 
-		<script type="text/javascript" src="${context}/js/azkaban.nav.js"></script>
 		<script type="text/javascript">
 			var contextURL = "${context}";
 			var currentTime = ${currentTime};
 			var timezone = "${timezone}";
 			var homeDir = "${homedir}";
+#if($project)
 			var projectId = ${project.id};
+#end
 		</script>
 		<script type="text/javascript">
 			var startQueries = [
 #if($queries)
-#foreach($query in $queries)
-#set($num = $velocityCount - 1)
+	#foreach($query in $queries)
+		#set($num = $velocityCount - 1)
 
-## Escape the script string as a JavaScript string before storing it.
-#set($script = $esc.javascript(${query.script}))
-				{
-					"num" : "${num}",
-					"title" : "${query.title}",
-					"type" : "${query.type}",
-					"script" : "$script"
-				},
-#end
+		## Escape the query title and script strings as JavaScript strings before loading them.
+		#set($queryTitle = $esc.javascript(${query.title}))
+		#set($queryScript = $esc.javascript(${query.script}))
+		{
+			"num" : "${num}",
+			"title" : #if($queryTitle) "$queryTitle" #else "" #end,
+			"type" : "${query.type}",
+			"script" : #if($queryScript) "$queryScript" #else "" #end
+		},
+	#end
 #end
 			];
 			var startVariables = [
@@ -106,6 +112,7 @@
 #end
 			</div>
 #if($project || $new)
+	#set($title = $esc.html($title))
 			<div>&nbsp;</div>
 			<div class="container">
 				<div>
@@ -117,61 +124,62 @@
 							<legend>Report</legend>
 							<div class="control-group required">
 								<label class="control-label">Title<abbr title="Required" class="required-mark">*</abbr></label>
-								<div class="controls"><input type="text" name="title" value="${title}"></div>
+								<div class="controls"><input type="text" name="title"#if($title) value="$title"#end></div>
 							</div>
 							<div class="control-group required">
 								<label class="control-label">Description<abbr title="Required" class="required-mark">*</abbr></label>
 								<div class="controls"><textarea class="span8" name="description">${description}</textarea></div>
 							</div>
 							<div class="control-group">
-								<div class="controls"><label class="checkbox"><input id="schedule-options" name="schedule" type="checkbox"#if($schedule) checked#end> Schedule</label></div>
+								<div class="controls">
+									<label class="checkbox">
+										<input id="schedule-options" name="schedule" type="checkbox"#if($schedule) checked#end />Schedule
+									</label>
+								</div>
 							</div>
 							<div id="schedule-fields">
 								<div class="control-group">
-									<div class="controls"><label class="checkbox"><input name="scheduleEnabled" type="checkbox"#if($scheduleEnabled) checked#end> Enabled</label></div>
-								</div>
-								<div class="control-group">
-									<label for="schedule-interval" class="control-label">Interval</label>
-									<div class="controls">
-										<select id="schedule-interval" name="schedule-interval">
-											<option value="y"#if($scheduleInterval=="y") selected#end>Yearly</option>
-											<option value="q"#if($scheduleInterval=="q") selected#end>Quarterly</option>
-											<option value="m"#if($scheduleInterval=="m") selected#end>Monthly</option>
-											<option value="w"#if($scheduleInterval=="w") selected#end>Weekly</option>
-											<option value="d"#if($scheduleInterval=="d") selected#end>Daily</option>
-											<option value="h"#if($scheduleInterval=="h") selected#end>Hourly</option>
+									<label for="schedule-time" class="control-label">Time</label>
+									<div id="schedule-time" class="controls">
+										#set($TWELVE=12)
+										#set($ZERO_ZERO="00")
+										<input name="schedule-hour" type="text" maxlength="2" value="#if($scheduleHour && $scheduleHour != "")${scheduleHour}#else$TWELVE#end" style="width:20px;"/>:<input name="schedule-minute" type="text" size="2" maxlength="2" value="#if($scheduleMinute && $scheduleMinute != "")${scheduleMinute}#else$ZERO_ZERO#end" style="width:20px;"/>
+										<select name="schedule-am_pm" style="width:60px;">
+										  <option#if($scheduleAmPm=="am") selected#end>am</option>
+										  <option#if($scheduleAmPm=="pm") selected#end>pm</option>
+										</select>
+										<select name="schedule-timezone" style="width:70px;">
+										  <option#if($scheduleTimeZone==$timezone) selected#end>${timezone}</option>
+										  <option#if($scheduleTimeZone=="UTC") selected#end>UTC</option>
 										</select>
 									</div>
 								</div>
-								<div id="time-field" class="" #if($scheduleInterval=="h") style='display:none;'#end>
+								<div class="control-group">
+									<label for="date" class="control-label">Date</label>
+									<div id="date" class="controls">
+										<input type="text" id="schedule-date" name="schedule-date"#if($scheduleDate && $scheduleDate != "") value="$scheduleDate"#end/>
+									</div>
+								</div>
+								<div class="control-group">
+									<div class="controls">
+										<label class="checkbox">
+											<input id="schedule-repeat" name="schedule-repeat" type="checkbox"#if($scheduleRepeat) checked#end/>Repeat
+										</label>
+									</div>
+								</div>
+								<div id="schedule-repeat-fields">
 									<div class="control-group">
-										<label for="schedule-time" class="control-label">Hour</label>
-										<div class="controls">
-											<select class="mini" id="schedule-time" name="schedule-time">
-												<option value="0"#if($scheduleTime=="0") selected#end>12am</option>
-												<option value="1"#if($scheduleTime=="1") selected#end>1am</option>
-												<option value="2"#if($scheduleTime=="2") selected#end>2am</option>
-												<option value="3"#if($scheduleTime=="3") selected#end>3am</option>
-												<option value="4"#if($scheduleTime=="4") selected#end>4am</option>
-												<option value="5"#if($scheduleTime=="5") selected#end>5am</option>
-												<option value="6"#if($scheduleTime=="6") selected#end>6am</option>
-												<option value="7"#if($scheduleTime=="7") selected#end>7am</option>
-												<option value="8"#if($scheduleTime=="8") selected#end>8am</option>
-												<option value="9"#if($scheduleTime=="9") selected#end>9am</option>
-												<option value="10"#if($scheduleTime=="10") selected#end>10am</option>
-												<option value="11"#if($scheduleTime=="11") selected#end>11am</option>
-												<option value="12"#if($scheduleTime=="12") selected#end>12pm</option>
-												<option value="13"#if($scheduleTime=="13") selected#end>1pm</option>
-												<option value="14"#if($scheduleTime=="14") selected#end>2pm</option>
-												<option value="15"#if($scheduleTime=="15") selected#end>3pm</option>
-												<option value="16"#if($scheduleTime=="16") selected#end>4pm</option>
-												<option value="17"#if($scheduleTime=="17") selected#end>5pm</option>
-												<option value="18"#if($scheduleTime=="18") selected#end>6pm</option>
-												<option value="19"#if($scheduleTime=="19") selected#end>7pm</option>
-												<option value="20"#if($scheduleTime=="20") selected#end>8pm</option>
-												<option value="21"#if($scheduleTime=="21") selected#end>9pm</option>
-												<option value="22"#if($scheduleTime=="22") selected#end>10pm</option>
-												<option value="23"#if($scheduleTime=="23") selected#end>11pm</option>
+										<label for="interval" class="control-label">Every</label>
+										<div id="interval" class="controls">
+											#set($ONE=1)
+											<input name="schedule-interval-quantity" type="text" maxlength="2" value="#if($scheduleIntervalQuantity)${scheduleIntervalQuantity}#else$ONE#end" style="width:20px;"/>
+											<select name="schedule-interval" style="width:100px;">
+											  <option value="M"#if($scheduleInterval=="M") selected#end>Minute(s)</option>
+											  <option value="h"#if($scheduleInterval=="h") selected#end>Hour(s)</option>
+											  <option value="d"#if($scheduleInterval=="d") selected#end>Day(s)</option>
+											  <option value="w"#if($scheduleInterval=="w") selected#end>Week(s)</option>
+											  <option value="m"#if($scheduleInterval=="m") selected#end>Month(s)</option>
+											  <option value="y"#if($scheduleInterval=="y") selected#end>Year(s)</option>
 											</select>
 										</div>
 									</div>
