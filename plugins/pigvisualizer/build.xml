@@ -95,7 +95,7 @@
 		<!-- Compile dustjs templates -->
     <exec dir="${java.src.dir}/tl" executable="make" failonerror="true"/>
     <copy todir="${dist.dust.dir}">
-      <fileset dir="${java.src.dir}/tl" includes="*.js"/>
+      <fileset dir="${java.src.dir}/tl/obj" includes="*.js"/>
     </copy>
 	</target>
 	

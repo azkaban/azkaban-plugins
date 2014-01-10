@@ -1,14 +1,15 @@
+OBJ_DIR = obj
 OBJ = \
-	jobstats.js \
-	jobdetails.js
+	$(OBJ_DIR)/jobstats.js \
+	$(OBJ_DIR)/jobdetails.js
 
 all: $(OBJ)
 
-.tl.js:
-	dustc --name=$(basename $<) $< $@
+$(OBJ_DIR)/%.js: %.tl
+	mkdir -p $(OBJ_DIR) && dustc --name=$(basename $<) $< $@
 
 clean:
-	rm -f $(OBJ)
+	rm -rf $(OBJ_DIR)
 
 .SUFFIXES: .tl .js
 
