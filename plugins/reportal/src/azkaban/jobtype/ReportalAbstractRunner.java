@@ -71,8 +71,7 @@ public abstract class ReportalAbstractRunner {
 
 		// Get properties
 		String execId = props.getString(CommonJobProperties.EXEC_ID);
-		// String jobName = props.getString(CommonJobProperties.FLOW_ID);
-		outputCapacity = props.getInt("reportal.output.capacity", 100 * 1024 * 1024);
+		outputCapacity = props.getInt("reportal.output.capacity", 10*1024*1024);
 		proxyUser = props.getString("reportal.proxy.user");
 		jobQuery = props.getString("reportal.job.query");
 		jobTitle = props.getString("reportal.job.title");

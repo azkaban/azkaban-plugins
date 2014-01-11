@@ -40,6 +40,8 @@ import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.shims.ShimLoader;
 
+import azkaban.reportal.util.BoundedOutputStream;
+
 public class ReportalHiveRunner extends ReportalAbstractRunner {
 
 	public ReportalHiveRunner(String jobName, Properties props) {
@@ -56,7 +58,7 @@ public class ReportalHiveRunner extends ReportalAbstractRunner {
 		}
 
 		File tempTSVFile = new File("./temp.tsv");
-		OutputStream tsvTempOutputStream = new BufferedOutputStream(new FileOutputStream(tempTSVFile));
+		OutputStream tsvTempOutputStream = new BoundedOutputStream(new BufferedOutputStream(new FileOutputStream(tempTSVFile)), outputCapacity);
 		PrintStream logOut = System.out;
 
 		// NOTE: It is critical to do this here so that log4j is reinitialized

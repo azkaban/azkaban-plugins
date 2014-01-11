@@ -36,6 +36,7 @@ import java.util.Set;
 import org.apache.pig.PigRunner;
 import org.apache.pig.tools.pigstats.PigStats;
 
+import azkaban.reportal.util.BoundedOutputStream;
 import azkaban.reportal.util.ReportalRunnerException;
 import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
@@ -63,7 +64,7 @@ public class ReportalPigRunner extends ReportalAbstractRunner {
 		PrintStream oldOutputStream = System.out;
 
 		File tempOutputFile = new File("./temp.out");
-		OutputStream tempOutputStream = new BufferedOutputStream(new FileOutputStream(tempOutputFile));
+		OutputStream tempOutputStream = new BoundedOutputStream(new BufferedOutputStream(new FileOutputStream(tempOutputFile)), outputCapacity);
 		PrintStream printStream = new PrintStream(tempOutputStream);
 		System.setOut(printStream);
 		
