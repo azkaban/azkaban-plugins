@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +32,9 @@ import org.apache.log4j.Logger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.mapred.Counters.Counter;
+import org.apache.hadoop.mapred.Counters.Group;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.pig.impl.util.ObjectSerializer;
 
@@ -84,4 +89,21 @@ public class StatsUtils {
 		}
 		return properties;
 	}
+
+  public static Object countersToJson(Counters counters) {
+    Map<String, Object> jsonObj = new HashMap<String, Object>();
+    Collection<String> counterGroups = counters.getGroupNames();
+    for (String groupName : counterGroups) {
+      Map<String, String> counterStats = new HashMap<String, String>();
+      Group group = counters.getGroup(groupName);
+      Iterator<Counters.Counter> it = group.iterator();
+      while (it.hasNext()) {
+        Counter counter = it.next();
+        counterStats.put(counter.getDisplayName(),
+            String.valueOf(counter.getCounter()));
+      }
+      jsonObj.put(groupName, counterStats);
+    }
+    return jsonObj;
+  }
 }

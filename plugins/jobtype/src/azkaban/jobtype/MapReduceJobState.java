@@ -261,6 +261,8 @@ public class MapReduceJobState {
 
     jsonObj.put("totalReducers", String.valueOf(totalReducers));
     jsonObj.put("finishedReducersCount", String.valueOf(finishedReducersCount));
+
+    jsonObj.put("counters", StatsUtils.countersToJson(counters));
 		return jsonObj;
 	}
 
