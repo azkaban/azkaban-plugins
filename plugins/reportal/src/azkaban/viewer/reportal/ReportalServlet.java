@@ -403,16 +403,15 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 						}
 					});
 					
-					List<String> logList = new ArrayList<String>();
+					List<ExecutableNode> logList = new ArrayList<ExecutableNode>();
 					boolean showDataCollector = hasParam(req, "debug");
 					for (ExecutableNode node: jobs) {
-						String jobId = node.getJobId();
-						if (!showDataCollector && !jobId.equals("data-collector")) {
-							logList.add(jobId);
+						if (!showDataCollector && !node.getJobId().equals("data-collector")) {
+							logList.add(node);
 						}
 					}
 					if (logList.size() == 1) {
-						resp.sendRedirect("/reportal?view&logs&id=" + project.getId() + "&execid=" + execId + "&log=" + logList.get(0));
+						resp.sendRedirect("/reportal?view&logs&id=" + project.getId() + "&execid=" + execId + "&log=" + logList.get(0).getJobId());
 					}
 					page.add("logs", logList);
 				}
