@@ -35,9 +35,10 @@ import azkaban.executor.ExecutableFlow;
 import azkaban.executor.ExecutableNode;
 import azkaban.executor.ExecutorManagerAdapter;
 import azkaban.executor.ExecutorManagerException;
-import azkaban.jobtype.JobDagNode;
 import azkaban.jobtype.pig.PigJobDagNode;
+import azkaban.jobtype.JobDagNode;
 import azkaban.jobtype.MapReduceJobState;
+import azkaban.jobtype.StatsUtils;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
 import azkaban.user.Permission;
@@ -246,7 +247,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		ret.put("features", node.getFeatures());
 		ret.put("aliases", node.getAliases());
 		ret.put("state", node.getMapReduceJobState().toJson());
-    ret.put("conf", JobDagNode.propertiesToJson(node.getJobConfiguration()));
+    ret.put("conf", StatsUtils.propertiesToJson(node.getJobConfiguration()));
 	}
 	
 	private void handleAjaxAction(HttpServletRequest request,

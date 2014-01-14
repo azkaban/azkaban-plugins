@@ -256,21 +256,21 @@
 								<label class="control-label">Viewers</label>
 								<div class="controls">
 									<textarea class="span8" name="access-viewer">$accessViewer</textarea>
-									<br/>Separate entries by commas, spaces or semicolons. If left blank, the runs of this report are viewable by everyone.
+									<br/>Separate usernames by commas, spaces, or semicolons. If left blank, the runs of this report are viewable by everyone.
 								</div>
 							</div>
 							<div class="control-group">
 								<label class="control-label">Executors</label>
 								<div class="controls">
 									<textarea class="span8" name="access-executor">$accessExecutor</textarea>
-									<br/>Separate entries by commas, spaces or semicolons. If left blank, anyone can execute this report.
+									<br/>Separate usernames by commas, spaces, or semicolons. If left blank, anyone can execute this report.
 								</div>
 							</div>
 							<div class="control-group">
 								<label class="control-label">Owners</label>
 								<div class="controls">
 									<textarea class="span8" name="access-owner">$accessOwner</textarea>
-									<br/>Separate entries by commas, spaces or semicolons.
+									<br/>Separate usernames by commas, spaces, or semicolons.
 								</div>
 							</div>
 						</fieldset>
@@ -280,14 +280,14 @@
 								<label class="control-label">Success Emails</label>
 								<div class="controls">
 									<textarea class="span8" name="notifications">$notifications</textarea>
-									<br/>Separate entries by commas, spaces or semicolons. Note: If the report returns no results, no email is sent, except for unscheduled runs.
+									<br/>Separate emails by commas, spaces, or semicolons. Note: If the report returns no results, no email is sent, except for unscheduled runs.
 								</div>
 							</div>
 							<div class="control-group">
 								<label class="control-label">Failure Emails</label>
 								<div class="controls">
 									<textarea class="span8" name="failure-notifications">$failureNotifications</textarea>
-									<br/>Separate entries by commas, spaces or semicolons.
+									<br/>Separate emails by commas, spaces, or semicolons.
 								</div>
 							</div>
 						</fieldset>

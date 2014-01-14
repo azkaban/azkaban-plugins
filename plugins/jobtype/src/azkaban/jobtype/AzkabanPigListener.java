@@ -56,8 +56,8 @@ import azkaban.utils.Props;
 public class AzkabanPigListener implements PigProgressNotificationListener {
 
 	private static Logger logger = Logger.getLogger(AzkabanPigListener.class);
-	private String outputDir = ".";
 	private String outputDagNodeFile;
+  private String outputJobStatsFile;
 	
 	private Map<String, PigJobDagNode> dagNodeNameMap = 
 			new HashMap<String, PigJobDagNode>();
@@ -66,13 +66,15 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 	private Set<String> completedJobIds = new HashSet<String>();
 	
 	public AzkabanPigListener(Props props) {
-		outputDir = props.getString("pig.listener.output.dir", 
+		String outputDir = props.getString("pig.listener.output.dir", 
 				System.getProperty("java.io.tmpdir"));
 		String jobId = props.getString("azkaban.job.id");
 		String execId = props.getString("azkaban.flow.execid");
 		String attempt = props.getString("azkaban.job.attempt");
 		outputDagNodeFile = outputDir + "/" + execId + "-"
 				+ jobId + "-dagnodemap.json";
+    outputJobStatsFile = outputDir + "/" + execId + "-" 
+        + jobId + "-stats.json";
 	}
 	
 	@Override
@@ -151,26 +153,37 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 		updateJsonFile();
 	}
 
-	private Object dagNodeListToJson(Map<String, PigJobDagNode> nodes) {
+	private Object dagNodeListToJson() {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();
-		for (Map.Entry<String, PigJobDagNode> entry : nodes.entrySet()) {
+		for (Map.Entry<String, PigJobDagNode> entry : dagNodeJobIdMap.entrySet()) {
 			jsonObj.put(entry.getKey(), entry.getValue().toJson());
 		}
 		return jsonObj;
 	}
+  
+  private Object nodesToJobStats() {
+    List<Object> jsonObj = new ArrayList<Object>();
+    for (Map.Entry<String, PigJobDagNode> entry : dagNodeJobIdMap.entrySet()) {
+      Map<String, Object> jobJsonObj = new HashMap<String, Object>();
+      JobDagNode node = entry.getValue();
+      jobJsonObj.put("state", node.getMapReduceJobState().toJson());
+      jobJsonObj.put("conf", 
+          StatsUtils.propertiesToJson(node.getJobConfiguration()));
+      jsonObj.add(jobJsonObj);
+    }
+    return jsonObj;
+  }
 
 	private void updateJsonFile() {
 		File dagNodeFile = null;
+    File jobStatsFile = null;
 		try {
 			dagNodeFile = new File(outputDagNodeFile);
+			JSONUtils.toJSON(dagNodeListToJson(), dagNodeFile);
+      jobStatsFile = new File(outputJobStatsFile);
+      JSONUtils.toJSON(nodesToJobStats(), jobStatsFile);
 		}
 		catch (Exception e) {
-			logger.error("Failed to convert to json.");
-		}
-		try {
-			JSONUtils.toJSON(dagNodeListToJson(dagNodeJobIdMap), dagNodeFile);
-		}
-		catch (IOException e) {
 			logger.error("Couldn't write json file", e);
 		}
 	}
@@ -306,7 +319,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 					new MapReduceJobState(runningJob, mapTaskReport, reduceTaskReport));
 
 			if (node.getJobConfiguration() == null) {
-				Properties jobConfProperties = getJobConf(runningJob);
+				Properties jobConfProperties = StatsUtils.getJobConf(runningJob);
 				if (jobConfProperties != null && jobConfProperties.size() > 0) {
 					node.setJobConfiguration(jobConfProperties);
 				}
@@ -316,36 +329,6 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 		}
 	}
 
-	private Properties getJobConf(RunningJob runningJob) {
-		Properties jobConfProperties = null;
-		try {
-			Path path = new Path(runningJob.getJobFile());
-			Configuration conf = new Configuration(false);
-			FileSystem fs = FileSystem.get(new Configuration());
-			InputStream in = fs.open(path);
-			conf.addResource(in);
-
-			jobConfProperties = new Properties();
-			for (Map.Entry<String, String> entry : conf) {
-				if (entry.getKey().equals("pig.mapPlan") ||
-						entry.getKey().equals("pig.reducePlan")) {
-					jobConfProperties.setProperty(entry.getKey(),
-							ObjectSerializer.deserialize(entry.getValue()).toString());
-				}
-				else {
-					jobConfProperties.setProperty(entry.getKey(), entry.getValue());
-				}
-			}
-		}
-		catch (FileNotFoundException e) {
-			logger.warn("Job conf not found.");
-		}
-		catch (IOException e) {
-			logger.warn("Error while retrieving job conf: " + e.getMessage());
-		}
-		return jobConfProperties;
-	}
-	
 	private void addCompletedJobStats(PigJobDagNode node, JobStats stats) {
 		node.setJobStats(stats);
 	}

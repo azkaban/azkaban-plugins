@@ -161,7 +161,9 @@ public class ReportalTeradataRunner extends ReportalAbstractRunner {
 				for (int j = 1; j <= numColumns; j++) {
 					String colVal = result.getString(j);
 
-					if (colVal != null) {
+					if (colVal == null) {
+						colVal = "\"null\"";
+					} else {
 						colVal = formatValue(colVal);
 					}
 

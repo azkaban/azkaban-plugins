@@ -25,9 +25,7 @@
 		<script type="text/javascript" src="${context}/js/underscore-1.4.4-min.js"></script>
 		<script type="text/javascript" src="${context}/js/namespace.js"></script>
 		<script type="text/javascript" src="${context}/js/backbone-0.9.10-min.js"></script>
-		<script type="text/javascript" src="${context}/js/jquery.simplemodal-1.4.4.js"></script>
 
-		<script type="text/javascript" src="${context}/js/azkaban.nav.js"></script>
 		<script type="text/javascript">
 			var contextURL = "${context}";
 			var currentTime = ${currentTime};
@@ -150,6 +148,7 @@
 						<thead>
 							<tr>
 								<th>Title</th>
+								<th>Status</th>
 								<th>View Log</th>
 							</tr>
 						</thead>
@@ -157,8 +156,9 @@
 	#if($logs)
 		#foreach($log in $logs)
 							<tr>
-								<td>${log}</td>
-								<td><a href="${context}/reportal?view&amp;logs&amp;id=${project.id}&amp;execid=${execid}&amp;log=${log}">Log</a></td>
+								<td>${log.jobId}</td>
+								<td>${log.status}</td>
+								<td><a href="${context}/reportal?view&amp;logs&amp;id=${project.id}&amp;execid=${execid}&amp;log=${log.jobId}">Log</a></td>
 							</tr>
 		#end
 	#else
