@@ -24,8 +24,8 @@
 		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
 		<script type="text/javascript" src="${context}/js/dust-full-2.2.3.min.js"></script>
 		
-		<script type="text/javascript" src="${context}/js/azkaban.common.utils.js"></script>
-		<script type="text/javascript" src="${context}/js/azkaban.ajax.utils.js"></script>
+		<script type="text/javascript" src="${context}/js/azkaban/util/common.js"></script>
+		<script type="text/javascript" src="${context}/js/azkaban/util/ajax.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.layout.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.context.menu.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.svg.graph.helper.js"></script>
