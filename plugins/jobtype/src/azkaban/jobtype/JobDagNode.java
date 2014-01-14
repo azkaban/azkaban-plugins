@@ -100,25 +100,6 @@ public class JobDagNode {
     return jobConfiguration;
   }
 
-	// XXX Refactor this!
-	public static Object propertiesToJson(Properties properties) {
-		Map<String, String> jsonObj = new HashMap<String, String>();
-		Set<String> keys = properties.stringPropertyNames();
-		for (String key : keys) {
-			jsonObj.put(key, properties.getProperty(key));
-		}
-		return jsonObj;
-	}
-
-	public static Properties propertiesFromJson(Object obj) {
-		Map<String, String> jsonObj = (HashMap<String, String>) obj;
-		Properties properties = new Properties();
-		for (Map.Entry<String, String> entry : jsonObj.entrySet()) {
-			properties.setProperty(entry.getKey(), entry.getValue());
-		}
-		return properties;
-	}
-
 	public Object toJson() {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();
 		jsonObj.put("name", name);
@@ -126,7 +107,8 @@ public class JobDagNode {
 		jsonObj.put("parents", parents);
 		jsonObj.put("successors", successors);
 		if (jobConfiguration != null) {
-			jsonObj.put("jobConfiguration", propertiesToJson(jobConfiguration));
+			jsonObj.put("jobConfiguration", 
+          StatsUtils.propertiesToJson(jobConfiguration));
 		}
     if (mapReduceJobState != null) {
       jsonObj.put("mapReduceJobState", mapReduceJobState.toJson());
@@ -147,7 +129,7 @@ public class JobDagNode {
     // Grab configuration if it is available.
 		if (jsonObj.containsKey("jobConfiguration")) {
 			node.setJobConfiguration(
-					propertiesFromJson(jsonObj.get("jobConfiguration")));
+					StatsUtils.propertiesFromJson(jsonObj.get("jobConfiguration")));
 		}
 		
 		// Grab MapReduceJobState.

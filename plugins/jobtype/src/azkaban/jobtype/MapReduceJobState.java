@@ -20,6 +20,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.hadoop.mapred.Counters;
+import org.apache.hadoop.mapred.Counters.Counter;
+import org.apache.hadoop.mapred.Counters.Group;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TIPStatus;
 import org.apache.hadoop.mapred.TaskReport;
@@ -45,8 +48,41 @@ public class MapReduceJobState {
 	private int totalReducers;
 	private int finishedReducersCount;
 
+  private Counters counters;
+
 	public MapReduceJobState() {
 	}
+
+  public MapReduceJobState(
+      String jobId,
+      String jobName,
+      String trackingURL,
+      String failureInfo,
+      boolean isComplete,
+      boolean isSuccessful,
+      float mapProgress,
+      float reduceProgress,
+      long jobStartTime,
+      long jobLastUpdateTime,
+      int totalMappers,
+      int finishedMappersCount,
+      int totalReducers,
+      int finishedReducersCount) {
+    this.jobId = jobId;
+    this.jobName = jobName;
+    this.trackingURL = trackingURL;
+    this.failureInfo = failureInfo;
+    this.isComplete = isComplete;
+    this.isSuccessful = isSuccessful;
+    this.mapProgress = mapProgress;
+    this.reduceProgress = reduceProgress;
+    this.jobStartTime = jobStartTime;
+    this.jobLastUpdateTime = jobLastUpdateTime;
+    this.totalMappers = totalMappers;
+    this.finishedMappersCount = finishedMappersCount;
+    this.totalReducers = totalReducers;
+    this.finishedReducersCount = finishedReducersCount;
+  }
 
 	@SuppressWarnings("deprecation")
 	public MapReduceJobState(RunningJob runningJob,
@@ -91,6 +127,8 @@ public class MapReduceJobState {
 				jobLastUpdateTime == 0) {
 			jobLastUpdateTime = System.currentTimeMillis();
 		}
+
+    counters = runningJob.getCounters();
 	}
 
 	public String getJobId() {
@@ -207,25 +245,71 @@ public class MapReduceJobState {
 
 	public Object toJson() {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();
+    jsonObj.put("jobId", jobId);
 		jsonObj.put("jobName", jobName);
 		jsonObj.put("trackingURL", trackingURL);
+		jsonObj.put("failureInfo", failureInfo);
 		jsonObj.put("isComplete", String.valueOf(isComplete));
 		jsonObj.put("isSuccessful", String.valueOf(isSuccessful));
-		jsonObj.put("failureInfo", failureInfo);
+    jsonObj.put("mapProgress", String.valueOf(mapProgress));
+    jsonObj.put("reduceProgress", String.valueOf(reduceProgress));
+    jsonObj.put("jobStartTime", String.valueOf(jobStartTime));
+    jsonObj.put("jobLastUpdateTime", String.valueOf(jobLastUpdateTime));
+
+    jsonObj.put("totalMappers", String.valueOf(totalMappers));
+    jsonObj.put("finishedMappersCount", String.valueOf(finishedMappersCount));
+
+    jsonObj.put("totalReducers", String.valueOf(totalReducers));
+    jsonObj.put("finishedReducersCount", String.valueOf(finishedReducersCount));
+
+    jsonObj.put("counters", StatsUtils.countersToJson(counters));
 		return jsonObj;
 	}
 
 	@SuppressWarnings("unchecked")
 	public static MapReduceJobState fromJson(Object obj) throws Exception {
 		Map<String, Object> jsonObj = (HashMap<String, Object>) obj;
-		MapReduceJobState state = new MapReduceJobState();
-		state.setTrackingURL((String) jsonObj.get("trackingURL"));
-		state.setComplete(
-				Boolean.parseBoolean((String) jsonObj.get("isComplete")));
-		state.setSuccessful(
-				Boolean.parseBoolean((String) jsonObj.get("isSuccessful")));
-		state.setJobName((String) jsonObj.get("jobName"));
-		state.setFailureInfo((String) jsonObj.get("failureInfo"));
-		return state;
+		String jobId = (String) jsonObj.get("jobId");
+		String jobName = (String) jsonObj.get("jobName");
+		String trackingUrl = (String) jsonObj.get("trackingURL");
+	  boolean isComplete =
+				Boolean.parseBoolean((String) jsonObj.get("isComplete"));
+		boolean isSuccessful =
+				Boolean.parseBoolean((String) jsonObj.get("isSuccessful"));
+		String failureInfo = (String) jsonObj.get("failureInfo");
+    float mapProgress =
+        Float.parseFloat((String) jsonObj.get("mapProgress"));
+    float reduceProgress = 
+        Float.parseFloat((String) jsonObj.get("reduceProgress"));
+    long jobStartTime =
+        Long.parseLong((String) jsonObj.get("jobStartTime"));
+    long jobLastUpdateTime = 
+        Long.parseLong((String) jsonObj.get("jobLastUpdateTime"));
+
+    int totalMappers =
+        Integer.parseInt((String) jsonObj.get("totalMappers"));
+    int finishedMappersCount =
+        Integer.parseInt((String) jsonObj.get("finishedMappersCount"));
+
+    int totalReducers =
+        Integer.parseInt((String) jsonObj.get("totalReducers"));
+    int finishedReducersCount =
+        Integer.parseInt((String) jsonObj.get("finishedReducersCount"));
+    
+		return new MapReduceJobState(
+        jobId,
+        jobName,
+        trackingUrl,
+        failureInfo,
+        isComplete,
+        isSuccessful,
+        mapProgress,
+        reduceProgress,
+        jobStartTime,
+        jobLastUpdateTime,
+        totalMappers,
+        finishedMappersCount,
+        totalReducers,
+        finishedReducersCount);
 	}
 }

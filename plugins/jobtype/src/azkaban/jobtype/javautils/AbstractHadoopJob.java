@@ -17,9 +17,13 @@
 package azkaban.jobtype.javautils;
 
 import java.io.IOException;
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -30,13 +34,18 @@ import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.Counters.Counter;
 import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobID;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.hadoop.mapred.TaskReport;
 import org.apache.hadoop.mapred.Mapper;
 import org.apache.hadoop.mapred.Reducer;
 import org.apache.log4j.Logger;
 
+import azkaban.jobtype.MapReduceJobState;
+import azkaban.jobtype.StatsUtils;
 import azkaban.utils.Props;
+import azkaban.utils.JSONUtils;
 
 public abstract class AbstractHadoopJob {
 	private static final Logger logger = Logger.getLogger(AbstractHadoopJob.class);
@@ -49,7 +58,12 @@ public abstract class AbstractHadoopJob {
 	private final String jobName;
 	
 	private JobConf jobconf;
+  private JobClient jobClient;
 	private Configuration conf;
+
+  private boolean visualizer;
+  private MapReduceJobState mapReduceJobState;
+  private String jobStatsFileName;
 
 	public AbstractHadoopJob(String name, Props props) {
 		this.props = props;
@@ -57,6 +71,16 @@ public abstract class AbstractHadoopJob {
 		conf = new Configuration();
 		jobconf = new JobConf(conf);
 		jobconf.setJobName(name);
+
+    visualizer = props.getBoolean("mr.listener.visualizer", false) == true;
+    if (visualizer == true) {
+      String outputDir = props.getString("mr.listener.output.dir",
+          System.getProperty("java.io.tmpdir"));
+      String jobId = props.getString("azkaban.job.id");
+      String execId = props.getString("azkaban.flow.execid");
+      jobStatsFileName = outputDir + "/" + execId + "-" +
+          jobId + "-stats.json";
+    }
 	}
 	
 	public JobConf getJobConf() {
@@ -78,12 +102,12 @@ public abstract class AbstractHadoopJob {
 			conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
 		}
 		
-		JobClient jobClient = new JobClient(conf);
+		jobClient = new JobClient(conf);
 		runningJob = jobClient.submitJob(conf);
 		logger.info("See " + runningJob.getTrackingURL() + " for details.");
 		jobClient.monitorAndPrintJob(conf, runningJob);
 		
-//		runningJob.waitForCompletion();
+    //runningJob.waitForCompletion();
 
 		if (!runningJob.isSuccessful()) {
 			throw new Exception("Hadoop job:" + getJobName() + " failed!");
@@ -91,12 +115,13 @@ public abstract class AbstractHadoopJob {
 
 		// dump all counters
 		Counters counters = runningJob.getCounters();
-		for(String groupName: counters.getGroupNames()) {
+		for (String groupName: counters.getGroupNames()) {
 			Counters.Group group = counters.getGroup(groupName);
 			logger.info("Group: " + group.getDisplayName());
-			for(Counter counter: group)
+			for (Counter counter: group)
 				logger.info(counter.getDisplayName() + ":\t" + counter.getValue());
 		}
+    updateMapReduceJobState();
 	}
 	
 	@SuppressWarnings("rawtypes") 
@@ -161,8 +186,7 @@ public abstract class AbstractHadoopJob {
 			FileOutputFormat.setOutputPath(conf, new Path(location));
 
 			// For testing purpose only remove output file if exists
-			if (props.getBoolean("force.output.overwrite", false))
-			{
+			if (props.getBoolean("force.output.overwrite", false)) {
 				FileSystem fs = FileOutputFormat.getOutputPath(conf).getFileSystem(conf);
 				fs.delete(FileOutputFormat.getOutputPath(conf), true);
 			}
@@ -226,7 +250,7 @@ public abstract class AbstractHadoopJob {
 
 		for (String key : getProps().getKeySet()) {
 			String lowerCase = key.toLowerCase();
-			if ( lowerCase.startsWith(HADOOP_PREFIX)) {
+			if (lowerCase.startsWith(HADOOP_PREFIX)) {
 				String newKey = key.substring(HADOOP_PREFIX.length());
 				conf.set(newKey, getProps().get(key));
 			}
@@ -247,15 +271,55 @@ public abstract class AbstractHadoopJob {
 	}
 
 	public void cancel() throws Exception {
-		if (runningJob != null)
+		if (runningJob != null) {
 			runningJob.killJob();
+    }
 	}
 
+  private void updateMapReduceJobState() {
+    if (runningJob == null || visualizer == false) {
+      return;
+    }
+
+    try {
+      JobID jobId = runningJob.getID();
+      TaskReport[] mapTaskReport = jobClient.getMapTaskReports(jobId);
+      TaskReport[] reduceTaskReport = jobClient.getReduceTaskReports(jobId);
+      mapReduceJobState = new MapReduceJobState(
+          runningJob, mapTaskReport, reduceTaskReport);
+      writeMapReduceJobState();
+    }
+    catch (IOException e) {
+      logger.error("Cannot update MapReduceJobState");
+    }
+  }
+
+  private Object statsToJson() {
+    List<Object> jsonObj = new ArrayList<Object>();
+    Map<String, Object> jobJsonObj = new HashMap<String, Object>();
+    jobJsonObj.put("state", mapReduceJobState.toJson());
+    jobJsonObj.put("conf", StatsUtils.getJobConf(runningJob));
+    jsonObj.add(jobJsonObj);
+    return jsonObj;
+  }
+
+  private void writeMapReduceJobState() {
+    File mrStateFile = null;
+    try {
+      mrStateFile = new File(jobStatsFileName);
+      JSONUtils.toJSON(statsToJson(), mrStateFile);
+    }
+    catch (Exception e) {
+      logger.error("Cannot write JSON file.");
+    }
+  }
+	
 	public double getProgress() throws IOException {
-		if (runningJob == null)
+		if (runningJob == null) {
 			return 0.0;
-		else
-			return (double) (runningJob.mapProgress() + runningJob.reduceProgress()) / 2.0d;
+    }
+    return (double) (runningJob.mapProgress() + 
+        runningJob.reduceProgress()) / 2.0d;
 	}
 
 	public Counters getCounters() throws IOException {

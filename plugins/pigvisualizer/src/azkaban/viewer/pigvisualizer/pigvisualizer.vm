@@ -22,10 +22,10 @@
 #parse ("azkaban/webapp/servlet/velocity/javascript.vm")
 
 		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
-		<script type="text/javascript" src="${context}/js/dust-core-2.2.2.min.js"></script>
+		<script type="text/javascript" src="${context}/js/dust-full-2.2.3.min.js"></script>
 		
-		<script type="text/javascript" src="${context}/js/azkaban.common.utils.js"></script>
-		<script type="text/javascript" src="${context}/js/azkaban.ajax.utils.js"></script>
+		<script type="text/javascript" src="${context}/js/azkaban/util/common.js"></script>
+		<script type="text/javascript" src="${context}/js/azkaban/util/ajax.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.layout.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.context.menu.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban.svg.graph.helper.js"></script>
@@ -61,10 +61,10 @@
 		<div class="az-page-header">
 			<div class="container-full">
 				<div class="row">
-					<div class="col-lg-6">
+					<div class="col-xs-6">
 						<h1><a href="${context}pigvisualizer?execid=${execId}&jobid=${jobId}">Job Execution <small>${jobId}</small></a></h1>
 					</div>
-					<div class="col-lg-6">
+					<div class="col-xs-6">
 						<div class="pull-right az-page-header-form">
 							<a href="${context}/manager?project=${projectName}&flow=${flowId}&job=$jobId" class="btn btn-info">Job Properties</a>
 						</div>
