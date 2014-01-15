@@ -67,7 +67,8 @@ public class MapReduceJobState {
       int totalMappers,
       int finishedMappersCount,
       int totalReducers,
-      int finishedReducersCount) {
+      int finishedReducersCount,
+      Counters counters) {
     this.jobId = jobId;
     this.jobName = jobName;
     this.trackingURL = trackingURL;
@@ -82,6 +83,7 @@ public class MapReduceJobState {
     this.finishedMappersCount = finishedMappersCount;
     this.totalReducers = totalReducers;
     this.finishedReducersCount = finishedReducersCount;
+    this.counters = counters;
   }
 
 	@SuppressWarnings("deprecation")
@@ -243,6 +245,14 @@ public class MapReduceJobState {
 		this.jobLastUpdateTime = jobLastUpdateTime;
 	}
 
+  public Counters getCounters() {
+    return this.counters;
+  }
+
+  public void setCounters(Counters counters) {
+    this.counters = counters;
+  }
+
 	public Object toJson() {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();
     jsonObj.put("jobId", jobId);
@@ -263,6 +273,7 @@ public class MapReduceJobState {
     jsonObj.put("finishedReducersCount", String.valueOf(finishedReducersCount));
 
     jsonObj.put("counters", StatsUtils.countersToJson(counters));
+    jsonObj.put("countersString", counters.makeEscapedCompactString());
 		return jsonObj;
 	}
 
@@ -295,6 +306,9 @@ public class MapReduceJobState {
         Integer.parseInt((String) jsonObj.get("totalReducers"));
     int finishedReducersCount =
         Integer.parseInt((String) jsonObj.get("finishedReducersCount"));
+
+    String countersString = (String) jsonObj.get("countersString");
+    Counters counters = Counters.fromEscapedCompactString(countersString);
     
 		return new MapReduceJobState(
         jobId,
@@ -310,6 +324,7 @@ public class MapReduceJobState {
         totalMappers,
         finishedMappersCount,
         totalReducers,
-        finishedReducersCount);
+        finishedReducersCount,
+        counters);
 	}
 }
