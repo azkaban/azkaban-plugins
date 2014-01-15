@@ -74,8 +74,7 @@ public abstract class AbstractHadoopJob {
 
     visualizer = props.getBoolean("mr.listener.visualizer", false) == true;
     if (visualizer == true) {
-      String outputDir = props.getString("mr.listener.output.dir",
-          System.getProperty("java.io.tmpdir"));
+      String outputDir = props.getString("azkaban.stats.dir", "../../stats");
       String jobId = props.getString("azkaban.job.id");
       String execId = props.getString("azkaban.flow.execid");
       jobStatsFileName = outputDir + "/" + execId + "-" +
