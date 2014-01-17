@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -74,11 +75,7 @@ public abstract class AbstractHadoopJob {
 
     visualizer = props.getBoolean("mr.listener.visualizer", false) == true;
     if (visualizer == true) {
-      String outputDir = props.getString("azkaban.stats.dir", "../../stats");
-      String jobId = props.getString("azkaban.job.id");
-      String execId = props.getString("azkaban.flow.execid");
-      jobStatsFileName = outputDir + "/" + execId + "-" +
-          jobId + "-stats.json";
+      jobStatsFileName = props.getString("azkaban.job.attachment.file");
     }
 	}
 	
@@ -120,7 +117,7 @@ public abstract class AbstractHadoopJob {
 			for (Counter counter: group)
 				logger.info(counter.getDisplayName() + ":\t" + counter.getValue());
 		}
-    updateMapReduceJobState();
+    updateMapReduceJobState(conf);
 	}
 	
 	@SuppressWarnings("rawtypes") 
@@ -275,7 +272,7 @@ public abstract class AbstractHadoopJob {
     }
 	}
 
-  private void updateMapReduceJobState() {
+  private void updateMapReduceJobState(JobConf jobConf) {
     if (runningJob == null || visualizer == false) {
       return;
     }
@@ -286,27 +283,28 @@ public abstract class AbstractHadoopJob {
       TaskReport[] reduceTaskReport = jobClient.getReduceTaskReports(jobId);
       mapReduceJobState = new MapReduceJobState(
           runningJob, mapTaskReport, reduceTaskReport);
-      writeMapReduceJobState();
+      writeMapReduceJobState(jobConf);
     }
     catch (IOException e) {
       logger.error("Cannot update MapReduceJobState");
     }
   }
 
-  private Object statsToJson() {
+  private Object statsToJson(JobConf jobConf) {
     List<Object> jsonObj = new ArrayList<Object>();
     Map<String, Object> jobJsonObj = new HashMap<String, Object>();
+		Properties conf = StatsUtils.getJobConf(jobConf);
     jobJsonObj.put("state", mapReduceJobState.toJson());
-    jobJsonObj.put("conf", StatsUtils.getJobConf(runningJob));
+    jobJsonObj.put("conf", StatsUtils.propertiesToJson(conf));
     jsonObj.add(jobJsonObj);
     return jsonObj;
   }
 
-  private void writeMapReduceJobState() {
+  private void writeMapReduceJobState(JobConf jobConf) {
     File mrStateFile = null;
     try {
       mrStateFile = new File(jobStatsFileName);
-      JSONUtils.toJSON(statsToJson(), mrStateFile);
+      JSONUtils.toJSON(statsToJson(jobConf), mrStateFile);
     }
     catch (Exception e) {
       logger.error("Cannot write JSON file.");

@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -50,14 +51,14 @@ import org.apache.pig.tools.pigstats.PigStats;
 import org.apache.pig.tools.pigstats.ScriptState;
 
 import azkaban.jobtype.pig.PigJobDagNode;
+import azkaban.jobtype.pig.PigJobStats;
 import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
 
 public class AzkabanPigListener implements PigProgressNotificationListener {
 
 	private static Logger logger = Logger.getLogger(AzkabanPigListener.class);
-	private String outputDagNodeFile;
-  private String outputJobStatsFile;
+	private String statsFile;
 	
 	private Map<String, PigJobDagNode> dagNodeNameMap = 
 			new HashMap<String, PigJobDagNode>();
@@ -66,14 +67,10 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 	private Set<String> completedJobIds = new HashSet<String>();
 	
 	public AzkabanPigListener(Props props) {
-		String outputDir = props.getString("azkaban.stats.dir", "../../stats");
 		String jobId = props.getString("azkaban.job.id");
 		String execId = props.getString("azkaban.flow.execid");
 		String attempt = props.getString("azkaban.job.attempt");
-		outputDagNodeFile = outputDir + "/" + execId + "-"
-				+ jobId + "-dagnodemap.json";
-    outputJobStatsFile = outputDir + "/" + execId + "-" 
-        + jobId + "-stats.json";
+		statsFile = props.getString("azkaban.job.attachment.file");
 	}
 	
 	@Override
@@ -151,20 +148,22 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 
 		updateJsonFile();
 	}
-
-	private Object dagNodeListToJson() {
-		Map<String, Object> jsonObj = new HashMap<String, Object>();
-		for (Map.Entry<String, PigJobDagNode> entry : dagNodeJobIdMap.entrySet()) {
-			jsonObj.put(entry.getKey(), entry.getValue().toJson());
-		}
-		return jsonObj;
-	}
   
-  private Object nodesToJobStats() {
+  private Object buildJobStatsJson() {
     List<Object> jsonObj = new ArrayList<Object>();
     for (Map.Entry<String, PigJobDagNode> entry : dagNodeJobIdMap.entrySet()) {
       Map<String, Object> jobJsonObj = new HashMap<String, Object>();
-      JobDagNode node = entry.getValue();
+      PigJobDagNode node = entry.getValue();
+			jobJsonObj.put("name", node.getName());
+			jobJsonObj.put("jobId", node.getJobId());
+			jobJsonObj.put("successors", node.getSuccessors());
+			jobJsonObj.put("level", Integer.toString(node.getLevel()));
+			jobJsonObj.put("aliases", node.getAliases());
+			jobJsonObj.put("features", node.getFeatures());
+			PigJobStats pigStats = node.getJobStats();
+			if (pigStats != null) {
+				jobJsonObj.put("pigStats", pigStats.toJson());
+			}
       jobJsonObj.put("state", node.getMapReduceJobState().toJson());
       jobJsonObj.put("conf", 
           StatsUtils.propertiesToJson(node.getJobConfiguration()));
@@ -174,16 +173,13 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
   }
 
 	private void updateJsonFile() {
-		File dagNodeFile = null;
-    File jobStatsFile = null;
+    File file = null;
 		try {
-			dagNodeFile = new File(outputDagNodeFile);
-			JSONUtils.toJSON(dagNodeListToJson(), dagNodeFile);
-      jobStatsFile = new File(outputJobStatsFile);
-      JSONUtils.toJSON(nodesToJobStats(), jobStatsFile);
+			file = new File(statsFile);
+			JSONUtils.toJSON(buildJobStatsJson(), file);
 		}
 		catch (Exception e) {
-			logger.error("Couldn't write json file", e);
+			logger.error("Couldn't write stats file", e);
 		}
 	}
 

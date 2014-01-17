@@ -14,27 +14,27 @@
                   <tbody>
                     <tr>
                       <td class="property-key"><strong>Num Maps</strong></td>
-                      <td class="property-value-half">{stats.numberMaps}</td>
+                      <td class="property-value-half">{pigStats.numberMaps}</td>
                       <td class="property-key"><strong>Num Reduces</strong></td>
-                      <td class="property-value-half">{stats.numberReduces}</td>
+                      <td class="property-value-half">{pigStats.numberReduces}</td>
                     </tr>
                     <tr>
                       <td class="property-key"><strong>Min Map Time</strong></td>
-                      <td class="property-value-half">{stats.minMapTime}</td>
+                      <td class="property-value-half">{pigStats.minMapTime}</td>
                       <td class="property-key"><strong>Min Reduce Time</strong></td>
-                      <td class="property-value-half">{stats.minReduceTime}</td>
+                      <td class="property-value-half">{pigStats.minReduceTime}</td>
                     </tr>
                     <tr>
                       <td class="property-key"><strong>Max Map Time</strong></td>
-                      <td class="property-value-half">{stats.maxMapTime}</td>
+                      <td class="property-value-half">{pigStats.maxMapTime}</td>
                       <td class="property-key"><strong>Nax Reduce Time</strong></td>
-                      <td class="property-value-half">{stats.maxReduceTime}</td>
+                      <td class="property-value-half">{pigStats.maxReduceTime}</td>
                     </tr>
                     <tr>
                       <td class="property-key"><strong>Avg Map Time</strong></td>
-                      <td class="property-value-half">{stats.avgMapTime}</td>
+                      <td class="property-value-half">{pigStats.avgMapTime}</td>
                       <td class="property-key"><strong>Avg Reduce Time</strong></td>
-                      <td class="property-value-half">{stats.avgReduceTime}</td>
+                      <td class="property-value-half">{pigStats.avgReduceTime}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -44,38 +44,38 @@
                   <tbody>
                     <tr>
                       <td class="property-key"><strong>Map Input Records</strong></td>
-                      <td class="property-value-half">{stats.mapInputRecords}</td>
+                      <td class="property-value-half">{pigStats.mapInputRecords}</td>
                       <td class="property-key"><strong>Reduce Input Records</strong></td>
-                      <td class="property-value-half">{stats.reduceInputRecords}</td>
+                      <td class="property-value-half">{pigStats.reduceInputRecords}</td>
                     </tr>
                     <tr>
                       <td class="property-key"><strong>Map Output Records</strong></td>
-                      <td class="property-value-half">{stats.mapOutputRecords}</td>
+                      <td class="property-value-half">{pigStats.mapOutputRecords}</td>
                       <td class="property-key"><strong>Reduce Output Records</strong></td>
-                      <td class="property-value-half">{stats.reduceOutputRecords}</td>
+                      <td class="property-value-half">{pigStats.reduceOutputRecords}</td>
                     </tr>
                     <tr>
                       <td class="property-key"><strong>Bytes Written</strong></td>
-                      <td class="property-value-half">{stats.bytesWritten}</td>
+                      <td class="property-value-half">{pigStats.bytesWritten}</td>
                       <td class="property-key"><strong>HDFS Bytes Written</strong></td>
-                      <td class="property-value-half">{stats.hdfsBytesWritten}</td>
+                      <td class="property-value-half">{pigStats.hdfsBytesWritten}</td>
                     </tr>
                     <tr>
                       <td class="property-key"><strong>Records Written</strong></td>
-                      <td class="property-value-half">{stats.recordsWritten}</td>
+                      <td class="property-value-half">{pigStats.recordsWritten}</td>
                       <td class="property-key"><strong>SMM Spill Count</strong></td>
-                      <td class="property-value-half">{stats.smmSpillCount}</td>
+                      <td class="property-value-half">{pigStats.smmSpillCount}</td>
                     </tr>
                     <tr>
                       <td class="property-key"><strong>Proactive Spill Count Recs</strong></td>
-                      <td class="property-value-half">{stats.proactiveSpillCountRecs}</td>
+                      <td class="property-value-half">{pigStats.proactiveSpillCountRecs}</td>
                       <td class="property-key"><strong>Proactive Spill Count Objects</strong></td>
-                      <td class="property-value-half">{stats.proactiveSpillCountObjects}</td>
+                      <td class="property-value-half">{pigStats.proactiveSpillCountObjects}</td>
                     </tr>
                   </tbody>
                 </table>
 
-                {?stats.inputStats}
+                {?pigStats.inputStats}
                 <h4>Inputs</h4>
                 <table class="table table-striped table-condensed table-bordered">
                   <thead>
@@ -87,19 +87,19 @@
                     </tr>
                   </thead>
                   <tbody>
-                  {#stats.inputStats}
+                  {#pigStats.inputStats}
                     <tr>
                       <td>{bytes}</td>
                       <td>{location}</td>
                       <td>{name}</td>
                       <td>{numberRecords}</td>
                     </tr>
-                  {/stats.inputStats}
+                  {/pigStats.inputStats}
                   </tbody>
                 </table>
-                {/stats.inputStats}
+                {/pigStats.inputStats}
 
-                {?stats.outputStats}
+                {?pigStats.outputStats}
                 <h4>Outputs</h4>
                 <table class="table table-striped table-condensed table-bordered">
                   <thead>
@@ -111,17 +111,17 @@
                     </tr>
                   </thead>
                   <tbody>
-                  {#stats.outputStats}
+                  {#pigStats.outputStats}
                     <tr>
                       <td>{bytes}</td>
                       <td>{location}</td>
                       <td>{name}</td>
                       <td>{numberRecords}</td>
                     </tr>
-                  {/stats.outputStats}
+                  {/pigStats.outputStats}
                   </tbody>
                 </table>
-                {/stats.outputStats}
+                {/pigStats.outputStats}
               </div>
               <div id="jobconf-tab-pane">
                 <h4>Job Configuration</h4>
@@ -129,8 +129,8 @@
                   <tbody>
                   {#conf}
                     <tr>
-                      <td class="property-key">{key}</td>
-                      <td>{value}</td>
+                      <td class="property-key"><pre>{key}</pre></td>
+                      <td class="property-value"><pre>{value}</pre></td>
                     </tr>
                   {/conf}
                   </tbody>

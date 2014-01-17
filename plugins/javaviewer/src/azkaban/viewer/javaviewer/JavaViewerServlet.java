@@ -14,7 +14,7 @@
  * the License.
  */
 
-package azkaban.viewer.pigvisualizer;
+package azkaban.viewer.javaviewer;
 
 import java.io.IOException;
 import java.io.File;
@@ -35,8 +35,6 @@ import azkaban.executor.ExecutableFlow;
 import azkaban.executor.ExecutableNode;
 import azkaban.executor.ExecutorManagerAdapter;
 import azkaban.executor.ExecutorManagerException;
-import azkaban.jobtype.pig.PigJobDagNode;
-import azkaban.jobtype.JobDagNode;
 import azkaban.jobtype.MapReduceJobState;
 import azkaban.jobtype.StatsUtils;
 import azkaban.project.Project;
@@ -53,12 +51,12 @@ import azkaban.webapp.session.Session;
 import azkaban.webapp.plugin.PluginRegistry;
 import azkaban.webapp.plugin.ViewerPlugin;
 
-public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
+public class JavaViewerServlet extends LoginAbstractAzkabanServlet {
 	private static final String PROXY_USER_SESSION_KEY = 
 			"hdfs.browser.proxy.user";
 	private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = 
 			"hadoop.security.manager.class";
-	private static Logger logger = Logger.getLogger(PigVisualizerServlet.class);
+	private static Logger logger = Logger.getLogger(JavaViewerServlet.class);
 
 	private Props props;
 	private File webResourcesPath;
@@ -71,7 +69,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 
 	private String outputDir;
 
-	public PigVisualizerServlet(Props props) {
+	public JavaViewerServlet(Props props) {
 		this.props = props;
 		viewerName = props.getString("viewer.name");
 		viewerPath = props.getString("viewer.path");
@@ -95,7 +93,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
       throws ServletException, IOException {
 
 		Page page = newPage(request, response, session, 
-				"azkaban/viewer/pigvisualizer/pigvisualizer.vm");
+				"azkaban/viewer/javaviewer/javaviewer.vm");
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
     page.add("errorMsg", "No job execution specified.");
@@ -114,11 +112,11 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		return project;
 	}
 
-  private void handleVisualizer(HttpServletRequest request,
+  private void handleViewer(HttpServletRequest request,
       HttpServletResponse response, Session session)
       throws ServletException, IOException {
 		Page page = newPage(request, response, session, 
-				"azkaban/viewer/pigvisualizer/pigvisualizer.vm");
+				"azkaban/viewer/javaviewer/javaviewer.vm");
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
 
@@ -167,7 +165,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		page.render();
 	}
 
-	private void ajaxFetchJobs(
+	private void ajaxFetchStats(
 			HttpServletRequest request,
 			HttpServletResponse response, 
 			HashMap<String, Object> ret, 
@@ -222,8 +220,8 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 				ret.put("error", "Cannot find execution '" + execId + "'");
 			}
 			else {
-				if (ajaxName.equals("fetchjobs")) {
-					ajaxFetchJobs(request, response, ret, session.getUser(), exFlow);
+				if (ajaxName.equals("fetchstats")) {
+					ajaxFetchStats(request, response, ret, session.getUser(), exFlow);
 				}
 			}
 		}
@@ -241,7 +239,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			handleAjaxAction(request, response, session);
 		}
 		else if (hasParam(request, "execid") && hasParam(request, "jobid")) {
-      handleVisualizer(request, response, session);
+      handleViewer(request, response, session);
 		}
 		else {
       handleDefault(request, response, session);

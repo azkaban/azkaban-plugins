@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
@@ -42,15 +44,51 @@ public class StatsUtils {
 	
   private static Logger logger = Logger.getLogger(StatsUtils.class);
 
+	private static final Set<String> JOB_CONF_KEYS = 
+			new HashSet<String>(Arrays.asList(new String[] {
+					"mapred.job.map.memory.mb",
+					"mapred.job.reduce.memory.mb",
+					"mapred.child.java.opts",
+					"mapred.cache.files",
+					"mapred.cache.archives",
+					"mapred.cache.files.filesizes",
+					"mapred.min.split.size",
+					"mapred.max.split.size",
+					"mapred.output.compress",
+					"mapred.output.compression.type",
+					"mapred.output.compression.codec",
+					"mapred.compress.map.output",
+					"mapred.map.output.compression.codec",
+					"mapred.queue.names",
+					"mapred.job.queue.name",
+					"io.sort.mb",
+			}));
+
 	public static Properties getJobConf(RunningJob runningJob) {
-		Properties jobConfProperties = null;
 		try {
 			Path path = new Path(runningJob.getJobFile());
 			Configuration conf = new Configuration(false);
 			FileSystem fs = FileSystem.get(new Configuration());
 			InputStream in = fs.open(path);
 			conf.addResource(in);
+			return getJobConf(conf);
+		}
+		catch (FileNotFoundException e) {
+			logger.warn("Job conf not found.");
+		}
+		catch (IOException e) {
+			logger.warn("Error while retrieving job conf: " + e.getMessage());
+		}
+		return null;
+	}
 
+	public static Properties getJobConf(Configuration conf) {
+		if (conf == null) {
+			return null;
+		}
+
+		Properties jobConfProperties = null;
+		try {
 			jobConfProperties = new Properties();
 			for (Map.Entry<String, String> entry : conf) {
 				if (entry.getKey().equals("pig.mapPlan") ||
@@ -58,16 +96,13 @@ public class StatsUtils {
 					jobConfProperties.setProperty(entry.getKey(),
 							ObjectSerializer.deserialize(entry.getValue()).toString());
 				}
-				else {
+				else if (JOB_CONF_KEYS.contains(entry.getKey())) {
 					jobConfProperties.setProperty(entry.getKey(), entry.getValue());
 				}
 			}
 		}
-		catch (FileNotFoundException e) {
-			logger.warn("Job conf not found.");
-		}
 		catch (IOException e) {
-			logger.warn("Error while retrieving job conf: " + e.getMessage());
+			logger.warn("Error while reading job conf: " + e.getMessage());
 		}
 		return jobConfProperties;
 	}

@@ -133,9 +133,6 @@ azkaban.JobStatsView = Backbone.View.extend({
     "click #jobstats-details-btn": "handleJobDetailsModal",
 	},
 
-  jobCache: {
-  },
-
 	initialize: function (settings) {
 		this.model.bind('change:selected', this.handleSelectionChange, this);
 		this.model.bind('change:graph', this.render, this);
@@ -179,47 +176,39 @@ azkaban.JobStatsView = Backbone.View.extend({
 
 		var previous = this.model.previous("selected");
 		var current = this.model.get("selected");
-    if (this.jobCache[current] != null) {
-      jobStatsView.renderSidebar(current);
-      return;
-    }
 
-		var requestURL = contextURL + "/pigvisualizer";
-		var request = {
-			"ajax": "fetchjobdetails",
-			"execid": execId,
-			"jobid": jobId,
-			"nodeid": current
-		};
-    var jobCache = this.jobCache;
-		var successHandler = function(data) {
-      if (data.state.isComplete == "false") {
-        data.jobState = "In Progress";
-      }
-      else if (data.state.isSuccessful == "true") {
-        data.jobState = "Succeeded";
-      }
-      else {
-        data.jobState = "Failed";
-      }
-      var jobConf = [];
-      for (key in data.conf) {
-        jobConf.push({"key": key, "value": data.conf[key]});
-      }
-      data.conf = null;
-      data.conf = jobConf;
+		var nodes = this.model.get("nodes");
+		var node = nodes[current];
+		if (node.detailsProcessed == true) {
+			this.renderSidebar(current);
+			return;
+		}
 
-      jobCache[current] = data;
-      jobStatsView.renderSidebar(current);
-    };
-		$.get(requestURL, request, successHandler, "json");
+		if (node.state.isComplete == "false") {
+			node.jobState = "In Progress";
+		}
+		else if (node.state.isSuccessful == "true") {
+			node.jobState = "Succeeded";
+		}
+		else {
+			node.jobState = "Failed";
+		}
+		var jobConf = [];
+		for (key in node.conf) {
+			jobConf.push({"key": key, "value": node.conf[key]});
+		}
+		node.conf = null;
+		node.conf = jobConf;
+
+		this.renderSidebar(current);
 	},
 
   renderSidebar: function(nodeId) {
-    if (this.jobCache[nodeId] == null) {
+		var nodes = this.model.get("nodes");
+		var data = nodes[nodeId];
+    if (data == null) {
       return;
     }
-    var data = this.jobCache[nodeId];
     dust.render("jobstats", data, function (err, out) {
       $('#jobstats-list').hide();
       $('#jobstats-details').show();
@@ -235,10 +224,11 @@ azkaban.JobStatsView = Backbone.View.extend({
 
   handleJobDetailsModal: function(evt) {
 		var current = this.model.get("selected");
-    if (this.jobCache[current] == null) {
+		var nodes = this.model.get("nodes");
+		var data = nodes[current];
+    if (data == null) {
       return;
-    }
-    var data = this.jobCache[current];
+		}
     $('#job-details-modal').modal();
   },
 
@@ -318,12 +308,31 @@ $(function() {
 
 	var requestURL = contextURL + "/pigvisualizer";
 	var request = {
-		"ajax": "fetchjobdag",
+		"ajax": "fetchjobs",
 		"execid": execId,
 		"jobid": jobId
 	};
 
 	var successHandler = function (data) {
+		var nodes = [];
+		var edges = [];
+		var jobs = data.jobs;
+		for (var i = 0; i < jobs.length; ++i) {
+			var job = jobs[i];
+			job.id = job.name;
+			job.level = parseInt(job.level);
+			nodes.push(job);
+			for (var j = 0; j < job.successors.length; ++j) {
+				var edge = {
+					from: job.name,
+					target: job.successors[j]
+				};
+				edges.push(edge);
+			}
+		}
+		data.nodes = nodes;
+		data.edges = edges;
+
 		createModelFromAjaxCall(data, visualizerGraphModel);
 		visualizerGraphModel.trigger("change:graph");
 	};
