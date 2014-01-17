@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -126,6 +127,33 @@ public class ReportalMailCreator implements MailCreator {
 		// Description
 		message.println(project.getDescription());
 		message.println("</div>");
+		
+		// Print variable values, if any
+		Map<String, String> flowParameters = flow.getExecutionOptions().getFlowParameters();
+		int i = 0;
+		while (flowParameters.containsKey("reportal.variable." + i + ".from")) {
+			if (i == 0) {
+				message.println("<div style='margin-top: 10px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-weight: bold;'>");
+				message.println("Variables");
+				message.println("</div>");
+				message.println("<table border='1' cellspacing='0' cellpadding='2' style='font-size: 14px;'>");
+				message.println("<thead><tr><th><b>Name</b></th><th><b>Value</b></th></tr></thead>");
+				message.println("<tbody>");
+			}
+			
+			message.println("<tr>");
+			message.println("<td>" + flowParameters.get("reportal.variable." + i + ".from") + "</td>");
+			message.println("<td>" + flowParameters.get("reportal.variable." + i + ".to") + "</td>");
+			message.println("</tr>");
+			
+			i++;
+		}
+		
+		if (i > 0) { // at least one variable
+			message.println("</tbody>");
+			message.println("</table>");
+		}
+		
 
 		if (printData) {
 			String locationFull = (outputLocation + "/" + flow.getExecutionId()).replace("//", "/");
@@ -222,7 +250,7 @@ public class ReportalMailCreator implements MailCreator {
 			}
 			
 			// Don't send an email if there are no results, unless this is an unscheduled run.
-			String unscheduledRun = flow.getExecutionOptions().getFlowParameters().get("reportal.unscheduled.run");
+			String unscheduledRun = flowParameters.get("reportal.unscheduled.run");
 			boolean isUnscheduledRun = unscheduledRun != null && unscheduledRun.trim().equalsIgnoreCase("true");
 			if (emptyResults && !isUnscheduledRun) {
 				return false;
