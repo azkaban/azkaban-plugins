@@ -77,9 +77,6 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		webResourcesPath = new File(new File(props.getSource()).getParentFile().getParentFile(), "web");
 		webResourcesPath.mkdirs();
 		setResourceDirectory(webResourcesPath);
-
-		outputDir = props.getString("pig.listener.output.dir",
-				System.getProperty("java.io.tmpdir"));
 	}
 
 	@Override
@@ -89,6 +86,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		executorManager = server.getExecutorManager();
 		projectManager = server.getProjectManager();
 
+		outputDir = server.getServerProps().getString("azkaban.stats.dir");
 	}
 
   private void handleAllExecutions(HttpServletRequest request,

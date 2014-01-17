@@ -26,12 +26,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -391,27 +390,33 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					page.add("view-logs", true);
 					List<ExecutableNode> jobs = exec.getExecutableNodes();
 					
-					// Sort list of jobs by level (which is the same as execution order
-					// since Reportal flows are all linear).
-					Collections.sort(jobs, new Comparator<ExecutableNode>() {
-						public int compare(ExecutableNode a, ExecutableNode b) {
-							return a.getLevel() < b.getLevel() ? -1 : 1;
-						}
-						
-						public boolean equals(Object obj) {
-							return this.equals(obj);
-						}
-					});
-					
+					// Add jobs in execution order
 					List<ExecutableNode> logList = new ArrayList<ExecutableNode>();
+					String prevNodeId = null;
 					boolean showDataCollector = hasParam(req, "debug");
-					for (ExecutableNode node: jobs) {
-						if (!showDataCollector && !node.getJobId().equals("data-collector")) {
-							logList.add(node);
+					int numJobs = jobs.size();
+					for (int i = 0; i < numJobs; i++) {
+						for (int j = 0; j < jobs.size(); j++) {
+							ExecutableNode job = jobs.get(j);
+							
+							if (!showDataCollector && job.getId().equals("data-collector")) {
+								jobs.remove(j);
+								break;
+							}
+							
+							Set<String> inNodes = job.getInNodes();
+							String inNodeId = inNodes.size() == 0 ? null : inNodes.iterator().next();
+							if ((inNodeId == prevNodeId) || (inNodeId != null && inNodeId.equals(prevNodeId))) {
+								logList.add(job);
+								jobs.remove(j);
+								prevNodeId = job.getId();
+								break;
+							}
 						}
 					}
+					
 					if (logList.size() == 1) {
-						resp.sendRedirect("/reportal?view&logs&id=" + project.getId() + "&execid=" + execId + "&log=" + logList.get(0).getJobId());
+						resp.sendRedirect("/reportal?view&logs&id=" + project.getId() + "&execid=" + execId + "&log=" + logList.get(0).getId());
 					}
 					page.add("logs", logList);
 				}
@@ -952,7 +957,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		Flow flow = project.getFlows().get(0);
 
-		ExecutableFlow exflow = new ExecutableFlow(flow);
+		ExecutableFlow exflow = new ExecutableFlow(project, flow);
 		exflow.setSubmitUser(user.getUserId());
 		exflow.addAllProxyUsers(project.getProxyUsers());
 
