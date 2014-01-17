@@ -129,8 +129,8 @@
                   <tbody>
                   {#conf}
                     <tr>
-                      <td class="property-key">{key}</td>
-                      <td>{value}</td>
+                      <td class="property-key"><pre>{key}</pre></td>
+                      <td class="property-value"><pre>{value}</pre></td>
                     </tr>
                   {/conf}
                   </tbody>
