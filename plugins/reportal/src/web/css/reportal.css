@@ -118,9 +118,9 @@ ol li div.control-group {
 /* Results */
 .report-actions { float: right; } 
 .report-actions .btn a:hover { text-decoration: none; }
-.report-actions .btn-icon { float: left; line-height: 0; }
+.report-actions .btn-icon { line-height: 0; }
 
-.btn-dropdown { position: relative; float: left; }
+.btn-dropdown { display: inline-block; }
 .btn-dropdown .dropdown-menu { top: 27px; left: -1px; -moz-box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2); -webkit-box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2); box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2); }
 .btn-dropdown.visible .btn-icon { background: #FFF; -moz-border-radius: 0 4px 0 0; -webkit-border-radius: 0 4px 0 0; border-radius: 0 4px 0 0; z-index: 1000; }
 .btn-dropdown a:hover.dropdown-toggle { text-decoration: none; }

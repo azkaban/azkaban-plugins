@@ -25,9 +25,6 @@
 		<link href="${context}/css/jquery-ui.css" rel="stylesheet">
 		<script type="text/javascript" src="${context}/js/jquery/jquery-1.9.1.js"></script>
 		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
-		<script type="text/javascript" src="${context}/js/underscore-1.4.4-min.js"></script>
-		<script type="text/javascript" src="${context}/js/namespace.js"></script>
-		<script type="text/javascript" src="${context}/js/backbone-0.9.10-min.js"></script>
 		
 		<link href="${context}/css/bootstrap-datetimepicker.css" rel="stylesheet">
 		<script type="text/javascript" src="${context}/js/moment.min.js"></script>
