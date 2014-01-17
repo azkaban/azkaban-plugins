@@ -82,7 +82,7 @@ public class HadoopPigJob extends JavaProcessJob {
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
 		userPigJar = getJobProps().getBoolean("use.user.pig.jar", false);
 		
-		if(shouldProxy) {
+		if (shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
 			try {
 				hadoopSecurityManager = loadHadoopSecurityManager(sysProps, log);
