@@ -47,35 +47,35 @@
                     </tr>
                     <tr>
                       <td class="first">Num Maps</td>
-                      <td>{stats.numberMaps}</td>
+                      <td>{pigStats.numberMaps}</td>
                     </tr>
                     <tr>
                       <td class="first">Num Reduces</td>
-                      <td>{stats.numberReduces}</td>
+                      <td>{pigStats.numberReduces}</td>
                     </tr>
                     <tr>
                       <td class="first">Min Map Time</td>
-                      <td>{stats.minMapTime}</td>
+                      <td>{pigStats.minMapTime}</td>
                     </tr>
                     <tr>
                       <td class="first">Max Map Time</td>
-                      <td>{stats.maxMapTime}</td>
+                      <td>{pigStats.maxMapTime}</td>
                     </tr>
                     <tr>
                       <td class="first">Avg Map Time</td>
-                      <td>{stats.avgMapTime}</td>
+                      <td>{pigStats.avgMapTime}</td>
                     </tr>
                     <tr>
                       <td class="first">Min Reduce Time</td>
-                      <td>{stats.minReduceTime}</td>
+                      <td>{pigStats.minReduceTime}</td>
                     </tr>
                     <tr>
                       <td class="first">Max Reduce Time</td>
-                      <td>{stats.maxReduceTime}</td>
+                      <td>{pigStats.maxReduceTime}</td>
                     </tr>
                     <tr>
                       <td class="first">Avg Reduce Time</td>
-                      <td>{stats.avgReduceTime}</td>
+                      <td>{pigStats.avgReduceTime}</td>
                     </tr>
                   </tbody>
                 </table>

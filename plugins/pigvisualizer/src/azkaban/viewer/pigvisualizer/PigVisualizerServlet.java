@@ -74,7 +74,8 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		viewerName = props.getString("viewer.name");
 		viewerPath = props.getString("viewer.path");
 
-		webResourcesPath = new File(new File(props.getSource()).getParentFile().getParentFile(), "web");
+		webResourcesPath = new File(
+				new File(props.getSource()).getParentFile().getParentFile(), "web");
 		webResourcesPath.mkdirs();
 		setResourceDirectory(webResourcesPath);
 	}
@@ -85,11 +86,9 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		AzkabanWebServer server = (AzkabanWebServer) getApplication();
 		executorManager = server.getExecutorManager();
 		projectManager = server.getProjectManager();
-
-		outputDir = server.getServerProps().getString("azkaban.stats.dir");
 	}
 
-  private void handleAllExecutions(HttpServletRequest request,
+  private void handleDefault(HttpServletRequest request,
       HttpServletResponse response, Session session)
       throws ServletException, IOException {
 
@@ -130,6 +129,12 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			exFlow = executorManager.getExecutableFlow(execId);
 			project = getProjectByPermission(
 					exFlow.getProjectId(), session.getUser(), Type.READ);
+			if (project == null) {
+				page.add("errorMsg", 
+						"No permission to view project " + exFlow.getProjectId());
+				page.render();
+				return;
+			}
 		}
 		catch (ExecutorManagerException e) {
 			page.add("errorMsg", "Error getting project '" + e.getMessage() + "'");
@@ -149,105 +154,41 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 		page.render();
 	}
 
-	private Map<String, PigJobDagNode> getDagNodeMap(int execId, String jobId) 
-			throws Exception {
-		String dagFilePath = outputDir + "/" + execId + "-" + jobId + 
-				"-dagnodemap.json";
-
-		File dagFile = new File(dagFilePath);
-		Map<String, Object> jsonObj = (HashMap<String, Object>) 
-			  JSONUtils.parseJSONFromFile(dagFile);
-		Map<String, PigJobDagNode> dagNodeMap = new HashMap<String, PigJobDagNode>();
-		for (Map.Entry<String, Object> entry : jsonObj.entrySet()) {
-			dagNodeMap.put(entry.getKey(), PigJobDagNode.fromJson(entry.getValue()));
-		}
-		return dagNodeMap;
-	}
-
-	private Map<String, String> getNameToJobIdMap(
-			Map<String, PigJobDagNode> dagNodeMap) {
-		Map<String, String> nameToJobId = new HashMap<String, String>();
-		for (Map.Entry<String, PigJobDagNode> entry : dagNodeMap.entrySet()) {
-			PigJobDagNode node = entry.getValue();
-			nameToJobId.put(node.getName(), node.getJobId());
-		}
-		return nameToJobId;
-	}
-
-	private void ajaxFetchJobDag(HttpServletRequest request,
-			HttpServletResponse response, HashMap<String, Object> ret, User user,
+	private void ajaxFetchJobs(
+			HttpServletRequest request,
+			HttpServletResponse response, 
+			HashMap<String, Object> ret, 
+			User user,
 			ExecutableFlow exFlow) throws ServletException {
-		int execId = getIntParam(request, "execid");
-		String jobId = getParam(request, "jobid");
-		Map<String, PigJobDagNode> dagNodeMap = null;
-		try {
-			dagNodeMap = getDagNodeMap(execId, jobId);
-		}
-		catch (Exception e) {
-			ret.put("error", "Error parsing JSON file: " + e.getMessage());
+		Project project = getProjectByPermission(
+				exFlow.getProjectId(), user, Type.READ);
+		if (project == null) {
+			ret.put("error", 
+					"No permission to read project " + exFlow.getProjectId());
 			return;
 		}
 
-		Map<String, String> nameToJobId = getNameToJobIdMap(dagNodeMap);
-		ArrayList<Map<String, Object>> nodeList = new ArrayList<Map<String, Object>>();
-		ArrayList<Map<String, Object>> edgeList = new ArrayList<Map<String, Object>>();
-		for (Map.Entry<String, PigJobDagNode> entry : dagNodeMap.entrySet()) {
-			PigJobDagNode node = entry.getValue();
-			HashMap<String, Object> nodeObj = new HashMap<String, Object>();
-			nodeObj.put("id", node.getJobId());
-			nodeObj.put("level", node.getLevel());
-			nodeObj.put("type", "pig");
-			nodeList.add(nodeObj);
-
-			// Add edges.
-			for (String successor : node.getSuccessors()) {
-				HashMap<String, Object> edgeObj = new HashMap<String, Object>();
-				String successorJobId = nameToJobId.get(successor);
-				if (successorJobId == null) {
-					ret.put("error", "Node " + successor + " not found.");
-					return;
-				}
-
-				PigJobDagNode targetNode = dagNodeMap.get(successorJobId);
-				edgeObj.put("from", node.getJobId());
-				edgeObj.put("target", targetNode.getJobId());
-				edgeList.add(edgeObj);
+		String jobId = getParam(request, "jobid");
+		response.setCharacterEncoding("utf-8");
+		List<Object> jsonObj = null;
+		try {
+			ExecutableNode node = exFlow.getExecutableNode(jobId);
+			if (node == null) {
+				ret.put("error", "Job " + jobId + " doesn't exist in " +
+						exFlow.getExecutionId());
+				return;
 			}
+			
+			jsonObj = executorManager.getExecutionJobStats(
+					exFlow, jobId, node.getAttempt());
 		}
-
-		ret.put("nodes", nodeList);
-		ret.put("edges", edgeList);
-	}
-
-	private void ajaxFetchJobDetails(HttpServletRequest request,
-			HttpServletResponse response, HashMap<String, Object> ret, User user,
-			ExecutableFlow exFlow) throws ServletException {
-		int execId = getIntParam(request, "execid");
-		String jobId = getParam(request, "jobid");
-		String nodeId = getParam(request, "nodeid");
-		Map<String, PigJobDagNode> dagNodeMap = null;
-		try {
-			dagNodeMap = getDagNodeMap(execId, jobId);
-		}
-		catch (Exception e) {
-			ret.put("error", "Error parsing JSON file: " + e.getMessage());
+		catch (ExecutorManagerException e) {
+			ret.put("error", "Error retrieving job stats " + jobId);
 			return;
 		}
-	
-		PigJobDagNode node = dagNodeMap.get(nodeId);
-		if (node == null) {
-			ret.put("error", "Node " + nodeId + " not found.");
-			return;
-		}
-
-		ret.put("jobId", nodeId);
-		ret.put("stats", node.getJobStats().toJson());
-		ret.put("features", node.getFeatures());
-		ret.put("aliases", node.getAliases());
-		ret.put("state", node.getMapReduceJobState().toJson());
-    ret.put("conf", StatsUtils.propertiesToJson(node.getJobConfiguration()));
+		ret.put("jobs", jsonObj);
 	}
-	
+
 	private void handleAjaxAction(HttpServletRequest request,
 			HttpServletResponse response, Session session) 
 			throws ServletException, IOException {
@@ -268,11 +209,8 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 				ret.put("error", "Cannot find execution '" + execId + "'");
 			}
 			else {
-				if (ajaxName.equals("fetchjobdag")) {
-					ajaxFetchJobDag(request, response, ret, session.getUser(), exFlow);
-				}
-				else if (ajaxName.equals("fetchjobdetails")) {
-					ajaxFetchJobDetails(request, response, ret, session.getUser(), exFlow);
+				if (ajaxName.equals("fetchjobs")) {
+					ajaxFetchJobs(request, response, ret, session.getUser(), exFlow);
 				}
 			}
 		}
@@ -293,7 +231,7 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
       handleVisualizer(request, response, session);
 		}
 		else {
-      handleAllExecutions(request, response, session);
+      handleDefault(request, response, session);
     }
 	}
 
