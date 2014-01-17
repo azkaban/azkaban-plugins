@@ -29,7 +29,7 @@ import azkaban.triggerapp.TriggerRunnerManager;
 import azkaban.utils.Props;
 import azkaban.webapp.AzkabanWebServer;
 import azkaban.webapp.servlet.AbstractAzkabanServlet;
-import azkaban.webapp.servlet.TriggerPlugin;
+import azkaban.webapp.plugin.TriggerPlugin;
 
 public class HdfsDataTriggerPlugin implements TriggerPlugin {
 

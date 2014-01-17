@@ -39,9 +39,9 @@
 			var successMessage = null;
 			var contextURL = "${context}";
 
-			var execId = ${execId};
-			var jobId = "${jobId}";
-			var flowId = "${flowId}";
+			var execId = ${execid};
+			var jobId = "${jobid}";
+			var flowId = "${flowid}";
 			var projectName = "${projectName}";
 		</script>
 
@@ -56,41 +56,7 @@
   #parse ("azkaban/webapp/servlet/velocity/errormsg.vm")
 #else
 
-## Page header.
-
-		<div class="az-page-header">
-			<div class="container-full">
-				<div class="row">
-					<div class="col-xs-6">
-						<h1><a href="${context}pigvisualizer?execid=${execId}&jobid=${jobId}">Job Execution <small>${jobId}</small></a></h1>
-					</div>
-					<div class="col-xs-6">
-						<div class="pull-right az-page-header-form">
-							<a href="${context}/manager?project=${projectName}&flow=${flowId}&job=$jobId" class="btn btn-info">Job Properties</a>
-						</div>
-						<div class="clearfix"></div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-    <div class="container-full">
-
-  #parse ("azkaban/webapp/servlet/velocity/alerts.vm")
-
-			<ol class="breadcrumb">
-				<li><a href="${context}/manager?project=${projectName}"><strong>Project</strong> $projectName</a></li>
-				<li><a href="${context}/manager?project=${projectName}&flow=${flowId}"><strong>Flow</strong> $flowId</a></li>
-				<li><a href="${context}/executor?execid=${execId}#jobslist"><strong>Execution</strong> $execId</a></li>
-        <li class="active"><strong>Job</strong> $jobId</li>
-			</ol>
-      
-			<ul class="nav nav-tabs" id="headertabs">
-				<li id="jobSummaryViewLink"><a href="${context}/executor?execid=${execId}&job=${jobId}#jobsummary">Summary</a></li>
-				<li id="jobLogViewLink"><a href="${context}/executor?execid=${execId}&job=${jobId}#joblog">Log</a></li>
-				<li class="active"><a href="${context}/pigvisualizer?execid=${execId}&jobid=${jobId}">Visualization</a></li>
-			</ul>
-    </div>
+  #parse ("azkaban/webapp/servlet/velocity/jobdetailsheader.vm")
 
     <div class="container-full container-fill" id="graphView">
 			<div class="row row-offcanvas row-offcanvas-left">

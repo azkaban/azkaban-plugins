@@ -50,6 +50,8 @@ import azkaban.webapp.AzkabanWebServer;
 import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
 import azkaban.webapp.servlet.Page;
 import azkaban.webapp.session.Session;
+import azkaban.webapp.plugin.PluginRegistry;
+import azkaban.webapp.plugin.ViewerPlugin;
 
 public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 	private static final String PROXY_USER_SESSION_KEY = 
@@ -130,6 +132,17 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			exFlow = executorManager.getExecutableFlow(execId);
 			project = getProjectByPermission(
 					exFlow.getProjectId(), session.getUser(), Type.READ);
+			
+			ExecutableNode node = exFlow.getExecutableNode(jobId);
+			if (node == null) {
+				page.add("errorMsg", "Job " + jobId + " doesn't exist in " + 
+						exFlow.getExecutionId());
+				return;
+			}
+		
+			List<ViewerPlugin> jobViewerPlugins = PluginRegistry.getRegistry()
+					.getViewerPluginsForJobType(node.getType());
+			page.add("jobViewerPlugins", jobViewerPlugins);
 		}
 		catch (ExecutorManagerException e) {
 			page.add("errorMsg", "Error getting project '" + e.getMessage() + "'");
@@ -143,9 +156,9 @@ public class PigVisualizerServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 		page.add("projectName", project.getName());
-		page.add("execId", execId);
-		page.add("jobId", jobId);
-		page.add("flowId", exFlow.getFlowId());
+		page.add("execid", execId);
+		page.add("jobid", jobId);
+		page.add("flowid", exFlow.getFlowId());
 		page.render();
 	}
 
