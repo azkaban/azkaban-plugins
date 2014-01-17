@@ -32,21 +32,21 @@
 		<script type="text/javascript">
 			var reportals = [
 #if($projects)
-#foreach($project in $projects)
-	#set($title = $esc.javascript(${project.getMetadata().title}))
-				{
-					"id" : "${project.id}",
-					"title" : "$title",
-					"time" : $project.createTimestamp,
-					"timeText" : "$utils.formatDateTime($project.createTimestamp)",
-					"user" : "$project.getMetadata().get("reportal-user")",
-					"scheduled" : $ReportalHelper.isScheduledProject($project),
-					"scheduledRepeating" : $ReportalHelper.isScheduledRepeatingProject($project),
-					"bookmark" : $ReportalHelper.isBookmarkProject($project, $user),
-					"subscribe" : $ReportalHelper.isSubscribeProject($project, $user),
-					"shown" : true
-				},
-#end
+	#foreach($project in $projects)
+		#set($title = $esc.javascript(${project.getMetadata().title}))
+					{
+						"id" : "${project.id}",
+						"title" : "$title",
+						"time" : $project.createTimestamp,
+						"timeText" : "$utils.formatDateTime($project.createTimestamp)",
+						"user" : "$project.getMetadata().get("reportal-user")",
+						"scheduled" : $ReportalHelper.isScheduledProject($project),
+						"scheduledRepeating" : $ReportalHelper.isScheduledRepeatingProject($project),
+						"bookmark" : $ReportalHelper.isBookmarkProject($project, $user),
+						"subscribe" : $ReportalHelper.isSubscribeProject($project, $user),
+						"shown" : true
+					},
+	#end
 #end
 			];
 		</script>

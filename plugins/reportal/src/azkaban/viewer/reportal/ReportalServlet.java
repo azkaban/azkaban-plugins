@@ -347,10 +347,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		Project project = projectManager.getProject(id);
 		Reportal reportal = Reportal.loadFromProject(project);
-		Flow flow = project.getFlows().get(0);
-
+		
 		if (reportal == null) {
-			page.add("errorMsg", "Report not found");
+			page.add("errorMsg", "Report not found.");
 			page.render();
 			return;
 		}
@@ -513,6 +512,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				pageNumber = 0;
 			}
 			try {
+				Flow flow = project.getFlows().get(0);
 				executorManager.getExecutableFlows(project.getId(), flow.getId(), pageNumber * itemsPerPage, itemsPerPage, exFlows);
 				ArrayList<ExecutableFlow> tmp = new ArrayList<ExecutableFlow>();
 				executorManager.getExecutableFlows(project.getId(), flow.getId(), (pageNumber + 1) * itemsPerPage, 1, tmp);
