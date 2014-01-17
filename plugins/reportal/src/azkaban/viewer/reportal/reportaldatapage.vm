@@ -28,7 +28,9 @@
 			var currentTime = ${currentTime};
 			var timezone = "${timezone}";
 			var homeDir = "${homedir}";
+#if($project)
 			var projectId = ${project.id};
+#end
 		</script>
 		<script type="text/javascript" src="${context}/reportal/js/reportal.js"></script>
 		<script type="text/javascript" src="${context}/reportal/js/reportal-data.js"></script>
