@@ -74,6 +74,7 @@
               <strong>Proxy user</strong> ${user}
               <button type="button" id="changeUserBtn" class="btn btn-sm btn-primary">Change User</button>
 	#end
+							<a id="goHomeLink" class="btn btn-sm btn-default" href="${context}/hdfs${homedir}">Home Directory</a>
             </div>
             <div class="clearfix"></div>
           </div>
@@ -91,8 +92,8 @@
 						<div class="panel-heading">
   #set ($size = $paths.size() - 1)
 							<a class="firstCrumb" href="${context}/hdfs/">/</a>#if($size >= 0)#foreach($i in [0 ..$size])<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span>/</span>#end #end
-              <div class="pull-right">
-                <a id="goHomeLink" class="btn btn-xs btn-default" href="${context}/hdfs${homedir}">Home Directory</a>
+							<div class="pull-right">
+								<strong>$subdirs.size()</strong> items
               </div>
 						</div>
   #if (!$no_fs)
