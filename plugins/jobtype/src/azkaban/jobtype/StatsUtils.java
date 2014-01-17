@@ -65,14 +65,30 @@ public class StatsUtils {
 			}));
 
 	public static Properties getJobConf(RunningJob runningJob) {
-		Properties jobConfProperties = null;
 		try {
 			Path path = new Path(runningJob.getJobFile());
 			Configuration conf = new Configuration(false);
 			FileSystem fs = FileSystem.get(new Configuration());
 			InputStream in = fs.open(path);
 			conf.addResource(in);
+			return getJobConf(conf);
+		}
+		catch (FileNotFoundException e) {
+			logger.warn("Job conf not found.");
+		}
+		catch (IOException e) {
+			logger.warn("Error while retrieving job conf: " + e.getMessage());
+		}
+		return null;
+	}
 
+	public static Properties getJobConf(Configuration conf) {
+		if (conf == null) {
+			return null;
+		}
+
+		Properties jobConfProperties = null;
+		try {
 			jobConfProperties = new Properties();
 			for (Map.Entry<String, String> entry : conf) {
 				if (entry.getKey().equals("pig.mapPlan") ||
@@ -85,11 +101,8 @@ public class StatsUtils {
 				}
 			}
 		}
-		catch (FileNotFoundException e) {
-			logger.warn("Job conf not found.");
-		}
 		catch (IOException e) {
-			logger.warn("Error while retrieving job conf: " + e.getMessage());
+			logger.warn("Error while reading job conf: " + e.getMessage());
 		}
 		return jobConfProperties;
 	}
