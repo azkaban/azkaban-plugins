@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.log4j.Logger;
@@ -112,7 +113,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		catch (InvocationTargetException e) {
 			logger.error("Could not instantiate Hadoop Security Manager "+ hadoopSecurityManagerClass.getName() + e.getCause());
 			throw new RuntimeException(e.getCause());
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(e.getCause());
 		}
@@ -144,11 +146,14 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			fs = getFileSystem(username);
 			try {
 				handleFSDisplay(fs, username, req, resp, session);
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
 				throw e;
-			} catch (ServletException se) {
+			}
+			catch (ServletException se) {
 				throw se;
-			} catch (Exception ge) {
+			}
+			catch (Exception ge) {
 				throw ge;
 			}
 			finally {
@@ -168,7 +173,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			page.render();
 		}
 		finally {
-			if(fs != null) {
+			if (fs != null) {
 				fs.close();
 			}
 		}
@@ -200,7 +205,6 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			this.writeJSON(resp, results);
 			return;
 		}
-
 	}
 
 	private void handleFSDisplay(FileSystem fs, String user, HttpServletRequest req, HttpServletResponse resp,
@@ -221,11 +225,14 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 
 		if (!fs.exists(path)) {
 			throw new IllegalArgumentException(path.toUri().getPath() + " does not exist.");
-		} else if (fs.isFile(path)) {
+		}
+		else if (fs.isFile(path)) {
 			displayFile(fs, req, resp, session, path);
-		} else if (fs.getFileStatus(path).isDir()) {
+		}
+		else if (fs.getFileStatus(path).isDir()) {
 			displayDir(fs, user, req, resp, session, path);
-		} else {
+		}
+		else {
 			throw new IllegalStateException(
 					"It exists, it is not a file, and it is not a directory, what is it precious?");
 		}
@@ -264,10 +271,21 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		try {
-			page.add("subdirs", fs.listStatus(path)); // ??? line
-		} catch (AccessControlException e) {
+			FileStatus[] subdirs = fs.listStatus(path);
+			page.add("subdirs", subdirs);
+			long size = 0;
+			for (int i = 0; i < subdirs.length; ++i) {
+				if (subdirs[i].isDir()) {
+					continue;
+				}
+				size += subdirs[i].getLen();
+			}
+			page.add("dirsize", size);
+		}
+		catch (AccessControlException e) {
 			page.add("error_message", "Permission denied. User cannot read file or directory");
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			page.add("error_message", "Error: " + e.getMessage());
 		}
 		page.render();

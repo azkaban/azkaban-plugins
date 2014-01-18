@@ -52,6 +52,15 @@
 			});
 #end
 		</script>
+		<style type="text/css">
+			.icon-directory {
+				color: #428bca;
+			}
+
+			.icon-file {
+				color: #cccccc;
+			}
+		</style>
 	</head>
 	<body>
 
@@ -93,7 +102,7 @@
   #set ($size = $paths.size() - 1)
 							<a class="firstCrumb" href="${context}/hdfs/">/</a>#if($size >= 0)#foreach($i in [0 ..$size])<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span>/</span>#end #end
 							<div class="pull-right">
-								<strong>$subdirs.size()</strong> items
+								<strong>$subdirs.size()</strong> items <strong>$utils.displayBytes($dirsize)</strong> total
               </div>
 						</div>
   #if (!$no_fs)
@@ -114,7 +123,14 @@
       #foreach ($status in $subdirs)
 								<tr>
 									<td>
-										<a href="${context}/hdfs${status.getPath().toUri().getPath()}">${status.path.name}#if($status.isDir())/#end</a>
+										<a href="${context}/hdfs${status.getPath().toUri().getPath()}">
+				#if ($status.isDir())
+											<span class="glyphicon glyphicon-folder-close icon-directory"></span>	
+				#else
+											<span class="glyphicon glyphicon-file icon-file"></span>	
+				#end
+											${status.path.name}#if($status.isDir())/#end</a>
+										</a>
 									</td>
 									<td>${status.permission}</td>
 									<td>${status.owner}/${status.group}</td>
