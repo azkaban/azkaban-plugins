@@ -14,84 +14,6 @@
  * the License.
  */
 
-var visualizerGraphModel;
-azkaban.VisualizerGraphModel = Backbone.Model.extend({});
-
-var nodeClickCallback = function (event, model, type) {
-	console.log("Node clicked callback");
-	var nodeId = event.currentTarget.jobid;
-	var jobRequestURL = contextURL + "/pigvisualizer?execid=" + execId + 
-			"&jobid=" + jobId + "&nodeId=" + nodeId;
-	var menu = [
-		{
-			title: "Open Node...", 
-			callback: function() { 
-				window.location.href = jobRequestURL; 
-			}
-		},
-		{
-			title: "Open Node in New Window...", 
-			callback: function() { 
-				window.open(jobRequestURL); 
-			}
-		},
-		{break: 1},
-		{
-			title: "Center Job", 
-			callback: function() {
-				model.trigger("centerNode", nodeId); 
-			}
-		}
-	];
-	contextMenuView.show(event, menu);
-}
-
-var jobClickCallback = function (event, model) {
-	console.log("Job clicked callback");
-	var nodeId = event.currentTarget.jobid;
-	var jobRequestURL = contextURL + "/pigvisualizer?execid=" + execId + 
-			"&jobid=" + jobId + "&nodeId=" + nodeId;
-	var menu = [
-		{
-			title: "Open Job...", 
-			callback: function() { 
-				window.location.href = jobRequestURL; 
-			}
-		},
-		{
-			title: "Open Job in New Window...", 
-			callback: function() { 
-				window.open(jobRequestURL);
-			}
-		},
-		{break: 1},
-		{
-			title: "Center Job", 
-			callback: function() { 
-				model.trigger("centerNode", nodeId);
-			}
-		}
-	];
-	contextMenuView.show(event, menu);
-}
-
-var edgeClickCallback = function (event, model) {
-	console.log("Edge clicked callback");
-}
-
-var graphClickCallback = function (event, model) {
-	console.log("Graph clicked callback");
-	var menu = [
-		{
-			title: "Center graph", 
-			callback: function() { 
-				model.trigger("resetPanZoom"); 
-			}
-		}
-	];
-	contextMenuView.show(event, menu);
-}
-
 var jobDetailsView;
 azkaban.JobDetailsView = Backbone.View.extend({
 	events: {
@@ -143,22 +65,22 @@ azkaban.JobStatsView = Backbone.View.extend({
 	},
 
 	handleJobClick: function (evt) {
-		if (!evt.currentTarget.jobid) {
+		if (!evt.currentTarget.data) {
 			return;
 		}
-		var jobid = evt.currentTarget.jobid;
+		var node = evt.currentTarget.data;
 
 		if (this.model.has("selected")) {
 			var selected = this.model.get("selected");
-			if (selected == jobid) {
+			if (selected == node) {
 				this.model.unset("selected");
 			}
 			else {
-				this.model.set({"selected": jobid});
+				this.model.set({"selected": node});
 			}
 		}
 		else {
-			this.model.set({"selected": jobid});
+			this.model.set({"selected": node});
 		}
 	},
 
@@ -176,45 +98,41 @@ azkaban.JobStatsView = Backbone.View.extend({
 
 		var previous = this.model.previous("selected");
 		var current = this.model.get("selected");
-
-		var nodes = this.model.get("nodes");
-		var node = nodes[current];
-		if (node.detailsProcessed == true) {
+		if (current.clicked == true) {
 			this.renderSidebar(current);
 			return;
 		}
 
-		if (node.state.isComplete == "false") {
-			node.jobState = "In Progress";
+		if (current.state.isComplete == "false") {
+			current.jobState = "In Progress";
 		}
-		else if (node.state.isSuccessful == "true") {
-			node.jobState = "Succeeded";
+		else if (current.state.isSuccessful == "true") {
+			current.jobState = "Succeeded";
 		}
 		else {
-			node.jobState = "Failed";
+			current.jobState = "Failed";
 		}
 		var jobConf = [];
-		for (key in node.conf) {
-			jobConf.push({"key": key, "value": node.conf[key]});
+		for (key in current.conf) {
+			jobConf.push({"key": key, "value": current.conf[key]});
 		}
-		node.conf = null;
-		node.conf = jobConf;
+		current.conf = null;
+		current.conf = jobConf;
+		current.clicked = true;
 
 		this.renderSidebar(current);
 	},
 
-  renderSidebar: function(nodeId) {
-		var nodes = this.model.get("nodes");
-		var data = nodes[nodeId];
-    if (data == null) {
+  renderSidebar: function(node) {
+    if (node == null) {
       return;
     }
-    dust.render("jobstats", data, function (err, out) {
+    dust.render("jobstats", node, function (err, out) {
       $('#jobstats-list').hide();
       $('#jobstats-details').show();
       $('#jobstats-details').html(out);
     });
-    dust.render("jobdetails", data, function (err, out) {
+    dust.render("jobdetails", node, function (err, out) {
       $('#job-details-modal-content').html(out);
       $('#job-details-modal').on('shown.bs.modal', function(e) {
         jobDetailsView.handleDetailsTabClick();
@@ -224,9 +142,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 
   handleJobDetailsModal: function(evt) {
 		var current = this.model.get("selected");
-		var nodes = this.model.get("nodes");
-		var data = nodes[current];
-    if (data == null) {
+    if (current == null) {
       return;
 		}
     $('#job-details-modal').modal();
@@ -241,7 +157,6 @@ azkaban.JobStatsView = Backbone.View.extend({
 		$('#jobstats-details').hide();
 		var data = this.model.get("data");
 		var nodes = data.nodes;
-		var edges = data.edges;
 
 		this.listNodes = {};
 		if (nodes.length == 0) {
@@ -269,7 +184,7 @@ azkaban.JobStatsView = Backbone.View.extend({
       $(a).attr('href', '#');
 			$(a).text(nodeArray[i].id);
 			$(list).append(a);
-			a.jobid = nodeArray[i].id;
+			a.data = nodeArray[i];
 			this.listNodes[nodeArray[i].id] = a;
 		}
 	},
@@ -283,12 +198,14 @@ azkaban.JobStatsView = Backbone.View.extend({
 });
 
 var contextMenuView;
+var graphView;
+var graphModel;
 
 $(function() {
-	visualizerGraphModel = new azkaban.VisualizerGraphModel();
-	visualizerGraphView = new azkaban.VisualizerGraphView({
+	graphModel = new azkaban.GraphModel();
+	graphView = new azkaban.SvgGraphView({
 		el: $('#svgDiv'),
-		model: visualizerGraphModel,
+		model: graphModel,
 		rightClick: {
 			"node": nodeClickCallback,
 			"edge": edgeClickCallback,
@@ -298,7 +215,7 @@ $(function() {
 
 	jobStatsView = new azkaban.JobStatsView({
 		el: $('#jobStats'),
-		model: visualizerGraphModel,
+		model: graphModel,
 		contextMenuCallback: jobClickCallback
 	});
         
@@ -315,26 +232,20 @@ $(function() {
 
 	var successHandler = function (data) {
 		var nodes = [];
-		var edges = [];
 		var jobs = data.jobs;
 		for (var i = 0; i < jobs.length; ++i) {
 			var job = jobs[i];
 			job.id = job.name;
 			job.level = parseInt(job.level);
+			job.in = job.parents;
+			job.type = "job";
+			job.clicked = false;
 			nodes.push(job);
-			for (var j = 0; j < job.successors.length; ++j) {
-				var edge = {
-					from: job.name,
-					target: job.successors[j]
-				};
-				edges.push(edge);
-			}
 		}
 		data.nodes = nodes;
-		data.edges = edges;
 
-		createModelFromAjaxCall(data, visualizerGraphModel);
-		visualizerGraphModel.trigger("change:graph");
+		graphModel.addFlow(data);
+		graphModel.trigger("change:graph");
 	};
 
 	$.get(requestURL, request, successHandler, "json");

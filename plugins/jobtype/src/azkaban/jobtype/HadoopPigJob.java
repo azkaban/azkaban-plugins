@@ -96,7 +96,7 @@ public class HadoopPigJob extends JavaProcessJob {
 	@Override
 	public void run() throws Exception {
 		File f = null;
-		if(shouldProxy && obtainTokens) {
+		if (shouldProxy && obtainTokens) {
 			userToProxy = getJobProps().getString("user.to.proxy");
 			getLog().info("Need to proxy. Getting tokens.");
 			// get tokens in to a file, and put the location in props
@@ -118,9 +118,9 @@ public class HadoopPigJob extends JavaProcessJob {
 			throw new Exception(t);
 		}
 		finally{
-			if(f != null) {
+			if (f != null) {
 				cancelHadoopTokens(f);	
-				if(f.exists()) {
+				if (f.exists()) {
 					f.delete();
 				}
 			}

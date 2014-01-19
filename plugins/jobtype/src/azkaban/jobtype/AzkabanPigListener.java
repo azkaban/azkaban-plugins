@@ -56,7 +56,6 @@ import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
 
 public class AzkabanPigListener implements PigProgressNotificationListener {
-
 	private static Logger logger = Logger.getLogger(AzkabanPigListener.class);
 	private String statsFile;
 	
@@ -67,9 +66,6 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
 	private Set<String> completedJobIds = new HashSet<String>();
 	
 	public AzkabanPigListener(Props props) {
-		String jobId = props.getString("azkaban.job.id");
-		String execId = props.getString("azkaban.flow.execid");
-		String attempt = props.getString("azkaban.job.attempt");
 		statsFile = props.getString("azkaban.job.attachment.file");
 	}
 	
@@ -156,6 +152,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
       PigJobDagNode node = entry.getValue();
 			jobJsonObj.put("name", node.getName());
 			jobJsonObj.put("jobId", node.getJobId());
+			jobJsonObj.put("parents", node.getParents());
 			jobJsonObj.put("successors", node.getSuccessors());
 			jobJsonObj.put("level", Integer.toString(node.getLevel()));
 			jobJsonObj.put("aliases", node.getAliases());
