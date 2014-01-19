@@ -152,6 +152,7 @@ public class AzkabanPigListener implements PigProgressNotificationListener {
       PigJobDagNode node = entry.getValue();
 			jobJsonObj.put("name", node.getName());
 			jobJsonObj.put("jobId", node.getJobId());
+			jobJsonObj.put("parents", node.getParents());
 			jobJsonObj.put("successors", node.getSuccessors());
 			jobJsonObj.put("level", Integer.toString(node.getLevel()));
 			jobJsonObj.put("aliases", node.getAliases());
