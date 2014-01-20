@@ -39,7 +39,6 @@
 
 		<script type="text/javascript" src="${context}/js/azkaban/model/svg-graph.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/util/flow-loader.js"></script>
-		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/view/job-list.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/view/svg-graph.js"></script>
 
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/view/pigvisualizer.js"></script>
