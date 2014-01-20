@@ -533,8 +533,8 @@ azkaban.SvgGraphView = Backbone.View.extend({
 		var nodeG = svg.group(g, "", {class:"node jobnode"});
 		
 		var innerG = svg.group(nodeG, "", {class:"nodebox"});
-		var borderRect = svg.rect(innerG, 0, 0, 10, 10, 3, 3, {class: "border"});
-		var titleRect = svg.rect(innerG, 0, 0, 10, 10, 3, 3, {class: "border"});
+		var borderRect = svg.rect(innerG, 0, 0, 10, 10, 3, 3, {class: "border-rect"});
+		var titleRect = svg.rect(innerG, 0, 0, 10, 10, 3, 3, {class: "title-rect"});
 		var titleText = svg.text(innerG, horizontalMargin, 16, node.title);
 		var bodyText = svg.text(innerG, horizontalMargin, 16, node.desc);
 		

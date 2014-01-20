@@ -7,6 +7,7 @@
 	<property name="dist.conf.dir" value="${dist.dir}/conf" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.dust.dir" value="${dist.dir}/dust" />
+	<property name="dist.less.dir" value="${dist.dir}/less" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
 		
@@ -14,6 +15,8 @@
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="java.src.dir" value="${basedir}/src" />
+	<property name="dust.src.dir" value="${basedir}/src/tl" />
+	<property name="less.src.dir" value="${basedir}/src/less" />
 	<property name="pigvisualizer.exlib.dir" value="${basedir}/extlib" />
 
 	<property name="azkaban-pigvisualizer-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
@@ -57,9 +60,28 @@
       <arg value="clean" />
     </exec>
 	</target>
+	
+	<target name="dust" description="Compile Less css files.">
+		<!-- Compile dustjs templates -->
+		<delete dir="${dist.dust.dir}" />
+		<mkdir dir="${dist.dust.dir}" />
+		<exec dir="${dust.src.dir}" executable="make" failonerror="true"/>
+		<copy todir="${dist.dust.dir}">
+			<fileset dir="${dust.src.dir}/obj" includes="*.js" />
+		</copy>
+	</target>
+	
+	<target name="less" description="Compile Less css files.">
+		<!-- Compile LESS to CSS -->
+		<delete dir="${dist.less.dir}" />
+		<mkdir dir="${dist.less.dir}" />
+		<exec dir="${less.src.dir}" executable="make" failonerror="true"/>
+		<copy todir="${dist.less.dir}" >
+			<fileset dir="${less.src.dir}/obj" includes="*.css" />
+		</copy>
+	</target>
 
 	<target name="build" description="Compile main source tree java files">
-	
 		<!-- copy the latest securitymanager jar -->
 		<delete>
 			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
@@ -76,8 +98,6 @@
 
 		<delete dir="${dist.classes.dir}" />
     <mkdir dir="${dist.classes.dir}" />
-		<delete dir="${dist.dust.dir}" />
-    <mkdir dir="${dist.dust.dir}" />
 	
 		<!-- copy non-java files to classes dir to load from classpath -->
 		<copy todir="${dist.classes.dir}">
@@ -91,12 +111,9 @@
 			<src path="${java.src.dir}" />
 			<classpath refid="main.classpath" />
 		</javac>
-
-		<!-- Compile dustjs templates -->
-    <exec dir="${java.src.dir}/tl" executable="make" failonerror="true"/>
-    <copy todir="${dist.dust.dir}">
-      <fileset dir="${java.src.dir}/tl/obj" includes="*.js"/>
-    </copy>
+		
+		<antcall target="dust"></antcall>
+		<antcall target="less"></antcall>
 	</target>
 	
 	<target name="jars" depends="build" description="Create azkaban jar">
@@ -141,6 +158,9 @@
 		</copy>
 		<copy todir="${dist.packages.dir}/web/js">
 			<fileset dir="${dist.dust.dir}" includes="*.js" />
+		</copy>
+		<copy todir="${dist.packages.dir}/web/css">
+			<fileset dir="${dist.less.dir}" includes="*.css" />
 		</copy>
 
 		<!-- Tarball it -->
