@@ -1,0 +1,24 @@
+.nodebox {
+  > .border-rect:hover {
+    fill-opacity: 0.7;
+  }
+}
+
+.node {
+  &.selected > .nodebox .border-rect {
+    stroke-width: 3;
+    stroke: #39b3d7;
+  }
+}
+
+
+.READY {
+  > g > rect.border-rect {
+    fill: #fff;
+  }
+
+  > g > rect.title-rect {
+    fill: #ccc;
+  }
+}
+

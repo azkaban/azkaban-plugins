@@ -74,7 +74,9 @@ azkaban.SvgGraphView = Backbone.View.extend({
 			});
 		}
 
-		this.tooltipcontainer = settings.tooltipcontainer ? settings.tooltipcontainer : "body";
+		this.tooltipcontainer = settings.tooltipcontainer 
+				? settings.tooltipcontainer 
+				: "body";
 		if (settings.render) {
 			this.render();
 		}
@@ -103,7 +105,8 @@ azkaban.SvgGraphView = Backbone.View.extend({
 
 		// Assign labels
 		for (var i = 0; i < nodes.length; ++i) {
-			nodes[i].label = nodes[i].id;
+			nodes[i].title = nodes[i].features.join();
+			nodes[i].desc = nodes[i].aliases.join();
 		}
 		
 		var self = this;
@@ -134,7 +137,7 @@ azkaban.SvgGraphView = Backbone.View.extend({
 			this.drawEdge(this, edges[i], edgeG);
 		}
 		
-		this.model.set({"flowId":data.flowId, "edges": edges});
+		this.model.set({"flowId": data.flowId, "edges": edges});
 		
 		var margin = this.graphMargin;
 		bounds.minX = bounds.minX ? bounds.minX - margin : -margin;
@@ -259,28 +262,31 @@ azkaban.SvgGraphView = Backbone.View.extend({
 
 	updateStatusChanges: function(updateData, data) {
 		// Assumes all changes have been applied.
-		if (updateData.nodes) {
-			var nodeMap = data.nodeMap;
-			for (var i = 0; i < updateData.nodes.length; ++i) {
-				var node = updateData.nodes[i];
-				var nodeToUpdate = nodeMap[node.id];
-				
-				var g = nodeToUpdate.gNode;
-				if (g) {
-					this.handleRemoveAllStatus(g);
-					addClass(g, nodeToUpdate.status);
-					
-					var title = nodeToUpdate.status + " (" + nodeToUpdate.type + ")";
-					if (nodeToUpdate.disabled) {
-						addClass(g, "nodeDisabled");
-						title = "DISABLED (" + nodeToUpdate.type + ")";
-					}
-					$(g).attr("title", title).tooltip('fixTitle');
-					
-					if (node.nodes) {
-						this.updateStatusChanges(node, nodeToUpdate);
-					}
-				}
+		if (!updateData.nodes) {
+			return;
+		}
+		var nodeMap = data.nodeMap;
+		for (var i = 0; i < updateData.nodes.length; ++i) {
+			var node = updateData.nodes[i];
+			var nodeToUpdate = nodeMap[node.id];
+			
+			var g = nodeToUpdate.gNode;
+			if (!g) {
+				continue;
+			}
+
+			this.handleRemoveAllStatus(g);
+			addClass(g, nodeToUpdate.status);
+			
+			var title = nodeToUpdate.status + " (" + nodeToUpdate.type + ")";
+			if (nodeToUpdate.disabled) {
+				addClass(g, "nodeDisabled");
+				title = "DISABLED (" + nodeToUpdate.type + ")";
+			}
+			$(g).attr("title", title).tooltip('fixTitle');
+			
+			if (node.nodes) {
+				this.updateStatusChanges(node, nodeToUpdate);
 			}
 		}
 	},
@@ -293,23 +299,24 @@ azkaban.SvgGraphView = Backbone.View.extend({
 	},
 
   handleRightClick: function(self) {
-		if (this.rightClick) {
-			var callbacks = this.rightClick;
-			var currentTarget = self.currentTarget;
-			if (callbacks.node && currentTarget.jobid) {
-				callbacks.node(self, this.model, currentTarget.nodeobj);
-			}
-			else if (callbacks.edge && 
-					(currentTarget.nodeName == "polyline" || 
-					 currentTarget.nodeName == "line")) {
-				callbacks.edge(self, this.model);
-			}
-			else if (callbacks.graph) {
-				callbacks.graph(self, this.model);
-			}
-			return false;
+		if (!this.rightClick) {
+			return true;
 		}
-		return true;
+
+		var callbacks = this.rightClick;
+		var currentTarget = self.currentTarget;
+		if (callbacks.node && currentTarget.jobid) {
+			callbacks.node(self, this.model, currentTarget.nodeobj);
+		}
+		else if (callbacks.edge && 
+				(currentTarget.nodeName == "polyline" || 
+				 currentTarget.nodeName == "line")) {
+			callbacks.edge(self, this.model);
+		}
+		else if (callbacks.graph) {
+			callbacks.graph(self, this.model);
+		}
+		return false;
 	},
 
 	drawEdge: function(self, edge, g) {
@@ -430,7 +437,6 @@ azkaban.SvgGraphView = Backbone.View.extend({
 		bounds.maxX = bounds.maxX ? bounds.maxX + margin : margin;
 		bounds.maxY = bounds.maxY ? bounds.maxY + margin : margin;
 		this.graphBounds = bounds;
-
 	},
 
 	relayoutFlow: function(node) {
@@ -527,20 +533,31 @@ azkaban.SvgGraphView = Backbone.View.extend({
 		var nodeG = svg.group(g, "", {class:"node jobnode"});
 		
 		var innerG = svg.group(nodeG, "", {class:"nodebox"});
-		var borderRect = svg.rect(innerG, 0, 0, 10, 10, 3, 3, {class: "border"});
-		var jobNameText = svg.text(innerG, horizontalMargin, 16, node.label);
+		var borderRect = svg.rect(innerG, 0, 0, 10, 10, 3, 3, {class: "border-rect"});
+		var titleRect = svg.rect(innerG, 0, 0, 10, 10, 3, 3, {class: "title-rect"});
+		var titleText = svg.text(innerG, horizontalMargin, 16, node.title);
+		var bodyText = svg.text(innerG, horizontalMargin, 16, node.desc);
+		
+		var titleBBox = titleText.getBBox();
+		var bodyBBox = bodyText.getBBox();
+
+		var titleHeight = titleBBox.height + 2 * verticalMargin;
+		var totalWidth = Math.max(titleBBox.width, bodyBBox.width) +
+				2 * horizontalMargin;
+		var totalHeight = titleHeight + bodyBBox.height + 
+				2 * verticalMargin;
+		
+		svg.change(borderRect, {width: totalWidth, height: totalHeight});
+		svg.change(titleRect, {width: totalWidth, height: titleHeight});
+		svg.change(titleText, {y: (titleHeight + titleBBox.height)/2 - 3});
+		svg.change(bodyText, {y: (titleHeight + titleBBox.height) / 2 - 3 + titleHeight});
+		svg.change(innerG, {transform: translateStr(-totalWidth/2, -totalHeight/2)});
+
 		nodeG.innerG = innerG;
 		innerG.borderRect = borderRect;		
 
-		var labelBBox = jobNameText.getBBox();
-		var totalWidth = labelBBox.width + 2*horizontalMargin;
-		var totalHeight = labelBBox.height + 2*verticalMargin;
-		svg.change(borderRect, {width: totalWidth, height: totalHeight});
-		svg.change(jobNameText, {y: (totalHeight + labelBBox.height)/2 - 3});
-		svg.change(innerG, {transform: translateStr(-totalWidth/2, -totalHeight/2)});
-		
-		node.width=totalWidth;
-		node.height=totalHeight;
+		node.width = totalWidth;
+		node.height = totalHeight;
 		
 		node.gNode = nodeG;
 		nodeG.data = node;
@@ -569,8 +586,8 @@ azkaban.SvgGraphView = Backbone.View.extend({
 				contextURL + "/images/graph-icon.png", {}); 
 
 		// Assign key values to make searching quicker
-		node.gNode=nodeG;
-		nodeG.data=node;
+		node.gNode = nodeG;
+		nodeG.data = node;
 
 		// Do this because jquery svg selectors don't work
 		nodeG.innerG = innerG;

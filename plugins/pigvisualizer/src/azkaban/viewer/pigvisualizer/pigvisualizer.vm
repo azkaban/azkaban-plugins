@@ -38,10 +38,9 @@
 		<script type="text/javascript" src="${context}/js/azkaban/util/job-status.js"></script>
 
 		<script type="text/javascript" src="${context}/js/azkaban/model/svg-graph.js"></script>
-		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/util/flow-loader.js"></script>
-		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/view/job-list.js"></script>
-		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/view/svg-graph.js"></script>
+		<script type="text/javascript" src="${context}/js/azkaban/util/flow-loader.js"></script>
 
+		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/view/svg-graph.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/view/pigvisualizer.js"></script>
 		
 		<script type="text/javascript" src="${context}/pigvisualizer/js/jobstats.js"></script>
@@ -58,6 +57,7 @@
 			var projectName = "${projectName}";
 		</script>
 		<link rel="stylesheet" type="text/css" href="${context}/css/azkaban-graph.css" />
+		<link rel="stylesheet" type="text/css" href="${context}/pigvisualizer/css/pigvisualizer.css" />
 	</head>
 	<body>
 
