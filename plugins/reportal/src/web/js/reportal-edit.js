@@ -100,7 +100,7 @@ $(document).ready(function () {
 	}
 
 	function scheduleOptionChangeHandler(item) {
-		if(item.checked) {
+		if(item && item.checked) {
 			scheduleFields.show();
 		} else {
 			scheduleFields.hide();
@@ -108,7 +108,7 @@ $(document).ready(function () {
 	};
 
 	function scheduleRepeatOptionChangeHandler(item) {
-		if (item.checked) {
+		if (item && item.checked) {
 			scheduleRepeatFields.show();
 		} else {
 			scheduleRepeatFields.hide();
