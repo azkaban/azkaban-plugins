@@ -17,14 +17,10 @@
 package azkaban.jobtype;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-
-import org.apache.pig.tools.pigstats.JobStats;
 
 public class JobDagNode {
 	protected String name;

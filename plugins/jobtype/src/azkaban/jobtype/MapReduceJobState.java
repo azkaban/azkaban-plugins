@@ -21,8 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.mapred.Counters;
-import org.apache.hadoop.mapred.Counters.Counter;
-import org.apache.hadoop.mapred.Counters.Group;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TIPStatus;
 import org.apache.hadoop.mapred.TaskReport;
@@ -86,7 +84,6 @@ public class MapReduceJobState {
     this.counters = counters;
   }
 
-	@SuppressWarnings("deprecation")
 	public MapReduceJobState(RunningJob runningJob,
 			TaskReport[] mapTaskReport,
 			TaskReport[] reduceTaskReport) throws IOException {

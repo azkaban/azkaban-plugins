@@ -64,7 +64,9 @@ public class PigIoStats {
   }
 
   public static PigIoStats fromJson(Object obj) {
+    @SuppressWarnings("unchecked")
     Map<String, Object> jsonObj = (HashMap<String, Object>) obj;
+    
     String name = (String) jsonObj.get("name");
     long bytes = Long.parseLong((String) jsonObj.get("bytes"));
     long records = Long.parseLong((String) jsonObj.get("numberRecords"));

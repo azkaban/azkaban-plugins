@@ -19,13 +19,11 @@ package azkaban.jobtype;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Properties;
 import java.util.Map;
 import java.util.Set;
@@ -117,7 +115,9 @@ public class StatsUtils {
 	}
 
 	public static Properties propertiesFromJson(Object obj) {
-		Map<String, String> jsonObj = (HashMap<String, String>) obj;
+		@SuppressWarnings("unchecked")
+    Map<String, String> jsonObj = (HashMap<String, String>) obj;
+		
 		Properties properties = new Properties();
 		for (Map.Entry<String, String> entry : jsonObj.entrySet()) {
 			properties.setProperty(entry.getKey(), entry.getValue());

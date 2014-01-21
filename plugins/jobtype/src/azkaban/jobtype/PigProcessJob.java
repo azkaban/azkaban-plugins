@@ -23,6 +23,7 @@ import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -120,7 +121,7 @@ public class PigProcessJob extends JavaProcessJob {
 
 		list.add(getScript());
 
-		return StringUtils.join(list, " ");
+		return StringUtils.join((Collection<String>) list, " ");
 	}
 
 	@Override

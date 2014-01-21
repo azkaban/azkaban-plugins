@@ -203,7 +203,10 @@ public class PigJobStats {
 
   private static List<PigIoStats> statsFromJson(Object obj) {
     List<PigIoStats> stats = new ArrayList<PigIoStats>();
+    
+    @SuppressWarnings("unchecked")
     List<Object> jsonStats = (ArrayList<Object>) obj;
+    
     for (Object jsonStat : jsonStats) {
       stats.add(PigIoStats.fromJson(jsonStat));
     }

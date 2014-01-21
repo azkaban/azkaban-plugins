@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.security.PrivilegedExceptionAction;
-import java.util.Properties;
 import java.util.Set;
 
 public class HadoopSecurePigWrapper {
@@ -110,7 +109,8 @@ public class HadoopSecurePigWrapper {
     });
 	}
 	
-	public static void runPigJob(String[] args) throws Exception {
+	@SuppressWarnings("deprecation")
+  public static void runPigJob(String[] args) throws Exception {
 		PigStats stats = null;
 		if (props.getBoolean("pig.listener.visualizer", false) == true) {
 			stats = PigRunner.run(args, new AzkabanPigListener(props));

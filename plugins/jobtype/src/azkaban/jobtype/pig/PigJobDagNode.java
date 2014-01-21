@@ -76,6 +76,7 @@ public class PigJobDagNode extends JobDagNode {
 		return jobStats;
 	}
 
+  @SuppressWarnings("unchecked")
   @Override
 	public Object toJson() {
 		Map<String, Object> jsonObj = new HashMap<String, Object>();
