@@ -38,42 +38,34 @@
 
 		<script type="text/javascript">
 			var contextURL = "${context}";
-			var currentTime = ${currentTime};
-			var timezone = "${timezone}";
-			var homeDir = "${homedir}";
-#if($project)
-			var projectId = ${project.id};
-#end
-		</script>
-		<script type="text/javascript">
 			var startQueries = [
-#if($queries)
-	#foreach($query in $queries)
-		#set($num = $velocityCount - 1)
+				#if($queries)
+					#foreach($query in $queries)
+						#set($num = $velocityCount - 1)
 
-		## Escape the query title and script strings as JavaScript strings before loading them.
-		#set($queryTitle = $esc.javascript(${query.title}))
-		#set($queryScript = $esc.javascript(${query.script}))
-		{
-			"num" : "${num}",
-			"title" : #if($queryTitle) "$queryTitle" #else "" #end,
-			"type" : "${query.type}",
-			"script" : #if($queryScript) "$queryScript" #else "" #end
-		},
-	#end
-#end
+						## Escape the query title and script strings as JavaScript strings before loading them.
+						#set($queryTitle = $esc.javascript(${query.title}))
+						#set($queryScript = $esc.javascript(${query.script}))
+						{
+							"num" : "${num}",
+							"title" : #if($queryTitle) "$queryTitle" #else "" #end,
+							"type" : "${query.type}",
+							"script" : #if($queryScript) "$queryScript" #else "" #end
+						},
+					#end
+				#end
 			];
 			var startVariables = [
-#if($variables)
-#foreach($variable in $variables)
-#set($num = $velocityCount - 1)
-				{
-					"num" : "${num}",
-					"title" : "${variable.title}",
-					"name" : "${variable.name}",
-				},
-#end
-#end
+				#if($variables)
+					#foreach($variable in $variables)
+						#set($num = $velocityCount - 1)
+									{
+										"num" : "${num}",
+										"title" : "${variable.title}",
+										"name" : "${variable.name}",
+									},
+					#end
+				#end
 			];
 		</script>
 		<script type="text/javascript" src="${context}/reportal/js/reportal.js"></script>
@@ -103,20 +95,18 @@
 			<div>&nbsp;</div>
 			<div style="text-align: center;">
 				<a class="btn btn-info" href="${context}/reportal">Reportal Home</a>
-#if($project)
-				<a class="btn btn-primary" href="${context}/reportal?view&amp;id=${project.id}">Report History</a>
-				<a class="btn btn-success button-run" href="${context}/reportal?run&amp;id=${project.id}">Run</a>
+#if($projectId)
+				<a class="btn btn-primary" href="${context}/reportal?view&amp;id=${projectId}">Report History</a>
+				<a class="btn btn-success button-run" href="${context}/reportal?run&amp;id=${projectId}">Run</a>
 #end
 			</div>
-#if($project || $new)
 	#set($title = $esc.html($title))
 			<div>&nbsp;</div>
 			<div class="container">
 				<div>
 					<form method="post" class="form-horizontal">
-						<input id="queryNumber" type="hidden" name="queryNumber" value="#if($project)${queryNumber}#{else}1#end">
-						<input id="variableNumber" type="hidden" name="variableNumber" value="#if($project)${variableNumber}#{else}1#end">
-						#if($project)<input type="hidden" name="id" value="${project.id}">#end
+						<input id="queryNumber" type="hidden" name="queryNumber" value="#if($queryNumber)${queryNumber}#{else}1#end">
+						<input id="variableNumber" type="hidden" name="variableNumber" value="#if($variableNumber)${variableNumber}#{else}1#end">
 						<fieldset>
 							<legend>Report</legend>
 							<div class="control-group required">
@@ -295,7 +285,6 @@
 					</form>
 				</div>
 			</div>
-#end
 		</div>
 	</body>
 </html>

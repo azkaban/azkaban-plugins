@@ -21,14 +21,8 @@
 		<link href="${context}/reportal/css/bootstrap.min.css" rel="stylesheet">
 		<script type="text/javascript" src="${context}/js/jquery/jquery-1.9.1.js"></script>    
 		<script type="text/javascript" src="${context}/js/jqueryui/jquery-ui-1.10.1.custom.js"></script>
-		<script type="text/javascript" src="${context}/reportal/js/bootstrap.min.js"></script>
-
 		<script type="text/javascript">
 			var contextURL = "${context}";
-			var currentTime = ${currentTime};
-			var timezone = "${timezone}";
-			var homeDir = "${homedir}";
-			var projectId = "${project.id}";
 		</script>
 		<script type="text/javascript" src="${context}/reportal/js/reportal.js"></script>
 		<script type="text/javascript" src="${context}/reportal/js/reportal-run.js"></script>
@@ -57,17 +51,17 @@
 			<div>&nbsp;</div>
 			<div style="text-align: center;">
 				<a class="btn btn-info" href="${context}/reportal">Reportal Home</a>
-#if($project)
-				<a class="btn btn-primary" href="${context}/reportal?view&amp;id=${project.id}">Report History</a>
-				<a class="btn btn-warning" href="${context}/reportal?edit&amp;id=${project.id}">Edit</a>
+#if($projectId)
+				<a class="btn btn-primary" href="${context}/reportal?view&amp;id=$projectId">Report History</a>
+				<a class="btn btn-warning" href="${context}/reportal?edit&amp;id=$projectId">Edit</a>
 #end
 			</div>
-#if($project)
+#if($projectId)
 			<div>&nbsp;</div>
 			<div class="container">
 				<div>
 					<form method="post" class="form-horizontal">
-						<input type="hidden" name="id" value="${project.id}">
+						<input type="hidden" name="id" value="$projectId">
 						<fieldset>
 							<legend>Report</legend>
 							<div class="control-group">
@@ -79,18 +73,18 @@
 								<div class="controls" style="padding-top:5px;">${description}</div>
 							</div>
 						</fieldset>
-#if($variables)
+	#if($variables)
 						<legend>Variables</legend>
 						<fieldset>
-#foreach($variable in $variables)
-#set($num = $velocityCount - 1)
+		#foreach($variable in $variables)
+			#set($num = $velocityCount - 1)
 							<div class="control-group">
 								<label class="control-label">${variable.title}</label>
 								<div class="controls"><input type="text" name="variable${num}" value=""></div>
 							</div>
-#end
+		#end
 						</fieldset>
-#end
+	#end
 						<div class="form-actions">
 							<input id="run-button" type="submit" class="btn btn-primary" value="Run">
 							<a href="${context}/reportal" class="btn">Cancel</a>

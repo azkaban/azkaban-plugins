@@ -568,7 +568,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
-		page.add("project", project);
+		page.add("projectId", id);
 		page.add("title", reportal.title);
 		page.add("description", reportal.description);
 
@@ -585,8 +585,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
 		preparePage(page, session);
 
-		page.add("new", true);
-		page.add("project", false);
 		page.add("title", "");
 		page.add("description", "");
 
@@ -634,7 +632,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
-		page.add("project", project);
+		page.add("projectId", id);
 		page.add("title", reportal.title);
 		page.add("description", reportal.description);
 		page.add("queryNumber", reportal.queries.size());
@@ -684,6 +682,10 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("esc", new EscapeTool());
 
 		boolean isEdit = hasParam(req, "id");
+		if (isEdit) {
+		  page.add("projectId", getIntParam(req, "id"));
+		}
+		
 		Project project = null;
 		Reportal report = new Reportal();
 
@@ -872,7 +874,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		report.project = project;
-		page.add("project", project);
+		page.add("projectId", project.getId());
 
 		report.updatePermissions();
 
