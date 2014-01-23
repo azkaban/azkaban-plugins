@@ -95,11 +95,11 @@
 			<div>&nbsp;</div>
 			<form method="post" class="form-horizontal">
 				<div style="text-align: center;">
-					<a class="btn btn-info" href="${context}/reportal">Reportal Home</a>
+					<a class="btn btn-primary" href="${context}/reportal">Reportal Home</a>
 #if($projectId)
-					<a class="btn btn-primary" href="${context}/reportal?view&amp;id=${projectId}">Report History</a>
-					<input type="submit" class="btn btn-primary" value="Save">
-					<a class="btn btn-success button-run" href="${context}/reportal?run&amp;id=${projectId}">Run</a>
+					<a class="btn btn-info" href="${context}/reportal?view&amp;id=${projectId}">Report History</a>
+					<input type="submit" class="btn btn-primary" name="submit" value="Save"/>
+					<input type="submit" class="btn btn-success" name="submit" value="Save and Run"/>
 #end
 				</div>
 #set($title = $esc.html($title))
@@ -279,7 +279,8 @@
 						</div>
 					</fieldset>
 					<div class="form-actions">
-						<input type="submit" class="btn btn-primary" value="Save">
+						<input type="submit" class="btn btn-primary" name="submit" value="Save">
+						<input type="submit" class="btn btn-success" name="submit" value="Save and Run"/>
 						<a href="${context}/reportal" class="btn">Cancel</a>
 					</div>
 				</div>

@@ -669,11 +669,35 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			}
 		}
 		else {
-			handleEditAddReportal(req, resp, session);
+		  handleSaveReportal(req, resp, session);		 
 		}
 	}
+	
+	private void handleSaveReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
+	  String projectId = validateAndSaveReport(req, resp, session); 
+	  
+    if (projectId != null) {
+      this.setSuccessMessageInCookie(resp, "Report Saved.");
+      
+      String submitType = getParam(req, "submit");
+      if (submitType.equals("Save")) {
+        resp.sendRedirect(req.getRequestURI() + "?edit&id=" + projectId);
+      } else {
+        resp.sendRedirect(req.getRequestURI() + "?run&id=" + projectId);
+      }
+    }
+	}
 
-	private void handleEditAddReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
+  /**
+   * Validates and saves a report, returning the project id of the saved report if successful, and null otherwise.
+   * @param req
+   * @param resp
+   * @param session
+   * @return The project id of the saved report if successful, and null otherwise
+   * @throws ServletException
+   * @throws IOException
+   */
+	private String validateAndSaveReport(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 
 		ProjectManager projectManager = server.getProjectManager();
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
@@ -776,14 +800,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		if (report.title.isEmpty()) {
 			page.add("errorMsg", "Title must not be empty.");
 			page.render();
-			return;
+			return null;
 		}
 
 		// Make sure description isn't empty
 		if (report.description.isEmpty()) {
 			page.add("errorMsg", "Description must not be empty.");
 			page.render();
-			return;
+			return null;
 		}
 		
 		// Verify schedule and repeat
@@ -793,14 +817,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					!NumberUtils.isDigits(report.scheduleMinute)) {
 				page.add("errorMsg", "Schedule time is invalid.");
 				page.render();
-				return;
+				return null;
 			}
 			
 			// Verify schedule date is not empty
 			if (report.scheduleDate.isEmpty()) {
 				page.add("errorMsg", "Schedule date must not be empty.");
 				page.render();
-				return;
+				return null;
 			}
 			
 			if (report.scheduleRepeat) {
@@ -808,7 +832,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				if (!NumberUtils.isDigits(report.scheduleIntervalQuantity)) {
 					page.add("errorMsg", "Repeat interval quantity is invalid.");
 					page.render();
-					return;
+					return null;
 				}
 			}
 		}
@@ -817,25 +841,25 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		if (numQueries <= 0) {
 			page.add("errorMsg", "There needs to have at least one query.");
 			page.render();
-			return;
+			return null;
 		}
 		// Type error check
 		if (typeError != null) {
 			page.add("errorMsg", "Type " + typeError + " is invalid.");
 			page.render();
-			return;
+			return null;
 		}
 		// Type permission check
 		if (typePermissionError != null && report.schedule) {
 			page.add("errorMsg", "You do not have permission to schedule Type " + typePermissionError + ".");
 			page.render();
-			return;
+			return null;
 		}
 		// Variable error check
 		if (variableErrorOccurred) {
 			page.add("errorMsg", "Variable title and name cannot be empty.");
 			page.render();
-			return;
+			return null;
 		}
 
 		// Attempt to get a project object
@@ -856,21 +880,21 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				e.printStackTrace();
 				page.add("errorMsg", "Error while creating report. " + e.getMessage());
 				page.render();
-				return;
+				return null;
 			}
 
 			// Project already exists
 			if (project == null) {
 				page.add("errorMsg", "A Report with the same name already exists.");
 				page.render();
-				return;
+				return null;
 			}
 		}
 
 		if (project == null) {
 			page.add("errorMsg", "Internal Error: Report not found");
 			page.render();
-			return;
+			return null;
 		}
 
 		report.project = project;
@@ -891,7 +915,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					e1.printStackTrace();
 				}
 			}
-			return;
+			return null;
 		}
 
 		// Prepare flow
@@ -909,7 +933,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			e2.printStackTrace();
 			page.add("errorMsg", e2.getMessage());
 			page.render();
-			return;
+			return null;
 		}
 
 		report.saveToProject(project);
@@ -929,11 +953,10 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					e1.printStackTrace();
 				}
 			}
-			return;
+			return null;
 		}
 
-		this.setSuccessMessageInCookie(resp, "Report Saved.");
-		resp.sendRedirect(req.getRequestURI() + "?edit&id=" + project.getId());
+		return Integer.toString(project.getId());
 	}
 
 	private void handleRunReportalWithVariables(HttpServletRequest req, HashMap<String, Object> ret, Session session) throws ServletException, IOException {
