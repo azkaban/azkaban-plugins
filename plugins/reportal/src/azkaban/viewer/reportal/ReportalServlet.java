@@ -700,6 +700,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private String validateAndSaveReport(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 
 		ProjectManager projectManager = server.getProjectManager();
+		User user = session.getUser();
+		
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
 		preparePage(page, session);
 		page.add("ReportalHelper", ReportalHelper.class);
@@ -769,7 +771,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			if (type == null && typeError == null) {
 				typeError = query.type;
 			}
-			if (!type.checkPermission(session.getUser())) {
+			if (!type.checkPermission(user)) {
 				typePermissionError = query.type;
 			}
 
@@ -872,7 +874,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		else {
 			// Creation mode, create project
 			try {
-				User user = session.getUser();
 				project = ReportalHelper.createReportalProject(server, report.title, report.description, user);
 				report.reportalUser = user.getUserId();
 				report.ownerEmail = user.getEmail();
@@ -903,14 +904,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		report.updatePermissions();
 
 		try {
-			report.createZipAndUpload(projectManager, session.getUser(), reportalStorageUser);
+			report.createZipAndUpload(projectManager, user, reportalStorageUser);
 		} catch (Exception e) {
 			e.printStackTrace();
 			page.add("errorMsg", "Error while creating Azkaban jobs. " + e.getMessage());
 			page.render();
 			if (!isEdit) {
 				try {
-					projectManager.removeProject(project, session.getUser());
+					projectManager.removeProject(project, user);
 				} catch (ProjectManagerException e1) {
 					e1.printStackTrace();
 				}
@@ -928,7 +929,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		// Create/Save schedule
 		ScheduleManager scheduleManager = server.getScheduleManager();
 		try {
-			report.updateSchedules(report, scheduleManager, session.getUser(), flow);
+			report.updateSchedules(report, scheduleManager, user, flow);
 		} catch (ScheduleManagerException e2) {
 			e2.printStackTrace();
 			page.add("errorMsg", e2.getMessage());
@@ -941,6 +942,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		try {
 			ReportalHelper.updateProjectNotifications(project, projectManager);
 			projectManager.updateProjectSetting(project);
+			projectManager.updateProjectDescription(project, report.description, user);
 			projectManager.updateFlow(project, flow);
 		} catch (ProjectManagerException e) {
 			e.printStackTrace();
@@ -948,7 +950,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			page.render();
 			if (!isEdit) {
 				try {
-					projectManager.removeProject(project, session.getUser());
+					projectManager.removeProject(project, user);
 				} catch (ProjectManagerException e1) {
 					e1.printStackTrace();
 				}
