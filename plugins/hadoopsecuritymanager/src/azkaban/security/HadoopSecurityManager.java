@@ -17,7 +17,6 @@
 package azkaban.security;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.hadoop.fs.FileSystem;

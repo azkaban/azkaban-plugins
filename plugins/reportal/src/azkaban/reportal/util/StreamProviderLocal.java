@@ -19,11 +19,14 @@ package azkaban.reportal.util;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import org.apache.commons.io.FileUtils;
 
 public class StreamProviderLocal implements IStreamProvider {
 
@@ -40,6 +43,31 @@ public class StreamProviderLocal implements IStreamProvider {
 		return new String[0];
 	}
 
+	public String[] getOldFiles(String pathString, final long thresholdTime) throws Exception {
+	  File file = new File(pathString);
+	  
+	  if (!file.exists() || !file.isDirectory()) {
+	    return new String[0];
+	  }
+	  
+	  File[] fileList = file.listFiles(new FileFilter() {
+	    public boolean accept(File file) {
+	      return file.lastModified() < thresholdTime;
+	    }
+	  });
+	  
+	  String[] files = new String[fileList.length];
+	  for (int i = 0; i < fileList.length; i++) {
+	    files[i] = fileList[i].getName();
+	  }
+	  
+	  return files;
+	}
+	
+	public void deleteFile(String pathString) throws Exception {
+	  FileUtils.deleteDirectory(new File(pathString));
+	}
+	
 	public InputStream getFileInputStream(String pathString) throws IOException {
 
 		File inputFile = new File(pathString);

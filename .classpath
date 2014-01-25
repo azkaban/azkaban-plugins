@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="plugins/reportal/src"/>
+	<classpathentry kind="src" path="plugins/hadoopsecuritymanager/src"/>
 	<classpathentry kind="src" path="plugins/jobtype/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="plugins/hdfsviewer/extlib/hadoop-core-1.0.4.jar"/>
@@ -23,5 +24,6 @@
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-io-2.4.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-dbcp-1.4.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="plugins/hadoopsecuritymanager/lib/hive-metastore-0.10.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
