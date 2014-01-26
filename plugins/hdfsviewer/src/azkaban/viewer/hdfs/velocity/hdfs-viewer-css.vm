@@ -1,0 +1,9 @@
+<style type="text/css">
+.icon-directory {
+  color: #428bca;
+}
+
+.icon-file {
+  color: #cccccc;
+}
+</style>

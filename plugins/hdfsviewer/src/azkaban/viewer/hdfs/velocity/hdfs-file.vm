@@ -27,40 +27,11 @@
 			var currentTime = ${currentTime};
 			var timezone = "${timezone}";
 			var homeDir = "${homedir}";
-
-#if ($allowproxy)
-			$(function() {
-				$('#changeUserBtn').click( function() {
-				  $('#messageDialog').modal();
-				});
-				
-				$('#submitChangeUserBtn').click( function() {
-					var user = $('#proxyname').val();
-					$.post(
-						"",
-						{'action': 'changeProxyUser', 'proxyname': user},
-						function(data) {
-							if (data.error) {
-								$('#messageBox').text(data.error);
-							}
-							else {
-								location.reload(true);
-							}
-						}
-					);
-				});
-			});
-#end
 		</script>
-		<style type="text/css">
-			.icon-directory {
-				color: #428bca;
-			}
-
-			.icon-file {
-				color: #cccccc;
-			}
-		</style>
+#if ($allowproxy)
+		<script type="text/javascript" src="${context}/hdfs/js/azkaban/view/hdfs-proxy.js"></script>
+#end
+    <link rel="stylesheet" type="text/css" href="${context}/hdfs/css/hdfs-viewer.css" />
 	</head>
 	<body>
 

@@ -164,7 +164,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		}
 		catch (Exception e) {
 			//e.printStackTrace();
-			Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/hdfsbrowserpage.vm");
+			Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/velocity/hdfs-browser.vm");
 			page.add("error_message", "Error: " + e.getMessage());
 			page.add("user", username);
 			page.add("allowproxy", allowGroupProxy);
@@ -241,7 +241,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	private void displayDir(FileSystem fs, String user, HttpServletRequest req, HttpServletResponse resp,
 			Session session, Path path) throws IOException {
 
-		Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/hdfsbrowserpage.vm");
+		Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/velocity/hdfs-browser.vm");
 		page.add("allowproxy", allowGroupProxy);
 		page.add("viewerPath", viewerPath);
 		page.add("viewerName", viewerName);
