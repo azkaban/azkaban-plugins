@@ -130,8 +130,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	protected void handleGet(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 		User user = session.getUser();
 		String username = user.getUserId();
-		
-		if(hasParam(req, "action") && getParam(req, "action").equals("goHomeDir")) {
+	
+		if (hasParam(req, "action") && getParam(req, "action").equals("goHomeDir")) {
 			username = getParam(req, "proxyname");
 		}
 		else if (allowGroupProxy) {
@@ -145,7 +145,12 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		try {
 			fs = getFileSystem(username);
 			try {
-				handleFSDisplay(fs, username, req, resp, session);
+				if (hasParam(req, "ajax")) {
+					handleAjaxAction(fs, username, req, resp, session);
+				}
+				else {
+					handleFSDisplay(fs, username, req, resp, session);
+				}
 			}
 			catch (IOException e) {
 				throw e;
@@ -182,43 +187,91 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	@Override
 	protected void handlePost(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 		User user = session.getUser();
-		if (hasParam(req, "action")) {
-			HashMap<String,String> results = new HashMap<String,String>();			
-			String action = getParam(req, "action");
-			
-			if (action.equals("changeProxyUser")) {
-				if (hasParam(req, "proxyname")) {
-					String newProxyname = getParam(req, "proxyname");
-								
-					if (user.getUserId().equals(newProxyname) || user.isInGroup(newProxyname) || user.getRoles().contains("admin")) {
-						session.setSessionData(PROXY_USER_SESSION_KEY, newProxyname);
-					}
-					else {
-						results.put("error", "User '" + user.getUserId() + "' cannot proxy as '" + newProxyname + "'");
-					}
+		if (!hasParam(req, "action")) {
+			return;
+		}
+
+		HashMap<String,String> results = new HashMap<String,String>();			
+		String action = getParam(req, "action");
+		
+		if (action.equals("changeProxyUser")) {
+			if (hasParam(req, "proxyname")) {
+				String newProxyname = getParam(req, "proxyname");
+							
+				if (user.getUserId().equals(newProxyname) || user.isInGroup(newProxyname) || user.getRoles().contains("admin")) {
+					session.setSessionData(PROXY_USER_SESSION_KEY, newProxyname);
+				}
+				else {
+					results.put("error", "User '" + user.getUserId() + "' cannot proxy as '" + newProxyname + "'");
 				}
 			}
-			else {
-				results.put("error", "action param is not set");
+		}
+		else {
+			results.put("error", "action param is not set");
+		}
+		
+		this.writeJSON(resp, results);
+	}
+	
+	private void handleAjaxAction(
+			FileSystem fs,
+			String username,
+			HttpServletRequest request,
+			HttpServletResponse response,
+			Session session) 
+			throws ServletException, IOException {
+
+		HashMap<String, Object> ret = new HashMap<String, Object>();
+		String ajaxName = getParam(request, "ajax");
+		Path path = null;
+		if (hasParam(request, "path")) {
+			path = new Path(getParam("path"));
+			if (!fs.exists(path)) {
+				ret.put("error", path.toUri().getPath() + " does not exist.");
 			}
-			
-			this.writeJSON(resp, results);
-			return;
+			else if (fs.isFile(path)) {
+				if (ajaxName.equals("fetchschema")) {
+					handleFetchSchema(fs, username, request, response, session);
+				}
+				else if (ajaxName.equals("fetchfile")) {
+					handleFetchFile(fs, username, request, response, session);
+				}
+				else {
+					ret.put("error", "Unknown AJAX action " + ajaxName");
+				}
+			else if (!fs.isFile(path)) {
+				ret.put("error", path.toUri().getPath() + " is not a file.");
+			}
+			else {
+				ret.put("error", path.toUri().getPath() + " is not a file " + 
+						"or directory.");
+			}
+		}
+
+		if (ret != null) {
+			this.writeJSON(response, ret);
 		}
 	}
 
-	private void handleFSDisplay(FileSystem fs, String user, HttpServletRequest req, HttpServletResponse resp,
-			Session session) throws IOException, ServletException, IllegalArgumentException, IllegalStateException {
+	private void handleFSDisplay(
+			FileSystem fs, 
+			String user, 
+			HttpServletRequest req, 
+			HttpServletResponse resp,
+			Session session) 
+			throws IOException, 
+					ServletException, 
+					IllegalArgumentException, 
+					IllegalStateException {
+
 		String prefix = req.getContextPath() + req.getServletPath();
 		String fsPath = req.getRequestURI().substring(prefix.length());
 		
 		Path path;
-		
 		if (fsPath.length() == 0) {
 			fsPath = "/";
 		}
 		path = new Path(fsPath);
-
 
 		if (logger.isDebugEnabled())
 			logger.debug("path=" + path.toString());
@@ -339,6 +392,31 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			page.add("error_message", "Error: " + e.getMessage());
 		}
 		page.render();
+	}
+
+	private void displayFileSchema(
+			FileSystem fs, 
+			HttpServletRequest req, 
+			HttpServletResponse resp, 
+			Session session, 
+			Path path)
+			throws IOException {
+		// use registered viewers to show the file content
+		boolean outputed = false;
+		String schema = null;
+		
+		for (HdfsFileViewer viewer : viewers) {
+			if (viewer.canReadSchema(fs, path)) {
+				schema = viewer.getSchema(fs, path);
+				outputed = true;
+				break; // don't need to try other viewers
+			}
+		}
+		
+		// use default text viewer
+		if (!outputed) {
+			output.write(("Sorry, no viewer available for this file. ").getBytes("UTF-8"));
+		}
 	}
 
 	private void displayFileSample(

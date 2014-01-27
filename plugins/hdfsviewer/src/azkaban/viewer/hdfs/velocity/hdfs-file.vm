@@ -74,39 +74,33 @@
 					<div class="panel panel-default" id="all-hdfsbrowser-content">
 						<div class="panel-heading">
 		#set ($size = $paths.size() - 1)
-							<a class="firstCrumb" href="${context}/hdfs/">/</a>#if($size >= 0)#foreach($i in [0 ..$size])<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span>/</span>#end #end
+							<a class="firstCrumb" href="${context}/hdfs/"> / </a>
+		#if ($size >= 0)
+			#set ($end = $size - 1)
+			#foreach ($i in [0 ..$end])
+							<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span> / </span>
+			#end
+								${segments.get($size)}
+		#end
 						</div>
-						<table id="hdfs-dir" class="table table-condensed table-striped table-hover table-bordered">
-							<thead>
-								<tr>
-									<th>File</th>
-									<th>Permission</th>
-									<th>Owner/Group</th>
-									<th>Size</th>
-									<th>Block Size</th>
-									<th>Reps</th>
-									<th>Modified Date</th>
-								</tr>
-							</thead>
+						<table class="table table-condensed table-striped table-bordered">
 							<tbody>
 								<tr>
-									<td>
-										<a href="${context}/hdfs${status.getPath().toUri().getPath()}">
-											<span class="glyphicon glyphicon-file icon-file"></span>	
-											${status.path.name}#if($status.isDir())/#end</a>
-										</a>
-									</td>
+									<td class="property-key">Permission</td>
 									<td>${status.permission}</td>
+									<td class="property-key">Owner/Group</td>
 									<td>${status.owner}/${status.group}</td>
-									<td>
-										$utils.displayBytes(${status.len})
-									</td>
-									<td>
-										$utils.displayBytes(${status.getBlockSize()})
-									</td>
-									<td>
-										${status.getReplication()}
-									</td>
+								</tr>
+								<tr>
+									<td class="property-key">Size</td>
+									<td>$utils.displayBytes(${status.len})</td>
+									<td class="property-key">Block Size</td>
+									<td>$utils.displayBytes(${status.getBlockSize()})</td>
+								</tr>
+								<tr>
+									<td class="property-key">Reps</td>
+									<td>${status.getReplication()}</td>
+									<td class="property-key">Modified Date</td>
 									<td>$utils.formatDateTime(${status.modificationTime})</td>
 								</tr>
 							</tbody>
@@ -116,6 +110,25 @@
 					</div><!-- /.panel -->
 				</div><!-- /.col-xs-12 -->
 			</div><!-- /.row -->
+
+			<div class="row">
+				<div class="col-xs-12">
+					<ul class="nav nav-tabs" id="file-tabs">
+						<li class="active"><a href="#schema" data-toggle="tab">Schema</a></li>
+						<li><a href="#contents" data-toggle="tab">Contents</a></li>
+					</ul>
+
+					<div class="tab-content">
+						<div class="tab-pane active" id="schema">
+							Schema
+						</div>
+
+						<div class="tab-pane active" id="contents">
+							Contents
+						</div>
+					</div>
+				</div>
+			</div>
 
 #parse ("azkaban/viewer/hdfs/velocity/change-proxy-modal.vm")
 #end

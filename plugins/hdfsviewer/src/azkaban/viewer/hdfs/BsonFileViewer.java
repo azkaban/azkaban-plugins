@@ -47,6 +47,11 @@ public final class BsonFileViewer implements HdfsFileViewer {
 	}
 
 	@Override
+	public boolean canReadSchema(FileSystem fs, Path path) {
+		return false;
+	}
+
+	@Override
 	public void displayFile(FileSystem fs, Path path, OutputStream outStream, int startLine, int endLine) throws IOException {
 		FSDataInputStream in = null;
 		try {
@@ -91,4 +96,7 @@ public final class BsonFileViewer implements HdfsFileViewer {
 		}
 	}
 
+	public String getSchema(FileSystem fs, Path path) {
+		return null;
+	}
 }

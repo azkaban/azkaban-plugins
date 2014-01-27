@@ -47,6 +47,11 @@ public class TextFileViewer implements HdfsFileViewer {
 		return true;
 	}
 
+	@Override
+	public boolean canReadSchema(FileSystem fs, Path path) {
+		return false;
+	}
+
 	public void displayFile(FileSystem fs,
 			Path path,
 			OutputStream outputStream,

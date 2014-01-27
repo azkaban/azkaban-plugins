@@ -50,7 +50,6 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 	
 	@Override
 	public boolean canReadFile(FileSystem fs, Path path) {
-
 		if (logger.isDebugEnabled())
 			logger.debug("path:" + path.toUri().getPath());
 
@@ -59,7 +58,8 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 			avroDataStream = getAvroDataStream(fs, path);
 			Schema schema = avroDataStream.getSchema();
 			return schema != null;
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			if (logger.isDebugEnabled()) {
 				logger.debug(path.toUri().getPath() + " is not an avro file.");
 				logger.debug("Error in getting avro schema: " + e.getLocalizedMessage());
@@ -71,7 +71,43 @@ public class HdfsAvroFileViewer implements HdfsFileViewer {
 				if (avroDataStream != null) {
 					avroDataStream.close();
 				}
-			} catch (IOException e) {
+			}
+			catch (IOException e) {
+				logger.error(e);
+			}
+		}
+	}
+
+	@Override
+	public boolean canReadSchema(FileSystem fs, Path path) {
+		return canReadFile(fs, path);
+	}
+	
+	@Override
+	public String getSchema(FileSystem fs, Path path) {
+		if (logger.isDebugEnabled())
+			logger.debug("path:" + path.toUri().getPath());
+
+		DataFileStream<Object> avroDataStream = null;
+		try {
+			avroDataStream = getAvroDataStream(fs, path);
+			Schema schema = avroDataStream.getSchema();
+			return schema.toString();
+		}
+		catch (IOException e) {
+			if (logger.isDebugEnabled()) {
+				logger.debug(path.toUri().getPath() + " is not an avro file.");
+				logger.debug("Error in getting avro schema: " + e.getLocalizedMessage());
+			}
+			return null;
+		}
+		finally {
+			try {
+				if (avroDataStream != null) {
+					avroDataStream.close();
+				}
+			}
+			catch (IOException e) {
 				logger.error(e);
 			}
 		}

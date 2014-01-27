@@ -54,6 +54,10 @@ public abstract class HdfsSequenceFileViewer implements HdfsFileViewer {
 		return result;
 	}
 
+	public boolean canReadSchema(FileSystem fs, Path file) {
+		return false;
+	}
+
 	public void displayFile(FileSystem fs,
 			Path file,
 			OutputStream outputStream,

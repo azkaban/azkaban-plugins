@@ -79,6 +79,11 @@ public class ParquetFileViewer implements HdfsFileViewer {
 	}
 
 	@Override
+	public boolean canReadSchema(FileSystem fs, Path path) {
+		return canReadFile(fs, path);
+	}
+
+	@Override
 	public void displayFile(FileSystem fs, Path path, OutputStream outputStream,
 			int startLine, int endLine) throws IOException {
 		if (logger.isDebugEnabled()) {
