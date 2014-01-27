@@ -227,7 +227,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			throw new IllegalArgumentException(path.toUri().getPath() + " does not exist.");
 		}
 		else if (fs.isFile(path)) {
-			displayFile(fs, req, resp, session, path);
+			displayFile(fs, user, req, resp, session, path);
 		}
 		else if (fs.getFileStatus(path).isDir()) {
 			displayDir(fs, user, req, resp, session, path);
@@ -291,7 +291,62 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		page.render();
 	}
 
-	private void displayFile(FileSystem fs, HttpServletRequest req, HttpServletResponse resp, Session session, Path path)
+	private void displayFile(
+			FileSystem fs, 
+			String user,
+			HttpServletRequest req, 
+			HttpServletResponse resp, 
+			Session session, 
+			Path path)
+			throws IOException {
+		Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/velocity/hdfs-file.vm");
+		page.add("allowproxy", allowGroupProxy);
+		page.add("viewerPath", viewerPath);
+		page.add("viewerName", viewerName);
+		
+		List<Path> paths = new ArrayList<Path>();
+		List<String> segments = new ArrayList<String>();
+		Path curr = path;
+		while (curr.getParent() != null) {
+			paths.add(curr);
+			segments.add(curr.getName());
+			curr = curr.getParent();
+		}
+
+		Collections.reverse(paths);
+		Collections.reverse(segments);
+
+		page.add("paths", paths);
+		page.add("segments", segments);
+		page.add("user", user);
+		
+		String homeDirString = fs.getHomeDirectory().toString();
+		if (homeDirString.startsWith("file:")) {
+			page.add("homedir", homeDirString.substring("file:".length()));
+		}
+		else {
+			page.add("homedir", homeDirString.substring(fs.getUri().toString().length()));
+		}
+
+		try {
+			FileStatus status = fs.getFileStatus(path);
+			page.add("status", status);
+		}
+		catch (AccessControlException e) {
+			page.add("error_message", "Permission denied. User annot read this file.");
+		}
+		catch (IOException e) {
+			page.add("error_message", "Error: " + e.getMessage());
+		}
+		page.render();
+	}
+
+	private void displayFileSample(
+			FileSystem fs, 
+			HttpServletRequest req, 
+			HttpServletResponse resp, 
+			Session session, 
+			Path path)
 			throws IOException {
 		int startLine = getIntParam(req, "start_line", 1);
 		int endLine = getIntParam(req, "end_line", 1000);
@@ -313,11 +368,13 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			if (!outputed) {
 				if (defaultViewer.canReadFile(fs, path)) {
 					defaultViewer.displayFile(fs, path, output, startLine, endLine);
-				} else {
+				}
+				else {
 					output.write(("Sorry, no viewer available for this file. ").getBytes("UTF-8"));
 				}
 			}
-		} finally {
+		}
+		finally {
 			output.flush();
 			output.close();
 		}
@@ -345,3 +402,5 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 //	}
 
 }
+
+/* vim: set ai ts=2 sts=2 sw=2 noet: */

@@ -29,7 +29,7 @@
 			var homeDir = "${homedir}";
 		</script>
 #if ($allowproxy)
-  #parse ("azkaban/viewer/hdfs/velocity/hdfs-proxy-js.vm")
+	#parse ("azkaban/viewer/hdfs/velocity/hdfs-proxy-js.vm")
 #end
 #parse ("azkaban/viewer/hdfs/velocity/hdfs-viewer-css.vm")
 	</head>
@@ -39,44 +39,44 @@
 #parse ("azkaban/webapp/servlet/velocity/nav.vm")
 
 #if ($errorMsg)
-  #parse ("azkaban/webapp/servlet/velocity/errormsg.vm")
+	#parse ("azkaban/webapp/servlet/velocity/errormsg.vm")
 #else
 
-    <div class="az-page-header">
+		<div class="az-page-header">
 			<div class="container-full">
-        <div class="row">
-          <div class="col-xs-6">
-            <h1><a href="${context}/hdfs">HDFS Browser</a></h1>
-          </div>
-          <div class="col-xs-6">
-            <div class="az-page-header-form pull-right">
+				<div class="row">
+					<div class="col-xs-6">
+						<h1><a href="${context}/hdfs">HDFS Browser</a></h1>
+					</div>
+					<div class="col-xs-6">
+						<div class="az-page-header-form pull-right">
 	#if ($allowproxy)
-              <strong>Proxy user</strong> ${user}
-              <button type="button" id="changeUserBtn" class="btn btn-sm btn-primary">Change User</button>
+							<strong>Proxy user</strong> ${user}
+							<button type="button" id="changeUserBtn" class="btn btn-sm btn-primary">Change User</button>
 	#end
 							<a id="goHomeLink" class="btn btn-sm btn-default" href="${context}/hdfs${homedir}">Home Directory</a>
-            </div>
-            <div class="clearfix"></div>
-          </div>
-        </div>
+						</div>
+						<div class="clearfix"></div>
+					</div>
+				</div>
 			</div>
-    </div>
+		</div>
 
-    <div class="container-full">
+		<div class="container-full">
 
-  #parse ("azkaban/webapp/servlet/velocity/alerts.vm")
+	#parse ("azkaban/webapp/servlet/velocity/alerts.vm")
+	#if (!$no_fs)
 
 			<div class="row">
 				<div class="col-xs-12">
 					<div class="panel panel-default" id="all-hdfsbrowser-content">
 						<div class="panel-heading">
-  #set ($size = $paths.size() - 1)
+		#set ($size = $paths.size() - 1)
 							<a class="firstCrumb" href="${context}/hdfs/">/</a>#if($size >= 0)#foreach($i in [0 ..$size])<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span>/</span>#end #end
 							<div class="pull-right">
 								<strong>$subdirs.size()</strong> items <strong>$utils.displayBytes($dirsize)</strong> total
-              </div>
+							</div>
 						</div>
-  #if (!$no_fs)
 						<table id="hdfs-dir" class="table table-condensed table-striped table-hover table-bordered">
 							<thead>
 								<tr>
@@ -90,8 +90,8 @@
 								</tr>
 							</thead>
 							<tbody>
-    #if ($subdirs)
-      #foreach ($status in $subdirs)
+		#if ($subdirs)
+			#foreach ($status in $subdirs)
 								<tr>
 									<td>
 										<a href="${context}/hdfs${status.getPath().toUri().getPath()}">
@@ -106,65 +106,41 @@
 									<td>${status.permission}</td>
 									<td>${status.owner}/${status.group}</td>
 									<td>
-        #if ($status.isDir())
+				#if ($status.isDir())
 										&ndash;
-        #else
+				#else
 										$utils.displayBytes(${status.len})
-        #end
+				#end
 									</td>
 									<td>
-        #if ($status.isDir())
+				#if ($status.isDir())
 										&ndash;
-        #else
+				#else
 										$utils.displayBytes(${status.getBlockSize()})
-        #end
+				#end
 									</td>
 									<td>
-        #if ($status.isDir())
+				#if ($status.isDir())
 										&ndash;
-        #else
+				#else
 										${status.getReplication()}
-        #end
+				#end
 									</td>
 									<td>$utils.formatDateTime(${status.modificationTime})</td>
 								</tr>
-      #end
-    #else
+			#end
+		#else
 								<tr><td>No Files In This Directory</td></tr>
-    #end
+		#end
 							</tbody>
 						</table>
-  #end
+	#end
 
 					</div><!-- /.panel -->
 				</div><!-- /.col-xs-12 -->
 			</div><!-- /.row -->
 
-			<div class="modal" id="messageDialog">
-				<div class="modal-dialog">
-					<div class="modal-content">
-						<div class="modal-header" id="messageTitle">
-							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-							<h4 class="modal-title">Change Proxy User</h4>
-						</div>
-						<div class="modal-body" id="messageDiv">
-              <fieldset>
-                <div class="form-group">
-                  <label for="proxyname" class="col-sm-3 control-label">Proxy User</label>
-                  <div class="col-sm-9">
-                    <input id="proxyname" type="text" name="proxyname" val="${user}" class="form-control">
-                  </div>
-                </div>
-              </fieldset>
-						</div>
-						<div class="modal-footer">
-							<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-							<button id="submitChangeUserBtn" class="btn btn-primary">Change User</button>
-						</div>
-					</div>
-				</div>
-			</div>
-
+#parse ("azkaban/viewer/hdfs/velocity/change-proxy-modal.vm")
 #end
 		</div><!-- /.container-full -->
 	</body>
