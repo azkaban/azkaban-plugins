@@ -75,9 +75,6 @@
 						<div class="panel-heading">
 		#set ($size = $paths.size() - 1)
 							<a class="firstCrumb" href="${context}/hdfs/">/</a>#if($size >= 0)#foreach($i in [0 ..$size])<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span>/</span>#end #end
-							<div class="pull-right">
-								<strong>$utils.displayBytes($filesize)</strong> total
-							</div>
 						</div>
 						<table id="hdfs-dir" class="table table-condensed table-striped table-hover table-bordered">
 							<thead>
