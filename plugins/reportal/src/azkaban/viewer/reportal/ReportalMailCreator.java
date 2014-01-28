@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -34,6 +35,7 @@ import java.util.Set;
 import org.apache.commons.io.IOUtils;
 
 import azkaban.executor.ExecutableFlow;
+import azkaban.executor.ExecutableNode;
 import azkaban.executor.ExecutionOptions;
 import azkaban.executor.mail.DefaultMailCreator;
 import azkaban.executor.mail.MailCreator;
@@ -107,7 +109,7 @@ public class ReportalMailCreator implements MailCreator {
 	}
 
 	private boolean createMessage(Project project, ExecutableFlow flow, EmailMessage message, String urlPrefix, boolean printData) throws Exception {
-		message.println("<html>");
+	  message.println("<html>");
 		message.println("<head></head>");
 		message.println("<body style='font-family: verdana; color: #000000; background-color: #cccccc; padding: 20px;'>");
 		message.println("<div style='background-color: #ffffff; border: 1px solid #aaaaaa; padding: 20px;-webkit-border-radius: 15px; -moz-border-radius: 15px; border-radius: 15px;'>");
@@ -183,10 +185,14 @@ public class ReportalMailCreator implements MailCreator {
 					return this.equals(obj);
 				}
 			});
+			
+			// Get jobs in execution order
+			List<ExecutableNode> jobs = ReportalUtil.sortExecutableNodes(flow.getExecutableNodes());
 
 			File tempFolder = new File(reportalMailDirectory + "/" + flow.getExecutionId());
 			tempFolder.mkdirs();
 
+			// Copy output files from HDFS to local disk, so you can send them as email attachments
 			for (String file : fileList) {
 				String filePath = locationFull + "/" + file;
 				InputStream csvInputStream = null;
@@ -212,7 +218,11 @@ public class ReportalMailCreator implements MailCreator {
 			
 			boolean emptyResults = true;
 
-			for (String file : fileList) {
+			for (i = 0; i < fileList.length; i++) {
+			  String file = fileList[i];
+			  ExecutableNode job = jobs.get(i);
+			  job.getAttempt();
+			  
 				message.println("<div style='margin-top: 10px; margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-weight: bold;'>");
 				message.println(file);
 				message.println("</div>");
@@ -225,7 +235,12 @@ public class ReportalMailCreator implements MailCreator {
 					Scanner rowScanner = new Scanner(csvInputStream);
 					int lineNumber = 0;
 					while (rowScanner.hasNextLine() && lineNumber <= NUM_PREVIEW_ROWS) {
-						emptyResults = false;
+					  // For Hive jobs, the first line is the column names, so we ignore it
+					  // when deciding whether the output is empty or not
+					  if (!job.getType().equals("reportalhive") || lineNumber > 0) {
+					    emptyResults = false;
+					  }
+					  
 						String csvLine = rowScanner.nextLine();
 						String[] data = csvLine.split("\",\"");
 						message.println("<tr>");

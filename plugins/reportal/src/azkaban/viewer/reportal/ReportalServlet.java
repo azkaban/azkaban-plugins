@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -388,37 +387,17 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				// List files
 				else {
 					page.add("view-logs", true);
-					List<ExecutableNode> jobs = exec.getExecutableNodes();
+					List<ExecutableNode> jobLogs = ReportalUtil.sortExecutableNodes(exec.getExecutableNodes());
 					
-					// Add jobs in execution order
-					List<ExecutableNode> logList = new ArrayList<ExecutableNode>();
-					String prevNodeId = null;
 					boolean showDataCollector = hasParam(req, "debug");
-					int numJobs = jobs.size();
-					for (int i = 0; i < numJobs; i++) {
-						for (int j = 0; j < jobs.size(); j++) {
-							ExecutableNode job = jobs.get(j);
-							
-							if (!showDataCollector && job.getId().equals("data-collector")) {
-								jobs.remove(j);
-								break;
-							}
-							
-							Set<String> inNodes = job.getInNodes();
-							String inNodeId = inNodes.size() == 0 ? null : inNodes.iterator().next();
-							if ((inNodeId == prevNodeId) || (inNodeId != null && inNodeId.equals(prevNodeId))) {
-								logList.add(job);
-								jobs.remove(j);
-								prevNodeId = job.getId();
-								break;
-							}
-						}
-					}
+					if (!showDataCollector) {
+					  jobLogs.remove(jobLogs.size() - 1);
+	        }
 					
-					if (logList.size() == 1) {
-						resp.sendRedirect("/reportal?view&logs&id=" + project.getId() + "&execid=" + execId + "&log=" + logList.get(0).getId());
+					if (jobLogs.size() == 1) {
+						resp.sendRedirect("/reportal?view&logs&id=" + project.getId() + "&execid=" + execId + "&log=" + jobLogs.get(0).getId());
 					}
-					page.add("logs", logList);
+					page.add("logs", jobLogs);
 				}
 			}
 			// Show data files

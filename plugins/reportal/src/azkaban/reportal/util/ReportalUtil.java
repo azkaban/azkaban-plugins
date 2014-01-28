@@ -16,11 +16,43 @@
 
 package azkaban.reportal.util;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import azkaban.executor.ExecutableNode;
+
 public class ReportalUtil {
 	public static IStreamProvider getStreamProvider(String fileSystem) {
 		if (fileSystem.equalsIgnoreCase("hdfs")) {
 			return new StreamProviderHDFS();
 		}
 		return new StreamProviderLocal();
+	}
+	
+	/**
+	 * Returns a new list with the nodes sorted in execution order.
+	 * @param nodes
+	 * @return
+	 */
+	public static List<ExecutableNode> sortExecutableNodes(List<ExecutableNode> nodes) {
+	  List<ExecutableNode> sortedNodes = new ArrayList<ExecutableNode>();
+    
+	  String prevNodeId = null;
+    for (int i = 0; i < nodes.size(); i++) {
+      for (int j = 0; j < nodes.size(); j++) {
+        ExecutableNode job = nodes.get(j);
+        
+        Set<String> inNodes = job.getInNodes();
+        String inNodeId = inNodes.size() == 0 ? null : inNodes.iterator().next();
+        if ((inNodeId == prevNodeId) || (inNodeId != null && inNodeId.equals(prevNodeId))) {
+          sortedNodes.add(job);
+          prevNodeId = job.getId();
+          break;
+        }
+      }
+    }
+    
+    return sortedNodes;
 	}
 }
