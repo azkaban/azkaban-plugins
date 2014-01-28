@@ -16,11 +16,44 @@
 
 package azkaban.reportal.util;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import azkaban.executor.ExecutableFlow;
+import azkaban.executor.ExecutableNode;
+
 public class ReportalUtil {
 	public static IStreamProvider getStreamProvider(String fileSystem) {
 		if (fileSystem.equalsIgnoreCase("hdfs")) {
 			return new StreamProviderHDFS();
 		}
 		return new StreamProviderLocal();
+	}
+	
+	/**
+	 * Returns a list of the executable nodes in the specified flow in execution order.
+	 * Assumes that the flow is linear.
+	 * @param nodes
+	 * @return
+	 */
+	public static List<ExecutableNode> sortExecutableNodes(ExecutableFlow flow) {
+	  List<ExecutableNode> sortedNodes = new ArrayList<ExecutableNode>();
+	  
+	  if (flow != null) {
+	    List<String> startNodeIds = flow.getStartNodes();
+	    
+	    String nextNodeId = startNodeIds.isEmpty() ? null : startNodeIds.get(0);
+	    
+	    while (nextNodeId != null) {
+	      ExecutableNode node = flow.getExecutableNode(nextNodeId);
+	      sortedNodes.add(node);
+
+	      Set<String> outNodes = node.getOutNodes();
+	      nextNodeId = outNodes.isEmpty() ? null : outNodes.iterator().next();
+	    }
+	  }
+    
+    return sortedNodes;
 	}
 }
