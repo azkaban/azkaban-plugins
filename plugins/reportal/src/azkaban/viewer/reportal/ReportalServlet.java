@@ -387,7 +387,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				// List files
 				else {
 					page.add("view-logs", true);
-					List<ExecutableNode> jobLogs = ReportalUtil.sortExecutableNodes(exec.getExecutableNodes());
+					List<ExecutableNode> jobLogs = ReportalUtil.sortExecutableNodes(exec);
 					
 					boolean showDataCollector = hasParam(req, "debug");
 					if (!showDataCollector) {

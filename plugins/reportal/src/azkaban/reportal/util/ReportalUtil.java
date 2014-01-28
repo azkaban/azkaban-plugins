@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import azkaban.executor.ExecutableFlow;
 import azkaban.executor.ExecutableNode;
 
 public class ReportalUtil {
@@ -31,27 +32,27 @@ public class ReportalUtil {
 	}
 	
 	/**
-	 * Returns a new list with the nodes sorted in execution order.
+	 * Returns a list of the executable nodes in the specified flow in execution order.
+	 * Assumes that the flow is linear.
 	 * @param nodes
 	 * @return
 	 */
-	public static List<ExecutableNode> sortExecutableNodes(List<ExecutableNode> nodes) {
+	public static List<ExecutableNode> sortExecutableNodes(ExecutableFlow flow) {
 	  List<ExecutableNode> sortedNodes = new ArrayList<ExecutableNode>();
-    
-	  String prevNodeId = null;
-    for (int i = 0; i < nodes.size(); i++) {
-      for (int j = 0; j < nodes.size(); j++) {
-        ExecutableNode job = nodes.get(j);
-        
-        Set<String> inNodes = job.getInNodes();
-        String inNodeId = inNodes.size() == 0 ? null : inNodes.iterator().next();
-        if ((inNodeId == prevNodeId) || (inNodeId != null && inNodeId.equals(prevNodeId))) {
-          sortedNodes.add(job);
-          prevNodeId = job.getId();
-          break;
-        }
-      }
-    }
+	  
+	  if (flow != null) {
+	    List<String> startNodeIds = flow.getStartNodes();
+	    
+	    String nextNodeId = startNodeIds.isEmpty() ? null : startNodeIds.get(0);
+	    
+	    while (nextNodeId != null) {
+	      ExecutableNode node = flow.getExecutableNode(nextNodeId);
+	      sortedNodes.add(node);
+
+	      Set<String> outNodes = node.getOutNodes();
+	      nextNodeId = outNodes.isEmpty() ? null : outNodes.iterator().next();
+	    }
+	  }
     
     return sortedNodes;
 	}

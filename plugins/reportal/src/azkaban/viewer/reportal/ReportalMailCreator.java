@@ -187,7 +187,7 @@ public class ReportalMailCreator implements MailCreator {
 			});
 			
 			// Get jobs in execution order
-			List<ExecutableNode> jobs = ReportalUtil.sortExecutableNodes(flow.getExecutableNodes());
+			List<ExecutableNode> jobs = ReportalUtil.sortExecutableNodes(flow);
 
 			File tempFolder = new File(reportalMailDirectory + "/" + flow.getExecutionId());
 			tempFolder.mkdirs();
@@ -237,7 +237,7 @@ public class ReportalMailCreator implements MailCreator {
 					while (rowScanner.hasNextLine() && lineNumber <= NUM_PREVIEW_ROWS) {
 					  // For Hive jobs, the first line is the column names, so we ignore it
 					  // when deciding whether the output is empty or not
-					  if (!job.getType().equals("reportalhive") || lineNumber > 0) {
+					  if (!job.getType().equals(ReportalType.HiveJob.getJobTypeName()) || lineNumber > 0) {
 					    emptyResults = false;
 					  }
 					  

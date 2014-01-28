@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="plugins/reportal/src"/>
+	<classpathentry kind="src" path="plugins/reportal/unit"/>
 	<classpathentry kind="src" path="plugins/hadoopsecuritymanager/src"/>
 	<classpathentry kind="src" path="plugins/jobtype/src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="plugins/hdfsviewer/extlib/hadoop-core-1.0.4.jar"/>
 	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/avro-1.7.4.jar"/>
