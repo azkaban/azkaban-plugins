@@ -100,7 +100,7 @@ public abstract class ReportalAbstractRunner {
 		Date date = new Date();
 		cal.setTime(date);
 		
-		String timeZone = props.getString("default.timezone.id", "UTC");
+		String timeZone = props.getString("reportal.time.variable.timezone", "UTC");
 		TimeZone.setDefault(TimeZone.getTimeZone(timeZone));
 		
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
