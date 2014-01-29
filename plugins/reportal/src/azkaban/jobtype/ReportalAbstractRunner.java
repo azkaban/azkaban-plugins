@@ -100,10 +100,11 @@ public abstract class ReportalAbstractRunner {
 		Date date = new Date();
 		cal.setTime(date);
 		
+		String timeZone = props.getString("default.timezone.id", "UTC");
+		TimeZone.setDefault(TimeZone.getTimeZone(timeZone));
+		
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-		dateFormat.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
-		SimpleDateFormat hourFormat = new SimpleDateFormat("yyyy-MM-dd-HH");
-		hourFormat.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
+    SimpleDateFormat hourFormat = new SimpleDateFormat("yyyy-MM-dd-HH");
 		
 		variables.put("hive_current_hour", hourFormat.format(cal.getTime()));
 		variables.put("hive_current_day", dateFormat.format(cal.getTime()));
