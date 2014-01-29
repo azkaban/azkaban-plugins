@@ -26,6 +26,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.Map.Entry;
 import java.util.Properties;
 
@@ -94,11 +95,16 @@ public abstract class ReportalAbstractRunner {
 		// Built-in variables
 		variables.put("run_id", execId);
 		variables.put("sys_date", Long.toString(System.currentTimeMillis() / 1000));
-		Date date = new Date();
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-		SimpleDateFormat hourFormat = new SimpleDateFormat("yyyy-MM-dd-HH");
+		
 		Calendar cal = Calendar.getInstance();
+		Date date = new Date();
 		cal.setTime(date);
+		
+		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+		dateFormat.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
+		SimpleDateFormat hourFormat = new SimpleDateFormat("yyyy-MM-dd-HH");
+		hourFormat.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
+		
 		variables.put("hive_current_hour", hourFormat.format(cal.getTime()));
 		variables.put("hive_current_day", dateFormat.format(cal.getTime()));
 		cal.add(Calendar.HOUR, -1);
