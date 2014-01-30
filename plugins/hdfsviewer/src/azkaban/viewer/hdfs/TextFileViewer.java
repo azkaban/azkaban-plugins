@@ -96,4 +96,8 @@ public class TextFileViewer implements HdfsFileViewer {
 			}
 		}
 	}
+	
+  public String getSchema(FileSystem fs, Path path) {
+		return null;
+	}
 }

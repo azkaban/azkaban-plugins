@@ -32,17 +32,16 @@ import org.apache.log4j.Logger;
  * Reads a image file if the file size is not larger than {@value #MAX_IMAGE_FILE_SIZE}.
  * 
  * @author ximeng
- *
  */
 
-public class HdfsImageFileViewer implements HdfsFileViewer {
+public class ImageFileViewer implements HdfsFileViewer {
 
-	private static Logger logger = Logger.getLogger(HdfsImageFileViewer.class);
+	private static Logger logger = Logger.getLogger(ImageFileViewer.class);
 	private static final long MAX_IMAGE_FILE_SIZE = 10485760L;
 
 	private HashSet<String> acceptedSuffix;
 
-	public HdfsImageFileViewer() {
+	public ImageFileViewer() {
 		final String[] imageSuffix = {".jpg", ".jpeg", ".tif", ".tiff", ".png", ".gif", ".bmp", ".svg"};    
 		acceptedSuffix = new HashSet<String>(Arrays.asList(imageSuffix));
 	}
@@ -107,5 +106,9 @@ public class HdfsImageFileViewer implements HdfsFileViewer {
 				inputStream.close();
 			}
 		}
+	}
+	
+  public String getSchema(FileSystem fs, Path path) {
+		return null;
 	}
 }

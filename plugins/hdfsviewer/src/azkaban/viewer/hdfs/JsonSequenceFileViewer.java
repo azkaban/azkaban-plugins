@@ -20,13 +20,16 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.hadoop.io.BytesWritable;
-import azkaban.viewer.hdfs.AzkabanSequenceFileReader;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
 
+import azkaban.viewer.hdfs.AzkabanSequenceFileReader;
+
 import voldemort.serialization.json.JsonTypeSerializer;
 
-public class JsonSequenceFileViewer extends HdfsSequenceFileViewer {
+public class JsonSequenceFileViewer extends SequenceFileViewer {
 
 	private static Logger logger = Logger.getLogger(JsonSequenceFileViewer.class);
 
@@ -85,4 +88,7 @@ public class JsonSequenceFileViewer extends HdfsSequenceFileViewer {
 			return value.toString();
 	}
 
+	public String getSchema(FileSystem fs, Path path) {
+		return null;
+	}
 }

@@ -26,7 +26,7 @@ public interface HdfsFileViewer	{
 
 	public boolean canReadFile(FileSystem fs, Path path);
 
-	public boolean canDisplaySchema(FileSystem fs, Path path);
+	public boolean canReadSchema(FileSystem fs, Path path);
 
 	public void displayFile(
 			FileSystem fs,

@@ -40,11 +40,10 @@ import org.codehaus.jackson.JsonGenerator;
  * This class implements a viewer of avro files
  * 
  * @author lguo
- * 
  */
-public class HdfsAvroFileViewer implements HdfsFileViewer {
+public class AvroFileViewer implements HdfsFileViewer {
 
-	private static Logger logger = Logger.getLogger(HdfsAvroFileViewer.class);
+	private static Logger logger = Logger.getLogger(AvroFileViewer.class);
 	// Will spend 5 seconds trying to pull data and then stop.
 	private static long STOP_TIME = 2000l;
 	

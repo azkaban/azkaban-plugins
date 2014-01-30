@@ -36,6 +36,7 @@ import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 
 import parquet.avro.AvroParquetReader;
+import parquet.avro.AvroSchemaConverter;
 
 /**
  * This class implements a viewer for Parquet files.
@@ -144,4 +145,26 @@ public class ParquetFileViewer implements HdfsFileViewer {
 			parquetReader.close();
 		}
 	}
+
+  @Override
+  public String getSchema(FileSystem fs, Path path) {
+    String schema = null;
+		try {
+			AvroParquetReader<GenericRecord> parquetReader = 
+          new AvroParquetReader<GenericRecord>(path);
+      GenericRecord record = parquetReader.read();
+      if (record == null) {
+        return null;
+      }
+      Schema avroSchema = record.getSchema();
+      AvroSchemaConverter converter = new AvroSchemaConverter();
+      schema = converter.convert(avroSchema).toString();
+    }
+    catch (IOException e) {
+      logger.warn("Cannot get schema for file: " + path.toUri().getPath());
+      return null;
+    }
+
+    return schema;
+  }
 }

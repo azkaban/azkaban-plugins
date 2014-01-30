@@ -90,10 +90,10 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		}
 		
 		defaultViewer = new TextFileViewer();
-		viewers.add(new HdfsAvroFileViewer());
+		viewers.add(new AvroFileViewer());
 		viewers.add(new ParquetFileViewer());
 		viewers.add(new JsonSequenceFileViewer());
-		viewers.add(new HdfsImageFileViewer());
+		viewers.add(new ImageFileViewer());
 		viewers.add(new BsonFileViewer());
 		viewers.add(defaultViewer);
 
@@ -122,12 +122,16 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		return hadoopSecurityManager;
 	}
 
-	private FileSystem getFileSystem(String username) throws HadoopSecurityManagerException {
+	private FileSystem getFileSystem(String username)
+			throws HadoopSecurityManagerException {
 		return hadoopSecurityManager.getFSAsUser(username);
 	}
 	
 	@Override
-	protected void handleGet(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
+	protected void handleGet(
+			HttpServletRequest req, 
+			HttpServletResponse resp, 
+			Session session) throws ServletException, IOException {
 		User user = session.getUser();
 		String username = user.getUserId();
 	
@@ -149,7 +153,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 					handleAjaxAction(fs, username, req, resp, session);
 				}
 				else {
-					handleFSDisplay(fs, username, req, resp, session);
+					handleFsDisplay(fs, username, req, resp, session);
 				}
 			}
 			catch (IOException e) {
@@ -185,7 +189,10 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	}
 
 	@Override
-	protected void handlePost(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
+	protected void handlePost(
+			HttpServletRequest req, 
+			HttpServletResponse resp, 
+			Session session) throws ServletException, IOException {
 		User user = session.getUser();
 		if (!hasParam(req, "action")) {
 			return;
@@ -198,11 +205,14 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			if (hasParam(req, "proxyname")) {
 				String newProxyname = getParam(req, "proxyname");
 							
-				if (user.getUserId().equals(newProxyname) || user.isInGroup(newProxyname) || user.getRoles().contains("admin")) {
+				if (user.getUserId().equals(newProxyname) || 
+						user.isInGroup(newProxyname) || 
+						user.getRoles().contains("admin")) {
 					session.setSessionData(PROXY_USER_SESSION_KEY, newProxyname);
 				}
 				else {
-					results.put("error", "User '" + user.getUserId() + "' cannot proxy as '" + newProxyname + "'");
+					results.put("error", "User '" + user.getUserId() + 
+							"' cannot proxy as '" + newProxyname + "'");
 				}
 			}
 		}
@@ -212,48 +222,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		
 		this.writeJSON(resp, results);
 	}
-	
-	private void handleAjaxAction(
-			FileSystem fs,
-			String username,
-			HttpServletRequest request,
-			HttpServletResponse response,
-			Session session) 
-			throws ServletException, IOException {
-
-		HashMap<String, Object> ret = new HashMap<String, Object>();
-		String ajaxName = getParam(request, "ajax");
-		Path path = null;
-		if (hasParam(request, "path")) {
-			path = new Path(getParam("path"));
-			if (!fs.exists(path)) {
-				ret.put("error", path.toUri().getPath() + " does not exist.");
-			}
-			else if (fs.isFile(path)) {
-				if (ajaxName.equals("fetchschema")) {
-					handleFetchSchema(fs, username, request, response, session);
-				}
-				else if (ajaxName.equals("fetchfile")) {
-					handleFetchFile(fs, username, request, response, session);
-				}
-				else {
-					ret.put("error", "Unknown AJAX action " + ajaxName");
-				}
-			else if (!fs.isFile(path)) {
-				ret.put("error", path.toUri().getPath() + " is not a file.");
-			}
-			else {
-				ret.put("error", path.toUri().getPath() + " is not a file " + 
-						"or directory.");
-			}
-		}
-
-		if (ret != null) {
-			this.writeJSON(response, ret);
-		}
-	}
-
-	private void handleFSDisplay(
+		
+	private void handleFsDisplay(
 			FileSystem fs, 
 			String user, 
 			HttpServletRequest req, 
@@ -280,10 +250,10 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			throw new IllegalArgumentException(path.toUri().getPath() + " does not exist.");
 		}
 		else if (fs.isFile(path)) {
-			displayFile(fs, user, req, resp, session, path);
+			displayFilePage(fs, user, req, resp, session, path);
 		}
 		else if (fs.getFileStatus(path).isDir()) {
-			displayDir(fs, user, req, resp, session, path);
+			displayDirPage(fs, user, req, resp, session, path);
 		}
 		else {
 			throw new IllegalStateException(
@@ -291,8 +261,13 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		}
 	}
 
-	private void displayDir(FileSystem fs, String user, HttpServletRequest req, HttpServletResponse resp,
-			Session session, Path path) throws IOException {
+	private void displayDirPage(
+			FileSystem fs, 
+			String user, 
+			HttpServletRequest req, 
+			HttpServletResponse resp,
+			Session session, 
+			Path path) throws IOException {
 
 		Page page = newPage(req, resp, session, "azkaban/viewer/hdfs/velocity/hdfs-browser.vm");
 		page.add("allowproxy", allowGroupProxy);
@@ -344,7 +319,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		page.render();
 	}
 
-	private void displayFile(
+	private void displayFilePage(
 			FileSystem fs, 
 			String user,
 			HttpServletRequest req, 
@@ -393,14 +368,54 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		}
 		page.render();
 	}
+	
+	private void handleAjaxAction(
+			FileSystem fs,
+			String username,
+			HttpServletRequest request,
+			HttpServletResponse response,
+			Session session) 
+			throws ServletException, IOException {
 
-	private void displayFileSchema(
+		HashMap<String, Object> ret = new HashMap<String, Object>();
+		String ajaxName = getParam(request, "ajax");
+		Path path = null;
+		if (!hasParam(request, "path")) {
+			ret.put("error", "Missing parameter 'path'.");
+			this.writeJSON(response, ret);
+			return;
+		}
+
+		path = new Path(getParam(request, "path"));
+		if (!fs.exists(path)) {
+			ret.put("error", path.toUri().getPath() + " does not exist.");
+			this.writeJSON(response, ret);
+			return;
+		}
+
+		if (ajaxName.equals("fetchschema")) {
+			handleAjaxFetchSchema(fs, request, response, session, path);
+		}
+		else if (ajaxName.equals("fetchfile")) {
+			handleAjaxFetchFile(fs, request, response, session, path);
+		}
+		else {
+			ret.put("error", "Unknown AJAX action " + ajaxName);
+		}
+
+		if (ret != null) {
+			this.writeJSON(response, ret);
+		}
+	}
+
+	private void handleAjaxFetchSchema(
 			FileSystem fs, 
 			HttpServletRequest req, 
 			HttpServletResponse resp, 
 			Session session, 
 			Path path)
 			throws IOException {
+
 		// use registered viewers to show the file content
 		boolean outputed = false;
 		String schema = null;
@@ -413,13 +428,9 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			}
 		}
 		
-		// use default text viewer
-		if (!outputed) {
-			output.write(("Sorry, no viewer available for this file. ").getBytes("UTF-8"));
-		}
 	}
 
-	private void displayFileSample(
+	private void handleAjaxFetchFile(
 			FileSystem fs, 
 			HttpServletRequest req, 
 			HttpServletResponse resp, 
@@ -433,28 +444,22 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		boolean outputed = false;
 		OutputStream output = resp.getOutputStream();
 		
-		try {
-			for (HdfsFileViewer viewer : viewers) {
-				if (viewer.canReadFile(fs, path)) {
-					viewer.displayFile(fs, path, output, startLine, endLine);
-					outputed = true;
-					break; // don't need to try other viewers
-				}
-			}
-			
-			// use default text viewer
-			if (!outputed) {
-				if (defaultViewer.canReadFile(fs, path)) {
-					defaultViewer.displayFile(fs, path, output, startLine, endLine);
-				}
-				else {
-					output.write(("Sorry, no viewer available for this file. ").getBytes("UTF-8"));
-				}
+		for (HdfsFileViewer viewer : viewers) {
+			if (viewer.canReadFile(fs, path)) {
+				viewer.displayFile(fs, path, output, startLine, endLine);
+				outputed = true;
+				break; // don't need to try other viewers
 			}
 		}
-		finally {
-			output.flush();
-			output.close();
+		
+		// use default text viewer
+		if (!outputed) {
+			if (defaultViewer.canReadFile(fs, path)) {
+				defaultViewer.displayFile(fs, path, output, startLine, endLine);
+			}
+			else {
+				output.write(("Sorry, no viewer available for this file. ").getBytes("UTF-8"));
+			}
 		}
 	}
 

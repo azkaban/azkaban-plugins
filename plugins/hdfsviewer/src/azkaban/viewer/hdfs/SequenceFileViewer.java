@@ -24,7 +24,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import azkaban.viewer.hdfs.AzkabanSequenceFileReader;
 
-public abstract class HdfsSequenceFileViewer implements HdfsFileViewer {
+public abstract class SequenceFileViewer implements HdfsFileViewer {
 
 	protected abstract boolean canReadFile(AzkabanSequenceFileReader.Reader reader) throws Exception;
 
