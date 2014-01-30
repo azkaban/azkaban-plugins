@@ -146,25 +146,25 @@ public class ParquetFileViewer implements HdfsFileViewer {
 		}
 	}
 
-  @Override
-  public String getSchema(FileSystem fs, Path path) {
-    String schema = null;
+	@Override
+	public String getSchema(FileSystem fs, Path path) {
+		String schema = null;
 		try {
 			AvroParquetReader<GenericRecord> parquetReader = 
-          new AvroParquetReader<GenericRecord>(path);
-      GenericRecord record = parquetReader.read();
-      if (record == null) {
-        return null;
-      }
-      Schema avroSchema = record.getSchema();
-      AvroSchemaConverter converter = new AvroSchemaConverter();
-      schema = converter.convert(avroSchema).toString();
-    }
-    catch (IOException e) {
-      logger.warn("Cannot get schema for file: " + path.toUri().getPath());
-      return null;
-    }
+					new AvroParquetReader<GenericRecord>(path);
+			GenericRecord record = parquetReader.read();
+			if (record == null) {
+				return null;
+			}
+			Schema avroSchema = record.getSchema();
+			AvroSchemaConverter converter = new AvroSchemaConverter();
+			schema = converter.convert(avroSchema).toString();
+		}
+		catch (IOException e) {
+			logger.warn("Cannot get schema for file: " + path.toUri().getPath());
+			return null;
+		}
 
-    return schema;
-  }
+		return schema;
+	}
 }
