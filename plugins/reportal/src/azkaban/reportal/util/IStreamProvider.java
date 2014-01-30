@@ -25,6 +25,22 @@ public interface IStreamProvider {
 	public void setUser(String user);
 	
 	public String[] getFileList(String pathString) throws Exception;
+	
+	/**
+	 * Returns a list of all files in a directory with a modification time
+	 * less than the specified time
+	 * @param pathString
+	 * @param thresholdTime   
+	 * @return
+	 */
+	public String[] getOldFiles(String pathString, long thresholdTime) throws Exception;
+	
+	/**
+	 * Deletes the file denoted by the specified path. If the file is a directory,
+	 * this method recursively deletes the files in the directory and the directory itself.
+	 * @param path
+	 */
+	public void deleteFile(String pathString) throws Exception;
 
 	public InputStream getFileInputStream(String pathString) throws Exception;
 

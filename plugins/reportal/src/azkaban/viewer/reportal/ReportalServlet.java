@@ -17,7 +17,6 @@
 package azkaban.viewer.reportal;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,14 +29,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
@@ -101,12 +98,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		reportalStorageUser = props.getString("reportal.storage.user", "reportal");
 		itemsPerPage = props.getInt("reportal.items_per_page", 20);
 		showNav = props.getBoolean("reportal.show.navigation", false);
+		
 		reportalMailDirectory = new File(props.getString("reportal.mail.temp.directory", "/tmp/reportal"));
 		reportalMailDirectory.mkdirs();
 		ReportalMailCreator.reportalMailDirectory = reportalMailDirectory;
 		ReportalMailCreator.outputLocation = props.getString("reportal.output.location", "/tmp/reportal");
 		ReportalMailCreator.outputFileSystem = props.getString("reportal.output.filesystem", "local");
 		ReportalMailCreator.reportalStorageUser = reportalStorageUser;
+		
 		webResourcesFolder = new File(new File(props.getSource()).getParentFile().getParentFile(), "web");
 		webResourcesFolder.mkdirs();
 		setResourceDirectory(webResourcesFolder);
@@ -117,8 +116,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		server = (AzkabanWebServer)getApplication();
-		cleanerThread = new CleanerThread();
-		cleanerThread.start();
 		ReportalMailCreator.azkaban = server;
 
 		shouldProxy = props.getBoolean("azkaban.should.proxy", false);
@@ -130,6 +127,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			e.printStackTrace();
 			throw new RuntimeException("Failed to get hadoop security manager!" + e.getCause());
 		}
+		
+		cleanerThread = new CleanerThread();
+    cleanerThread.start();
 	}
 
 	private HadoopSecurityManager loadHadoopSecurityManager(Props props, Logger logger) throws RuntimeException {
@@ -387,37 +387,17 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				// List files
 				else {
 					page.add("view-logs", true);
-					List<ExecutableNode> jobs = exec.getExecutableNodes();
+					List<ExecutableNode> jobLogs = ReportalUtil.sortExecutableNodes(exec);
 					
-					// Add jobs in execution order
-					List<ExecutableNode> logList = new ArrayList<ExecutableNode>();
-					String prevNodeId = null;
 					boolean showDataCollector = hasParam(req, "debug");
-					int numJobs = jobs.size();
-					for (int i = 0; i < numJobs; i++) {
-						for (int j = 0; j < jobs.size(); j++) {
-							ExecutableNode job = jobs.get(j);
-							
-							if (!showDataCollector && job.getId().equals("data-collector")) {
-								jobs.remove(j);
-								break;
-							}
-							
-							Set<String> inNodes = job.getInNodes();
-							String inNodeId = inNodes.size() == 0 ? null : inNodes.iterator().next();
-							if ((inNodeId == prevNodeId) || (inNodeId != null && inNodeId.equals(prevNodeId))) {
-								logList.add(job);
-								jobs.remove(j);
-								prevNodeId = job.getId();
-								break;
-							}
-						}
-					}
+					if (!showDataCollector) {
+					  jobLogs.remove(jobLogs.size() - 1);
+	        }
 					
-					if (logList.size() == 1) {
-						resp.sendRedirect("/reportal?view&logs&id=" + project.getId() + "&execid=" + execId + "&log=" + logList.get(0).getId());
+					if (jobLogs.size() == 1) {
+						resp.sendRedirect("/reportal?view&logs&id=" + project.getId() + "&execid=" + execId + "&log=" + jobLogs.get(0).getId());
 					}
-					page.add("logs", logList);
+					page.add("logs", jobLogs);
 				}
 			}
 			// Show data files
@@ -700,6 +680,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private String validateAndSaveReport(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
 
 		ProjectManager projectManager = server.getProjectManager();
+		User user = session.getUser();
+		
 		Page page = newPage(req, resp, session, "azkaban/viewer/reportal/reportaleditpage.vm");
 		preparePage(page, session);
 		page.add("ReportalHelper", ReportalHelper.class);
@@ -769,7 +751,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			if (type == null && typeError == null) {
 				typeError = query.type;
 			}
-			if (!type.checkPermission(session.getUser())) {
+			if (!type.checkPermission(user)) {
 				typePermissionError = query.type;
 			}
 
@@ -872,7 +854,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		else {
 			// Creation mode, create project
 			try {
-				User user = session.getUser();
 				project = ReportalHelper.createReportalProject(server, report.title, report.description, user);
 				report.reportalUser = user.getUserId();
 				report.ownerEmail = user.getEmail();
@@ -903,14 +884,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		report.updatePermissions();
 
 		try {
-			report.createZipAndUpload(projectManager, session.getUser(), reportalStorageUser);
+			report.createZipAndUpload(projectManager, user, reportalStorageUser);
 		} catch (Exception e) {
 			e.printStackTrace();
 			page.add("errorMsg", "Error while creating Azkaban jobs. " + e.getMessage());
 			page.render();
 			if (!isEdit) {
 				try {
-					projectManager.removeProject(project, session.getUser());
+					projectManager.removeProject(project, user);
 				} catch (ProjectManagerException e1) {
 					e1.printStackTrace();
 				}
@@ -928,7 +909,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		// Create/Save schedule
 		ScheduleManager scheduleManager = server.getScheduleManager();
 		try {
-			report.updateSchedules(report, scheduleManager, session.getUser(), flow);
+			report.updateSchedules(report, scheduleManager, user, flow);
 		} catch (ScheduleManagerException e2) {
 			e2.printStackTrace();
 			page.add("errorMsg", e2.getMessage());
@@ -941,6 +922,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		try {
 			ReportalHelper.updateProjectNotifications(project, projectManager);
 			projectManager.updateProjectSetting(project);
+			projectManager.updateProjectDescription(project, report.description, user);
 			projectManager.updateFlow(project, flow);
 		} catch (ProjectManagerException e) {
 			e.printStackTrace();
@@ -948,7 +930,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			page.render();
 			if (!isEdit) {
 				try {
-					projectManager.removeProject(project, session.getUser());
+					projectManager.removeProject(project, user);
 				} catch (ProjectManagerException e1) {
 					e1.printStackTrace();
 				}
@@ -1026,12 +1008,13 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	}
 
 	private class CleanerThread extends Thread {
-		// Every hour, clean execution dir.
-		private static final long EXECUTION_DIR_CLEAN_INTERVAL_MS = 60 * 60 * 1000;
+		// Every day, clean Reportal execution output directory.
+		private static final long EXECUTION_DIR_CLEAN_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 		private boolean shutdown = false;
-		private long lastExecutionDirCleanTime = -1;
-		private long executionDirRetention = 1 * 24 * 60 * 60 * 1000;
+		
+		// Retain executions for 14 days.
+		private static final long EXECUTION_DIR_RETENTION = 14 * 24 * 60 * 60 * 1000;
 
 		public CleanerThread() {
 			this.setName("Reportal-Cleaner-Thread");
@@ -1046,36 +1029,47 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		public void run() {
 			while (!shutdown) {
 				synchronized (this) {
-					long currentTime = System.currentTimeMillis();
-					if (currentTime - EXECUTION_DIR_CLEAN_INTERVAL_MS > lastExecutionDirCleanTime) {
-						logger.info("Cleaning old execution dirs");
-						cleanOldReportalDirs();
-						lastExecutionDirCleanTime = currentTime;
-					}
+					logger.info("Cleaning old execution dirs");
+					cleanOldReportalDirs();
+				}
+				
+				try {
+				  Thread.sleep(EXECUTION_DIR_CLEAN_INTERVAL_MS);
+				} catch (InterruptedException e) {
+				  logger.error("CleanerThread's sleep was interrupted.", e);
 				}
 			}
 		}
 
 		private void cleanOldReportalDirs() {
-			File dir = reportalMailDirectory;
+		  IStreamProvider streamProvider = ReportalUtil.getStreamProvider(ReportalMailCreator.outputFileSystem);
 
-			final long pastTimeThreshold = System.currentTimeMillis() - executionDirRetention;
-			File[] executionDirs = dir.listFiles(new FileFilter() {
-				@Override
-				public boolean accept(File path) {
-					if (path.isDirectory() && path.lastModified() < pastTimeThreshold) {
-						return true;
-					}
-					return false;
-				}
-			});
+      if (streamProvider instanceof StreamProviderHDFS) {
+        StreamProviderHDFS hdfsStreamProvider = (StreamProviderHDFS) streamProvider;
+        hdfsStreamProvider.setHadoopSecurityManager(hadoopSecurityManager);
+        hdfsStreamProvider.setUser(reportalStorageUser);
+      }
 
-			for (File exDir: executionDirs) {
-				try {
-					FileUtils.deleteDirectory(exDir);
-				} catch (IOException e) {
-					logger.error("Error cleaning execution dir " + exDir.getPath(), e);
-				}
+			final long pastTimeThreshold = System.currentTimeMillis() - EXECUTION_DIR_RETENTION;
+			
+			String[] oldFiles = null;
+			try {
+			  oldFiles = streamProvider.getOldFiles(ReportalMailCreator.outputLocation, pastTimeThreshold);
+			} catch (Exception e) {
+			  logger.error("Error getting old files from " + ReportalMailCreator.outputLocation + " on "
+			               + ReportalMailCreator.outputFileSystem + " file system.", e);
+			}
+
+			if (oldFiles != null) {
+  			for (String file: oldFiles) {
+  			  String filePath = ReportalMailCreator.outputLocation + "/" + file;
+  				try {
+  					streamProvider.deleteFile(filePath);
+  				} catch (Exception e) {
+  					logger.error("Error deleting file " + filePath + " from " + ReportalMailCreator.outputFileSystem
+  					             + " file system.", e);
+  				}
+  			}
 			}
 		}
 	}
