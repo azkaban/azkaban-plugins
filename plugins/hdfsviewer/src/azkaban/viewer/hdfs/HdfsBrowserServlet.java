@@ -487,8 +487,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			Path path)
 			throws IOException, ServletException {
 
-		int startLine = getIntParam(req, "start_line", DEFAULT_START_LINE);
-		int endLine = getIntParam(req, "end_line", DEFAULT_END_LINE);
+		int startLine = getIntParam(req, "startLine", DEFAULT_START_LINE);
+		int endLine = getIntParam(req, "endLine", DEFAULT_END_LINE);
 
 		if (endLine < startLine) {
 			ret.put("error", "Invalid range: endLine < startLine.");
