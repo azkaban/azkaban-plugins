@@ -72,7 +72,7 @@
           <div class="panel panel-default" id="all-hdfsbrowser-content">
             <div class="panel-heading">
     #set ($size = $paths.size() - 1)
-              <a class="firstCrumb" href="${context}/hdfs/">/</a>#if($size >= 0)#foreach($i in [0 ..$size])<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span>/</span>#end #end
+              <a class="firstCrumb" href="${context}/hdfs/"> / </a>#if($size >= 0)#foreach($i in [0 ..$size])<a href="$context/hdfs${paths.get($i)}">${segments.get($i)}</a><span> / </span>#end #end
               <div class="pull-right">
                 <strong>$subdirs.size()</strong> items <strong>$utils.displayBytes($dirsize)</strong> total
               </div>
