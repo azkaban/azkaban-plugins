@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -366,12 +367,29 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			page.add("homedir", homeDirString.substring(fs.getUri().toString().length()));
 		}
 
+		boolean hasSchema = false;
+		int viewerId = -1;
+		for (int i = 0; i < viewers.size(); ++i) {
+			HdfsFileViewer viewer = viewers.get(i);
+			Set<Capability> capabilities = viewer.getCapabilities(fs, path);
+			if (capabilities.contains(Capability.READ)) {
+				if (capabilities.contains(Capability.SCHEMA)) {
+					hasSchema = true;
+				}
+				viewerId = i;
+				break;
+			}
+		}
+
+		page.add("viewerId", viewerId);
+		page.add("hasSchema", hasSchema);
+
 		try {
 			FileStatus status = fs.getFileStatus(path);
 			page.add("status", status);
 		}
 		catch (AccessControlException e) {
-			page.add("error_message", "Permission denied. User annot read this file.");
+			page.add("error_message", "Permission denied. User cannot read this file.");
 		}
 		catch (IOException e) {
 			page.add("error_message", "Error: " + e.getMessage());

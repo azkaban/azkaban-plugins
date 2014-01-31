@@ -28,7 +28,8 @@
       var timezone = "${timezone}";
       var homeDir = "${homedir}";
       var path = "${path}";
-      var schemaAvailable = "${schemaAvailable}";
+      var hasSchema = ${hasSchema};
+      var viewerId = ${viewerId};
     </script>
 #if ($allowproxy)
   #parse ("azkaban/viewer/hdfs/velocity/hdfs-proxy-js.vm")
@@ -38,7 +39,7 @@
   </head>
   <body>
 
-#set ($current_page="$viewerName")
+#set ($current_page = "$viewerName")
 #parse ("azkaban/webapp/servlet/velocity/nav.vm")
 
 #if ($errorMsg)
@@ -115,14 +116,14 @@
       <div class="row">
         <div class="col-xs-12">
           <ul class="nav nav-tabs" id="file-tabs">
-  #if ($schemaAvailable)
+  #if ($hasSchema)
             <li class="active"><a href="#schema" data-toggle="tab">Schema</a></li>
   #end
             <li><a href="#contents" data-toggle="tab">Contents</a></li>
           </ul>
 
           <div class="tab-content">
-  #if ($schemaAvailable)
+  #if ($hasSchema)
             <div class="tab-pane active" id="schema">
               <pre id="file-schema"></pre>
             </div>
