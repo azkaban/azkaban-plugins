@@ -14,12 +14,13 @@ azkaban.HdfsSchemaModel = Backbone.Model.extend({
       'path': path,
       'viewerId': viewerId
     };
+    var model = this;
     var successHandler = function(data) {
       if (data.error != null) {
-        this.set('error', data.error);
+        model.set('error', data.error);
       }
       if (data.schema != null) {
-        this.set('schema', data.schema);
+        model.set('schema', data.schema);
       }
     };
     $.get(requestURL, requestData, successHandler, 'json');
@@ -71,12 +72,13 @@ azkaban.HdfsFileModel = Backbone.Model.extend({
       'startLine': 0,
       'endLine': 50
     };
+    var model = this;
     var successHandler = function(data) {
       if (data.error != null) {
-        this.set('error', data.error);
+        model.set('error', data.error);
       }
       if (data.chunk != null) {
-        this.set('contents', data.chunk);
+        model.set('contents', data.chunk);
       }
     };
     $.get(requestURL, requestData, successHandler, 'json');

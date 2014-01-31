@@ -371,6 +371,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		page.add("paths", paths);
 		page.add("segments", segments);
 		page.add("user", user);
+    page.add("path", path.toString());
 		
 		String homeDirString = fs.getHomeDirectory().toString();
 		if (homeDirString.startsWith("file:")) {

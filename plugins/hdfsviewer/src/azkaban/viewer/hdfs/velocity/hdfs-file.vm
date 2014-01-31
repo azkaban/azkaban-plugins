@@ -89,21 +89,21 @@
               <tbody>
                 <tr>
                   <td class="property-key">Permission</td>
-                  <td>${status.permission}</td>
+                  <td class="property-value-half">${status.permission}</td>
                   <td class="property-key">Owner/Group</td>
-                  <td>${status.owner}/${status.group}</td>
+                  <td class="property-value-half">${status.owner}/${status.group}</td>
                 </tr>
                 <tr>
                   <td class="property-key">Size</td>
-                  <td>$utils.displayBytes(${status.len})</td>
+                  <td class="property-value-half">$utils.displayBytes(${status.len})</td>
                   <td class="property-key">Block Size</td>
-                  <td>$utils.displayBytes(${status.getBlockSize()})</td>
+                  <td class="property-value-half">$utils.displayBytes(${status.getBlockSize()})</td>
                 </tr>
                 <tr>
                   <td class="property-key">Reps</td>
-                  <td>${status.getReplication()}</td>
+                  <td class="property-value-half">${status.getReplication()}</td>
                   <td class="property-key">Modified Date</td>
-                  <td>$utils.formatDateTime(${status.modificationTime})</td>
+                  <td class="property-value-half">$utils.formatDateTime(${status.modificationTime})</td>
                 </tr>
               </tbody>
             </table>
