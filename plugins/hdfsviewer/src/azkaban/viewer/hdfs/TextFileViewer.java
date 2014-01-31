@@ -22,13 +22,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.HashSet;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
 
-public class TextFileViewer implements HdfsFileViewer {
+public class TextFileViewer extends HdfsFileViewer {
 
 	private static Logger logger = Logger.getLogger(TextFileViewer.class);
 	private HashSet<String> acceptedSuffix = new HashSet<String>();
@@ -43,13 +45,8 @@ public class TextFileViewer implements HdfsFileViewer {
 		acceptedSuffix.add(".log");
 	}
 
-	public boolean canReadFile(FileSystem fs, Path path) {
-		return true;
-	}
-
-	@Override
-	public boolean canReadSchema(FileSystem fs, Path path) {
-		return false;
+	public Set<Capability> getCapabilities(FileSystem fs, Path path) {
+		return EnumSet.of(Capability.READ);
 	}
 
 	public void displayFile(FileSystem fs,
@@ -95,9 +92,5 @@ public class TextFileViewer implements HdfsFileViewer {
 				inputStream.close();
 			}
 		}
-	}
-	
-  public String getSchema(FileSystem fs, Path path) {
-		return null;
 	}
 }

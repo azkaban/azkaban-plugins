@@ -16,6 +16,8 @@
 
 package azkaban.viewer.hdfs;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,14 +45,14 @@ import parquet.avro.AvroSchemaConverter;
  *
  * @author David Z. Chen (dchen@linkedin.com)
  */
-public class ParquetFileViewer implements HdfsFileViewer {
+public class ParquetFileViewer extends HdfsFileViewer {
 	private static Logger logger = Logger.getLogger(ParquetFileViewer.class);
 
 	// Will spend 5 seconds trying to pull data and then stop.
 	final private static long STOP_TIME = 2000l;
 
 	@Override
-	public boolean canReadFile(FileSystem fs, Path path) {
+	public Set<Capability> getCapabilities(FileSystem fs, Path path) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Parquet file path: " + path.toUri().getPath());
 		}
@@ -64,7 +66,7 @@ public class ParquetFileViewer implements HdfsFileViewer {
 				logger.debug(path.toUri().getPath() + " is not a Parquet file.");
 				logger.debug("Error in opening Parquet file: " + e.getLocalizedMessage());
 			}
-			return false;
+			return EnumSet.noneOf(Capability.class);
 		}
 		finally {
 			try {
@@ -76,12 +78,7 @@ public class ParquetFileViewer implements HdfsFileViewer {
 				logger.error(e);
 			}
 		}
-		return true;
-	}
-
-	@Override
-	public boolean canReadSchema(FileSystem fs, Path path) {
-		return canReadFile(fs, path);
+		return EnumSet.of(Capability.READ, Capability.SCHEMA);
 	}
 
 	@Override

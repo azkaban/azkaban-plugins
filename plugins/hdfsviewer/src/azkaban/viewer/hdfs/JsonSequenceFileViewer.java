@@ -16,6 +16,8 @@
 
 package azkaban.viewer.hdfs;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -33,18 +35,21 @@ public class JsonSequenceFileViewer extends SequenceFileViewer {
 
 	private static Logger logger = Logger.getLogger(JsonSequenceFileViewer.class);
 
-	public boolean canReadFile(AzkabanSequenceFileReader.Reader reader)  {
+	public Set<Capability> getCapabilities(AzkabanSequenceFileReader.Reader reader)  {
 		Text keySchema = null;
 		Text valueSchema = null;
 		try {
 			keySchema = reader.getMetadata().get(new Text("key.schema"));
 			valueSchema = reader.getMetadata().get(new Text("value.schema"));
 		}
-		catch(Exception e) {
+		catch (Exception e) {
 			logger.error("can't get schema. may not be json file");
 		}
 
-		return keySchema != null && valueSchema != null;
+		if (keySchema != null && valueSchema != null) {
+			return EnumSet.of(Capability.READ);
+		}
+		return EnumSet.noneOf(Capability.class);
 	}
 
 	public void displaySequenceFile(AzkabanSequenceFileReader.Reader reader,
@@ -52,7 +57,7 @@ public class JsonSequenceFileViewer extends SequenceFileViewer {
 			int startLine,
 			int endLine) throws IOException {
 
-		if(logger.isDebugEnabled()) {
+		if (logger.isDebugEnabled()) {
 			logger.debug("display json file");
 		}
 
@@ -65,14 +70,16 @@ public class JsonSequenceFileViewer extends SequenceFileViewer {
 		JsonTypeSerializer valueSerializer = new JsonTypeSerializer(valueSchema.toString());
 
 		// skip lines before the start line
-		for(int i = 1; i < startLine; i++)
+		for (int i = 1; i < startLine; i++) {
 			reader.next(keyWritable, valueWritable);
+		}
 
 		// now actually output lines
-		for(int i = startLine; i <= endLine; i++) {
+		for (int i = startLine; i <= endLine; i++) {
 			boolean readSomething = reader.next(keyWritable, valueWritable);
-			if(!readSomething)
+			if (!readSomething) {
 				break;
+			}
 			output.write(safeToString(keySerializer.toObject(keyWritable.getBytes())));
 			output.write("\t=>\t");
 			output.write(safeToString(valueSerializer.toObject(valueWritable.getBytes())));
@@ -82,13 +89,11 @@ public class JsonSequenceFileViewer extends SequenceFileViewer {
 	}
 
 	private String safeToString(Object value) {
-		if(value == null)
+		if (value == null) {
 			return "null";
-		else
+		}
+		else {
 			return value.toString();
-	}
-
-	public String getSchema(FileSystem fs, Path path) {
-		return null;
+		}
 	}
 }

@@ -28,6 +28,7 @@
       var timezone = "${timezone}";
       var homeDir = "${homedir}";
       var path = "${path}";
+      var schemaAvailable = "${schemaAvailable}";
     </script>
 #if ($allowproxy)
   #parse ("azkaban/viewer/hdfs/velocity/hdfs-proxy-js.vm")
@@ -114,18 +115,26 @@
       <div class="row">
         <div class="col-xs-12">
           <ul class="nav nav-tabs" id="file-tabs">
+  #if ($schemaAvailable)
             <li class="active"><a href="#schema" data-toggle="tab">Schema</a></li>
+  #end
             <li><a href="#contents" data-toggle="tab">Contents</a></li>
           </ul>
 
           <div class="tab-content">
+  #if ($schemaAvailable)
             <div class="tab-pane active" id="schema">
-              Schema
+              <pre id="file-schema"></pre>
             </div>
 
-            <div class="tab-pane active" id="contents">
-              Contents
+            <div class="tab-pane" id="contents">
+              <pre id="file-contents"></pre>
             </div>
+  #else
+            <div class="tab-pane active" id="contents">
+              <pre id="file-contents"></pre>
+            </div>
+  #end
           </div>
         </div>
       </div>

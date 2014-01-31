@@ -16,6 +16,8 @@
 
 package azkaban.viewer.hdfs;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,24 +33,24 @@ import org.apache.avro.io.JsonEncoder;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
+
 import org.codehaus.jackson.JsonEncoding;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
-
 
 /**
  * This class implements a viewer of avro files
  * 
  * @author lguo
  */
-public class AvroFileViewer implements HdfsFileViewer {
+public class AvroFileViewer extends HdfsFileViewer {
 
 	private static Logger logger = Logger.getLogger(AvroFileViewer.class);
 	// Will spend 5 seconds trying to pull data and then stop.
 	private static long STOP_TIME = 2000l;
 	
 	@Override
-	public boolean canReadFile(FileSystem fs, Path path) {
+	public Set<Capability> getCapabilities(FileSystem fs, Path path) {
 		if (logger.isDebugEnabled())
 			logger.debug("path:" + path.toUri().getPath());
 
@@ -56,14 +58,16 @@ public class AvroFileViewer implements HdfsFileViewer {
 		try {
 			avroDataStream = getAvroDataStream(fs, path);
 			Schema schema = avroDataStream.getSchema();
-			return schema != null;
+			return (schema != null)
+					? EnumSet.of(Capability.READ, Capability.SCHEMA)
+					: EnumSet.noneOf(Capability.class);
 		}
 		catch (IOException e) {
 			if (logger.isDebugEnabled()) {
 				logger.debug(path.toUri().getPath() + " is not an avro file.");
 				logger.debug("Error in getting avro schema: " + e.getLocalizedMessage());
 			}
-			return false;
+			return EnumSet.noneOf(Capability.class);
 		}
 		finally {
 			try {
@@ -77,11 +81,6 @@ public class AvroFileViewer implements HdfsFileViewer {
 		}
 	}
 
-	@Override
-	public boolean canReadSchema(FileSystem fs, Path path) {
-		return canReadFile(fs, path);
-	}
-	
 	@Override
 	public String getSchema(FileSystem fs, Path path) {
 		if (logger.isDebugEnabled())

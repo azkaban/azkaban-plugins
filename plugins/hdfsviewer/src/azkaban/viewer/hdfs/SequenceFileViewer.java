@@ -16,6 +16,8 @@
 
 package azkaban.viewer.hdfs;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -24,29 +26,34 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import azkaban.viewer.hdfs.AzkabanSequenceFileReader;
 
-public abstract class SequenceFileViewer implements HdfsFileViewer {
+public abstract class SequenceFileViewer extends HdfsFileViewer {
 
-	protected abstract boolean canReadFile(AzkabanSequenceFileReader.Reader reader) throws Exception;
+	protected abstract Set<Capability> getCapabilities(
+			AzkabanSequenceFileReader.Reader reader) throws Exception;
 
-	protected abstract void displaySequenceFile(AzkabanSequenceFileReader.Reader reader,
+	protected abstract void displaySequenceFile(
+			AzkabanSequenceFileReader.Reader reader,
 			PrintWriter output,
 			int startLine,
 			int endLine) throws IOException;
 
-	public boolean canReadFile(FileSystem fs, Path file) {
-		boolean result = false;
+	public Set<Capability> getCapabilites(FileSystem fs, Path file) {
+		Set<Capability> result = EnumSet.noneOf(Capability.class);
 		AzkabanSequenceFileReader.Reader reader = null;
+
 		try {
 			reader = new AzkabanSequenceFileReader.Reader(fs, file, new Configuration());
-			result = canReadFile(reader);
-		} catch(Exception e) {
-			return false;
+			result = getCapabilities(reader);
+		} 
+		catch (Exception e) {
+			return EnumSet.noneOf(Capability.class);
 		}
 		finally {
 			if (reader != null) {
 				try {
 					reader.close();
-				} catch (IOException e) {
+				}
+				catch (IOException e) {
 				}
 			}
 		}
@@ -54,25 +61,24 @@ public abstract class SequenceFileViewer implements HdfsFileViewer {
 		return result;
 	}
 
-	public boolean canReadSchema(FileSystem fs, Path file) {
-		return false;
-	}
-
 	public void displayFile(FileSystem fs,
 			Path file,
 			OutputStream outputStream,
 			int startLine,
 			int endLine) throws IOException {
+
 		AzkabanSequenceFileReader.Reader reader = null;
 		PrintWriter writer = new PrintWriter(outputStream);
 		try {
 			reader = new AzkabanSequenceFileReader.Reader(fs, file, new Configuration());
 			displaySequenceFile(reader, writer, startLine, endLine);
-		} catch(IOException e) {
+		}
+		catch (IOException e) {
 			writer.write("Error opening sequence file " + e);
 			throw e;
-		} finally {
-			if(reader != null) {
+		}
+		finally {
+			if (reader != null) {
 				reader.close();
 			}
 		}
