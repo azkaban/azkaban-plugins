@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.apache.velocity.tools.generic.EscapeTool;
@@ -430,7 +431,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 							String[] data = csvLine.split("\",\"");
 							ArrayList<String> line = new ArrayList<String>();
 							for (String item: data) {
-								line.add(item.replace("\"", ""));
+							  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
+							  line.add(column);
 							}
 							lines.add(line);
 							lineNumber++;
