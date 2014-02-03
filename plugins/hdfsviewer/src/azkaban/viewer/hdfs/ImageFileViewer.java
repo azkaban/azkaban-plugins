@@ -64,10 +64,10 @@ public class ImageFileViewer extends HdfsFileViewer {
 				len = fs.getFileStatus(path).getLen();
 			}
 			catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return EnumSet.noneOf(Capability.class);
 			}
+
 			if (len <= MAX_IMAGE_FILE_SIZE) {
 				return EnumSet.of(Capability.READ);
 			}

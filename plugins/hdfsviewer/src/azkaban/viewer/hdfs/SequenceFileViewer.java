@@ -54,6 +54,7 @@ public abstract class SequenceFileViewer extends HdfsFileViewer {
 					reader.close();
 				}
 				catch (IOException e) {
+					e.printStackTrace();
 				}
 			}
 		}
