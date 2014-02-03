@@ -33,6 +33,7 @@ import java.util.Scanner;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import azkaban.executor.ExecutableFlow;
 import azkaban.executor.ExecutableNode;
@@ -245,7 +246,8 @@ public class ReportalMailCreator implements MailCreator {
 						String[] data = csvLine.split("\",\"");
 						message.println("<tr>");
 						for (String item : data) {
-							message.println("<td>" + item.replace("\"", "") + "</td>");
+						  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
+						  message.println("<td>" + column + "</td>");
 						}
 						message.println("</tr>");
 						if (lineNumber == NUM_PREVIEW_ROWS && rowScanner.hasNextLine()) {
