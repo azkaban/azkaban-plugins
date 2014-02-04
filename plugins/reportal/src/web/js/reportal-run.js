@@ -14,22 +14,31 @@
  * the License.
  */
 
+// Sends a POST request to the Reportal servlet that starts an execution of a report.
+function runReport(event, buttonId, isTestRun) {
+	event.preventDefault();
+	$.ajax({
+		url: contextURL + "/reportal?ajax=run" + (isTestRun ? "&testRun" : ""),
+		type: "POST",
+		data: $("form").serialize(),
+		dataType: "json"
+	}).done(function(data) {
+		if (data.result == "success") {
+			displaySuccess(data.message + " Redirecting in 5 seconds");
+			setTimeout(function(){window.location.href = data.redirect;}, 5000);
+		}
+		else {
+			displayError(data.error);
+		}
+	});
+}
+
 $(document).ready(function () {
 	$("#run-button").click(function(event) {
-		event.preventDefault();
-		$.ajax({
-			url: contextURL + "/reportal?ajax=run",
-			type: "POST",
-			data: $("form").serialize(),
-			dataType: "json"
-		}).done(function(data) {
-			if(data.result == "success") {
-				displaySuccess(data.message + " Redirecting in 5 seconds");
-				setTimeout(function(){window.location.href = data.redirect;}, 5000);
-			}
-			else{
-				displayError(data.error);
-			}
-		});
+		runReport(event, "#run-button", false);
+	});
+
+	$("#test-run-button").click(function(event) {
+		runReport(event, "#test-run-button", true);
 	});
 });

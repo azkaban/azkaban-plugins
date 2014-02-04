@@ -944,6 +944,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	}
 
 	private void handleRunReportalWithVariables(HttpServletRequest req, HashMap<String, Object> ret, Session session) throws ServletException, IOException {
+		boolean isTestRun = hasParam(req, "testRun");
+	  
 		int id = getIntParam(req, "id");
 		ProjectManager projectManager = server.getProjectManager();
 		Project project = projectManager.getProject(id);
@@ -983,9 +985,17 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		
 		// Add the execution user's email to the list of success and failure emails.
 		String email = user.getEmail();
+		
 		if (email != null && !email.isEmpty()) {
-			options.getSuccessEmails().add(email);
-			options.getFailureEmails().add(email);
+			if (isTestRun) { // Only email the executor
+				List<String> emails = new ArrayList<String>();
+				emails.add(email);
+				options.setSuccessEmails(emails);
+				options.setFailureEmails(emails);
+			} else {
+				options.getSuccessEmails().add(email);
+				options.getFailureEmails().add(email);
+			}
 		}
 		
 		options.getFlowParameters().put("reportal.title", report.title);

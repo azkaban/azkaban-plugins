@@ -87,6 +87,7 @@
 	#end
 						<div class="form-actions">
 							<input id="run-button" type="submit" class="btn btn-primary" value="Run">
+							<input id="test-run-button" type="submit" class="btn btn-info" value="Test Run (only email executor)">
 							<a href="${context}/reportal" class="btn">Cancel</a>
 						</div>
 					<form>
