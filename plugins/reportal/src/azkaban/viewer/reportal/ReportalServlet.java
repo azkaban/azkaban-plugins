@@ -17,7 +17,6 @@
 package azkaban.viewer.reportal;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -250,24 +249,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				}
 			}
 		}
-		// Set graph
-		else if (ajaxName.equals("graph")) {
-			if (reportal.getAccessViewers().size() > 0 && !project.hasPermission(user, Type.READ)) {
-				ret.put("error", "You do not have permissions to view this reportal.");
-			}
-			else {
-				String hash = getParam(req, "hash");
-				project.getMetadata().put("graphHash", hash);
-				try {
-					server.getProjectManager().updateProjectSetting(project);
-					ret.put("result", "success");
-					ret.put("message", "Default graph saved.");
-				} catch (ProjectManagerException e) {
-					e.printStackTrace();
-					ret.put("error", "Error saving graph. " + e.getMessage());
-				}
-			}
-		}
 		// Get a portion of logs
 		else if (ajaxName.equals("log")) {
 			int execId = getIntParam(req, "execId");
@@ -393,7 +374,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					boolean showDataCollector = hasParam(req, "debug");
 					if (!showDataCollector) {
 					  jobLogs.remove(jobLogs.size() - 1);
-	        }
+	        		}
 					
 					if (jobLogs.size() == 1) {
 						resp.sendRedirect("/reportal?view&logs&id=" + project.getId() + "&execid=" + execId + "&log=" + jobLogs.get(0).getId());
@@ -417,34 +398,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				}
 
 				try {
-					// Preview file
-					if (hasParam(req, "preview")) {
-						page.add("view-preview", true);
-						String fileName = getParam(req, "preview");
-						String filePath = locationFull + "/" + fileName;
-						InputStream csvInputStream = streamProvider.getFileInputStream(filePath);
-						Scanner rowScanner = new Scanner(csvInputStream);
-						ArrayList<Object> lines = new ArrayList<Object>();
-						int lineNumber = 0;
-						while (rowScanner.hasNextLine() && lineNumber < 100) {
-							String csvLine = rowScanner.nextLine();
-							String[] data = csvLine.split("\",\"");
-							ArrayList<String> line = new ArrayList<String>();
-							for (String item: data) {
-							  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
-							  line.add(column);
-							}
-							lines.add(line);
-							lineNumber++;
-						}
-						rowScanner.close();
-						page.add("preview", lines);
-						Object graphHash = project.getMetadata().get("graphHash");
-						if (graphHash != null) {
-							page.add("graphHash", graphHash);
-						}
-					}
-					else if (hasParam(req, "download")) {
+					if (hasParam(req, "download")) {
 						String fileName = getParam(req, "download");
 						String filePath = locationFull + "/" + fileName;
 						InputStream csvInputStream = null;
@@ -461,18 +415,52 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 						}
 						return;
 					}
-					// List files
+					// Show file previews
 					else {
-						page.add("view-files", true);
-						try {
+						page.add("view-preview", true);
+						
+						try {							
 							String[] fileList = streamProvider.getFileList(locationFull);
-							String[] dataList = ReportalHelper.filterCSVFile(fileList);
-							Arrays.sort(dataList);
-							if (dataList.length > 0) {
-								page.add("files", dataList);
+							fileList = ReportalHelper.filterCSVFile(fileList);
+							Arrays.sort(fileList);
+							
+							List<Object> files = new ArrayList<Object>();
+							for (String fileName : fileList) {
+								Map<String, Object> file = new HashMap<String, Object>();
+								file.put("name", fileName);
+								
+								String filePath = locationFull + "/" + fileName;
+								InputStream csvInputStream = streamProvider.getFileInputStream(filePath);
+								Scanner rowScanner = new Scanner(csvInputStream);
+								
+								List<Object> lines = new ArrayList<Object>();
+								int lineNumber = 0;
+								while (rowScanner.hasNextLine() && lineNumber < ReportalMailCreator.NUM_PREVIEW_ROWS) {
+									String csvLine = rowScanner.nextLine();
+									String[] data = csvLine.split("\",\"");
+									List<String> line = new ArrayList<String>();
+									for (String item: data) {
+									  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
+									  line.add(column);
+									}
+									lines.add(line);
+									lineNumber++;
+								}
+								
+								file.put("content", lines);
+								
+								if (rowScanner.hasNextLine()) {
+									file.put("hasMore", true);
+								}
+								
+								rowScanner.close();
+								
+								files.add(file);
 							}
-						} catch (FileNotFoundException e) {
-
+							
+							page.add("files", files);
+						} catch (Exception e) {
+							logger.debug("Error encountered while processing files in " + locationFull, e);
 						}
 					}
 				} finally {

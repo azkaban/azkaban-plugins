@@ -116,32 +116,6 @@
 						</tbody>
 					</table>
 #end
-#if($view-files)
-					<table id="report-results" border="0" cellspacing="0" cellpadding="0" class="table table-bordered table-striped">
-						<thead>
-							<tr>
-								<th>File</th>
-								<th>Preview</th>
-								<th>Download</th>
-							</tr>
-						</thead>
-						<tbody>
-	#if($files)
-		#foreach($file in $files)
-							<tr>
-								<td>${file}</td>
-								<td><a href="${context}/reportal?view&amp;id=${project.id}&amp;execid=${execid}&amp;preview=${file}">Preview</a></td>
-								<td><a download="${file}" href="${context}/reportal?view&amp;id=${project.id}&amp;execid=${execid}&amp;download=${file}">Download</a></td>
-							</tr>
-		#end
-	#else
-							<tr>
-								<td colspan="3" style="text-align:center;">No data available.</td>
-							</tr>
-	#end
-						</tbody>
-					</table>
-#end
 #if($view-logs)
 					<table id="report-results" border="0" cellspacing="0" cellpadding="0" class="table table-bordered table-striped">
 						<thead>
@@ -186,64 +160,33 @@
 					</div>
 #end
 #if($view-preview)
-	#if($preview)
-					<div id="buttons" style="text-align: center;">
-						<span class="btn btn-info graph graph-lines">Lines Graph</span>
-						<span class="btn btn-info graph graph-bar">Bar Graph</span>
-						<span class="btn btn-info graph graph-pie">Pie Graph</span>
-						<span class="btn btn-info bar-graph vertical-series">Vertical Series</span>
-						<span class="btn btn-info bar-graph vertical-stacked">Vertical Stacked</span>
-						<span class="btn btn-info bar-graph horizontal-series">Horizontal Series</span>
-						<span class="btn btn-info bar-graph horizontal-stacked">Horizontal Stacked</span>
-						<span class="btn btn-warning save-graph">Set as default</span>
+	#if($files)
+		#foreach($file in $files)
+			#set($fileName = $file.get("name"))
+					<div>
+						<a download="$fileName" href="$context/reportal?view&amp;id=${project.id}&amp;execid=$execid&amp;download=$fileName"><b>$fileName</b></a>
 					</div>
-					<div>&nbsp;</div>
-					<div id="report-chart-container" style="display:none; width: 300px; height: 200px; padding: 5px; margin: 5px auto 0px auto; resize:both; overflow:auto; border:1px solid #666">
-						<div id="report-chart" style="width: 100%; height: 100%;"></div>
-					</div>
-					<div>&nbsp;</div>
+
 					<table id="report-results" border="0" cellspacing="0" cellpadding="0" class="table table-bordered table-striped">
-						<thead>
-		#foreach($line in $preview)
-			#set($lineNum = $velocityCount - 1)
-			#if($lineNum == 0)
-							<tr>
+			#foreach($line in $file.get("content"))
 				#foreach($item in $line)
-								<th class="column-header">$item<span class="btn btn-info column-title">Select label</span><span class="btn btn-success column-data">Select data</span></th>
+						<tr>
+							<td>$item</td>
+						</tr>
 				#end
-							</tr>
-						</thead>
-						<tbody>
-			#else
-							<tr>
-				#foreach($item in $line)
-								<td>$item</td>
-				#end
-							</tr>
 			#end
-		#end
-						</tbody>
+
+			#if($file.get("hasMore"))
+				#set($numColumns = $file.get("content").get(0).length)
+						<tr>
+							<td colspan="$numColumns">...</td>
+						</tr>
+			#end
 					</table>
-					<script>
-					var projectId = ${project.id};
-		#if($graphHash)
-					if(!location.hash) {
-						location.hash = "${graphHash}";
-					}
 		#end
-					var original = [
-		#foreach($line in $preview)
-						[#foreach($item in $line)"$item", #end],
-		#end
-					];
-					</script>
+	#else
+					<div style="text-align:center;">No data available.</div>
 	#end
-					<script type="text/javascript" src="${context}/reportal/js/raphael/raphael.js"></script>
-					<script type="text/javascript" src="${context}/reportal/js/raphael/g.raphael-min.js"></script>
-					<script type="text/javascript" src="${context}/reportal/js/raphael/g.pie-min.js"></script>
-					<script type="text/javascript" src="${context}/reportal/js/raphael/g.line-min.js"></script>
-					<script type="text/javascript" src="${context}/reportal/js/raphael/g.bar-min.js"></script>
-					<script type="text/javascript" src="${context}/reportal/js/reportal-data-preview.js"></script>
 #end
 				</div>
 			</div>
