@@ -16,12 +16,15 @@
 
 package azkaban.viewer.hdfs;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+
 import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
 import org.bson.BasicBSONDecoder;
@@ -34,7 +37,7 @@ import com.mongodb.util.JSON;
  * @author adilaijaz
  * 
  */
-public final class BsonFileViewer implements HdfsFileViewer {
+public final class BsonFileViewer extends HdfsFileViewer {
 
 	/**
 	 * The maximum time spent, in milliseconds, while reading records from the file.
@@ -42,12 +45,21 @@ public final class BsonFileViewer implements HdfsFileViewer {
 	private static long STOP_TIME = 2000l;
 
 	@Override
-	public boolean canReadFile(FileSystem fs, Path path) {
-		return path.getName().endsWith(".bson");
+	public Set<Capability> getCapabilities(FileSystem fs, Path path) {
+		if (path.getName().endsWith(".bson")) {
+			return EnumSet.of(Capability.READ);
+		}
+		return EnumSet.noneOf(Capability.class);
 	}
 
 	@Override
-	public void displayFile(FileSystem fs, Path path, OutputStream outStream, int startLine, int endLine) throws IOException {
+	public void displayFile(
+			FileSystem fs, 
+			Path path, 
+			OutputStream outStream, 
+			int startLine, 
+			int endLine) throws IOException {
+
 		FSDataInputStream in = null;
 		try {
 			in = fs.open(path, 16 * 1024 * 1024);
@@ -80,15 +92,15 @@ public final class BsonFileViewer implements HdfsFileViewer {
 				JSON.serialize(value, bldr);
 				outStream.write(bldr.toString().getBytes("UTF-8"));
 			}
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			outStream.write(("Error in display avro file: " + e.getLocalizedMessage()).getBytes("UTF-8"));
-		} finally {
+		}
+		finally {
 			if (in != null) {
 				in.close();
 			}
-
 			outStream.flush();
 		}
 	}
-
 }
