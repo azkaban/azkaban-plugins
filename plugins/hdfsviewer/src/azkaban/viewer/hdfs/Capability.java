@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 LinkedIn Corp.
+ * Copyright 2014 LinkedIn Corp.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,28 +16,8 @@
 
 package	azkaban.viewer.hdfs;
 
-import java.util.EnumSet;
-import java.util.Set;
-import java.io.IOException;
-import java.io.OutputStream;
-
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-
-public abstract class HdfsFileViewer {
-
-	public Set<Capability> getCapabilities(FileSystem fs, Path path) {
-		return EnumSet.noneOf(Capability.class);
-	}
-
-	public abstract void displayFile(
-			FileSystem fs,
-			Path path,
-			OutputStream outStream,
-			int startLine,
-			int endLine) throws IOException;
-
-	public String getSchema(FileSystem fs, Path path) {
-		return null;
-	}
+public enum Capability {
+	READ, 
+	SCHEMA
 }
+

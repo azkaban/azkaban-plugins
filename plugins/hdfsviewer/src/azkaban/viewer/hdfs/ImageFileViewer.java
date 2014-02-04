@@ -21,6 +21,8 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -32,44 +34,46 @@ import org.apache.log4j.Logger;
  * Reads a image file if the file size is not larger than {@value #MAX_IMAGE_FILE_SIZE}.
  * 
  * @author ximeng
- *
  */
 
-public class HdfsImageFileViewer implements HdfsFileViewer {
+public class ImageFileViewer extends HdfsFileViewer {
 
-	private static Logger logger = Logger.getLogger(HdfsImageFileViewer.class);
+	private static Logger logger = Logger.getLogger(ImageFileViewer.class);
 	private static final long MAX_IMAGE_FILE_SIZE = 10485760L;
 
 	private HashSet<String> acceptedSuffix;
 
-	public HdfsImageFileViewer() {
-		final String[] imageSuffix = {".jpg", ".jpeg", ".tif", ".tiff", ".png", ".gif", ".bmp", ".svg"};    
+	public ImageFileViewer() {
+		final String[] imageSuffix = {
+			".jpg", ".jpeg", ".tif", ".tiff", ".png", ".gif", ".bmp", ".svg"
+		};
 		acceptedSuffix = new HashSet<String>(Arrays.asList(imageSuffix));
 	}
 
-	public boolean canReadFile(FileSystem fs, Path path) {
+	public Set<Capability> getCapabilities(FileSystem fs, Path path) {
 		String fileName = path.getName();
 		int pos = fileName.lastIndexOf('.');
-		if(pos >= 0)
-		{
-			String suffix = fileName.substring(pos).toLowerCase();
-			if(acceptedSuffix.contains(suffix))
-			{
-				long len = 0;
-				try {
-					len = fs.getFileStatus(path).getLen();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-					return false;
-				}
-				if(len <= MAX_IMAGE_FILE_SIZE)
-				{
-					return true;
-				}
+		if (pos < 0) {
+			return EnumSet.noneOf(Capability.class);
+		}
+
+		String suffix = fileName.substring(pos).toLowerCase();
+		if (acceptedSuffix.contains(suffix)) {
+			long len = 0;
+			try {
+				len = fs.getFileStatus(path).getLen();
+			}
+			catch (IOException e) {
+				e.printStackTrace();
+				return EnumSet.noneOf(Capability.class);
+			}
+
+			if (len <= MAX_IMAGE_FILE_SIZE) {
+				return EnumSet.of(Capability.READ);
 			}
 		}
-		return false;
+
+		return EnumSet.noneOf(Capability.class);
 	}
 
 	public void displayFile(FileSystem fs,
@@ -78,7 +82,7 @@ public class HdfsImageFileViewer implements HdfsFileViewer {
 			int startLine,
 			int endLine) throws IOException {
 
-		if(logger.isDebugEnabled()) {
+		if (logger.isDebugEnabled()) {
 			logger.debug("read in image file");
 		}
 
@@ -89,15 +93,16 @@ public class HdfsImageFileViewer implements HdfsFileViewer {
 			long outputSize = 0L;
 			byte[] buffer = new byte[16384];
 			int len;
-			while((len = inputStream.read(buffer)) != -1)
-			{
+			while ((len = inputStream.read(buffer)) != -1) {
 				output.write(buffer, 0, len);
 				outputSize += len;
-				if (outputSize > MAX_IMAGE_FILE_SIZE)
+				if (outputSize > MAX_IMAGE_FILE_SIZE) {
 					break;
+				}
 			}
 			output.flush();
-		} finally {
+		}
+		finally {
 			if (inputStream != null) {
 				inputStream.close();
 			}
