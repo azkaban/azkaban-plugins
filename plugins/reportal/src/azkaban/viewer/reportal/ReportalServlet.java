@@ -419,44 +419,12 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					else {
 						page.add("view-preview", true);
 						
-						try {							
+						try {
 							String[] fileList = streamProvider.getFileList(locationFull);
 							fileList = ReportalHelper.filterCSVFile(fileList);
 							Arrays.sort(fileList);
 							
-							List<Object> files = new ArrayList<Object>();
-							for (String fileName : fileList) {
-								Map<String, Object> file = new HashMap<String, Object>();
-								file.put("name", fileName);
-								
-								String filePath = locationFull + "/" + fileName;
-								InputStream csvInputStream = streamProvider.getFileInputStream(filePath);
-								Scanner rowScanner = new Scanner(csvInputStream);
-								
-								List<Object> lines = new ArrayList<Object>();
-								int lineNumber = 0;
-								while (rowScanner.hasNextLine() && lineNumber < ReportalMailCreator.NUM_PREVIEW_ROWS) {
-									String csvLine = rowScanner.nextLine();
-									String[] data = csvLine.split("\",\"");
-									List<String> line = new ArrayList<String>();
-									for (String item: data) {
-									  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
-									  line.add(column);
-									}
-									lines.add(line);
-									lineNumber++;
-								}
-								
-								file.put("content", lines);
-								
-								if (rowScanner.hasNextLine()) {
-									file.put("hasMore", true);
-								}
-								
-								rowScanner.close();
-								
-								files.add(file);
-							}
+							List<Object> files = getFilePreviews(fileList, locationFull, streamProvider);
 							
 							page.add("files", files);
 						} catch (Exception e) {
@@ -515,6 +483,57 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		page.render();
+	}
+	
+	/**
+	 * Returns a list of file Objects that contain a "name" property with the file name,
+	 * a "content" property with the lines in the file, and a "hasMore" property if the
+	 * file contains more than NUM_PREVIEW_ROWS lines.
+	 * @param fileList
+	 * @param locationFull
+	 * @param streamProvider
+	 * @return
+	 */
+	private List<Object> getFilePreviews(String[] fileList, String locationFull, IStreamProvider streamProvider) {
+		List<Object> files = new ArrayList<Object>();
+		try {
+			for (String fileName : fileList) {
+				Map<String, Object> file = new HashMap<String, Object>();
+				file.put("name", fileName);
+				
+				String filePath = locationFull + "/" + fileName;
+				InputStream csvInputStream = streamProvider.getFileInputStream(filePath);
+				Scanner rowScanner = new Scanner(csvInputStream);
+				
+				List<Object> lines = new ArrayList<Object>();
+				int lineNumber = 0;
+				while (rowScanner.hasNextLine() && lineNumber < ReportalMailCreator.NUM_PREVIEW_ROWS) {
+					String csvLine = rowScanner.nextLine();
+					String[] data = csvLine.split("\",\"");
+					List<String> line = new ArrayList<String>();
+					for (String item: data) {
+					  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
+					  line.add(column);
+					}
+					lines.add(line);
+					lineNumber++;
+				}
+				
+				file.put("content", lines);
+				
+				if (rowScanner.hasNextLine()) {
+					file.put("hasMore", true);
+				}
+				
+				rowScanner.close();
+				
+				files.add(file);
+			}
+		} catch (Exception e) {
+			logger.debug("Error encountered while processing files in " + locationFull, e);
+		}
+		
+		return files;
 	}
 
 	private void handleRunReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
@@ -644,18 +663,18 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	}
 	
 	private void handleSaveReportal(HttpServletRequest req, HttpServletResponse resp, Session session) throws ServletException, IOException {
-	  String projectId = validateAndSaveReport(req, resp, session); 
+		String projectId = validateAndSaveReport(req, resp, session); 
 	  
-    if (projectId != null) {
-      this.setSuccessMessageInCookie(resp, "Report Saved.");
+		if (projectId != null) {
+			this.setSuccessMessageInCookie(resp, "Report Saved.");
       
-      String submitType = getParam(req, "submit");
-      if (submitType.equals("Save")) {
-        resp.sendRedirect(req.getRequestURI() + "?edit&id=" + projectId);
-      } else {
-        resp.sendRedirect(req.getRequestURI() + "?run&id=" + projectId);
-      }
-    }
+			String submitType = getParam(req, "submit");
+			if (submitType.equals("Save")) {
+				resp.sendRedirect(req.getRequestURI() + "?edit&id=" + projectId);
+			} else {
+				resp.sendRedirect(req.getRequestURI() + "?run&id=" + projectId);
+			}
+		}
 	}
 
   /**
@@ -833,7 +852,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			page.render();
 			return null;
 		}
-
+		
 		// Attempt to get a project object
 		if (isEdit) {
 			// Editing mode, load project
