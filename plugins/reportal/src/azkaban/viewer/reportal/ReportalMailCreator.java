@@ -110,7 +110,7 @@ public class ReportalMailCreator implements MailCreator {
 	}
 
 	private boolean createMessage(Project project, ExecutableFlow flow, EmailMessage message, String urlPrefix, boolean printData) throws Exception {
-	  message.println("<html>");
+		message.println("<html>");
 		message.println("<head></head>");
 		message.println("<body style='font-family: verdana; color: #000000; background-color: #cccccc; padding: 20px;'>");
 		message.println("<div style='background-color: #ffffff; border: 1px solid #aaaaaa; padding: 20px;-webkit-border-radius: 15px; -moz-border-radius: 15px; border-radius: 15px;'>");
