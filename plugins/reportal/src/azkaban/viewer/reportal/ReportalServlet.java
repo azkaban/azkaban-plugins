@@ -858,8 +858,12 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		UserManager userManager = getApplication().getUserManager();
 		String[] accessLists = new String[] { report.accessViewer, report.accessExecutor, report.accessOwner };
 		for (String accessList : accessLists) {
-			accessList = accessList == null ? null : accessList.trim();
-			if (accessList != null && !accessList.isEmpty()) {
+			if (accessList == null) {
+				continue;
+			}
+			
+			accessList = accessList.trim();
+			if (!accessList.isEmpty()) {
 				String[] users = accessList.split(Reportal.ACCESS_LIST_SPLIT_REGEX);
 				for (String accessUser : users) {
 					if (!userManager.validateUser(accessUser)) {
