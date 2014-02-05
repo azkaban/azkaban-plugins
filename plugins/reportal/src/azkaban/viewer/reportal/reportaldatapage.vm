@@ -177,7 +177,7 @@
 			#end
 
 			#if($file.get("hasMore"))
-				#set($numColumns = $file.get("content").get(0).length)
+				#set($numColumns = $file.get("content").get(0).size())
 						<tr>
 							<td colspan="$numColumns">...</td>
 						</tr>
