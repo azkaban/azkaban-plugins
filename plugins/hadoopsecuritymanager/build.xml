@@ -10,8 +10,8 @@
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
 	<property name="java.src.dir" value="${basedir}/src" />
-	<!--property name="conf.dir" value="${basedir}/conf" /-->
 	<property name="azkaban-hadoopsecuritymanager-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
+	<property name="version.file" value="${base.dir}/dist/package.version" />
 	<property file="build.properties" />
 
 	<property environment="env" />
@@ -39,7 +39,7 @@
 		<delete dir="${dist.packages.dir}" />
 	</target>
 
-	<target name="build" description="Compile main source tree java files">
+	<target name="build" depends="clean" description="Compile main source tree java files">
 		<delete dir="${dist.classes.dir}" />
 		<mkdir dir="${dist.classes.dir}" />
 		
@@ -72,6 +72,8 @@
 				<exclude name="azkaban*.jar"/>
 			</fileset>
 		</copy>
+	 	<!-- Copy build version file -->
+	 	<copy file="${version.file}" todir="${dist.packages.dir}" />
 
         <!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">

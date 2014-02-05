@@ -17,11 +17,11 @@
 	
 	<property name="azkaban-hdfs-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="azkaban-hdfs-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
-
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
-	
+	<property name="version.file" value="${base.dir}/dist/package.version" />
+		
 	<property environment="env" />
-
+	
 	<path id="main.classpath">
 		<fileset dir="${ext.lib.dir}">
 			<include name="*.jar" />
@@ -54,7 +54,7 @@
 		</delete>
 	</target>
 
-	<target name="build" description="Compile main source tree java files">
+	<target name="build" depends="clean" description="Compile main source tree java files">
 	
 		<!-- copy the latest securitymanager jar -->
 		<delete>
@@ -127,6 +127,9 @@
 			<fileset dir="${plugin.ext.lib.dir}" >
 			</fileset>
 		</copy>
+		
+		<!-- Copy build version file -->
+		<copy file="${version.file}" todir="${dist.packages.dir}" />
 		
 		<!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">

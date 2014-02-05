@@ -1,0 +1,176 @@
+<?xml version="1.0"?>
+
+<project name="azkaban" basedir="." default="package">
+	<property file="build.properties" />
+	<property name="base.dir" value="${basedir}" />
+	<property name="dist.dir" value="${basedir}/dist" />
+	<property name="dist.jar.dir" value="${basedir}/dist/jars" />
+	<property name="dist.classes.dir" value="${basedir}/dist/classes" />
+	<property name="dist.packages.dir" value="${basedir}/dist/packages" />
+	<property name="version.file" value="${basedir}/dist/package.version" />
+	<property environment="env" />
+
+	<path id="main.classpath">
+		<fileset dir="${extlib.dir}">
+			<include name="*.jar" />
+		</fileset>
+
+		<pathelement path="${dist.classes.dir}" />
+	</path>
+
+	<!-- set the build number based on environment variable, otherwise blank -->
+	<property environment="env" description="System environment variables (including those set by Hudson)" />
+
+	<target name="clean" description="Delete generated files.">
+		<echo message="Deleting generated files in dist" />
+		<delete dir="${dist.jar.dir}" />
+		<delete dir="${dist.classes.dir}" />
+	</target>
+	
+	<available file=".git" type="dir" property="git.present"/>
+	<target name="git.info" description="Store git info" if="git.present">
+	    <exec executable="git" outputproperty="git.commithash" failifexecutionfails="false" errorproperty="">
+	        <arg value="rev-parse"/>
+	    	<arg value="HEAD"/>
+	    </exec>
+		
+	    <exec executable="git" outputproperty="git.repo" failifexecutionfails="false" errorproperty="">
+	        <arg value="config"/>
+	    	<arg value="--get"/>
+	    	<arg value="remote.origin.url"/>
+	    </exec>
+		
+	    <exec executable="git" outputproperty="git.tag" failifexecutionfails="false" errorproperty="">
+	        <arg value="describe"/>
+	    	<arg value="--abbrev=0"/>
+	    	<arg value="--tags"/>
+	    </exec>
+	    <condition property="git.tag" value="${git.tag}" else="${version}">
+	        <and>
+	            <isset property="git.tag"/>
+	            <length string="${git.tag}" trim="yes" length="0" when="greater"/>
+	        </and>
+	    </condition>
+		<echo>Git tag found to be ${git.commithash} with tag ${git.tag} from repo ${git.repo}</echo>
+	</target>
+	
+	<target name="repo.file" depends="git.info" description="Create a file to reference the git commit">
+		<delete file="azkaban.version" />
+		
+		<tstamp>
+			<format timezone="UTC" property="current.time" pattern="yyyy-MM-dd hh:mm zzz"/>
+		</tstamp>
+		
+		<!-- Need to remove indents of the echo contents, because echo into file includes the tabs -->
+<echo file="${version.file}">
+${git.tag}
+${git.commithash}
+${git.repo}
+${current.time}
+</echo>
+	</target>
+	
+	<target name="package-dep" depends="clean,repo.file" description="Create azkaban jar">
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/hadoopsecuritymanager" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/hdfsviewer" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/jobtype" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/javaviewer" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/pigvisualizer" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/reportal" includes="build.xml" />
+		</subant>
+	</target>
+	
+	<target name="package-dep-yarn" depends="clean,repo.file" description="Create azkaban jar">
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/hadoopsecuritymanager-yarn" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/hdfsviewer" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/jobtype" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/javaviewer" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/pigvisualizer" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/reportal" includes="build.xml" />
+		</subant>
+	</target>
+	
+	<target name="package" depends="package-dep" description="Creates plugin packages">
+		<delete dir="${dist.packages.dir}" />
+		<mkdir dir="${dist.packages.dir}" />
+		
+		<!-- Copy Azkaban jars and libs-->
+		<copy todir="${dist.packages.dir}/viewer/hdfs" >
+			<fileset dir="${dist.dir}/hdfsviewer/packages" >
+				<exclude name="azkaban-hdfs-viewer-*.gz"/>
+			</fileset>
+		</copy>
+		
+		<copy todir="${dist.packages.dir}/jobtypes" >
+			<fileset dir="${dist.dir}/jobtype/packages" >
+				<exclude name="azkaban-jobtype-*.gz"/>
+			</fileset>
+		</copy>
+		
+		<copy todir="${dist.packages.dir}/viewer/javaviewer" >
+			<fileset dir="${dist.dir}/jobtype/packages" >
+				<exclude name="azkaban-javaviewer-*.gz"/>
+			</fileset>
+		</copy>
+		
+		<tar destfile="${dist.packages.dir}/${name}-${git.tag}.tar.gz" compression="gzip" longfile="gnu">
+			<tarfileset dir="${dist.packages.dir}" prefix="" filemode="755" />
+		</tar>
+	</target>
+	
+	<target name="package-yarn" depends="package-dep-yarn" description="Creates plugin packages">
+		<delete dir="${dist.packages.dir}" />
+		<mkdir dir="${dist.packages.dir}" />
+		
+		<!-- Copy Azkaban jars and libs-->
+		<copy todir="${dist.packages.dir}/viewer/hdfs" >
+			<fileset dir="${dist.dir}/hdfsviewer/packages" >
+				<exclude name="azkaban-hdfs-viewer-*.gz"/>
+			</fileset>
+		</copy>
+		
+		<copy todir="${dist.packages.dir}/jobtypes" >
+			<fileset dir="${dist.dir}/jobtype/packages" >
+				<exclude name="azkaban-jobtype-*.gz"/>
+			</fileset>
+		</copy>
+		
+		<tar destfile="${dist.packages.dir}/${name}-${git.tag}.tar.gz" compression="gzip" longfile="gnu">
+			<tarfileset dir="${dist.packages.dir}" prefix="" filemode="755" />
+		</tar>
+	</target>
+</project>
