@@ -10,7 +10,6 @@
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
 	<property name="java.src.dir" value="${basedir}/src" />
-	<!--property name="conf.dir" value="${basedir}/conf" /-->
 	<property name="azkaban-hadoopsecuritymanager-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="version.file" value="${base.dir}/dist/package.version" />
 	<property file="build.properties" />
