@@ -169,11 +169,11 @@
 
 					<table id="report-results" border="0" cellspacing="0" cellpadding="0" class="table table-bordered table-striped">
 			#foreach($line in $file.get("content"))
-				#foreach($item in $line)
 						<tr>
+				#foreach($item in $line)
 							<td>$item</td>
-						</tr>
 				#end
+						</tr>
 			#end
 
 			#if($file.get("hasMore"))
