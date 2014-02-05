@@ -62,6 +62,7 @@ import azkaban.scheduler.ScheduleManagerException;
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.user.Permission.Type;
 import azkaban.user.User;
+import azkaban.user.UserManager;
 import azkaban.utils.FileIOUtils.LogData;
 import azkaban.utils.Props;
 import azkaban.webapp.AzkabanWebServer;
@@ -852,6 +853,22 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			page.render();
 			return null;
 		}
+		
+		// Validate access users
+        UserManager userManager = getApplication().getUserManager();
+        String[] accessLists = new String[] { report.accessViewer, report.accessExecutor, report.accessOwner };
+        for (String accessList : accessLists) {
+        	if (!accessList.trim().isEmpty()) {
+	            String[] users = accessList.trim().split(Reportal.ACCESS_LIST_SPLIT_REGEX);
+	            for (String accessUser : users) {
+	                if (!userManager.validateUser(accessUser)) {
+	                	page.add("errorMsg", "User " + accessUser + " in access list is invalid.");
+	                	page.render();
+	                	return null;
+	                }
+	            }
+        	}
+        }
 		
 		// Attempt to get a project object
 		if (isEdit) {

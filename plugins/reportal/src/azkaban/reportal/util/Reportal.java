@@ -51,7 +51,7 @@ import azkaban.viewer.reportal.ReportalMailCreator;
 import azkaban.viewer.reportal.ReportalTypeManager;
 
 public class Reportal {
-	private static final String ACCESS_LIST_SPLIT_REGEX = "\\s*,\\s*|\\s*;\\s*|\\s+";
+	public static final String ACCESS_LIST_SPLIT_REGEX = "\\s*,\\s*|\\s*;\\s*|\\s+";
 
 	public String reportalUser;
 	public String ownerEmail;
