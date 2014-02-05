@@ -855,20 +855,21 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 		
 		// Validate access users
-        UserManager userManager = getApplication().getUserManager();
-        String[] accessLists = new String[] { report.accessViewer, report.accessExecutor, report.accessOwner };
-        for (String accessList : accessLists) {
-        	if (!accessList.trim().isEmpty()) {
-	            String[] users = accessList.trim().split(Reportal.ACCESS_LIST_SPLIT_REGEX);
-	            for (String accessUser : users) {
-	                if (!userManager.validateUser(accessUser)) {
-	                	page.add("errorMsg", "User " + accessUser + " in access list is invalid.");
-	                	page.render();
-	                	return null;
-	                }
-	            }
-        	}
-        }
+		UserManager userManager = getApplication().getUserManager();
+		String[] accessLists = new String[] { report.accessViewer, report.accessExecutor, report.accessOwner };
+		for (String accessList : accessLists) {
+			accessList = accessList == null ? null : accessList.trim();
+			if (accessList != null && !accessList.isEmpty()) {
+				String[] users = accessList.split(Reportal.ACCESS_LIST_SPLIT_REGEX);
+				for (String accessUser : users) {
+					if (!userManager.validateUser(accessUser)) {
+						page.add("errorMsg", "User " + accessUser + " in access list is invalid.");
+						page.render();
+						return null;
+					}
+				}
+			}
+		}
 		
 		// Attempt to get a project object
 		if (isEdit) {
