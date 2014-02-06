@@ -1,5 +1,3 @@
-package azkaban.jobtype;
-
 /*
  * Copyright 2012 LinkedIn, Inc
  *
@@ -15,6 +13,8 @@ package azkaban.jobtype;
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package azkaban.jobtype;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.cli.CliDriver;
 import org.apache.hadoop.security.UserGroupInformation;
