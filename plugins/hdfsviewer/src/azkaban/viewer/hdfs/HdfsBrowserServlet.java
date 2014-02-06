@@ -17,7 +17,7 @@
 package azkaban.viewer.hdfs;
 
 import java.io.IOException;
-import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -191,7 +191,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			}
 		}
 		catch (Exception e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 			Page page = newPage(req, resp, session, 
 					"azkaban/viewer/hdfs/velocity/hdfs-browser.vm");
 			page.add("error_message", "Error: " + e.getMessage());
@@ -439,7 +439,11 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			handleAjaxFetchSchema(fs, request, ret, session, path);
 		}
 		else if (ajaxName.equals("fetchfile")) {
-			handleAjaxFetchFile(fs, request, ret, session, path);
+			// Note: fetchFile writes directly to the output stream. Thus, we need
+			// to make sure we do not write to the output stream once this call
+			// returns.
+			ret = null;
+			handleAjaxFetchFile(fs, request, response, session, path);
 		}
 		else {
 			ret.put("error", "Unknown AJAX action " + ajaxName);
@@ -483,28 +487,28 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	private void handleAjaxFetchFile(
 			FileSystem fs, 
 			HttpServletRequest req, 
-			Map<String, Object> ret,
+			HttpServletResponse resp,
 			Session session, 
 			Path path)
 			throws IOException, ServletException {
 
 		int startLine = getIntParam(req, "startLine", DEFAULT_START_LINE);
 		int endLine = getIntParam(req, "endLine", DEFAULT_END_LINE);
+		OutputStream output = resp.getOutputStream();
 
 		if (endLine < startLine) {
-			ret.put("error", "Invalid range: endLine < startLine.");
+			output.write(("Invalid range: endLine < startLine.").getBytes("UTF-8"));
 			return;
 		}
 
 		if (endLine - startLine > FILE_MAX_LINES) {
-			ret.put("error", "Invalid range: range exceeds max number of lines.");
+			output.write(("Invalid range: range exceeds max number of lines.")
+					.getBytes("UTF-8"));
 			return;
 		}
 
 		// Use registered viewers to show the file content
-		OutputStream output = resp.getOutputStream();
 		HdfsFileViewer fileViewer = null;
-
 		if (hasParam(req, "viewerId")) {
 			fileViewer = viewers.get(getIntParam(req, "viewerId"));
 			if (!fileViewer.getCapabilities(fs, path).contains(Capability.READ)) {
@@ -531,6 +535,6 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			}
 		}
 
-		viewer.displayFile(fs, path, output, startLine, endLine);
+		fileViewer.displayFile(fs, path, output, startLine, endLine);
 	}
 }

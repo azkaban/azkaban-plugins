@@ -22,4 +22,9 @@
 .icon-file {
   color: #cccccc;
 }
+
+#file-contents,
+#file-schema {
+  display: none;
+}
 </style>

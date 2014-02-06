@@ -69,7 +69,8 @@ azkaban.HdfsSchemaView = Backbone.View.extend({
       return;
     }
 
-    $('#file-schema').text(schema);
+    $('#file-schema-loading').hide();
+    $('#file-schema').show().text(schema);
     this.rendered = true;
   }
 });
@@ -86,7 +87,7 @@ azkaban.HdfsFileModel = Backbone.Model.extend({
       'path': path,
       'viewerId': viewerId,
       'startLine': 0,
-      'endLine': 50
+      'endLine': 1000
     };
     var model = this;
     var successHandler = function(data) {
@@ -95,7 +96,7 @@ azkaban.HdfsFileModel = Backbone.Model.extend({
       }
       model.set('contents', data);
     };
-    $.get(requestURL, requestData, successHandler, 'json');
+    $.get(requestURL, requestData, successHandler, 'text');
   }
 });
 
@@ -125,7 +126,8 @@ azkaban.HdfsFileView = Backbone.View.extend({
       return;
     }
 
-    $('#file-contents').text(file);
+    $('#file-contents-loading').hide();
+    $('#file-contents').show().text(file);
     this.rendered = true;
   }
 });
@@ -152,14 +154,14 @@ $(function () {
   if (hasSchema) {
     schemaModel = new azkaban.HdfsSchemaModel();
     schemaView = new azkaban.HdfsSchemaView({
-      el: $("#file-schema"),
+      el: $("#schema"),
       model: schemaModel
     });
   }
 
   fileModel = new azkaban.HdfsFileModel();
   fileView = new azkaban.HdfsFileView({
-    el: $("#file-contents"),
+    el: $("#contents"),
     model: fileModel
   });
 
