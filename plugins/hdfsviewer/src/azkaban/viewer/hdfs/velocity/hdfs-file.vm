@@ -124,11 +124,21 @@
 
           <div class="tab-content">
             <div class="tab-pane active" id="contents">
+              <div class="progress progress-striped active" id="file-contents-loading">
+                <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                  <span class="sr-only">Loading...</span>
+                </div>
+              </div>
               <pre id="file-contents"></pre>
             </div>
             
   #if ($hasSchema)
             <div class="tab-pane" id="schema">
+              <div class="progress progress-striped active" id="file-schema-loading">
+                <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">
+                  <span class="sr-only">Loading...</span>
+                </div>
+              </div>
               <pre id="file-schema"></pre>
             </div>
   #end
