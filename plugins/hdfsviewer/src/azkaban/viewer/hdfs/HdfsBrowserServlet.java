@@ -54,9 +54,11 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = 
 			"hadoop.security.manager.class";
 
-	public static final int DEFAULT_START_LINE = 1;
-	public static final int DEFAULT_END_LINE = 1000;
-	public static final int FILE_MAX_LINES = 1000;
+	private static final int DEFAULT_FILE_MAX_LINES = 1000;
+
+	private int fileMaxLines;
+	private int defaultStartLine;
+	private int defaultEndLine;
 
 	private static Logger logger = Logger.getLogger(HdfsBrowserServlet.class);
 
@@ -75,9 +77,12 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 	
 	public HdfsBrowserServlet(Props props) {
 		this.props = props;
-		
+	
 		viewerName = props.getString("viewer.name");
 		viewerPath = props.getString("viewer.path");
+		fileMaxLines = props.getInt("file.max.lines", DEFAULT_FILE_MAX_LINES);
+		defaultStartLine = 1;
+		defaultEndLine = fileMaxLines;
 	}
 
 	@Override
@@ -492,8 +497,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			Path path)
 			throws IOException, ServletException {
 
-		int startLine = getIntParam(req, "startLine", DEFAULT_START_LINE);
-		int endLine = getIntParam(req, "endLine", DEFAULT_END_LINE);
+		int startLine = getIntParam(req, "startLine", defaultStartLine);
+		int endLine = getIntParam(req, "endLine", defaultEndLine);
 		OutputStream output = resp.getOutputStream();
 
 		if (endLine < startLine) {
@@ -501,7 +506,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
-		if (endLine - startLine > FILE_MAX_LINES) {
+		if (endLine - startLine > fileMaxLines) {
 			output.write(("Invalid range: range exceeds max number of lines.")
 					.getBytes("UTF-8"));
 			return;

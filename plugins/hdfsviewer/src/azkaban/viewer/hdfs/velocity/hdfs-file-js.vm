@@ -86,8 +86,6 @@ azkaban.HdfsFileModel = Backbone.Model.extend({
       'ajax': 'fetchfile',
       'path': path,
       'viewerId': viewerId,
-      'startLine': 0,
-      'endLine': 1000
     };
     var model = this;
     var successHandler = function(data) {
