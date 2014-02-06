@@ -37,12 +37,13 @@ public abstract class SequenceFileViewer extends HdfsFileViewer {
 			int startLine,
 			int endLine) throws IOException;
 
-	public Set<Capability> getCapabilites(FileSystem fs, Path file) {
+	@Override
+	public Set<Capability> getCapabilities(FileSystem fs, Path path) {
 		Set<Capability> result = EnumSet.noneOf(Capability.class);
 		AzkabanSequenceFileReader.Reader reader = null;
 
 		try {
-			reader = new AzkabanSequenceFileReader.Reader(fs, file, new Configuration());
+			reader = new AzkabanSequenceFileReader.Reader(fs, path, new Configuration());
 			result = getCapabilities(reader);
 		} 
 		catch (Exception e) {
@@ -62,6 +63,7 @@ public abstract class SequenceFileViewer extends HdfsFileViewer {
 		return result;
 	}
 
+	@Override
 	public void displayFile(FileSystem fs,
 			Path file,
 			OutputStream outputStream,
