@@ -93,9 +93,7 @@ azkaban.HdfsFileModel = Backbone.Model.extend({
       if (data.error != null) {
         model.set('error', data.error);
       }
-      if (data.chunk != null) {
-        model.set('contents', data.chunk);
-      }
+      model.set('contents', data);
     };
     $.get(requestURL, requestData, successHandler, 'json');
   }

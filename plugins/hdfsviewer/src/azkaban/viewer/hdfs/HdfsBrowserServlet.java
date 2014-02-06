@@ -55,8 +55,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			"hadoop.security.manager.class";
 
 	public static final int DEFAULT_START_LINE = 1;
-	public static final int DEFAULT_END_LINE = 100;
-	public static final int FILE_MAX_LINES = 100;
+	public static final int DEFAULT_END_LINE = 1000;
+	public static final int FILE_MAX_LINES = 1000;
 
 	private static Logger logger = Logger.getLogger(HdfsBrowserServlet.class);
 
@@ -501,37 +501,36 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			return;
 		}
 
-		// use registered viewers to show the file content
-		boolean outputed = false;
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		// Use registered viewers to show the file content
+		OutputStream output = resp.getOutputStream();
+		HdfsFileViewer fileViewer = null;
 
 		if (hasParam(req, "viewerId")) {
-			HdfsFileViewer viewer = viewers.get(getIntParam(req, "viewerId"));
-			if (viewer.getCapabilities(fs, path).contains(Capability.READ)) {
-				viewer.displayFile(fs, path, output, startLine, endLine);
-				outputed = true;
+			fileViewer = viewers.get(getIntParam(req, "viewerId"));
+			if (!fileViewer.getCapabilities(fs, path).contains(Capability.READ)) {
+				fileViewer = null;
 			}
 		}
-
-		for (HdfsFileViewer viewer : viewers) {
-			if (viewer.getCapabilities(fs, path).contains(Capability.READ)) {
-				viewer.displayFile(fs, path, output, startLine, endLine);
-				outputed = true;
-				break; // don't need to try other viewers
+		else {
+			for (HdfsFileViewer viewer : viewers) {
+				if (viewer.getCapabilities(fs, path).contains(Capability.READ)) {
+					fileViewer = viewer;
+					break;
+				}
 			}
 		}
 		
 		// use default text viewer
-		if (!outputed) {
+		if (fileViewer == null) {
 			if (defaultViewer.getCapabilities(fs, path).contains(Capability.READ)) {
-				defaultViewer.displayFile(fs, path, output, startLine, endLine);
+				fileViewer = defaultViewer;
 			}
 			else {
-				ret.put("error", "Cannot retrieve file.");
+				output.write(("No viewer available for file.").getBytes("UTF-8"));
 				return;
 			}
 		}
 
-		ret.put("chunk", output.toString());
+		viewer.displayFile(fs, path, output, startLine, endLine);
 	}
 }
