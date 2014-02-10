@@ -49,11 +49,11 @@
     <div class="az-page-header">
       <div class="container-full">
         <div class="row">
-          <div class="col-xs-6">
+          <div class="header-title">
             <h1><a href="${context}/hdfs">HDFS Browser</a></h1>
           </div>
-          <div class="col-xs-6">
-            <div class="az-page-header-form pull-right">
+          <div class="header-control">
+            <div class="pull-right header-form">
   #if ($allowproxy)
               <strong>Proxy user</strong> ${user}
               <button type="button" id="changeUserBtn" class="btn btn-sm btn-primary">Change User</button>
@@ -115,7 +115,7 @@
 
       <div class="row">
         <div class="col-xs-12">
-          <ul class="nav nav-tabs" id="file-tabs">
+          <ul class="nav nav-tabs nav-sm" id="file-tabs">
             <li class="active"><a href="#contents" data-toggle="tab">Contents</a></li>
   #if ($hasSchema)
             <li><a href="#schema" data-toggle="tab">Schema</a></li>
