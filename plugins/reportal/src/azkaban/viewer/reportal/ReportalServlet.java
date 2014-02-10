@@ -435,7 +435,11 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 						}
 					}
 				} finally {
-					streamProvider.cleanUp();
+					try {
+						streamProvider.cleanUp();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
@@ -499,44 +503,44 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	 */
 	private List<Object> getFilePreviews(String[] fileList, String locationFull, IStreamProvider streamProvider) {
 		List<Object> files = new ArrayList<Object>();
+		InputStream csvInputStream = null;
+		
 		try {
 			for (String fileName : fileList) {
 				Map<String, Object> file = new HashMap<String, Object>();
 				file.put("name", fileName);
 				
 				String filePath = locationFull + "/" + fileName;
-				InputStream csvInputStream = streamProvider.getFileInputStream(filePath);
+				csvInputStream = streamProvider.getFileInputStream(filePath);
 				Scanner rowScanner = new Scanner(csvInputStream);
 				
 				List<Object> lines = new ArrayList<Object>();
 				int lineNumber = 0;
-				
-				try {
-					while (rowScanner.hasNextLine() && lineNumber < ReportalMailCreator.NUM_PREVIEW_ROWS) {
-						String csvLine = rowScanner.nextLine();
-						String[] data = csvLine.split("\",\"");
-						List<String> line = new ArrayList<String>();
-						for (String item: data) {
-						  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
-						  line.add(column);
-						}
-						lines.add(line);
-						lineNumber++;
+				while (rowScanner.hasNextLine() && lineNumber < ReportalMailCreator.NUM_PREVIEW_ROWS) {
+					String csvLine = rowScanner.nextLine();
+					String[] data = csvLine.split("\",\"");
+					List<String> line = new ArrayList<String>();
+					for (String item: data) {
+					  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
+					  line.add(column);
 					}
-					
-					file.put("content", lines);
-					
-					if (rowScanner.hasNextLine()) {
-						file.put("hasMore", true);
-					}
-					
-					files.add(file);
-				} finally {
-					rowScanner.close();
+					lines.add(line);
+					lineNumber++;
 				}
+				
+				file.put("content", lines);
+				
+				if (rowScanner.hasNextLine()) {
+					file.put("hasMore", true);
+				}
+				
+				files.add(file);
+				rowScanner.close();
 			}
 		} catch (Exception e) {
 			logger.debug("Error encountered while processing files in " + locationFull, e);
+		} finally {
+			IOUtils.closeQuietly(csvInputStream);
 		}
 		
 		return files;

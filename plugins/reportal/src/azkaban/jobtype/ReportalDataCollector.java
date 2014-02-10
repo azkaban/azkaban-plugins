@@ -20,6 +20,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -55,6 +56,9 @@ public class ReportalDataCollector extends ReportalAbstractRunner {
 		int jobNumber = prop.getInt("reportal.job.number");
 		List<Exception> exceptions = new ArrayList<Exception>();
 		for (int i = 0; i < jobNumber; i++) {
+			InputStream tempStream = null;
+			IStreamProvider outputProvider = null;
+			OutputStream persistentStream = null;
 			try {
 				String jobTitle = prop.getString("reportal.job." + i);
 				System.out.println("Reportal Data Collector: Job name=" + jobTitle);
@@ -75,19 +79,26 @@ public class ReportalDataCollector extends ReportalAbstractRunner {
 				System.out.println("Reportal Data Collector: Saving output to persistent storage");
 				System.out.println("Reportal Data Collector: FS=" + outputFileSystem + ", Location=" + locationFull);
 				// Open temp file
-				InputStream tempStream = new BufferedInputStream(new FileInputStream(tempOutput));
+				tempStream = new BufferedInputStream(new FileInputStream(tempOutput));
 				// Open file from HDFS if specified
-				IStreamProvider outputProvider = ReportalUtil.getStreamProvider(outputFileSystem);
-				OutputStream persistentStream = outputProvider.getFileOutputStream(locationFull);
+				outputProvider = ReportalUtil.getStreamProvider(outputFileSystem);
+				persistentStream = outputProvider.getFileOutputStream(locationFull);
 				// Copy it
 				IOUtils.copy(tempStream, persistentStream);
-				tempStream.close();
-				persistentStream.close();
-				outputProvider.cleanUp();
+				
 			} catch (Exception e) {
 				System.out.println("Reportal Data Collector: Data collection failed. " + e.getMessage());
 				e.printStackTrace();
 				exceptions.add(e);
+			} finally {
+				IOUtils.closeQuietly(tempStream);
+				IOUtils.closeQuietly(persistentStream);
+				
+				try {
+					outputProvider.cleanUp();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 
