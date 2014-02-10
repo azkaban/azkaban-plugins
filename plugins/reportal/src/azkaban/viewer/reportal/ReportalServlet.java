@@ -510,27 +510,30 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				
 				List<Object> lines = new ArrayList<Object>();
 				int lineNumber = 0;
-				while (rowScanner.hasNextLine() && lineNumber < ReportalMailCreator.NUM_PREVIEW_ROWS) {
-					String csvLine = rowScanner.nextLine();
-					String[] data = csvLine.split("\",\"");
-					List<String> line = new ArrayList<String>();
-					for (String item: data) {
-					  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
-					  line.add(column);
+				
+				try {
+					while (rowScanner.hasNextLine() && lineNumber < ReportalMailCreator.NUM_PREVIEW_ROWS) {
+						String csvLine = rowScanner.nextLine();
+						String[] data = csvLine.split("\",\"");
+						List<String> line = new ArrayList<String>();
+						for (String item: data) {
+						  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
+						  line.add(column);
+						}
+						lines.add(line);
+						lineNumber++;
 					}
-					lines.add(line);
-					lineNumber++;
+					
+					file.put("content", lines);
+					
+					if (rowScanner.hasNextLine()) {
+						file.put("hasMore", true);
+					}
+					
+					files.add(file);
+				} finally {
+					rowScanner.close();
 				}
-				
-				file.put("content", lines);
-				
-				if (rowScanner.hasNextLine()) {
-					file.put("hasMore", true);
-				}
-				
-				rowScanner.close();
-				
-				files.add(file);
 			}
 		} catch (Exception e) {
 			logger.debug("Error encountered while processing files in " + locationFull, e);
