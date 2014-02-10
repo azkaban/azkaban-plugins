@@ -17,6 +17,7 @@
 package azkaban.viewer.reportal;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,6 +35,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.math.NumberUtils;
@@ -1049,13 +1051,16 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	}
 
 	private class CleanerThread extends Thread {
-		// Every day, clean Reportal output directory.
-		private static final long OUTPUT_DIR_CLEAN_INTERVAL_MS = 24 * 60 * 60 * 1000;
+		// Every day, clean Reportal output directory and mail temp directory.
+		private static final long CLEAN_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 		private boolean shutdown = false;
 		
-		// Retain executions for 14 days.
+		// Retain Reportal output for 14 days.
 		private static final long OUTPUT_DIR_RETENTION = 14 * 24 * 60 * 60 * 1000;
+		
+		// Retain mail temp directory for 1 day.
+		private static final long MAIL_TEMP_DIR_RETENTION = 1 * 24 * 60 * 60 * 1000;
 
 		public CleanerThread() {
 			this.setName("Reportal-Cleaner-Thread");
@@ -1072,10 +1077,13 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				synchronized (this) {
 					logger.info("Cleaning old execution output dirs");
 					cleanOldReportalOutputDirs();
+					
+					logger.info("Cleaning Reportal mail temp directory");
+					cleanReportalMailTempDir();
 				}
 				
 				try {
-				  Thread.sleep(OUTPUT_DIR_CLEAN_INTERVAL_MS);
+				  Thread.sleep(CLEAN_INTERVAL_MS);
 				} catch (InterruptedException e) {
 				  logger.error("CleanerThread's sleep was interrupted.", e);
 				}
@@ -1112,6 +1120,29 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 						logger.error("Error deleting file " + filePath + " from "
 								+ ReportalMailCreator.outputFileSystem + " file system.", e);
 					}
+				}
+			}
+		}
+		
+		private void cleanReportalMailTempDir() {
+			File dir = reportalMailTempDirectory;
+			final long pastTimeThreshold = System.currentTimeMillis() - MAIL_TEMP_DIR_RETENTION;
+			
+			File[] oldMailTempDirs = dir.listFiles(new FileFilter() {
+				@Override
+				public boolean accept(File path) {
+					if (path.isDirectory() && path.lastModified() < pastTimeThreshold) {
+						return true;
+					}
+					return false;
+				}
+			});
+
+			for (File tempDir: oldMailTempDirs) {
+				try {
+					FileUtils.deleteDirectory(tempDir);
+				} catch (IOException e) {
+					logger.error("Error cleaning Reportal mail temp dir " + tempDir.getPath(), e);
 				}
 			}
 		}
