@@ -447,63 +447,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 			e.printStackTrace();
 		}
 		
-//		if(jtTokens.containsKey(key)) {
-//			final Token<DelegationTokenIdentifier> jtToken = jtTokens.get(key);
-//			logger.info("Canceling jt token" + jtToken);
-//			jtTokens.remove(key);
-//			try {
-//				getProxiedUser(userToProxy).doAs(
-//					new PrivilegedExceptionAction<Void>() {
-//							@Override
-//							public Void run() throws Exception {
-//								cancelToken(jtToken);
-//								return null;
-//							}							
-//							private void cancelToken(Token<DelegationTokenIdentifier> jt) throws IOException, InterruptedException   {
-//								JobConf jc = new JobConf(conf);
-//								JobClient jobClient = new JobClient(jc);
-//								jobClient.cancelDelegationToken(jtToken);
-//							}
-//					}
-//				);
-//			} catch (IOException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//				throw new HadoopSecurityManagerException("Failed to cancel token", e);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//				throw new HadoopSecurityManagerException("Failed to cancel token", e);
-//			}
-//		}
-//		
-//		if(nnTokens.containsKey(key)) {
-//			final Token<?> nnToken = nnTokens.get(key);
-//			logger.info("Canceling nn token" + nnToken);
-//			nnTokens.remove(key);
-//			try {
-//				getProxiedUser(userToProxy).doAs(
-//					new PrivilegedExceptionAction<Void>() {
-//							@Override
-//							public Void run() throws Exception {
-//								cancelToken(nnToken);
-//								return null;
-//							}							
-//							private void cancelToken(Token<?> nt) throws IOException, InterruptedException   {
-//								nt.cancel(conf);
-//							}
-//					}
-//				);
-//			} catch (IOException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//				throw new HadoopSecurityManagerException("Failed to cancel token", e);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//				throw new HadoopSecurityManagerException("Failed to cancel token", e);
-//			}
-//		}
 	}
 	
 	/*
