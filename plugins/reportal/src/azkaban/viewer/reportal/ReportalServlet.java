@@ -17,6 +17,7 @@
 package azkaban.viewer.reportal;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,6 +35,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.math.NumberUtils;
@@ -77,7 +79,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private static Logger logger = Logger.getLogger(ReportalServlet.class);
 
 	private CleanerThread cleanerThread;
-	private File reportalMailDirectory;
+	private File reportalMailTempDirectory;
 
 	private AzkabanWebServer server;
 	private Props props;
@@ -100,9 +102,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		itemsPerPage = props.getInt("reportal.items_per_page", 20);
 		showNav = props.getBoolean("reportal.show.navigation", false);
 		
-		reportalMailDirectory = new File(props.getString("reportal.mail.temp.directory", "/tmp/reportal"));
-		reportalMailDirectory.mkdirs();
-		ReportalMailCreator.reportalMailDirectory = reportalMailDirectory;
+		reportalMailTempDirectory = new File(props.getString("reportal.mail.temp.directory", "/tmp/reportal"));
+		reportalMailTempDirectory.mkdirs();
+		ReportalMailCreator.reportalMailTempDirectory = reportalMailTempDirectory;
 		ReportalMailCreator.outputLocation = props.getString("reportal.output.location", "/tmp/reportal");
 		ReportalMailCreator.outputFileSystem = props.getString("reportal.output.filesystem", "local");
 		ReportalMailCreator.reportalStorageUser = reportalStorageUser;
@@ -130,7 +132,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 		
 		cleanerThread = new CleanerThread();
-    cleanerThread.start();
+		cleanerThread.start();
 	}
 
 	private HadoopSecurityManager loadHadoopSecurityManager(Props props, Logger logger) throws RuntimeException {
@@ -433,7 +435,11 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 						}
 					}
 				} finally {
-					streamProvider.cleanUp();
+					try {
+						streamProvider.cleanUp();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		}
@@ -497,13 +503,15 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	 */
 	private List<Object> getFilePreviews(String[] fileList, String locationFull, IStreamProvider streamProvider) {
 		List<Object> files = new ArrayList<Object>();
+		InputStream csvInputStream = null;
+		
 		try {
 			for (String fileName : fileList) {
 				Map<String, Object> file = new HashMap<String, Object>();
 				file.put("name", fileName);
 				
 				String filePath = locationFull + "/" + fileName;
-				InputStream csvInputStream = streamProvider.getFileInputStream(filePath);
+				csvInputStream = streamProvider.getFileInputStream(filePath);
 				Scanner rowScanner = new Scanner(csvInputStream);
 				
 				List<Object> lines = new ArrayList<Object>();
@@ -526,12 +534,13 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					file.put("hasMore", true);
 				}
 				
-				rowScanner.close();
-				
 				files.add(file);
+				rowScanner.close();
 			}
 		} catch (Exception e) {
 			logger.debug("Error encountered while processing files in " + locationFull, e);
+		} finally {
+			IOUtils.closeQuietly(csvInputStream);
 		}
 		
 		return files;
@@ -1049,13 +1058,16 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	}
 
 	private class CleanerThread extends Thread {
-		// Every day, clean Reportal execution output directory.
-		private static final long EXECUTION_DIR_CLEAN_INTERVAL_MS = 24 * 60 * 60 * 1000;
+		// Every day, clean Reportal output directory and mail temp directory.
+		private static final long CLEAN_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 		private boolean shutdown = false;
 		
-		// Retain executions for 14 days.
-		private static final long EXECUTION_DIR_RETENTION = 14 * 24 * 60 * 60 * 1000;
+		// Retain Reportal output for 14 days.
+		private static final long OUTPUT_DIR_RETENTION = 14 * 24 * 60 * 60 * 1000;
+		
+		// Retain mail temp directory for 1 day.
+		private static final long MAIL_TEMP_DIR_RETENTION = 1 * 24 * 60 * 60 * 1000;
 
 		public CleanerThread() {
 			this.setName("Reportal-Cleaner-Thread");
@@ -1070,47 +1082,75 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		public void run() {
 			while (!shutdown) {
 				synchronized (this) {
-					logger.info("Cleaning old execution dirs");
-					cleanOldReportalDirs();
+					logger.info("Cleaning old execution output dirs");
+					cleanOldReportalOutputDirs();
+					
+					logger.info("Cleaning Reportal mail temp directory");
+					cleanReportalMailTempDir();
 				}
 				
 				try {
-				  Thread.sleep(EXECUTION_DIR_CLEAN_INTERVAL_MS);
+				  Thread.sleep(CLEAN_INTERVAL_MS);
 				} catch (InterruptedException e) {
 				  logger.error("CleanerThread's sleep was interrupted.", e);
 				}
 			}
 		}
 
-		private void cleanOldReportalDirs() {
-		  IStreamProvider streamProvider = ReportalUtil.getStreamProvider(ReportalMailCreator.outputFileSystem);
+		private void cleanOldReportalOutputDirs() {
+			IStreamProvider streamProvider = 
+					ReportalUtil.getStreamProvider(ReportalMailCreator.outputFileSystem);
 
-      if (streamProvider instanceof StreamProviderHDFS) {
-        StreamProviderHDFS hdfsStreamProvider = (StreamProviderHDFS) streamProvider;
-        hdfsStreamProvider.setHadoopSecurityManager(hadoopSecurityManager);
-        hdfsStreamProvider.setUser(reportalStorageUser);
-      }
+			if (streamProvider instanceof StreamProviderHDFS) {
+				StreamProviderHDFS hdfsStreamProvider = (StreamProviderHDFS) streamProvider;
+				hdfsStreamProvider.setHadoopSecurityManager(hadoopSecurityManager);
+				hdfsStreamProvider.setUser(reportalStorageUser);
+			}
 
-			final long pastTimeThreshold = System.currentTimeMillis() - EXECUTION_DIR_RETENTION;
+			final long pastTimeThreshold = System.currentTimeMillis() - OUTPUT_DIR_RETENTION;
 			
 			String[] oldFiles = null;
 			try {
-			  oldFiles = streamProvider.getOldFiles(ReportalMailCreator.outputLocation, pastTimeThreshold);
+				oldFiles = streamProvider.getOldFiles(
+						ReportalMailCreator.outputLocation, pastTimeThreshold);
 			} catch (Exception e) {
-			  logger.error("Error getting old files from " + ReportalMailCreator.outputLocation + " on "
-			               + ReportalMailCreator.outputFileSystem + " file system.", e);
+				logger.error("Error getting old files from " + ReportalMailCreator.outputLocation
+						+ " on " + ReportalMailCreator.outputFileSystem + " file system.", e);
 			}
 
 			if (oldFiles != null) {
-  			for (String file: oldFiles) {
-  			  String filePath = ReportalMailCreator.outputLocation + "/" + file;
-  				try {
-  					streamProvider.deleteFile(filePath);
-  				} catch (Exception e) {
-  					logger.error("Error deleting file " + filePath + " from " + ReportalMailCreator.outputFileSystem
-  					             + " file system.", e);
-  				}
-  			}
+				for (String file: oldFiles) {
+					String filePath = ReportalMailCreator.outputLocation + "/" + file;
+					try {
+						streamProvider.deleteFile(filePath);
+					} catch (Exception e) {
+						logger.error("Error deleting file " + filePath + " from "
+								+ ReportalMailCreator.outputFileSystem + " file system.", e);
+					}
+				}
+			}
+		}
+		
+		private void cleanReportalMailTempDir() {
+			File dir = reportalMailTempDirectory;
+			final long pastTimeThreshold = System.currentTimeMillis() - MAIL_TEMP_DIR_RETENTION;
+			
+			File[] oldMailTempDirs = dir.listFiles(new FileFilter() {
+				@Override
+				public boolean accept(File path) {
+					if (path.isDirectory() && path.lastModified() < pastTimeThreshold) {
+						return true;
+					}
+					return false;
+				}
+			});
+
+			for (File tempDir: oldMailTempDirs) {
+				try {
+					FileUtils.deleteDirectory(tempDir);
+				} catch (IOException e) {
+					logger.error("Error cleaning Reportal mail temp dir " + tempDir.getPath(), e);
+				}
 			}
 		}
 	}

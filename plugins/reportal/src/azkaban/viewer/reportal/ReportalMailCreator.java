@@ -55,7 +55,7 @@ public class ReportalMailCreator implements MailCreator {
 	public static String outputLocation = "";
 	public static String outputFileSystem = "";
 	public static String reportalStorageUser = "";
-	public static File reportalMailDirectory;
+	public static File reportalMailTempDirectory;
 	public static final String REPORTAL_MAIL_CREATOR = "ReportalMailCreator";
 	public static final int NUM_PREVIEW_ROWS = 50;
 
@@ -190,7 +190,7 @@ public class ReportalMailCreator implements MailCreator {
 			// Get jobs in execution order
 			List<ExecutableNode> jobs = ReportalUtil.sortExecutableNodes(flow);
 
-			File tempFolder = new File(reportalMailDirectory + "/" + flow.getExecutionId());
+			File tempFolder = new File(reportalMailTempDirectory + "/" + flow.getExecutionId());
 			tempFolder.mkdirs();
 
 			// Copy output files from HDFS to local disk, so you can send them as email attachments
