@@ -118,7 +118,7 @@ public class HadoopSecureHiveWrapper {
 	
 	public static void runHive(String[] args) throws Exception {
 		
-		final HiveConf hiveConf = new HiveConf(); // provideHiveConf();
+		final HiveConf hiveConf = new HiveConf(SessionState.class); // provideHiveConf();
 		
 	    if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
 	    	System.out.println("Setting hadoop tokens ... ");
@@ -160,6 +160,16 @@ public class HadoopSecureHiveWrapper {
 			Thread.currentThread().setContextClassLoader(loader);
 		}
 		
+		//TODO: says so by oozie, not sure if it is true
+		// Have to explicitly unset this property or Hive will not set it.
+		//hiveConf.set("mapred.job.name", "");
+
+		// See https://issues.apache.org/jira/browse/HIVE-1411
+		hiveConf.set("datanucleus.plugin.pluginRegistryBundleCheck", "LOG");
+
+		// to force hive to use the jobclient to submit the job, never using HADOOPBIN (to do localmode)
+		hiveConf.setBoolean("hive.exec.mode.local.auto", false);
+		
 		ss = new CliSessionState(hiveConf);
 		SessionState.start(ss);
 		
@@ -171,17 +181,7 @@ public class HadoopSecureHiveWrapper {
 		if (!op.process_stage2(ss)) {
 			throw new IllegalArgumentException("Can't process arguments from session state");
 		}
-		
-		//TODO: says so by oozie, not sure if it is true
-		// Have to explicitly unset this property or Hive will not set it.
-		//hiveConf.set("mapred.job.name", "");
 
-		// See https://issues.apache.org/jira/browse/HIVE-1411
-		hiveConf.set("datanucleus.plugin.pluginRegistryBundleCheck", "LOG");
-
-		// to force hive to use the jobclient to submit the job, never using HADOOPBIN (to do localmode)
-		hiveConf.setBoolean("hive.exec.mode.local.auto", false);
-		
 		//TODO: logFile, still useful?
 		//CliDriver.main(args);
 		logger.info("Executing query: " + hiveScript);
