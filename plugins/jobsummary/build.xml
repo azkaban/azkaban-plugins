@@ -50,7 +50,7 @@
 			</fileset>
 			<fileset file="${lib.dir}/azkaban-jobtype-*.jar">
 			</fileset>
-    </delete>
+		</delete>
 	</target>
 
 	<target name="build" depends="clean" description="Compile main source tree java files">
@@ -74,14 +74,14 @@
 	
 		<!-- copy non-java files to classes dir to load from classpath -->
 		<copy todir="${dist.classes.dir}">
-      <fileset dir="${java.src.dir}">
+			<fileset dir="${java.src.dir}">
 				<exclude name="**/*.java" />
 			</fileset>
 		</copy>
 		
 		<javac fork="true" destdir="${dist.classes.dir}"
 			target="1.6" debug="true" deprecation="false" failonerror="true">
-      <src path="${java.src.dir}" />
+			<src path="${java.src.dir}" />
 			<classpath refid="main.classpath" />
 		</javac>
 
