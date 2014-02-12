@@ -94,7 +94,7 @@
   ## SVG Graph.
 
 				<div class="col-xs-12 col-sm-9 col-content">
-          <div id="svgDiv" class="well well-clear well-sm">
+          <div id="svgDiv" class="well well-clear well-sm graph-container">
             <svg id="flow-graph" xmlns="http://www.w3.org/2000/svg" version="1.1" shape-rendering="optimize-speed" text-rendering="optimize-speed">
             </svg>
           </div>
