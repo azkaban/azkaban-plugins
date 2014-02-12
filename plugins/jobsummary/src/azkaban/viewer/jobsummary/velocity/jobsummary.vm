@@ -16,29 +16,29 @@
 
 <!DOCTYPE html> 
 <html lang="en">
-	<head>
+  <head>
 
 #parse ("azkaban/webapp/servlet/velocity/style.vm")
 #parse ("azkaban/webapp/servlet/velocity/javascript.vm")
 
-		<script type="text/javascript" src="${context}/js/azkaban/util/ajax.js"></script>
-		<script type="text/javascript" src="${context}/jobsummary/js/azkaban/view/job-summary.js"></script>
-		<script type="text/javascript" src="${context}/jobsummary/js/azkaban/model/log-data.js"></script>
-		<script type="text/javascript">
-			var contextURL = "${context}";
-			var currentTime = ${currentTime};
-			var timezone = "${timezone}";
-			var errorMessage = null;
-			var successMessage = null;
-			
-			var projectName = "${projectName}";
-			var flowName = "${flowid}";
-			var execId = "${execid}";
-			var jobId = "${jobid}";
-			var attempt = ${attempt};
-		</script>
-	</head>
-	<body>
+    <script type="text/javascript" src="${context}/js/azkaban/util/ajax.js"></script>
+    <script type="text/javascript" src="${context}/jobsummary/js/azkaban/view/job-summary.js"></script>
+    <script type="text/javascript" src="${context}/jobsummary/js/azkaban/model/log-data.js"></script>
+    <script type="text/javascript">
+      var contextURL = "${context}";
+      var currentTime = ${currentTime};
+      var timezone = "${timezone}";
+      var errorMessage = null;
+      var successMessage = null;
+      
+      var projectName = "${projectName}";
+      var flowName = "${flowid}";
+      var execId = "${execid}";
+      var jobId = "${jobid}";
+      var attempt = ${attempt};
+    </script>
+  </head>
+  <body>
 
 #set ($current_page = "$viewerName")
 #parse ("azkaban/webapp/servlet/velocity/nav.vm")
@@ -111,7 +111,7 @@
         </div>
       </div>
     </div>
-		
+    
 #end
     </div><!-- /.container-full -->
   </body>
