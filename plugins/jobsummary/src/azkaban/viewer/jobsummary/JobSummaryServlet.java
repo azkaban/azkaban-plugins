@@ -111,7 +111,7 @@ public class JobSummaryServlet extends LoginAbstractAzkabanServlet {
 		
 		User user = session.getUser();
 		int execId = getIntParam(req, "execid");
-		String jobId = getParam(req, "job");
+		String jobId = getParam(req, "jobid");
 		int attempt = getIntParam(req, "attempt", 0);
 
 		page.add("execid", execId);
@@ -177,7 +177,7 @@ public class JobSummaryServlet extends LoginAbstractAzkabanServlet {
 	protected void handleGet(HttpServletRequest request, 
 			HttpServletResponse response, Session session)
 			throws ServletException, IOException {
-		if (hasParam(request, "execid") && hasParam(request, "job")) {
+		if (hasParam(request, "execid") && hasParam(request, "jobid")) {
       handleViewer(request, response, session);
 		}
 		else {
