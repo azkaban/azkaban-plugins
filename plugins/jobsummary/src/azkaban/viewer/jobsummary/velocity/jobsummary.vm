@@ -22,7 +22,7 @@
 #parse ("azkaban/webapp/servlet/velocity/javascript.vm")
 
 		<script type="text/javascript" src="${context}/js/azkaban/util/ajax.js"></script>
-		<script type="text/javascript" src="${context}/jobsummary/js/azkaban/view/javaviewer.js"></script>
+		<script type="text/javascript" src="${context}/jobsummary/js/azkaban/view/job-summary.js"></script>
 		<script type="text/javascript" src="${context}/jobsummary/js/azkaban/model/log-data.js"></script>
 		<script type="text/javascript">
 			var contextURL = "${context}";

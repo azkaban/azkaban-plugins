@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 
-<project name="azkaban-job-summary" basedir="." default="all">
+<project name="azkaban-jobsummary" basedir="." default="all">
 	<property file="build.properties" />
 	<property name="base.dir" value="${basedir}/../.." />
-	<property name="dist.dir" value="${base.dir}/dist/job-summary" />
+	<property name="dist.dir" value="${base.dir}/dist/jobsummary" />
 	<property name="dist.conf.dir" value="${dist.dir}/conf" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
@@ -13,10 +13,10 @@
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="java.src.dir" value="${basedir}/src" />
-	<property name="job-summary.exlib.dir" value="${basedir}/extlib" />
+	<property name="jobsummary.exlib.dir" value="${basedir}/extlib" />
 
-	<property name="azkaban-job-summary-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
-	<property name="azkaban-job-summary-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
+	<property name="azkaban-jobsummary-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
+	<property name="azkaban-jobsummary-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
 
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
 	<property name="jobtypejar" value="${base.dir}/dist/jobtype/jars/azkaban-jobtype-*.jar" />
@@ -89,7 +89,7 @@
 	
 	<target name="jars" depends="build" description="Create azkaban jar">
 		<mkdir dir="${dist.jar.dir}" />
-		<jar destfile="${azkaban-job-summary-jar}">
+		<jar destfile="${azkaban-jobsummary-jar}">
 			<fileset dir="${dist.classes.dir}">
 				<include name="**/*.*" />
 			</fileset>
@@ -98,7 +98,7 @@
 	
 	<target name="src-jars" description="Create azkaban binary+source jar">
 		<mkdir dir="${dist.jar.dir}" />
-		<jar destfile="${azkaban-job-summary-jar}">
+		<jar destfile="${azkaban-jobsummary-jar}">
 			<fileset dir="${dist.classes.dir}">
 				<include name="**/*.*" />
 			</fileset>
@@ -106,7 +106,7 @@
 		</jar>
 	</target>
 	
-	<target name="package-job-summary" depends="jars" description="Creates a package for the webserver">
+	<target name="package-jobsummary" depends="jars" description="Creates a package for the webserver">
 		<delete dir="${dist.packages.dir}" />
 		<mkdir dir="${dist.packages.dir}" />
 		<mkdir dir="${dist.packages.dir}/conf" />
@@ -120,7 +120,7 @@
 		</copy>
 		
 		<!-- Copy Azkaban jars and libs-->
-		<copy file="${azkaban-job-summary-jar}" todir="${dist.packages.dir}/lib" />
+		<copy file="${azkaban-jobsummary-jar}" todir="${dist.packages.dir}/lib" />
 		<copy todir="${dist.packages.dir}/lib">
 			<fileset dir="${lib.dir}" />
 		</copy>
@@ -137,6 +137,6 @@
 		</tar>
 	</target>
 	
-	<target name="package" depends="package-job-summary" description="Create all packages">
+	<target name="package" depends="package-jobsummary" description="Create all packages">
 	</target>
 </project>

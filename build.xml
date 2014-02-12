@@ -97,7 +97,7 @@ ${current.time}
 		</subant>
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/job-summary" includes="build.xml" />
+			<fileset dir="plugins/jobsummary" includes="build.xml" />
 		</subant>
 	</target>
 	
@@ -128,7 +128,7 @@ ${current.time}
 		</subant>
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/job-summary" includes="build.xml" />
+			<fileset dir="plugins/jobsummary" includes="build.xml" />
 		</subant>
 	</target>
 	
