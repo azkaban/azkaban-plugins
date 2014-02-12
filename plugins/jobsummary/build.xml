@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+
+<project name="azkaban-jobsummary" basedir="." default="all">
+	<property file="build.properties" />
+	<property name="base.dir" value="${basedir}/../.." />
+	<property name="dist.dir" value="${base.dir}/dist/jobsummary" />
+	<property name="dist.conf.dir" value="${dist.dir}/conf" />
+	<property name="dist.classes.dir" value="${dist.dir}/classes" />
+	<property name="dist.packages.dir" value="${dist.dir}/packages" />
+	<property name="dist.jar.dir" value="${dist.dir}/jars" />
+		
+	<property name="conf.dir" value="${basedir}/conf" />
+	<property name="ext.lib.dir" value="${base.dir}/extlib" />
+	<property name="lib.dir" value="${basedir}/lib" />
+	<property name="java.src.dir" value="${basedir}/src" />
+	<property name="jobsummary.exlib.dir" value="${basedir}/extlib" />
+
+	<property name="azkaban-jobsummary-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
+	<property name="azkaban-jobsummary-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
+
+	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
+	<property name="jobtypejar" value="${base.dir}/dist/jobtype/jars/azkaban-jobtype-*.jar" />
+	<property name="version.file" value="${base.dir}/dist/package.version" />
+	<property environment="env" />
+
+	<path id="main.classpath">
+		<fileset dir="${ext.lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+		
+		<pathelement path="${dist.classes.dir}" />
+	</path>
+
+	<!-- set the build number based on environment variable, otherwise blank -->
+	<property environment="env" description="System environment variables (including those set by Hudson)" />
+
+	<target name="all" depends="clean, jars, package" description="Builds all jars" />
+
+	<target name="clean" description="Delete generated files.">
+		<echo message="Deleting generated files in dist" />
+		<delete dir="${dist.jar.dir}" />
+		<delete dir="${dist.classes.dir}" />
+		<delete dir="${dist.packages.dir}" />
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+			</fileset>
+			<fileset file="${lib.dir}/azkaban-jobtype-*.jar">
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="build" depends="clean" description="Compile main source tree java files">
+	
+		<!-- copy the latest securitymanager jar -->
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+			</fileset>
+			<fileset file="${lib.dir}/azkaban-jobtype-*.jar">
+			</fileset>
+		</delete>
+		<copy todir="${lib.dir}">
+			<fileset file="${hadoopsecuritymanagerjar}">
+			</fileset>
+			<fileset file="${jobtypejar}">
+			</fileset>
+		</copy>
+
+		<delete dir="${dist.classes.dir}" />
+		<mkdir dir="${dist.classes.dir}" />
+	
+		<!-- copy non-java files to classes dir to load from classpath -->
+		<copy todir="${dist.classes.dir}">
+			<fileset dir="${java.src.dir}">
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+		
+		<javac fork="true" destdir="${dist.classes.dir}"
+			target="1.6" debug="true" deprecation="false" failonerror="true">
+			<src path="${java.src.dir}" />
+			<classpath refid="main.classpath" />
+		</javac>
+
+	</target>
+	
+	<target name="jars" depends="build" description="Create azkaban jar">
+		<mkdir dir="${dist.jar.dir}" />
+		<jar destfile="${azkaban-jobsummary-jar}">
+			<fileset dir="${dist.classes.dir}">
+				<include name="**/*.*" />
+			</fileset>
+		</jar>
+	</target>
+	
+	<target name="src-jars" description="Create azkaban binary+source jar">
+		<mkdir dir="${dist.jar.dir}" />
+		<jar destfile="${azkaban-jobsummary-jar}">
+			<fileset dir="${dist.classes.dir}">
+				<include name="**/*.*" />
+			</fileset>
+			<fileset dir="${java.src.dir}" />
+		</jar>
+	</target>
+	
+	<target name="package-jobsummary" depends="jars" description="Creates a package for the webserver">
+		<delete dir="${dist.packages.dir}" />
+		<mkdir dir="${dist.packages.dir}" />
+		<mkdir dir="${dist.packages.dir}/conf" />
+		<mkdir dir="${dist.packages.dir}/lib" />
+		<mkdir dir="${dist.packages.dir}/extlib" />
+		<mkdir dir="${dist.packages.dir}/web" />
+		
+		<!-- Copy conf files and folder structure -->
+		<copy todir="${dist.packages.dir}/conf">
+			<fileset dir="${conf.dir}" />
+		</copy>
+		
+		<!-- Copy Azkaban jars and libs-->
+		<copy file="${azkaban-jobsummary-jar}" todir="${dist.packages.dir}/lib" />
+		<copy todir="${dist.packages.dir}/lib">
+			<fileset dir="${lib.dir}" />
+		</copy>
+		<copy todir="${dist.packages.dir}/web">
+			<fileset dir="${java.src.dir}/web" />
+		</copy>
+
+		<!-- Copy build version file -->
+		<copy file="${version.file}" todir="${dist.packages.dir}" />
+		
+		<!-- Tarball it -->
+		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
+			<tarfileset dir="${dist.packages.dir}" prefix="${name}-${version}" filemode="755" />
+		</tar>
+	</target>
+	
+	<target name="package" depends="package-jobsummary" description="Create all packages">
+	</target>
+</project>
