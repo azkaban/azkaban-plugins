@@ -204,7 +204,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 			$(target).addClass('btn-default');
 		}
 
-		// Using $().hasClass('active') does not use here because it appears that
+		// Using $().hasClass('active') does not work here because it appears that
 		// this is called before the Bootstrap toggle completes.
 		this.model.set({"autoPanZoom": $(target).hasClass('btn-info')});
 	},
