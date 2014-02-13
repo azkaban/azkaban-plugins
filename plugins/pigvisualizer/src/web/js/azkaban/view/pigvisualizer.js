@@ -18,6 +18,7 @@ var jobDetailsView;
 azkaban.JobDetailsView = Backbone.View.extend({
 	events: {
     "click #details-tab": "handleDetailsTabClick",
+    "click #counters-tab": "handleCountersTabClick",
     "click #jobconf-tab": "handleJobConfTabClick"
   },
 
@@ -25,19 +26,30 @@ azkaban.JobDetailsView = Backbone.View.extend({
   },
 
   handleDetailsTabClick: function() {
-    console.log("handle details tab click");
     $('#jobconf-tab').removeClass('active');
+    $('#counters-tab').removeClass('active');
     $('#details-tab').addClass('active');
+    $('#counters-tab-pane').hide();
     $('#jobconf-tab-pane').hide();
     $('#details-tab-pane').show();
   },
 
   handleJobConfTabClick: function() {
-    console.log("handle details tab click");
     $('#details-tab').removeClass('active');
+    $('#counters-tab').removeClass('active');
     $('#jobconf-tab').addClass('active');
     $('#details-tab-pane').hide();
+    $('#counters-tab-pane').hide();
     $('#jobconf-tab-pane').show();
+  },
+
+  handleCountersTabClick: function() {
+    $('#details-tab').removeClass('active');
+    $('#jobconf-tab').removeClass('active');
+    $('#counters-tab').addClass('active');
+    $('#details-tab-pane').hide();
+    $('#jobconf-tab-pane').hide();
+    $('#counters-tab-pane').show();
   },
 
   render: function() {
@@ -92,6 +104,42 @@ azkaban.JobStatsView = Backbone.View.extend({
 		$('#jobstats-list').show();
 	},
 
+  reformatConf: function (conf) {
+    if (conf == null) {
+      return null;
+    }
+		var jobConf = [];
+		for (var key in conf) {
+			jobConf.push({
+        key: key,
+        value: conf[key]
+      });
+		}
+    return jobConf;
+  },
+
+  reformatCounters: function (rawCounters) {
+    if (rawCounters == null) {
+      return null;
+    }
+    var jobCounters = [];
+    for (var counterName in rawCounters) {
+      var counterGroup = {
+        name: counterName,
+        counters: []
+      };
+      var counters = rawCounters[counterName];
+      for (var key in counters) {
+        counterGroup.counters.push({
+          key: key,
+          value: counters[key]
+        });
+      }
+      jobCounters.push(counterGroup);
+    }
+    return jobCounters;
+  },
+
 	handleSelectionChange: function (evt) {
 		if (!this.model.hasChanged("selected") || !this.model.has("selected")) {
 			return;
@@ -113,12 +161,8 @@ azkaban.JobStatsView = Backbone.View.extend({
 		else {
 			current.jobState = "Failed";
 		}
-		var jobConf = [];
-		for (key in current.conf) {
-			jobConf.push({"key": key, "value": current.conf[key]});
-		}
-		current.conf = null;
-		current.conf = jobConf;
+		current.conf = this.reformatConf(current.conf);
+    current.counterGroups = this.reformatCounters(current.state.counters);
 		current.clicked = true;
 
 		this.renderSidebar(current);
