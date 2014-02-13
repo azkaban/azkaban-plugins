@@ -48,7 +48,7 @@ public class HadoopHiveJob extends JavaProcessJob {
 	
 	private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
 
-	
+	private boolean debug = false;
 	
 	public HadoopHiveJob(String jobid, Props sysProps, Props jobProps, Logger log) throws IOException {
 		super(jobid, sysProps, jobProps, log);
@@ -58,6 +58,8 @@ public class HadoopHiveJob extends JavaProcessJob {
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
 		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
+		
+		debug = getJobProps().getBoolean("debug", false);
 		
 		if(shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
@@ -164,9 +166,21 @@ public class HadoopHiveJob extends JavaProcessJob {
 	protected String getJVMArguments() {
 		String args = super.getJVMArguments();
 
-		String typeGlobalJVMArgs = getSysProps().getString("jobtype.global.jvm.args", null);
-		if (typeGlobalJVMArgs != null) {
-			args += " " + typeGlobalJVMArgs;
+		String typeUserGlobalJVMArgs = getJobProps().getString("jobtype.global.jvm.args", null);
+		if (typeUserGlobalJVMArgs != null) {
+			args += " " + typeUserGlobalJVMArgs;
+		}
+		String typeSysGlobalJVMArgs = getSysProps().getString("jobtype.global.jvm.args", null);
+		if (typeSysGlobalJVMArgs != null) {
+			args += " " + typeSysGlobalJVMArgs;
+		}
+		String typeUserJVMArgs = getJobProps().getString("jobtype.jvm.args", null);
+		if (typeUserJVMArgs != null) {
+			args += " " + typeUserJVMArgs;
+		}
+		String typeSysJVMArgs = getSysProps().getString("jobtype.jvm.args", null);
+		if (typeSysJVMArgs != null) {
+			args += " " + typeSysJVMArgs;
 		}
 		
 		//make sure queryloglocation, execscratchdir, auxjarpath, iotmpdir are in place in settings
@@ -201,6 +215,11 @@ public class HadoopHiveJob extends JavaProcessJob {
 			}
 		}
 
+		if(debug) {
+			list.add("-hiveconf");
+			list.add("hive.root.logger=INFO,console");
+		}
+		
 		list.add("-f");
 		list.add(getScript());
 
