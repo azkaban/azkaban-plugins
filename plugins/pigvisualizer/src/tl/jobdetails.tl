@@ -1,11 +1,11 @@
-						<div class="modal-header">
-							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-							<h4 class="modal-title">{jobId}</h4>
-						</div><!-- /modal-header -->
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title">{jobId}</h4>
+            </div><!-- /modal-header -->
             <div class="modal-body">
               <ul class="nav nav-tabs">
                 <li id="details-tab"><a href="#">Details</a></li>
-                <li id="jobconf-tab"><a href="#">Job Conf</a></li>
+                <li id="jobconf-tab"><a href="#">Configuration</a></li>
               </ul>
 
               <div id="details-tab-pane">
@@ -135,6 +135,10 @@
                   {/conf}
                   </tbody>
                 </table>
+                <div class="callout callout-info">
+                  <h4>Full Job Conf</h4>
+                  <p>For the full job configuration, please view this job on the JobTracker.</p>
+                </div>
               </div>
             </div><!-- /.modal-body -->
             <div class="modal-footer">
