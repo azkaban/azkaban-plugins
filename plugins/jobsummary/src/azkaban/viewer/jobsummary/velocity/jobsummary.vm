@@ -55,7 +55,7 @@
           <h3>
             Job Summary
             <div class="pull-right">
-              <button type="button" id="updateSummaryBtn" class="btn btn-xs btn-default">Refresh</button>
+              <button type="button" id="update-summary-btn" class="btn btn-xs btn-default">Refresh</button>
             </div>
           </h3>
 
@@ -64,53 +64,53 @@
             <p>There is no summary information available for this job yet. Try waiting and clicking Refresh.</p>
           </div>
 
-          <div id="jobType">
-            <table id="jobTypeTable" class="table table-striped table-bordered table-hover">
+          <div id="job-type">
+            <table id="job-type-table" class="table table-striped table-bordered table-hover">
             </table>
           </div>
 
-          <div id="commandSummary">
+          <div id="command-summary">
             <h4>Command Summary</h4>
-            <table id="commandTable" class="table table-striped table-bordered table-hover">
+            <table id="command-table" class="table table-striped table-bordered table-hover">
             </table>
           </div>
 
-          <div id="pigJobSummary">
+          <div id="pig-job-summary">
             <h4>Pig Job Summary</h4>
             <table class="table table-striped table-bordered table-hover">
-              <thead id="summaryHeader">
+              <thead id="summary-header">
               </thead>
-              <tbody id="summaryBody">
+              <tbody id="summary-body">
               </tbody>
             </table>
           </div>
 
-          <div id="pigJobStats">
+          <div id="pig-job-stats">
             <h4>Pig Job Stats</h4>
             <div class="scrollable">
               <table class="table table-striped table-bordered table-hover table-condensed">
-                <thead id="statsHeader">
+                <thead id="stats-header">
                 </thead>
-                <tbody id="statsBody">
+                <tbody id="stats-body">
                 </tbody>
               </table>
             </div>
           </div>
 
-          <div id="hiveJobSummary">
+          <div id="hive-job-summary">
             <h4>Hive Job Summary</h4>
-            <table class="table table-striped table-bordered table-hover" id="hiveTable">
-              <thead id="hiveTableHeader">
+            <table class="table table-striped table-bordered table-hover" id="hive-table">
+              <thead id="hive-table-header">
               </thead>
-              <tbody id="hiveTableBody">
+              <tbody id="hive-table-body">
               </tbody>
             </table>
           </div>
 
-          <div id="jobIds">
+          <div id="job-ids">
             <h4>Map Reduce Jobs</h4>
             <table class="table table-striped table-bordered table-hover">
-              <tbody id="jobIdsTableBody"></tbody>
+              <tbody id="job-ids-table-body"></tbody>
             </table>
           </div>
         </div>
