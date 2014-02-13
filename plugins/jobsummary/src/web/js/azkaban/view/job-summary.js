@@ -63,6 +63,7 @@ azkaban.JobSummaryView = Backbone.View.extend({
 
     jobTypeTable.append(tr);
 
+    $("#placeholder").hide();
     $("#jobType").show();
   },
 
@@ -85,6 +86,7 @@ azkaban.JobSummaryView = Backbone.View.extend({
 
     oldBody.replaceWith(newBody);
 
+    $("#placeholder").hide();
     $("#jobIds").show();
   },
 
@@ -109,6 +111,7 @@ azkaban.JobSummaryView = Backbone.View.extend({
       }
     }
 
+    $("#placeholder").hide();
     $("#commandSummary").show();
   },
 
@@ -144,6 +147,7 @@ azkaban.JobSummaryView = Backbone.View.extend({
       body.append(tr);
     }
 
+    $("#placeholder").hide();
     $("#pigJob" + tableName.charAt(0).toUpperCase() + tableName.substring(1)).show();
   },
 
@@ -226,6 +230,7 @@ azkaban.JobSummaryView = Backbone.View.extend({
     }
     oldBody.replaceWith(newBody);
 
+    $("#placeholder").hide();
     $("#hiveJobSummary").show();
   }
 });

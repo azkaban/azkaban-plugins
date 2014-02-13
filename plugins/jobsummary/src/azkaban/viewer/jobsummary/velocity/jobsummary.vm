@@ -59,12 +59,17 @@
             </div>
           </h3>
 
+          <div class="callout callout-default" id="placeholder">
+            <h4>Job Summary not available</h4>
+            <p>There is no summary information available for this job yet. Try waiting and clicking Refresh.</p>
+          </div>
+
           <div id="jobType">
             <table id="jobTypeTable" class="table table-striped table-bordered table-hover">
             </table>
           </div>
 
-          <div id="command-summary">
+          <div id="commandSummary">
             <h4>Command Summary</h4>
             <table id="commandTable" class="table table-striped table-bordered table-hover">
             </table>
