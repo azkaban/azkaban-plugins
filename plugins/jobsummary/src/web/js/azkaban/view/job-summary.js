@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,16 +19,16 @@ $.namespace('azkaban');
 var jobSummaryView;
 azkaban.JobSummaryView = Backbone.View.extend({
   events: {
-    "click #updateSummaryBtn" : "refresh"
+    "click #update-summary-btn" : "refresh"
   },
 
   initialize: function(settings) {
-    $("#jobType").hide();
-    $("#commandSummary").hide();
-    $("#pigJobSummary").hide();
-    $("#pigJobStats").hide();
-    $("#hiveJobSummary").hide();
-    $("#jobIds").hide();
+    $("#job-type").hide();
+    $("#command-summary").hide();
+    $("#pig-job-summary").hide();
+    $("#pig-job-stats").hide();
+    $("#hive-job-summary").hide();
+    $("#job-ids").hide();
 
     this.listenTo(this.model, "change:jobType", this.renderJobTypeTable);
     this.listenTo(this.model, "change:commandProperties", this.renderCommandTable);
@@ -49,11 +49,12 @@ azkaban.JobSummaryView = Backbone.View.extend({
   },
 
   renderJobTypeTable: function() {
-    var jobTypeTable = $("#jobTypeTable");
+    var jobTypeTable = $("#job-type-table");
     var jobType = this.model.get("jobType");
 
     var tr = document.createElement("tr");
     var td = document.createElement("td");
+    $(td).addClass("property-key");
     $(td).html("<b>Job Type</b>");
     $(tr).append(td);
     td = document.createElement("td");
@@ -62,12 +63,13 @@ azkaban.JobSummaryView = Backbone.View.extend({
 
     jobTypeTable.append(tr);
 
-    $("#jobType").show();
+    $("#placeholder").hide();
+    $("#job-type").show();
   },
 
   renderJobIdsTable: function() {
-    var oldBody = $("#jobIdsTableBody");
-    var newBody = $(document.createElement("tbody")).attr("id", "jobIdsTableBody");
+    var oldBody = $("#job-ids-table-body");
+    var newBody = $(document.createElement("tbody")).attr("id", "job-ids-table-body");
 
     var jobIds = this.model.get("jobIds");
     var jobUrls = this.model.get("jobTrackerUrls");
@@ -84,11 +86,12 @@ azkaban.JobSummaryView = Backbone.View.extend({
 
     oldBody.replaceWith(newBody);
 
-    $("#jobIds").show();
+    $("#placeholder").hide();
+    $("#job-ids").show();
   },
 
   renderCommandTable: function() {
-    var commandTable = $("#commandTable");
+    var commandTable = $("#command-table");
     var commandProperties = this.model.get("commandProperties");
 
     for (var key in commandProperties) {
@@ -108,12 +111,13 @@ azkaban.JobSummaryView = Backbone.View.extend({
       }
     }
 
-    $("#commandSummary").show();
+    $("#placeholder").hide();
+    $("#command-summary").show();
   },
-  
+
   renderPigTable: function(tableName, data) {
     // Add table headers
-    var header = $("#" + tableName + "Header");
+    var header = $("#" + tableName + "-header");
     var tr = document.createElement("tr");
     var i;
     var headers = data[0];
@@ -124,16 +128,16 @@ azkaban.JobSummaryView = Backbone.View.extend({
       $(tr).append(th);
     }
     header.append(tr);
-    
+
     // Add table body
-    var body = $("#" + tableName + "Body");
+    var body = $("#" + tableName + "-body");
     for (i = 1; i < data.length; i++) {
       tr = document.createElement("tr");
       var row = data[i];
       for (var j = 0; j < numColumns; j++) {
         var td = document.createElement("td");
         if (j == 0) {
-          // first column is a link to job details page 
+          // first column is a link to job details page
           $(td).html(row[j]);
         } else {
           $(td).text(row[j]);
@@ -143,13 +147,14 @@ azkaban.JobSummaryView = Backbone.View.extend({
       body.append(tr);
     }
 
-    $("#pigJob" + tableName.charAt(0).toUpperCase() + tableName.substring(1)).show();
+    $("#placeholder").hide();
+    $("#pig-job-" + tableName).show();
   },
-  
+
   renderPigSummaryTable: function() {
     this.renderPigTable("summary", this.model.get("pigSummary"));
   },
-  
+
   renderPigStatsTable: function() {
     this.renderPigTable("stats", this.model.get("pigStats"));
   },
@@ -160,7 +165,7 @@ azkaban.JobSummaryView = Backbone.View.extend({
     var queryJobs = hiveSummary.hiveQueryJobs;
 
     // Set up table column headers
-    var header = $("#hiveTableHeader");
+    var header = $("#hive-table-header");
     var tr = document.createElement("tr");
 
     var headers;
@@ -177,17 +182,17 @@ azkaban.JobSummaryView = Backbone.View.extend({
       $(tr).append(th);
     }
     header.html(tr);
-    
+
     // Construct table body
-    var oldBody = $("#hiveTableBody");
-    var newBody = $(document.createElement("tbody")).attr("id", "hiveTableBody");
+    var oldBody = $("#hive-table-body");
+    var newBody = $(document.createElement("tbody")).attr("id", "hive-table-body");
     for (i = 0; i < queries.length; i++) {
       // new query
       tr = document.createElement("tr");
       var td = document.createElement("td");
       $(td).html("<b>" + queries[i] + "</b>");
       $(tr).append(td);
-      
+
       var jobs = queryJobs[i];
       if (jobs != null) {
         // add first job for this query
@@ -199,17 +204,17 @@ azkaban.JobSummaryView = Backbone.View.extend({
           $(tr).append(td);
         }
         newBody.append(tr);
-        
+
         // add remaining jobs for this query
         for (j = 1; j < jobs.length; j++) {
           jobValues = jobs[j];
           tr = document.createElement("tr");
-          
+
           // add empty cell for query column
           td = document.createElement("td");
           $(td).html("&nbsp;");
           $(tr).append(td);
-          
+
           // add job values
           for (var k = 0; k < jobValues.length; k++) {
             td = document.createElement("td");
@@ -218,21 +223,22 @@ azkaban.JobSummaryView = Backbone.View.extend({
           }
           newBody.append(tr);
         }
-        
+
       } else {
         newBody.append(tr);
       }
     }
     oldBody.replaceWith(newBody);
 
-    $("#hiveJobSummary").show();
+    $("#placeholder").hide();
+    $("#hive-job-summary").show();
   }
 });
 
 $(function() {
   var logDataModel = new azkaban.LogDataModel();
   jobSummaryView = new azkaban.JobSummaryView({
-    el: $('#jobSummaryView'), 
+    el: $('#job-summary-view'),
     model: logDataModel
   });
   logDataModel.refresh();
