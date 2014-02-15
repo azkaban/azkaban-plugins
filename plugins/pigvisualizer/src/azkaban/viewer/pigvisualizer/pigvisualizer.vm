@@ -1,12 +1,12 @@
 #*
  * Copyright 2012 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -14,7 +14,7 @@
  * the License.
 *#
 
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 	<head>
 
@@ -22,18 +22,18 @@
 #parse ("azkaban/webapp/servlet/velocity/javascript.vm")
 		<script type="text/javascript" src="${context}/js/dust-full-2.2.3.min.js"></script>
 
-		<script type="text/javascript" src="${context}/js/jquery.svg.min.js"></script> 
-		<script type="text/javascript" src="${context}/js/jquery.svganim.min.js"></script> 
+		<script type="text/javascript" src="${context}/js/jquery.svg.min.js"></script>
+		<script type="text/javascript" src="${context}/js/jquery.svganim.min.js"></script>
 		<script type="text/javascript" src="${context}/js/jquery.svgfilter.min.js"></script>
-		
+
 		<script type="text/javascript" src="${context}/js/azkaban/util/common.js"></script>
-		<script type="text/javascript" src="${context}/js/azkaban/util/date.js"></script>	
+		<script type="text/javascript" src="${context}/js/azkaban/util/date.js"></script>
 		<script type="text/javascript" src="${context}/js/azkaban/util/ajax.js"></script>
-		
+
 		<script type="text/javascript" src="${context}/js/azkaban/util/svgutils.js"></script>
 		<script type="text/javascript" src="${context}/js/azkaban/util/svg-navigate.js"></script>
 		<script type="text/javascript" src="${context}/js/azkaban/util/layout.js"></script>
-		
+
 		<script type="text/javascript" src="${context}/js/azkaban/view/context-menu.js"></script>
 		<script type="text/javascript" src="${context}/js/azkaban/util/job-status.js"></script>
 
@@ -42,7 +42,7 @@
 
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/view/svg-graph.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/azkaban/view/pigvisualizer.js"></script>
-		
+
 		<script type="text/javascript" src="${context}/pigvisualizer/js/jobstats.js"></script>
 		<script type="text/javascript" src="${context}/pigvisualizer/js/jobdetails.js"></script>
 
@@ -70,6 +70,13 @@
 
   #parse ("azkaban/webapp/servlet/velocity/jobdetailsheader.vm")
 
+    <div class="container-full" id="placeholder">
+      <div class="callout callout-default">
+        <h4>No Pig Visualization available</h4>
+        <p>Visualization for this Pig job is not available. Try waiting and refreshing the page.</p>
+      </div>
+    </div>
+
     <div class="container-full container-fill" id="graphView">
 			<div class="row row-offcanvas row-offcanvas-left">
 				<div class="col-xs-6 col-sm-3 sidebar-offcanvas graph-sidebar" id="jobStats">
@@ -82,9 +89,8 @@
             </div>
             <div id="list" class="list-group"></div>
             <div class="panel-footer">
-              <input type="checkbox" id="autoPanZoomCheckbox" class="autoPanZoom" value="autoPanZoom">
-              <label for="autoPanZoom">Auto Pan Zoom</label>
-              <div id="resetPanZoomBtn" class="btn btn-sm btn-default">Reset Pan Zoom</div>
+              <button type="button" class="btn btn-sm btn-default" id="resetPanZoomBtn">Reset Pan Zoom</button>
+              <button type="button" class="btn btn-sm btn-default" id="autoPanZoomBtn" data-toggle="button">Auto Pan Zoom</button>
             </div>
           </div>
           <div id="jobstats-details">
@@ -103,7 +109,7 @@
     </div>
 
   ## Job Details Modal
-  
+
     <div class="container-full">
       <div class="modal modal-wide" id="job-details-modal">
 				<div class="modal-dialog">
@@ -111,7 +117,7 @@
           </div>
         </div>
       </div>
-      
+
       <div id="contextMenu"></div>
 #end
     </div><!-- /.container-full -->

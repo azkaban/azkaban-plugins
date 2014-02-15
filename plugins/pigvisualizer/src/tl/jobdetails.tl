@@ -1,11 +1,12 @@
-						<div class="modal-header">
-							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-							<h4 class="modal-title">{jobId}</h4>
-						</div><!-- /modal-header -->
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title">{jobId}</h4>
+            </div><!-- /modal-header -->
             <div class="modal-body">
               <ul class="nav nav-tabs">
                 <li id="details-tab"><a href="#">Details</a></li>
-                <li id="jobconf-tab"><a href="#">Job Conf</a></li>
+                <li id="counters-tab"><a href="#">Counters</a></li>
+                <li id="jobconf-tab"><a href="#">Configuration</a></li>
               </ul>
 
               <div id="details-tab-pane">
@@ -123,6 +124,29 @@
                 </table>
                 {/pigStats.outputStats}
               </div>
+
+              <div id="counters-tab-pane">
+                {#counterGroups}
+                  <h4>{name}</h4>
+                  <table class="table table-striped table-condensed table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Counter</th>
+                        <th>Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {#counters}
+                      <tr>
+                        <td class="property-key">{key}</td>
+                        <td>{value}</td>
+                      </tr>
+                    {/counters}
+                    </tbody>
+                  </table>
+                {/counterGroups}
+              </div>
+
               <div id="jobconf-tab-pane">
                 <h4>Job Configuration</h4>
                 <table class="table table-striped table-condensed table-bordered table-properties">
@@ -135,6 +159,10 @@
                   {/conf}
                   </tbody>
                 </table>
+                <div class="callout callout-info">
+                  <h4>Full Job Conf</h4>
+                  <p>For the full job configuration, please view this job on the JobTracker.</p>
+                </div>
               </div>
             </div><!-- /.modal-body -->
             <div class="modal-footer">

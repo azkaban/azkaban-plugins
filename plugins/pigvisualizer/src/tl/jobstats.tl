@@ -1,7 +1,7 @@
 
               <div class="panel panel-default">
                 <div class="panel-heading">
-                  <button type="button" id="jobstats-back-btn" class="btn btn-default btn-sm">&lt; Back</button>
+                  <button type="button" id="jobstats-back-btn" class="btn btn-default btn-sm"><span class="glyphicon glyphicon-chevron-left"></span> Back</button>
                 </div>
                 <table class="table table-condensed table-striped table-hover table-bordered">
                   <thead>

@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,26 +18,38 @@ var jobDetailsView;
 azkaban.JobDetailsView = Backbone.View.extend({
 	events: {
     "click #details-tab": "handleDetailsTabClick",
+    "click #counters-tab": "handleCountersTabClick",
     "click #jobconf-tab": "handleJobConfTabClick"
   },
-	
+
   initialize: function (settings) {
   },
-  
+
   handleDetailsTabClick: function() {
-    console.log("handle details tab click");
     $('#jobconf-tab').removeClass('active');
+    $('#counters-tab').removeClass('active');
     $('#details-tab').addClass('active');
+    $('#counters-tab-pane').hide();
     $('#jobconf-tab-pane').hide();
     $('#details-tab-pane').show();
   },
 
   handleJobConfTabClick: function() {
-    console.log("handle details tab click");
     $('#details-tab').removeClass('active');
+    $('#counters-tab').removeClass('active');
     $('#jobconf-tab').addClass('active');
     $('#details-tab-pane').hide();
+    $('#counters-tab-pane').hide();
     $('#jobconf-tab-pane').show();
+  },
+
+  handleCountersTabClick: function() {
+    $('#details-tab').removeClass('active');
+    $('#jobconf-tab').removeClass('active');
+    $('#counters-tab').addClass('active');
+    $('#details-tab-pane').hide();
+    $('#jobconf-tab-pane').hide();
+    $('#counters-tab-pane').show();
   },
 
   render: function() {
@@ -49,7 +61,8 @@ var jobStatsView;
 azkaban.JobStatsView = Backbone.View.extend({
 	events: {
 		"click .job": "handleJobClick",
-		"click .resetPanZoomBtn": "handleResetPanZoom",
+		"click #resetPanZoomBtn": "handleResetPanZoom",
+		"click #autoPanZoomBtn": "handleAutoPanZoom",
 		"click #jobstats-back-btn": "handleBackButton",
 		"contextMenu li": "handleContextMenuClick",
     "click #jobstats-details-btn": "handleJobDetailsModal",
@@ -91,6 +104,42 @@ azkaban.JobStatsView = Backbone.View.extend({
 		$('#jobstats-list').show();
 	},
 
+  reformatConf: function (conf) {
+    if (conf == null) {
+      return null;
+    }
+		var jobConf = [];
+		for (var key in conf) {
+			jobConf.push({
+        key: key,
+        value: conf[key]
+      });
+		}
+    return jobConf;
+  },
+
+  reformatCounters: function (rawCounters) {
+    if (rawCounters == null) {
+      return null;
+    }
+    var jobCounters = [];
+    for (var counterName in rawCounters) {
+      var counterGroup = {
+        name: counterName,
+        counters: []
+      };
+      var counters = rawCounters[counterName];
+      for (var key in counters) {
+        counterGroup.counters.push({
+          key: key,
+          value: counters[key]
+        });
+      }
+      jobCounters.push(counterGroup);
+    }
+    return jobCounters;
+  },
+
 	handleSelectionChange: function (evt) {
 		if (!this.model.hasChanged("selected") || !this.model.has("selected")) {
 			return;
@@ -112,12 +161,8 @@ azkaban.JobStatsView = Backbone.View.extend({
 		else {
 			current.jobState = "Failed";
 		}
-		var jobConf = [];
-		for (key in current.conf) {
-			jobConf.push({"key": key, "value": current.conf[key]});
-		}
-		current.conf = null;
-		current.conf = jobConf;
+		current.conf = this.reformatConf(current.conf);
+    current.counterGroups = this.reformatCounters(current.state.counters);
 		current.clicked = true;
 
 		this.renderSidebar(current);
@@ -148,6 +193,21 @@ azkaban.JobStatsView = Backbone.View.extend({
     $('#job-details-modal').modal();
   },
 
+	handleAutoPanZoom: function(evt) {
+		var target = evt.currentTarget;
+		if ($(target).hasClass('btn-default')) {
+			$(target).removeClass('btn-default');
+			$(target).addClass('btn-info');
+		}
+		else if ($(target).hasClass('btn-info')) {
+			$(target).removeClass('btn-info');
+			$(target).addClass('btn-default');
+		}
+
+		// Using $().hasClass('active') does not work here because it appears that
+		// this is called before the Bootstrap toggle completes.
+		this.model.set({"autoPanZoom": $(target).hasClass('btn-info')});
+	},
 
 	handleResetPanZoom: function (evt) {
 		this.model.trigger("resetPanZoom");
@@ -169,7 +229,7 @@ azkaban.JobStatsView = Backbone.View.extend({
 			var diff = a.y - b.y;
 			if (diff == 0) {
 				return a.x - b.x;
-			} 
+			}
 			else {
 				return diff;
 			}
@@ -202,6 +262,7 @@ var graphView;
 var graphModel;
 
 $(function() {
+  $('#graphView').hide();
 	graphModel = new azkaban.GraphModel();
 	graphView = new azkaban.SvgGraphView({
 		el: $('#svgDiv'),
@@ -218,9 +279,9 @@ $(function() {
 		model: graphModel,
 		contextMenuCallback: jobClickCallback
 	});
-        
+
   jobDetailsView = new azkaban.JobDetailsView({
-    el: $('#job-details-modal'), 
+    el: $('#job-details-modal'),
   });
 
 	var requestURL = contextURL + "/pigvisualizer";
@@ -231,6 +292,13 @@ $(function() {
 	};
 
 	var successHandler = function (data) {
+    if (data == null || data.jobs == null || data.jobs.length == 0) {
+      return;
+    }
+
+    $('#placeholder').hide();
+    $('#graphView').show();
+
 		var nodes = [];
 		var jobs = data.jobs;
 		for (var i = 0; i < jobs.length; ++i) {
