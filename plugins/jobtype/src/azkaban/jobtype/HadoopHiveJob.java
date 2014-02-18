@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -223,7 +224,7 @@ public class HadoopHiveJob extends JavaProcessJob {
 		list.add("-f");
 		list.add(getScript());
 
-		return StringUtils.join(list, " ");
+		return StringUtils.join((Collection<String>) list, " ");
 	}
 
 	@Override
