@@ -82,8 +82,18 @@
 
 		<div class="content" style="margin-top: 41px;">
 			<div id="box-error">
-	#if($errorMsg)
-				<div class="box-error-message">$errorMsg</div>
+	#if($errorMsgs)
+				<div class="box-error-message">
+		#foreach($errorMsg in $errorMsgs)
+		  #set($num = $velocityCount - 1)
+		  
+		  #if($num > 0)
+		      <br/>
+		  #end
+		  
+		  $errorMsg
+		#end
+				</div>
 	#else
 		#if($error_message != "null")
 				<div class="box-error-message">$error_message</div>
