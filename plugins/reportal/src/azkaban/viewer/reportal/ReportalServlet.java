@@ -431,7 +431,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 							
 							page.add("files", files);
 						} catch (Exception e) {
-							logger.debug("Error encountered while processing files in " + locationFull, e);
+							logger.error("Error encountered while processing files in " + locationFull, e);
 						}
 					}
 				} finally {
