@@ -83,7 +83,12 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private CleanerThread cleanerThread;
 	
 	private File reportalMailTempDirectory;
-	private Set<String> allowedEmailDomains = new HashSet<String>(); 
+	
+	/**
+	 * A whitelist of allowed email domains (e.g.: example.com).
+	 * If null, all email domains are allowed.
+	 */
+	private Set<String> allowedEmailDomains = null; 
 
 	private AzkabanWebServer server;
 	private Props props;
@@ -109,10 +114,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		reportalMailTempDirectory.mkdirs();
 		ReportalMailCreator.reportalMailTempDirectory = reportalMailTempDirectory;
 		List<String> allowedDomains = props.getStringList("reportal.allowed.email.domains", 
-				new ArrayList<String>());
+				(List<String>) null);
 		
-		for (String domain : allowedDomains) {
-			allowedEmailDomains.add(domain);
+		if (allowedDomains != null) {
+			allowedEmailDomains = new HashSet<String>();
+			
+			for (String domain : allowedDomains) {
+				allowedEmailDomains.add(domain);
+			}
 		}
 		
 		ReportalMailCreator.outputLocation = props.getString("reportal.output.location", "/tmp/reportal");
@@ -869,39 +878,20 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 		
 		// Validate email addresses
-		if (allowedEmailDomains.size() > 0) {
-			if (!report.notifications.trim().isEmpty()) {
-				String[] successEmails = report.notifications.trim()
-					.split(Reportal.ACCESS_LIST_SPLIT_REGEX);
-				
-				for (String email : successEmails) {
-					if (!email.isEmpty()) {
-						String domain = getEmailDomain(email);
-						
-						if (!allowedEmailDomains.contains(domain)) {
-							errors.add("Invalid email address: '" + email + "'. "
-									+ "Valid domains are: " + allowedEmailDomains);
-						}
-					}
-				}
+		Set<String> emails = ReportalHelper.parseUniqueEmails(report.notifications + "," 
+				+ report.failureNotifications, Reportal.ACCESS_LIST_SPLIT_REGEX);
+		for (String email : emails) {
+			if (!ReportalHelper.isValidEmailAddress(email)) {
+				errors.add("Invalid email address: " + email);
 			}
 			
-			if (!report.failureNotifications.trim().isEmpty()) {
-				String[] failureEmails = report.failureNotifications.trim()
-					.split(Reportal.ACCESS_LIST_SPLIT_REGEX);
-				
-				for (String email : failureEmails) {
-					if (!email.isEmpty()) {
-						String domain = getEmailDomain(email);
-						
-						if (!allowedEmailDomains.contains(domain)) {
-							errors.add("Invalid email address: '" + email + "'. "
-									+ "Valid domains are: " + allowedEmailDomains);
-						}
-					}
-				}
+			String domain = ReportalHelper.getEmailDomain(email);
+			if (allowedEmailDomains != null && !allowedEmailDomains.contains(domain)) {
+				errors.add("Email address '" + email + "' has an invalid domain '" + domain + "'. "
+						+ "Valid domains are: " + allowedEmailDomains);
 			}
 		}
+		
 		
 		if (errors.size() > 0) {
 			page.add("errorMsgs", errors);
@@ -1010,24 +1000,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		return Integer.toString(project.getId());
-	}
-	
-	/**
-	 * Given an email string, returns the domain part if it exists, and null otherwise.
-	 * @param email
-	 * @return
-	 */
-	private String getEmailDomain(String email) {
-		if (email == null || email.isEmpty()) {
-			return "";
-		}
-		
-		int atSignIndex = email.indexOf('@');
-		if (atSignIndex > 0) {
-			return email.substring(atSignIndex + 1);
-		}
-		
-		return "";
 	}
 
 	private void handleRunReportalWithVariables(HttpServletRequest req, HashMap<String, Object> ret, Session session) throws ServletException, IOException {
