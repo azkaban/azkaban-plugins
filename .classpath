@@ -6,16 +6,16 @@
 	<classpathentry kind="src" path="plugins/jobtype/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="plugins/hdfsviewer/extlib/hadoop-core-1.0.4.jar"/>
 	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/avro-1.7.4.jar"/>
 	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/voldemort-0.96.jar"/>
+	<classpathentry kind="lib" path="extlib/azkaban-2.5.0-rc3.jar"/>
+	<classpathentry kind="lib" path="extlib/hadoop-core-1.0.4.jar"/>
 	<classpathentry kind="lib" path="extlib/jackson-core-asl-1.9.5.jar"/>
 	<classpathentry kind="lib" path="extlib/jackson-mapper-asl-1.9.5.jar"/>
 	<classpathentry kind="lib" path="extlib/log4j-1.2.16.jar"/>
 	<classpathentry kind="lib" path="extlib/servlet-api-2.5.jar"/>
 	<classpathentry kind="lib" path="extlib/velocity-1.7.jar"/>
 	<classpathentry kind="lib" path="extlib/velocity-tools-2.0.jar"/>
-	<classpathentry kind="lib" path="extlib/azkaban-2.5.0-beta2.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/mail-1.4.5.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/joda-time-2.0.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/hive-cli-0.8.1.jar"/>
