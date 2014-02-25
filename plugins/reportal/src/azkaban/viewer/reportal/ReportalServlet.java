@@ -192,7 +192,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Project project = projectManager.getProject(id);
 		Reportal reportal = Reportal.loadFromProject(project);
 
-		// Delete reportal
+		// Delete report
 		if (ajaxName.equals("delete")) {
 			if (!project.hasPermission(user, Type.ADMIN)) {
 				ret.put("error", "You do not have permissions to delete this reportal.");
@@ -209,7 +209,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				ret.put("result", "success");
 			}
 		}
-		// Bookmark reportal
+		// Bookmark report
 		else if (ajaxName.equals("bookmark")) {
 			boolean wasBookmarked = ReportalHelper.isBookmarkProject(project, user);
 			try {
@@ -228,7 +228,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				ret.put("error", "Error bookmarking reportal. " + e.getMessage());
 			}
 		}
-		// Subscribe reportal
+		// Subscribe to report
 		else if (ajaxName.equals("subscribe")) {
 			boolean wasSubscribed = ReportalHelper.isSubscribeProject(project, user);
 			if (!wasSubscribed && reportal.getAccessViewers().size() > 0 && !project.hasPermission(user, Type.READ)) {
@@ -943,7 +943,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Flow flow = project.getFlows().get(0);
 		project.getMetadata().put("flowName", flow.getId());
 
-		// Set reportal mailer
+		// Set Reportal mailer
 		flow.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
 
 		// Create/Save schedule
@@ -1061,22 +1061,26 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		// The frequency, in milliseconds, that the Reportal output
 		// and mail temp directories should be cleaned
 		private final long CLEAN_INTERVAL_MS;
+		private static final long DEFAULT_CLEAN_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 		// The duration, in milliseconds, that Reportal output should be retained for
 		private final long OUTPUT_DIR_RETENTION_MS;
+		private static final long DEFAULT_OUTPUT_DIR_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 		
 		// The duration, in milliseconds, that Reportal mail temp files should be retained for
 		private final long MAIL_TEMP_DIR_RETENTION_MS;
+		private static final long DEFAULT_MAIL_TEMP_DIR_RETENTION_MS = 24 * 60 * 60 * 1000;
 		
 		private boolean shutdown = false;
 
 		public CleanerThread() {
 			this.setName("Reportal-Cleaner-Thread");
-			CLEAN_INTERVAL_MS = props.getInt("reportal.clean.interval.ms", 24 * 60 * 60 * 1000);
-			OUTPUT_DIR_RETENTION_MS = props.getInt("reportal.output.dir.retention.ms",
-					7 * 24 * 60 * 60 * 1000);
-			MAIL_TEMP_DIR_RETENTION_MS = props.getInt("reportal.mail.temp.dir.retention.ms",
-					1 * 24 * 60 * 60 * 1000);
+			CLEAN_INTERVAL_MS = props.getLong("reportal.clean.interval.ms",
+					DEFAULT_CLEAN_INTERVAL_MS);
+			OUTPUT_DIR_RETENTION_MS = props.getLong("reportal.output.dir.retention.ms",
+					DEFAULT_OUTPUT_DIR_RETENTION_MS);
+			MAIL_TEMP_DIR_RETENTION_MS = props.getLong("reportal.mail.temp.dir.retention.ms",
+					DEFAULT_MAIL_TEMP_DIR_RETENTION_MS);
 		}
 
 		@SuppressWarnings("unused")
