@@ -102,10 +102,10 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		itemsPerPage = props.getInt("reportal.items_per_page", 20);
 		showNav = props.getBoolean("reportal.show.navigation", false);
 		
-		reportalMailTempDirectory = new File(props.getString("reportal.mail.temp.directory", "/tmp/reportal"));
+		reportalMailTempDirectory = new File(props.getString("reportal.mail.temp.dir", "/tmp/reportal"));
 		reportalMailTempDirectory.mkdirs();
 		ReportalMailCreator.reportalMailTempDirectory = reportalMailTempDirectory;
-		ReportalMailCreator.outputLocation = props.getString("reportal.output.location", "/tmp/reportal");
+		ReportalMailCreator.outputLocation = props.getString("reportal.output.dir", "/tmp/reportal");
 		ReportalMailCreator.outputFileSystem = props.getString("reportal.output.filesystem", "local");
 		ReportalMailCreator.reportalStorageUser = reportalStorageUser;
 		
@@ -387,8 +387,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			}
 			// Show data files
 			else {
-				String outputFileSystem = props.getString("reportal.output.filesystem", "local");
-				String outputBase = props.getString("reportal.output.location", "/tmp/reportal");
+				String outputFileSystem = ReportalMailCreator.outputFileSystem;
+				String outputBase = ReportalMailCreator.outputLocation;
 
 				String locationFull = (outputBase + "/" + execId).replace("//", "/");
 
@@ -1058,19 +1058,25 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	}
 
 	private class CleanerThread extends Thread {
-		// Every day, clean Reportal output directory and mail temp directory.
-		private static final long CLEAN_INTERVAL_MS = 24 * 60 * 60 * 1000;
+		// The frequency, in milliseconds, that the Reportal output
+		// and mail temp directories should be cleaned
+		private final long CLEAN_INTERVAL_MS;
 
+		// The duration, in milliseconds, that Reportal output should be retained for
+		private final long OUTPUT_DIR_RETENTION_MS;
+		
+		// The duration, in milliseconds, that Reportal mail temp files should be retained for
+		private final long MAIL_TEMP_DIR_RETENTION_MS;
+		
 		private boolean shutdown = false;
-		
-		// Retain Reportal output for 14 days.
-		private static final long OUTPUT_DIR_RETENTION = 14 * 24 * 60 * 60 * 1000;
-		
-		// Retain mail temp directory for 1 day.
-		private static final long MAIL_TEMP_DIR_RETENTION = 1 * 24 * 60 * 60 * 1000;
 
 		public CleanerThread() {
 			this.setName("Reportal-Cleaner-Thread");
+			CLEAN_INTERVAL_MS = props.getInt("reportal.clean.interval.ms", 24 * 60 * 60 * 1000);
+			OUTPUT_DIR_RETENTION_MS = props.getInt("reportal.output.dir.retention.ms",
+					7 * 24 * 60 * 60 * 1000);
+			MAIL_TEMP_DIR_RETENTION_MS = props.getInt("reportal.mail.temp.dir.retention.ms",
+					1 * 24 * 60 * 60 * 1000);
 		}
 
 		@SuppressWarnings("unused")
@@ -1107,7 +1113,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				hdfsStreamProvider.setUser(reportalStorageUser);
 			}
 
-			final long pastTimeThreshold = System.currentTimeMillis() - OUTPUT_DIR_RETENTION;
+			final long pastTimeThreshold = System.currentTimeMillis() - OUTPUT_DIR_RETENTION_MS;
 			
 			String[] oldFiles = null;
 			try {
@@ -1133,7 +1139,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		
 		private void cleanReportalMailTempDir() {
 			File dir = reportalMailTempDirectory;
-			final long pastTimeThreshold = System.currentTimeMillis() - MAIL_TEMP_DIR_RETENTION;
+			final long pastTimeThreshold = System.currentTimeMillis() - MAIL_TEMP_DIR_RETENTION_MS;
 			
 			File[] oldMailTempDirs = dir.listFiles(new FileFilter() {
 				@Override
