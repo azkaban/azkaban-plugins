@@ -50,7 +50,7 @@ public class ReportalDataCollector extends ReportalAbstractRunner {
 		System.out.println("Reportal Data Collector: Initializing");
 
 		String outputFileSystem = props.getString("reportal.output.filesystem", "local");
-		String outputBase = props.getString("reportal.output.location", "/tmp/reportal");
+		String outputBase = props.getString("reportal.output.dir", "/tmp/reportal");
 		String execId = props.getString(CommonJobProperties.EXEC_ID);
 
 		int jobNumber = prop.getInt("reportal.job.number");
