@@ -26,9 +26,11 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -79,7 +81,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private static Logger logger = Logger.getLogger(ReportalServlet.class);
 
 	private CleanerThread cleanerThread;
+	
 	private File reportalMailTempDirectory;
+	
+	/**
+	 * A whitelist of allowed email domains (e.g.: example.com).
+	 * If null, all email domains are allowed.
+	 */
+	private Set<String> allowedEmailDomains = null; 
 
 	private AzkabanWebServer server;
 	private Props props;
@@ -91,7 +100,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	private int itemsPerPage = 20;
 	private boolean showNav;
 
-	// private String viewerPath;
 	private HadoopSecurityManager hadoopSecurityManager;
 
 	public ReportalServlet(Props props) {
@@ -105,6 +113,13 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		reportalMailTempDirectory = new File(props.getString("reportal.mail.temp.dir", "/tmp/reportal"));
 		reportalMailTempDirectory.mkdirs();
 		ReportalMailCreator.reportalMailTempDirectory = reportalMailTempDirectory;
+
+		List<String> allowedDomains = props.getStringList("reportal.allowed.email.domains", 
+				(List<String>) null);
+		if (allowedDomains != null) {
+			allowedEmailDomains = new HashSet<String>(allowedDomains);
+		}
+		
 		ReportalMailCreator.outputLocation = props.getString("reportal.output.dir", "/tmp/reportal");
 		ReportalMailCreator.outputFileSystem = props.getString("reportal.output.filesystem", "local");
 		ReportalMailCreator.reportalStorageUser = reportalStorageUser;
@@ -618,15 +633,19 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		Project project = projectManager.getProject(id);
 		Reportal reportal = Reportal.loadFromProject(project);
+		
+		List<String> errors = new ArrayList<String>();
 
 		if (reportal == null) {
-			page.add("errorMsg", "Report not found");
+			errors.add("Report not found");
+			page.add("errorMsgs", errors);
 			page.render();
 			return;
 		}
 
 		if (!project.hasPermission(session.getUser(), Type.ADMIN)) {
-			page.add("errorMsg", "You are not allowed to edit this report.");
+			errors.add("You are not allowed to edit this report.");
+			page.add("errorMsgs", errors);
 			page.render();
 			return;
 		}
@@ -755,8 +774,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		List<Query> queryList = new ArrayList<Query>(numQueries);
 		page.add("queries", queryList);
 		report.queries = queryList;
-
-		String typeError = null;
+		
+		List<String> errors = new ArrayList<String>();
 		String typePermissionError = null;
 		for (int i = 0; i < numQueries; i++) {
 			Query query = new Query();
@@ -767,10 +786,13 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 			// Type check
 			ReportalType type = ReportalType.getTypeByName(query.type);
-			if (type == null && typeError == null) {
-				typeError = query.type;
+			if (type == null) {
+				errors.add("Type " + query.type + " is invalid.");
 			}
-			if (!type.checkPermission(user)) {
+			
+			if (!type.checkPermission(user) && report.schedule) {
+				errors.add("You do not have permission to schedule Type "
+						+ typePermissionError + ".");
 				typePermissionError = query.type;
 			}
 
@@ -783,7 +805,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("variables", variableList);
 		report.variables = variableList;
 
-		boolean variableErrorOccurred = false;
 		for (int i = 0; i < variables; i++) {
 			Variable variable = new Variable();
 
@@ -791,7 +812,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			variable.name = getParam(req, "variable" + i + "name");
 
 			if (variable.title.isEmpty() || variable.name.isEmpty()) {
-				variableErrorOccurred = true;
+				errors.add("Variable title and name cannot be empty.");
 			}
 
 			variableList.add(variable);
@@ -799,16 +820,12 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
 		// Make sure title isn't empty
 		if (report.title.isEmpty()) {
-			page.add("errorMsg", "Title must not be empty.");
-			page.render();
-			return null;
+			errors.add("Title must not be empty.");
 		}
 
 		// Make sure description isn't empty
 		if (report.description.isEmpty()) {
-			page.add("errorMsg", "Description must not be empty.");
-			page.render();
-			return null;
+			errors.add("Description must not be empty.");
 		}
 		
 		// Verify schedule and repeat
@@ -816,51 +833,25 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			// Verify schedule time
 			if (!NumberUtils.isDigits(report.scheduleHour) ||
 					!NumberUtils.isDigits(report.scheduleMinute)) {
-				page.add("errorMsg", "Schedule time is invalid.");
-				page.render();
-				return null;
+				errors.add("Schedule time is invalid.");
 			}
 			
 			// Verify schedule date is not empty
 			if (report.scheduleDate.isEmpty()) {
-				page.add("errorMsg", "Schedule date must not be empty.");
-				page.render();
-				return null;
+				errors.add("Schedule date must not be empty.");
 			}
 			
 			if (report.scheduleRepeat) {
 				// Verify repeat interval
 				if (!NumberUtils.isDigits(report.scheduleIntervalQuantity)) {
-					page.add("errorMsg", "Repeat interval quantity is invalid.");
-					page.render();
-					return null;
+					errors.add("Repeat interval quantity is invalid.");
 				}
 			}
 		}
 
 		// Empty query check
 		if (numQueries <= 0) {
-			page.add("errorMsg", "There needs to have at least one query.");
-			page.render();
-			return null;
-		}
-		// Type error check
-		if (typeError != null) {
-			page.add("errorMsg", "Type " + typeError + " is invalid.");
-			page.render();
-			return null;
-		}
-		// Type permission check
-		if (typePermissionError != null && report.schedule) {
-			page.add("errorMsg", "You do not have permission to schedule Type " + typePermissionError + ".");
-			page.render();
-			return null;
-		}
-		// Variable error check
-		if (variableErrorOccurred) {
-			page.add("errorMsg", "Variable title and name cannot be empty.");
-			page.render();
-			return null;
+			errors.add("There needs to have at least one query.");
 		}
 		
 		// Validate access users
@@ -876,12 +867,33 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				String[] users = accessList.split(Reportal.ACCESS_LIST_SPLIT_REGEX);
 				for (String accessUser : users) {
 					if (!userManager.validateUser(accessUser)) {
-						page.add("errorMsg", "User " + accessUser + " in access list is invalid.");
-						page.render();
-						return null;
+						errors.add("User " + accessUser + " in access list is invalid.");
 					}
 				}
 			}
+		}
+		
+		// Validate email addresses
+		Set<String> emails = ReportalHelper.parseUniqueEmails(report.notifications + "," 
+				+ report.failureNotifications, Reportal.ACCESS_LIST_SPLIT_REGEX);
+		for (String email : emails) {
+			if (!ReportalHelper.isValidEmailAddress(email)) {
+				errors.add("Invalid email address: " + email);
+				continue;
+			}
+			
+			String domain = ReportalHelper.getEmailDomain(email);
+			if (allowedEmailDomains != null && !allowedEmailDomains.contains(domain)) {
+				errors.add("Email address '" + email + "' has an invalid domain '" + domain + "'. "
+						+ "Valid domains are: " + allowedEmailDomains);
+			}
+		}
+		
+		
+		if (errors.size() > 0) {
+			page.add("errorMsgs", errors);
+			page.render();
+			return null;
 		}
 		
 		// Attempt to get a project object
@@ -899,21 +911,24 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				report.ownerEmail = user.getEmail();
 			} catch (Exception e) {
 				e.printStackTrace();
-				page.add("errorMsg", "Error while creating report. " + e.getMessage());
+				errors.add("Error while creating report. " + e.getMessage());
+				page.add("errorMsgs", errors);
 				page.render();
 				return null;
 			}
 
 			// Project already exists
 			if (project == null) {
-				page.add("errorMsg", "A Report with the same name already exists.");
+				errors.add("A Report with the same name already exists.");
+				page.add("errorMsgs", errors);
 				page.render();
 				return null;
 			}
 		}
 
 		if (project == null) {
-			page.add("errorMsg", "Internal Error: Report not found");
+			errors.add("Internal Error: Report not found");
+			page.add("errorMsgs", errors);
 			page.render();
 			return null;
 		}
@@ -927,7 +942,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			report.createZipAndUpload(projectManager, user, reportalStorageUser);
 		} catch (Exception e) {
 			e.printStackTrace();
-			page.add("errorMsg", "Error while creating Azkaban jobs. " + e.getMessage());
+			errors.add("Error while creating Azkaban jobs. " + e.getMessage());
+			page.add("errorMsgs", errors);
 			page.render();
 			if (!isEdit) {
 				try {
@@ -950,9 +966,10 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		ScheduleManager scheduleManager = server.getScheduleManager();
 		try {
 			report.updateSchedules(report, scheduleManager, user, flow);
-		} catch (ScheduleManagerException e2) {
-			e2.printStackTrace();
-			page.add("errorMsg", e2.getMessage());
+		} catch (ScheduleManagerException e) {
+			e.printStackTrace();
+			errors.add(e.getMessage());
+			page.add("errorMsgs", errors);
 			page.render();
 			return null;
 		}
@@ -966,7 +983,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			projectManager.updateFlow(project, flow);
 		} catch (ProjectManagerException e) {
 			e.printStackTrace();
-			page.add("errorMsg", "Error while updating report. " + e.getMessage());
+			errors.add("Error while updating report. " + e.getMessage());
+			page.add("errorMsgs", errors);
 			page.render();
 			if (!isEdit) {
 				try {

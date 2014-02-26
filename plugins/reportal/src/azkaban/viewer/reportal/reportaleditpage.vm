@@ -82,8 +82,18 @@
 
 		<div class="content" style="margin-top: 41px;">
 			<div id="box-error">
-	#if($errorMsg)
-				<div class="box-error-message">$errorMsg</div>
+	#if($errorMsgs)
+				<div class="box-error-message">
+		#foreach($errorMsg in $errorMsgs)
+		  #set($num = $velocityCount - 1)
+		  
+		  #if($num > 0)
+                    <br/>
+		  #end
+		  
+                    $errorMsg
+		#end
+				</div>
 	#else
 		#if($error_message != "null")
 				<div class="box-error-message">$error_message</div>
@@ -243,21 +253,21 @@
 							<label class="control-label">Viewers</label>
 							<div class="controls">
 								<textarea class="span8" name="access-viewer">$accessViewer</textarea>
-								<br/>Separate usernames by commas, spaces, or semicolons. If left blank, the runs of this report are viewable by everyone.
+								<br/>Separate usernames (e.g.: jdoe) by commas, spaces, or semicolons. If left blank, the runs of this report are viewable by everyone.
 							</div>
 						</div>
 						<div class="control-group">
 							<label class="control-label">Executors</label>
 							<div class="controls">
 								<textarea class="span8" name="access-executor">$accessExecutor</textarea>
-								<br/>Separate usernames by commas, spaces, or semicolons. If left blank, anyone can execute this report.
+								<br/>Separate usernames (e.g.: jdoe) by commas, spaces, or semicolons. If left blank, anyone can execute this report.
 							</div>
 						</div>
 						<div class="control-group">
 							<label class="control-label">Owners</label>
 							<div class="controls">
 								<textarea class="span8" name="access-owner">$accessOwner</textarea>
-								<br/>Separate usernames by commas, spaces, or semicolons.
+								<br/>Separate usernames (e.g.: jdoe) by commas, spaces, or semicolons.
 							</div>
 						</div>
 					</fieldset>
@@ -267,14 +277,14 @@
 							<label class="control-label">Success Emails</label>
 							<div class="controls">
 								<textarea class="span8" name="notifications">$notifications</textarea>
-								<br/>Separate emails by commas, spaces, or semicolons. Note: If the report returns no results, no email is sent, except for unscheduled runs.
+								<br/>Separate emails (e.g.: jdoe@example.com) by commas, spaces, or semicolons. Note: If the report returns no results, no email is sent, except for unscheduled runs.
 							</div>
 						</div>
 						<div class="control-group">
 							<label class="control-label">Failure Emails</label>
 							<div class="controls">
 								<textarea class="span8" name="failure-notifications">$failureNotifications</textarea>
-								<br/>Separate emails by commas, spaces, or semicolons.
+								<br/>Separate emails (e.g.: jdoe@example.com) by commas, spaces, or semicolons.
 							</div>
 						</div>
 					</fieldset>

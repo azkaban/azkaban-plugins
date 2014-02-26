@@ -20,8 +20,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
@@ -238,8 +240,40 @@ public class ReportalHelper {
 		}
 		return result.toArray(new String[result.size()]);
 	}
+	
+	/**
+	 * Given a string containing multiple emails, splits it based on the given
+	 * regular expression, and returns a set containing the unique, non-empty emails.
+	 * @param emailList
+	 * @return
+	 */
+	public static Set<String> parseUniqueEmails(String emailList, String splitRegex) {
+		Set<String> uniqueEmails = new HashSet<String>();
+		
+		if (emailList == null) {
+			return uniqueEmails;
+		}
+		
+		String[] emails = emailList.trim().split(splitRegex);
+		for (String email : emails) {
+			if (!email.isEmpty()) {
+				uniqueEmails.add(email);
+			}
+		}
+		
+		return uniqueEmails;
+	}
 
+	/**
+	 * Returns true if the given email is valid and false otherwise.
+	 * @param email
+	 * @return
+	 */
 	public static boolean isValidEmailAddress(String email) {
+		if (email == null) {
+			return false;
+		}
+		
 		boolean result = true;
 		try {
 			InternetAddress emailAddr = new InternetAddress(email);
@@ -248,5 +282,23 @@ public class ReportalHelper {
 			result = false;
 		}
 		return result;
+	}
+	
+	/**
+	 * Given an email string, returns the domain part if it exists, and null otherwise.
+	 * @param email
+	 * @return
+	 */
+	public static String getEmailDomain(String email) {
+		if (email == null || email.isEmpty()) {
+			return null;
+		}
+		
+		int atSignIndex = email.indexOf('@');
+		if (atSignIndex != -1) {
+			return email.substring(atSignIndex + 1);
+		}
+		
+		return null;
 	}
 }
