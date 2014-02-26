@@ -73,7 +73,12 @@ public class StreamProviderHDFS implements IStreamProvider {
 	
 	public void deleteFile(String pathString) throws Exception {
 	  ensureHdfs();
-	  hdfs.delete(new Path(pathString), true);
+	  
+	  try {
+		  hdfs.delete(new Path(pathString), true);
+	  } catch (IOException e) {
+		  cleanUp();
+	  }
 	}
 
 	public InputStream getFileInputStream(String pathString) throws Exception {
@@ -116,15 +121,29 @@ public class StreamProviderHDFS implements IStreamProvider {
 		super.finalize();
 	}
 	
+	/**
+	 * Returns an array of the file statuses of the files/directories in the given path if it
+	 * is a directory and an empty array otherwise.
+	 * @param pathString
+	 * @return
+	 * @throws HadoopSecurityManagerException
+	 * @throws IOException
+	 */
 	private FileStatus[] getFileStatusList(String pathString) throws HadoopSecurityManagerException, IOException {
-    ensureHdfs();
-    Path path = new Path(pathString);
-
-    FileStatus pathStatus = hdfs.getFileStatus(path);
-    if (pathStatus.isDir()) {
-      return hdfs.listStatus(path);
-    }
+	    ensureHdfs();
+	    
+	    Path path = new Path(pathString);
+	    FileStatus pathStatus = null;
+	    try {
+	    	pathStatus = hdfs.getFileStatus(path);
+	    } catch (IOException e) {
+	    	cleanUp();
+	    }
     
-    return new FileStatus[0];
-  }
+	    if (pathStatus != null && pathStatus.isDir()) {
+	    	return hdfs.listStatus(path);
+	    }
+	    
+	    return new FileStatus[0];
+	  }
 }
