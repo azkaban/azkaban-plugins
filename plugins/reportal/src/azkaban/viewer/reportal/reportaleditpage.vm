@@ -88,10 +88,10 @@
 		  #set($num = $velocityCount - 1)
 		  
 		  #if($num > 0)
-		      <br/>
+                    <br/>
 		  #end
 		  
-		  $errorMsg
+                    $errorMsg
 		#end
 				</div>
 	#else

@@ -295,7 +295,7 @@ public class ReportalHelper {
 		}
 		
 		int atSignIndex = email.indexOf('@');
-		if (atSignIndex > 0) {
+		if (atSignIndex != -1) {
 			return email.substring(atSignIndex + 1);
 		}
 		

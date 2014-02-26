@@ -110,21 +110,17 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		itemsPerPage = props.getInt("reportal.items_per_page", 20);
 		showNav = props.getBoolean("reportal.show.navigation", false);
 		
-		reportalMailTempDirectory = new File(props.getString("reportal.mail.temp.directory", "/tmp/reportal"));
+		reportalMailTempDirectory = new File(props.getString("reportal.mail.temp.dir", "/tmp/reportal"));
 		reportalMailTempDirectory.mkdirs();
 		ReportalMailCreator.reportalMailTempDirectory = reportalMailTempDirectory;
+
 		List<String> allowedDomains = props.getStringList("reportal.allowed.email.domains", 
 				(List<String>) null);
-		
 		if (allowedDomains != null) {
-			allowedEmailDomains = new HashSet<String>();
-			
-			for (String domain : allowedDomains) {
-				allowedEmailDomains.add(domain);
-			}
+			allowedEmailDomains = new HashSet<String>(allowedDomains);
 		}
 		
-		ReportalMailCreator.outputLocation = props.getString("reportal.output.location", "/tmp/reportal");
+		ReportalMailCreator.outputLocation = props.getString("reportal.output.dir", "/tmp/reportal");
 		ReportalMailCreator.outputFileSystem = props.getString("reportal.output.filesystem", "local");
 		ReportalMailCreator.reportalStorageUser = reportalStorageUser;
 		
@@ -211,7 +207,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Project project = projectManager.getProject(id);
 		Reportal reportal = Reportal.loadFromProject(project);
 
-		// Delete reportal
+		// Delete report
 		if (ajaxName.equals("delete")) {
 			if (!project.hasPermission(user, Type.ADMIN)) {
 				ret.put("error", "You do not have permissions to delete this reportal.");
@@ -228,7 +224,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				ret.put("result", "success");
 			}
 		}
-		// Bookmark reportal
+		// Bookmark report
 		else if (ajaxName.equals("bookmark")) {
 			boolean wasBookmarked = ReportalHelper.isBookmarkProject(project, user);
 			try {
@@ -247,7 +243,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				ret.put("error", "Error bookmarking reportal. " + e.getMessage());
 			}
 		}
-		// Subscribe reportal
+		// Subscribe to report
 		else if (ajaxName.equals("subscribe")) {
 			boolean wasSubscribed = ReportalHelper.isSubscribeProject(project, user);
 			if (!wasSubscribed && reportal.getAccessViewers().size() > 0 && !project.hasPermission(user, Type.READ)) {
@@ -406,8 +402,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 			}
 			// Show data files
 			else {
-				String outputFileSystem = props.getString("reportal.output.filesystem", "local");
-				String outputBase = props.getString("reportal.output.location", "/tmp/reportal");
+				String outputFileSystem = ReportalMailCreator.outputFileSystem;
+				String outputBase = ReportalMailCreator.outputLocation;
 
 				String locationFull = (outputBase + "/" + execId).replace("//", "/");
 
@@ -883,6 +879,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		for (String email : emails) {
 			if (!ReportalHelper.isValidEmailAddress(email)) {
 				errors.add("Invalid email address: " + email);
+				continue;
 			}
 			
 			String domain = ReportalHelper.getEmailDomain(email);
@@ -962,7 +959,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		Flow flow = project.getFlows().get(0);
 		project.getMetadata().put("flowName", flow.getId());
 
-		// Set reportal mailer
+		// Set Reportal mailer
 		flow.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
 
 		// Create/Save schedule
@@ -1079,19 +1076,29 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	}
 
 	private class CleanerThread extends Thread {
-		// Every day, clean Reportal output directory and mail temp directory.
-		private static final long CLEAN_INTERVAL_MS = 24 * 60 * 60 * 1000;
+		// The frequency, in milliseconds, that the Reportal output
+		// and mail temp directories should be cleaned
+		private final long CLEAN_INTERVAL_MS;
+		private static final long DEFAULT_CLEAN_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
+		// The duration, in milliseconds, that Reportal output should be retained for
+		private final long OUTPUT_DIR_RETENTION_MS;
+		private static final long DEFAULT_OUTPUT_DIR_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+		
+		// The duration, in milliseconds, that Reportal mail temp files should be retained for
+		private final long MAIL_TEMP_DIR_RETENTION_MS;
+		private static final long DEFAULT_MAIL_TEMP_DIR_RETENTION_MS = 24 * 60 * 60 * 1000;
+		
 		private boolean shutdown = false;
-		
-		// Retain Reportal output for 14 days.
-		private static final long OUTPUT_DIR_RETENTION = 14 * 24 * 60 * 60 * 1000;
-		
-		// Retain mail temp directory for 1 day.
-		private static final long MAIL_TEMP_DIR_RETENTION = 1 * 24 * 60 * 60 * 1000;
 
 		public CleanerThread() {
 			this.setName("Reportal-Cleaner-Thread");
+			CLEAN_INTERVAL_MS = props.getLong("reportal.clean.interval.ms",
+					DEFAULT_CLEAN_INTERVAL_MS);
+			OUTPUT_DIR_RETENTION_MS = props.getLong("reportal.output.dir.retention.ms",
+					DEFAULT_OUTPUT_DIR_RETENTION_MS);
+			MAIL_TEMP_DIR_RETENTION_MS = props.getLong("reportal.mail.temp.dir.retention.ms",
+					DEFAULT_MAIL_TEMP_DIR_RETENTION_MS);
 		}
 
 		@SuppressWarnings("unused")
@@ -1128,7 +1135,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 				hdfsStreamProvider.setUser(reportalStorageUser);
 			}
 
-			final long pastTimeThreshold = System.currentTimeMillis() - OUTPUT_DIR_RETENTION;
+			final long pastTimeThreshold = System.currentTimeMillis() - OUTPUT_DIR_RETENTION_MS;
 			
 			String[] oldFiles = null;
 			try {
@@ -1154,7 +1161,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		
 		private void cleanReportalMailTempDir() {
 			File dir = reportalMailTempDirectory;
-			final long pastTimeThreshold = System.currentTimeMillis() - MAIL_TEMP_DIR_RETENTION;
+			final long pastTimeThreshold = System.currentTimeMillis() - MAIL_TEMP_DIR_RETENTION_MS;
 			
 			File[] oldMailTempDirs = dir.listFiles(new FileFilter() {
 				@Override
