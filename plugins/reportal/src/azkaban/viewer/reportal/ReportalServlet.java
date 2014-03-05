@@ -64,10 +64,12 @@ import azkaban.reportal.util.StreamProviderHDFS;
 import azkaban.scheduler.ScheduleManager;
 import azkaban.scheduler.ScheduleManagerException;
 import azkaban.security.commons.HadoopSecurityManager;
+import azkaban.user.Permission;
 import azkaban.user.Permission.Type;
 import azkaban.user.User;
 import azkaban.user.UserManager;
 import azkaban.utils.FileIOUtils.LogData;
+import azkaban.utils.Pair;
 import azkaban.utils.Props;
 import azkaban.webapp.AzkabanWebServer;
 import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
@@ -936,8 +938,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		report.project = project;
 		page.add("projectId", project.getId());
 
-		report.updatePermissions();
-
 		try {
 			report.createZipAndUpload(projectManager, user, reportalStorageUser);
 		} catch (Exception e) {
@@ -975,11 +975,12 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		report.saveToProject(project);
-
+		
 		try {
 			ReportalHelper.updateProjectNotifications(project, projectManager);
 			projectManager.updateProjectSetting(project);
 			projectManager.updateProjectDescription(project, report.description, user);
+			updateProjectPermissions(project, projectManager, report, user);
 			projectManager.updateFlow(project, flow);
 		} catch (ProjectManagerException e) {
 			e.printStackTrace();
@@ -997,6 +998,41 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		return Integer.toString(project.getId());
+	}
+	
+	private void updateProjectPermissions(Project project, ProjectManager projectManager,
+			Reportal report, User currentUser) throws ProjectManagerException {
+		// Old permissions and users
+		List<Pair<String, Permission>> oldPermissions = project.getUserPermissions();
+		Set<String> oldUsers = new HashSet<String>();
+		for (Pair<String, Permission> userPermission : oldPermissions) {
+			oldUsers.add(userPermission.getFirst());
+		}
+		
+		// Update permissions
+		report.updatePermissions();
+		
+		// New permissions and users
+		List<Pair<String, Permission>> newPermissions = project.getUserPermissions();
+		Set<String> newUsers = new HashSet<String>();
+		for (Pair<String, Permission> userPermission : newPermissions) {
+			newUsers.add(userPermission.getFirst());
+		}
+		
+		// Save all new permissions
+		for (Pair<String, Permission> userPermission : newPermissions) {
+			if (!oldPermissions.contains(userPermission)) {
+				projectManager.updateProjectPermission(project, userPermission.getFirst(),
+						userPermission.getSecond(), false, currentUser);
+			}
+		}
+		
+		// Remove permissions for any old users no longer in the new users
+		for (String oldUser : oldUsers) {
+			if (!newUsers.contains(oldUser)) {
+				projectManager.removeProjectPermission(project, oldUser, false, currentUser);
+			}
+		}
 	}
 
 	private void handleRunReportalWithVariables(HttpServletRequest req, HashMap<String, Object> ret, Session session) throws ServletException, IOException {

@@ -179,8 +179,10 @@ public class Reportal {
 		}
 	}
 
+	/**
+	 * Updates the project permissions in MEMORY, but does NOT update the project in the database.
+	 */
 	public void updatePermissions() {
-		// Save permissions
 		String[] accessViewerList = accessViewer.trim().split(ACCESS_LIST_SPLIT_REGEX);
 		String[] accessExecutorList = accessExecutor.trim().split(ACCESS_LIST_SPLIT_REGEX);
 		String[] accessOwnerList = accessOwner.trim().split(ACCESS_LIST_SPLIT_REGEX);
