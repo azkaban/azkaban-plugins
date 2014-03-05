@@ -1021,8 +1021,10 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		
 		// Save all new permissions
 		for (Pair<String, Permission> userPermission : newPermissions) {
-			projectManager.updateProjectPermission(project, userPermission.getFirst(),
-					userPermission.getSecond(), false, currentUser);
+			if (!oldPermissions.contains(userPermission)) {
+				projectManager.updateProjectPermission(project, userPermission.getFirst(),
+						userPermission.getSecond(), false, currentUser);
+			}
 		}
 		
 		// Remove permissions for any old users no longer in the new users
