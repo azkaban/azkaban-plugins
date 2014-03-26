@@ -21,10 +21,10 @@
 	<classpathentry kind="lib" path="extlib/velocity-tools-2.0.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/mail-1.4.5.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/joda-time-2.0.jar"/>
-	<classpathentry kind="lib" path="plugins/reportal/lib/pig-0.11.0-withouthadoop.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-io-2.4.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-dbcp-1.4.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="plugins/reportal/lib/reportalpig/lib/pig-0.11.0-withouthadoop.jar"/>
 	<classpathentry kind="lib" path="plugins/hadoopsecuritymanager/lib/hive-metastore-0.10.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

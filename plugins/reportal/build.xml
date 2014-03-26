@@ -40,8 +40,9 @@
 		
 		<fileset dir="${lib.dir}">
 			<include name="*.jar" />
+			<include name="**/*.jar" />
 		</fileset>
-		
+
 		<pathelement path="${dist.classes.dir}" />
 	</path>
 
