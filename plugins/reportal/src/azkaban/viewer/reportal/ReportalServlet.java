@@ -444,7 +444,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 							fileList = ReportalHelper.filterCSVFile(fileList);
 							Arrays.sort(fileList);
 							
-							List<Object> files = getFilePreviews(fileList, locationFull, streamProvider);
+							List<Object> files = getFilePreviews(fileList, locationFull, streamProvider,
+							                                     reportal.renderResultsAsHtml);
 							
 							page.add("files", files);
 						} catch (Exception e) {
@@ -518,7 +519,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	 * @param streamProvider
 	 * @return
 	 */
-	private List<Object> getFilePreviews(String[] fileList, String locationFull, IStreamProvider streamProvider) {
+	private List<Object> getFilePreviews(String[] fileList, String locationFull,
+	                                     IStreamProvider streamProvider,
+	                                     boolean renderResultsAsHtml) {
 		List<Object> files = new ArrayList<Object>();
 		InputStream csvInputStream = null;
 		
@@ -538,7 +541,10 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					String[] data = csvLine.split("\",\"");
 					List<String> line = new ArrayList<String>();
 					for (String item: data) {
-					  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
+					  String column = item.replace("\"", "");
+					  if (!renderResultsAsHtml) {
+					    column = StringEscapeUtils.escapeHtml(column);
+					  }
 					  line.add(column);
 					}
 					lines.add(line);
@@ -668,6 +674,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("scheduleRepeat", reportal.scheduleRepeat);
 		page.add("scheduleIntervalQuantity", reportal.scheduleIntervalQuantity);
 		page.add("scheduleInterval", reportal.scheduleInterval);
+		page.add("renderResultsAsHtml", reportal.renderResultsAsHtml);
 		page.add("notifications", reportal.notifications);
 		page.add("failureNotifications", reportal.failureNotifications);
 		page.add("accessViewer", reportal.accessViewer);
@@ -749,6 +756,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		report.scheduleRepeat = hasParam(req, "schedule-repeat");
 		report.scheduleIntervalQuantity = getParam(req, "schedule-interval-quantity");
 		report.scheduleInterval = getParam(req, "schedule-interval");
+		report.renderResultsAsHtml = hasParam(req, "render-results-as-html");
 		page.add("schedule", report.schedule);
 		page.add("scheduleHour", report.scheduleHour);
 		page.add("scheduleMinute", report.scheduleMinute);
@@ -758,6 +766,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("scheduleRepeat", report.scheduleRepeat);
 		page.add("scheduleIntervalQuantity", report.scheduleIntervalQuantity);
 		page.add("scheduleInterval", report.scheduleInterval);
+		page.add("renderResultsAsHtml", report.renderResultsAsHtml);
 
 		report.accessViewer = getParam(req, "access-viewer");
 		report.accessExecutor = getParam(req, "access-executor");
@@ -1091,7 +1100,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 		
 		options.getFlowParameters().put("reportal.title", report.title);
-		
+		options.getFlowParameters().put("reportal.render.results.as.html",
+		                                report.renderResultsAsHtml ? "true" : "false");
 		options.getFlowParameters().put("reportal.unscheduled.run", "true");
 
 		try {
