@@ -130,6 +130,13 @@
 						<div class="control-group">
 							<div class="controls">
 								<label class="checkbox">
+									<input name="render-results-as-html" type="checkbox"#if($renderResultsAsHtml) checked#end />Render results as HTML
+								</label>
+							</div>
+						</div>
+						<div class="control-group">
+							<div class="controls">
+								<label class="checkbox">
 									<input id="schedule-options" name="schedule" type="checkbox"#if($schedule) checked#end />Schedule
 								</label>
 							</div>
