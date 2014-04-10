@@ -61,12 +61,6 @@ public class ReportalHiveRunner extends ReportalAbstractRunner {
 		OutputStream tsvTempOutputStream = new BoundedOutputStream(new BufferedOutputStream(new FileOutputStream(tempTSVFile)), outputCapacity);
 		PrintStream logOut = System.out;
 
-		// NOTE: It is critical to do this here so that log4j is reinitialized
-		// before any of the other core hive classes are loaded
-		// criccomini@linkedin.com: I disabled this because it appears to swallow
-		// all future logging (even outside of hive).
-		// SessionState.initHiveLog4j();
-
 		String orig = HiveConf.getVar(conf, HiveConf.ConfVars.HIVEAUXJARS);
 
 		CliSessionState sessionState = new CliSessionState(conf);
