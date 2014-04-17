@@ -90,7 +90,7 @@ public class AvroFileViewer extends HdfsFileViewer {
 		try {
 			avroDataStream = getAvroDataStream(fs, path);
 			Schema schema = avroDataStream.getSchema();
-			return schema.toString();
+			return schema.toString(true);
 		}
 		catch (IOException e) {
 			if (logger.isDebugEnabled()) {
