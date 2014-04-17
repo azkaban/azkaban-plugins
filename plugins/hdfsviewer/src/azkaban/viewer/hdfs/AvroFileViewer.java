@@ -29,7 +29,6 @@ import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
-import org.apache.avro.io.JsonEncoder;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.log4j.Logger;
@@ -90,7 +89,7 @@ public class AvroFileViewer extends HdfsFileViewer {
 		try {
 			avroDataStream = getAvroDataStream(fs, path);
 			Schema schema = avroDataStream.getSchema();
-			return schema.toString();
+			return schema.toString(true);
 		}
 		catch (IOException e) {
 			if (logger.isDebugEnabled()) {

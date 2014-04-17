@@ -22,8 +22,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.hadoop.io.BytesWritable;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
 
