@@ -45,7 +45,6 @@ public abstract class SequenceFileViewer extends HdfsFileViewer {
       throws AccessControlException {
 		Set<Capability> result = EnumSet.noneOf(Capability.class);
 		AzkabanSequenceFileReader.Reader reader = null;
-
 		try {
 			reader = new AzkabanSequenceFileReader.Reader(fs, path, new Configuration());
 			result = getCapabilities(reader);

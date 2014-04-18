@@ -247,10 +247,11 @@ public class AzkabanSequenceFileReader {
     	  seek(start);
     	  this.end = in.getPos() + length;
     	  init(tempReader);
-      } catch (Exception e) {
+      } catch (IOException e) {
     	  if(this.in != null) {
-    		in.close();
+          in.close();
     	  }
+        throw e;
       }
     }
 

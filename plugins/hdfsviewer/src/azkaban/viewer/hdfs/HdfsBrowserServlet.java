@@ -373,7 +373,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			}
 			catch (AccessControlException e) {
 				page.add("error_message", "Permission denied. User cannot read this file.");
-        page.add("no_fs", "true");
+				page.add("no_fs", "true");
 				page.render();
 				return;
 			}
