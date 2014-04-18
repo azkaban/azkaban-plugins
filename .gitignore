@@ -3,3 +3,4 @@ azkaban-hadoopsecuritymanager-*.jar
 azkaban-pigvisualizer-*.jar
 azkaban-jobtype-*.jar
 /bin
+*.swp

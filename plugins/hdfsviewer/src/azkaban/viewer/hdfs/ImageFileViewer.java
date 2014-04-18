@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -28,11 +28,12 @@ import java.util.HashSet;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.AccessControlException;
 import org.apache.log4j.Logger;
 
 /**
  * Reads a image file if the file size is not larger than {@value #MAX_IMAGE_FILE_SIZE}.
- * 
+ *
  * @author ximeng
  */
 
@@ -50,7 +51,9 @@ public class ImageFileViewer extends HdfsFileViewer {
 		acceptedSuffix = new HashSet<String>(Arrays.asList(imageSuffix));
 	}
 
-	public Set<Capability> getCapabilities(FileSystem fs, Path path) {
+  @Override
+	public Set<Capability> getCapabilities(FileSystem fs, Path path)
+      throws AccessControlException {
 		String fileName = path.getName();
 		int pos = fileName.lastIndexOf('.');
 		if (pos < 0) {
@@ -63,6 +66,9 @@ public class ImageFileViewer extends HdfsFileViewer {
 			try {
 				len = fs.getFileStatus(path).getLen();
 			}
+      catch (AccessControlException e) {
+        throw e;
+      }
 			catch (IOException e) {
 				e.printStackTrace();
 				return EnumSet.noneOf(Capability.class);
