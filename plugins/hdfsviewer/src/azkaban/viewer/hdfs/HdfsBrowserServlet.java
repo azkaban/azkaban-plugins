@@ -336,7 +336,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 		catch (AccessControlException e) {
 			page.add("error_message",
 					"Permission denied. User cannot read file or directory");
-      page.add("no_fs", "true");
+			page.add("no_fs", "true");
 		}
 		catch (IOException e) {
 			page.add("error_message", "Error: " + e.getMessage());
@@ -408,49 +408,49 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 			throws ServletException, IOException {
 		Map<String, Object> ret = new HashMap<String, Object>();
 		FileSystem fs = null;
-    try {
-      try {
-        fs = getFileSystem(username);
-      }
-      catch (HadoopSecurityManagerException e) {
-        errorAjax(response, ret, "Cannot get FileSystem.");
-        return;
-      }
+		try {
+			try {
+				fs = getFileSystem(username);
+			}
+			catch (HadoopSecurityManagerException e) {
+				errorAjax(response, ret, "Cannot get FileSystem.");
+				return;
+			}
 
-      String ajaxName = getParam(request, "ajax");
-      Path path = null;
-      if (!hasParam(request, "path")) {
-        errorAjax(response, ret, "Missing parameter 'path'.");
-        return;
-      }
+			String ajaxName = getParam(request, "ajax");
+			Path path = null;
+			if (!hasParam(request, "path")) {
+				errorAjax(response, ret, "Missing parameter 'path'.");
+				return;
+			}
 
-      path = new Path(getParam(request, "path"));
-      if (!fs.exists(path)) {
-        errorAjax(response, ret, path.toUri().getPath() + " does not exist.");
-        return;
-      }
+			path = new Path(getParam(request, "path"));
+			if (!fs.exists(path)) {
+				errorAjax(response, ret, path.toUri().getPath() + " does not exist.");
+				return;
+			}
 
-      if (ajaxName.equals("fetchschema")) {
-        handleAjaxFetchSchema(fs, request, ret, session, path);
-      }
-      else if (ajaxName.equals("fetchfile")) {
-        // Note: fetchFile writes directly to the output stream. Thus, we need
-        // to make sure we do not write to the output stream once this call
-        // returns.
-        ret = null;
-        handleAjaxFetchFile(fs, request, response, session, path);
-      }
-      else {
-        ret.put("error", "Unknown AJAX action " + ajaxName);
-      }
+			if (ajaxName.equals("fetchschema")) {
+				handleAjaxFetchSchema(fs, request, ret, session, path);
+			}
+			else if (ajaxName.equals("fetchfile")) {
+				// Note: fetchFile writes directly to the output stream. Thus, we need
+				// to make sure we do not write to the output stream once this call
+				// returns.
+				ret = null;
+				handleAjaxFetchFile(fs, request, response, session, path);
+			}
+			else {
+				ret.put("error", "Unknown AJAX action " + ajaxName);
+			}
 
-      if (ret != null) {
-        this.writeJSON(response, ret);
-      }
-    }
-    finally {
-      fs.close();
-    }
+			if (ret != null) {
+				this.writeJSON(response, ret);
+			}
+		}
+		finally {
+			fs.close();
+		}
 	}
 
 	private void handleAjaxFetchSchema(FileSystem fs, HttpServletRequest req,
