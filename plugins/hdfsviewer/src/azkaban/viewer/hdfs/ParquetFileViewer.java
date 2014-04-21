@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,6 +29,7 @@ import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.AccessControlException;
 import org.apache.log4j.Logger;
 
 import org.codehaus.jackson.JsonEncoding;
@@ -50,7 +51,8 @@ public class ParquetFileViewer extends HdfsFileViewer {
 	final private static long STOP_TIME = 2000l;
 
 	@Override
-	public Set<Capability> getCapabilities(FileSystem fs, Path path) {
+	public Set<Capability> getCapabilities(FileSystem fs, Path path)
+      throws AccessControlException {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Parquet file path: " + path.toUri().getPath());
 		}
@@ -59,6 +61,9 @@ public class ParquetFileViewer extends HdfsFileViewer {
 		try {
 			parquetReader = new AvroParquetReader<GenericRecord>(path);
 		}
+    catch (AccessControlException e) {
+      throw e;
+    }
 		catch (IOException e) {
 			if (logger.isDebugEnabled()) {
 				logger.debug(path.toUri().getPath() + " is not a Parquet file.");
@@ -125,7 +130,7 @@ public class ParquetFileViewer extends HdfsFileViewer {
 			}
 		}
 		catch (IOException e) {
-			outputStream.write(("Error in displaying Parquet file: " + 
+			outputStream.write(("Error in displaying Parquet file: " +
 					e.getLocalizedMessage()).getBytes("UTF-8"));
 			throw e;
 		}
@@ -145,7 +150,7 @@ public class ParquetFileViewer extends HdfsFileViewer {
 	public String getSchema(FileSystem fs, Path path) {
 		String schema = null;
 		try {
-			AvroParquetReader<GenericRecord> parquetReader = 
+			AvroParquetReader<GenericRecord> parquetReader =
 					new AvroParquetReader<GenericRecord>(path);
 			GenericRecord record = parquetReader.read();
 			if (record == null) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,6 +23,7 @@ import java.io.PrintWriter;
 
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.fs.permission.AccessControlException;
 import org.apache.log4j.Logger;
 
 import azkaban.viewer.hdfs.AzkabanSequenceFileReader;
@@ -33,17 +34,10 @@ public class JsonSequenceFileViewer extends SequenceFileViewer {
 
 	private static Logger logger = Logger.getLogger(JsonSequenceFileViewer.class);
 
-	public Set<Capability> getCapabilities(AzkabanSequenceFileReader.Reader reader)  {
-		Text keySchema = null;
-		Text valueSchema = null;
-		try {
-			keySchema = reader.getMetadata().get(new Text("key.schema"));
-			valueSchema = reader.getMetadata().get(new Text("value.schema"));
-		}
-		catch (Exception e) {
-			logger.error("can't get schema. may not be json file");
-		}
-
+	public Set<Capability> getCapabilities(
+      AzkabanSequenceFileReader.Reader reader) {
+		Text keySchema = reader.getMetadata().get(new Text("key.schema"));
+		Text valueSchema = reader.getMetadata().get(new Text("value.schema"));
 		if (keySchema != null && valueSchema != null) {
 			return EnumSet.of(Capability.READ);
 		}
