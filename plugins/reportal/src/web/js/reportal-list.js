@@ -17,7 +17,7 @@
 $(document).ready(function () {
 	var reportalTable = $("#reportalTable");
 	var tableBody = $("#reportalTable").find("tbody").eq(0);
-	reportalTable.tablesorter();
+	reportalTable.tablesorter({sortList:[[0,0]]});
 	var template = $("#action-template").html();
 	var inputBookmark = $("#facet_bookmarked")[0];
 	var inputSubscribe= $("#facet_subscribed")[0];
