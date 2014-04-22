@@ -52,21 +52,6 @@ public class ReportalHelper {
 		return reportalProjects;
 	}
 
-	public static List<Project> getReportalProjectsWithFilter(AzkabanWebServer server) {
-		List<Project> projects = server.getProjectManager().getProjects();
-
-		List<Project> reportalProjects = new ArrayList<Project>();
-
-		for (Project project : projects) {
-			if (project.getMetadata().containsKey("reportal-user")) {
-				// Apply filter
-				reportalProjects.add(project);
-			}
-		}
-
-		return reportalProjects;
-	}
-
 	public static void bookmarkProject(AzkabanWebServer server, Project project, User user) throws ProjectManagerException {
 		project.getMetadata().put("bookmark-" + user.getUserId(), true);
 		server.getProjectManager().updateProjectSetting(project);

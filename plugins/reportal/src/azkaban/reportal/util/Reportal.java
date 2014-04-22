@@ -72,6 +72,8 @@ public class Reportal {
 	public String scheduleIntervalQuantity;
 	public String scheduleInterval;
 
+	public boolean renderResultsAsHtml;
+
 	public String accessViewer;
 	public String accessExecutor;
 	public String accessOwner;
@@ -99,6 +101,8 @@ public class Reportal {
 		project.getMetadata().put("scheduleRepeat", scheduleRepeat);
 		project.getMetadata().put("scheduleIntervalQuantity", scheduleIntervalQuantity);
 		project.getMetadata().put("scheduleInterval", scheduleInterval);
+
+		project.getMetadata().put("renderResultsAsHtml", renderResultsAsHtml);
 
 		project.getMetadata().put("accessViewer", accessViewer);
 		project.getMetadata().put("accessExecutor", accessExecutor);
@@ -170,8 +174,10 @@ public class Reportal {
 			
 			ExecutionOptions options = new ExecutionOptions();
 			options.getFlowParameters().put("reportal.execution.user", user.getUserId());
-			options.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
 			options.getFlowParameters().put("reportal.title", report.title);
+			options.getFlowParameters().put("reportal.render.results.as.html",
+			                                report.renderResultsAsHtml ? "true" : "false");
+			options.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
 
 			scheduleManager.scheduleFlow(-1, project.getId(), project.getName(), flow.getId(), "ready",
 					firstSchedTime.getMillis(), firstSchedTime.getZone(), period, DateTime.now().getMillis(),
@@ -179,8 +185,10 @@ public class Reportal {
 		}
 	}
 
+	/**
+	 * Updates the project permissions in MEMORY, but does NOT update the project in the database.
+	 */
 	public void updatePermissions() {
-		// Save permissions
 		String[] accessViewerList = accessViewer.trim().split(ACCESS_LIST_SPLIT_REGEX);
 		String[] accessExecutorList = accessExecutor.trim().split(ACCESS_LIST_SPLIT_REGEX);
 		String[] accessOwnerList = accessOwner.trim().split(ACCESS_LIST_SPLIT_REGEX);
@@ -329,6 +337,8 @@ public class Reportal {
 		reportal.scheduleRepeat = boolGetter.get(project.getMetadata().get("scheduleRepeat"));
 		reportal.scheduleIntervalQuantity = stringGetter.get(project.getMetadata().get("scheduleIntervalQuantity"));
 		reportal.scheduleInterval = stringGetter.get(project.getMetadata().get("scheduleInterval"));
+
+		reportal.renderResultsAsHtml = boolGetter.get(project.getMetadata().get("renderResultsAsHtml"));
 
 		reportal.accessViewer = stringGetter.get(project.getMetadata().get("accessViewer"));
 		reportal.accessExecutor = stringGetter.get(project.getMetadata().get("accessExecutor"));

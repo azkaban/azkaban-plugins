@@ -3,13 +3,17 @@
 	<classpathentry kind="src" path="plugins/reportal/src"/>
 	<classpathentry kind="src" path="plugins/reportal/unit"/>
 	<classpathentry kind="src" path="plugins/hadoopsecuritymanager/src"/>
+	<classpathentry kind="src" path="plugins/hdfsviewer/src"/>
 	<classpathentry kind="src" path="plugins/jobtype/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/avro-1.7.4.jar"/>
 	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/voldemort-0.96.jar"/>
 	<classpathentry kind="lib" path="extlib/azkaban-2.5.0-rc3.jar"/>
-	<classpathentry kind="lib" path="extlib/hadoop-core-1.0.4.jar"/>
+	<classpathentry kind="lib" path="extlib/hadoop-core-1.2.1.jar"/>
+	<classpathentry kind="lib" path="extlib/hive-cli-0.12.0.jar"/>
+	<classpathentry kind="lib" path="extlib/hive-common-0.12.0.jar"/>
+	<classpathentry kind="lib" path="extlib/hive-exec-0.12.0.jar"/>
 	<classpathentry kind="lib" path="extlib/jackson-core-asl-1.9.5.jar"/>
 	<classpathentry kind="lib" path="extlib/jackson-mapper-asl-1.9.5.jar"/>
 	<classpathentry kind="lib" path="extlib/log4j-1.2.16.jar"/>
@@ -18,13 +22,13 @@
 	<classpathentry kind="lib" path="extlib/velocity-tools-2.0.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/mail-1.4.5.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/joda-time-2.0.jar"/>
-	<classpathentry kind="lib" path="plugins/reportal/lib/hive-cli-0.8.1.jar"/>
-	<classpathentry kind="lib" path="plugins/reportal/lib/hive-common-0.8.1.jar"/>
-	<classpathentry kind="lib" path="plugins/reportal/lib/hive-exec-0.8.1.jar"/>
-	<classpathentry kind="lib" path="plugins/reportal/lib/pig-0.11.0-withouthadoop.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-io-2.4.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-dbcp-1.4.jar"/>
 	<classpathentry kind="lib" path="plugins/reportal/lib/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="plugins/reportal/lib/reportalpig/lib/pig-0.11.0-withouthadoop.jar"/>
 	<classpathentry kind="lib" path="plugins/hadoopsecuritymanager/lib/hive-metastore-0.10.0.jar"/>
+	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/mongo-java-driver-2.10.1.jar"/>
+	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/parquet-avro-1.3.3-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="plugins/hdfsviewer/lib/parquet-hadoop-bundle-1.3.3-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -219,6 +219,10 @@ public class ReportalMailCreator implements MailCreator {
 			
 			boolean emptyResults = true;
 
+			String htmlResults = flowParameters.get("reportal.render.results.as.html");
+			boolean renderResultsAsHtml = htmlResults != null
+			    && htmlResults.trim().equalsIgnoreCase("true");
+
 			for (i = 0; i < fileList.length; i++) {
 			  String file = fileList[i];
 			  ExecutableNode job = jobs.get(i);
@@ -246,7 +250,10 @@ public class ReportalMailCreator implements MailCreator {
 						String[] data = csvLine.split("\",\"");
 						message.println("<tr>");
 						for (String item : data) {
-						  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
+						  String column = item.replace("\"", "");
+						  if (!renderResultsAsHtml) {
+						    column = StringEscapeUtils.escapeHtml(column);
+						  }
 						  message.println("<td>" + column + "</td>");
 						}
 						message.println("</tr>");

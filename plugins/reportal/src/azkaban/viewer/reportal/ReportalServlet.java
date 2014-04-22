@@ -64,10 +64,12 @@ import azkaban.reportal.util.StreamProviderHDFS;
 import azkaban.scheduler.ScheduleManager;
 import azkaban.scheduler.ScheduleManagerException;
 import azkaban.security.commons.HadoopSecurityManager;
+import azkaban.user.Permission;
 import azkaban.user.Permission.Type;
 import azkaban.user.User;
 import azkaban.user.UserManager;
 import azkaban.utils.FileIOUtils.LogData;
+import azkaban.utils.Pair;
 import azkaban.utils.Props;
 import azkaban.webapp.AzkabanWebServer;
 import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
@@ -442,7 +444,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 							fileList = ReportalHelper.filterCSVFile(fileList);
 							Arrays.sort(fileList);
 							
-							List<Object> files = getFilePreviews(fileList, locationFull, streamProvider);
+							List<Object> files = getFilePreviews(fileList, locationFull, streamProvider,
+							                                     reportal.renderResultsAsHtml);
 							
 							page.add("files", files);
 						} catch (Exception e) {
@@ -516,7 +519,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 	 * @param streamProvider
 	 * @return
 	 */
-	private List<Object> getFilePreviews(String[] fileList, String locationFull, IStreamProvider streamProvider) {
+	private List<Object> getFilePreviews(String[] fileList, String locationFull,
+	                                     IStreamProvider streamProvider,
+	                                     boolean renderResultsAsHtml) {
 		List<Object> files = new ArrayList<Object>();
 		InputStream csvInputStream = null;
 		
@@ -536,7 +541,10 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 					String[] data = csvLine.split("\",\"");
 					List<String> line = new ArrayList<String>();
 					for (String item: data) {
-					  String column = StringEscapeUtils.escapeHtml(item.replace("\"", ""));
+					  String column = item.replace("\"", "");
+					  if (!renderResultsAsHtml) {
+					    column = StringEscapeUtils.escapeHtml(column);
+					  }
 					  line.add(column);
 					}
 					lines.add(line);
@@ -666,6 +674,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("scheduleRepeat", reportal.scheduleRepeat);
 		page.add("scheduleIntervalQuantity", reportal.scheduleIntervalQuantity);
 		page.add("scheduleInterval", reportal.scheduleInterval);
+		page.add("renderResultsAsHtml", reportal.renderResultsAsHtml);
 		page.add("notifications", reportal.notifications);
 		page.add("failureNotifications", reportal.failureNotifications);
 		page.add("accessViewer", reportal.accessViewer);
@@ -747,6 +756,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		report.scheduleRepeat = hasParam(req, "schedule-repeat");
 		report.scheduleIntervalQuantity = getParam(req, "schedule-interval-quantity");
 		report.scheduleInterval = getParam(req, "schedule-interval");
+		report.renderResultsAsHtml = hasParam(req, "render-results-as-html");
 		page.add("schedule", report.schedule);
 		page.add("scheduleHour", report.scheduleHour);
 		page.add("scheduleMinute", report.scheduleMinute);
@@ -756,6 +766,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		page.add("scheduleRepeat", report.scheduleRepeat);
 		page.add("scheduleIntervalQuantity", report.scheduleIntervalQuantity);
 		page.add("scheduleInterval", report.scheduleInterval);
+		page.add("renderResultsAsHtml", report.renderResultsAsHtml);
 
 		report.accessViewer = getParam(req, "access-viewer");
 		report.accessExecutor = getParam(req, "access-executor");
@@ -936,8 +947,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		report.project = project;
 		page.add("projectId", project.getId());
 
-		report.updatePermissions();
-
 		try {
 			report.createZipAndUpload(projectManager, user, reportalStorageUser);
 		} catch (Exception e) {
@@ -975,11 +984,12 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		report.saveToProject(project);
-
+		
 		try {
 			ReportalHelper.updateProjectNotifications(project, projectManager);
 			projectManager.updateProjectSetting(project);
 			projectManager.updateProjectDescription(project, report.description, user);
+			updateProjectPermissions(project, projectManager, report, user);
 			projectManager.updateFlow(project, flow);
 		} catch (ProjectManagerException e) {
 			e.printStackTrace();
@@ -997,6 +1007,41 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 
 		return Integer.toString(project.getId());
+	}
+	
+	private void updateProjectPermissions(Project project, ProjectManager projectManager,
+			Reportal report, User currentUser) throws ProjectManagerException {
+		// Old permissions and users
+		List<Pair<String, Permission>> oldPermissions = project.getUserPermissions();
+		Set<String> oldUsers = new HashSet<String>();
+		for (Pair<String, Permission> userPermission : oldPermissions) {
+			oldUsers.add(userPermission.getFirst());
+		}
+		
+		// Update permissions
+		report.updatePermissions();
+		
+		// New permissions and users
+		List<Pair<String, Permission>> newPermissions = project.getUserPermissions();
+		Set<String> newUsers = new HashSet<String>();
+		for (Pair<String, Permission> userPermission : newPermissions) {
+			newUsers.add(userPermission.getFirst());
+		}
+		
+		// Save all new permissions
+		for (Pair<String, Permission> userPermission : newPermissions) {
+			if (!oldPermissions.contains(userPermission)) {
+				projectManager.updateProjectPermission(project, userPermission.getFirst(),
+						userPermission.getSecond(), false, currentUser);
+			}
+		}
+		
+		// Remove permissions for any old users no longer in the new users
+		for (String oldUser : oldUsers) {
+			if (!newUsers.contains(oldUser)) {
+				projectManager.removeProjectPermission(project, oldUser, false, currentUser);
+			}
+		}
 	}
 
 	private void handleRunReportalWithVariables(HttpServletRequest req, HashMap<String, Object> ret, Session session) throws ServletException, IOException {
@@ -1055,7 +1100,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 		}
 		
 		options.getFlowParameters().put("reportal.title", report.title);
-		
+		options.getFlowParameters().put("reportal.render.results.as.html",
+		                                report.renderResultsAsHtml ? "true" : "false");
 		options.getFlowParameters().put("reportal.unscheduled.run", "true");
 
 		try {

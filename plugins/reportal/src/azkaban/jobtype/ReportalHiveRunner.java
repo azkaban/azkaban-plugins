@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -61,12 +61,6 @@ public class ReportalHiveRunner extends ReportalAbstractRunner {
 		OutputStream tsvTempOutputStream = new BoundedOutputStream(new BufferedOutputStream(new FileOutputStream(tempTSVFile)), outputCapacity);
 		PrintStream logOut = System.out;
 
-		// NOTE: It is critical to do this here so that log4j is reinitialized
-		// before any of the other core hive classes are loaded
-		// criccomini@linkedin.com: I disabled this because it appears to swallow
-		// all future logging (even outside of hive).
-		// SessionState.initHiveLog4j();
-
 		String orig = HiveConf.getVar(conf, HiveConf.ConfVars.HIVEAUXJARS);
 
 		CliSessionState sessionState = new CliSessionState(conf);
@@ -90,7 +84,7 @@ public class ReportalHiveRunner extends ReportalAbstractRunner {
 		for (Map.Entry<Object, Object> item: sessionState.cmdProperties.entrySet()) {
 			conf.set((String)item.getKey(), (String)item.getValue());
 		}
-		
+
 		SessionState.start(sessionState);
 
 		String expanded = expandHiveAuxJarsPath(orig);
@@ -100,14 +94,14 @@ public class ReportalHiveRunner extends ReportalAbstractRunner {
 			System.out.println("Expanded aux jars variable from [" + orig + "] to [" + expanded + "]");
 			HiveConf.setVar(conf, HiveConf.ConfVars.HIVEAUXJARS, expanded);
 		}
-		
+
 		if (!ShimLoader.getHadoopShims().usesJobShell()) {
 			// hadoop-20 and above - we need to augment classpath using hiveconf
 			// components
 			// see also: code in ExecDriver.java
 			ClassLoader loader = conf.getClassLoader();
 			String auxJars = HiveConf.getVar(conf, HiveConf.ConfVars.HIVEAUXJARS);
-			
+
 			System.out.println("Got auxJars = " + auxJars);
 
 			if (StringUtils.isNotBlank(auxJars)) {
@@ -131,7 +125,6 @@ public class ReportalHiveRunner extends ReportalAbstractRunner {
 				line = prefix + line;
 				line = injectVariables(line);
 				System.out.println("Reportal Hive: Running Hive Query: " + line);
-				System.out.println("Reportal Hive: HiveConf HIVEAUXJARS: " + HiveConf.getVar(conf, HiveConf.ConfVars.HIVEAUXJARS));
 				returnValue = cli.processLine(line);
 				prefix = "";
 			}
@@ -167,38 +160,15 @@ public class ReportalHiveRunner extends ReportalAbstractRunner {
 	}
 
 	private String[] buildHiveArgs() {
-		String hadoopBinDir = props.getString("hadoop.dir.bin");
-		String hadoopConfDir = props.getString("hadoop.dir.conf");
-		String hiveAuxJarsPath = props.getString("hive.aux.jars.path");
-
 		List<String> confBuilder = new ArrayList<String>();
 
 		if (proxyUser != null) {
 			confBuilder.add("hive.exec.scratchdir=/tmp/hive-" + proxyUser);
 		}
-		if (hadoopBinDir != null) {
-			confBuilder.add("hadoop.bin.path=" + hadoopBinDir);
-		}
-		if (hadoopConfDir != null) {
-			confBuilder.add("hadoop.config.dir=" + hadoopConfDir);
-		}
-		if (hiveAuxJarsPath != null) {
-			hiveAuxJarsPath = "file://" + hiveAuxJarsPath.replace(",", ",file://");
-			confBuilder.add("hive.aux.jars.path=" + hiveAuxJarsPath);
-		}
+
 		if (jobTitle != null) {
 			confBuilder.add("mapred.job.name=\"Reportal: " + jobTitle + "\"");
 		}
-
-		// if (logDir != null) {
-		// confBuilder.add("hive.log.dir=" + logDir);
-		// }
-		// if (logFile != null) {
-		// confBuilder.add("hive.log.file=" + logFile);
-		// }
-		// if (mapredJobQueueName != null) {
-		// confBuilder.add("mapred.job.queue.name=" + mapredJobQueueName);
-		// }
 
 		String[] args = new String[confBuilder.size() * 2];
 
