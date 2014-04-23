@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.Map;
 
 import azkaban.flow.CommonJobProperties;
+import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.reportal.util.Reportal;
 import azkaban.utils.Props;
 
@@ -51,6 +52,7 @@ public class ReportalTypeManager {
 		type.buildJobFiles(reportal, propertiesFile, jobFile, jobName, queryScript, userName);
 
 		propertiesFile.put(CommonJobProperties.JOB_TYPE, type.getJobTypeName());
+		propertiesFile.put(JavaProcessJob.JVM_PARAMS, "-Dreportal.user.name=" + userName + " -Dreportal.execid=${azkaban.flow.execid}");
 
 		// Order dependency
 		if (dependentJob != null) {
