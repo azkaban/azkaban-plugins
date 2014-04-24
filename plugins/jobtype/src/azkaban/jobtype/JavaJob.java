@@ -17,6 +17,7 @@
 package azkaban.jobtype;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -42,9 +43,18 @@ public class JavaJob extends JavaProcessJob {
 
 	private Object _javaObject = null;
 	private String props;
+	
+	private boolean shouldProxy = false;
+	private boolean noUserClasspath = false;
+	private boolean runStaticMethod = false;
 
 	public JavaJob(String jobid, Props sysProps, Props jobProps, Logger log) {
 		super(jobid, sysProps, new Props(sysProps, jobProps), log);
+		
+		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
+		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
+		noUserClasspath = getSysProps().getBoolean("azkaban.no.user.classpath", false);
+		runStaticMethod = getJobProps().getBoolean("run.main.method", false);	
 	}
 
 	@Override
@@ -60,9 +70,21 @@ public class JavaJob extends JavaProcessJob {
 	
 	@Override
 	protected List<String> getClassPaths() {
-		List<String> classPath = super.getClassPaths();
+		List<String> classPath;
+		if(!noUserClasspath) {
+			classPath = super.getClassPaths();
+		}
+		else {
+			getLog().info("Supressing user supplied classpath settings.");
+			classPath = new ArrayList<String>();
+		}
 
-		classPath.add(getSourcePathFromClass(JavaJobRunnerMain.class));
+
+		if(runStaticMethod) {
+			classPath.add(getSourcePathFromClass(JavaJobRunnerMain2.class));
+		} else {
+			classPath.add(getSourcePathFromClass(JavaJobRunnerMain.class));
+		}
 		classPath.add(getSourcePathFromClass(Props.class));
 		classPath.add(getSourcePathFromClass(SecurityUtils.class));
 		
@@ -127,7 +149,11 @@ public class JavaJob extends JavaProcessJob {
 	
 	@Override
 	protected String getJavaClass() {
-		return JavaJobRunnerMain.class.getName();
+		if(runStaticMethod) {
+			return JavaJobRunnerMain2.class.getName();
+		} else {
+			return JavaJobRunnerMain.class.getName();
+		}
 	}
 
 	@Override

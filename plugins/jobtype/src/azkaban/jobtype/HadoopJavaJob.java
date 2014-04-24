@@ -54,17 +54,20 @@ public class HadoopJavaJob extends JavaProcessJob {
 	private boolean obtainTokens = false;
 	private boolean noUserClasspath = false;
 	
+	private boolean runStaticMethod = false;
+	
 	private HadoopSecurityManager hadoopSecurityManager;
 
 	public HadoopJavaJob(String jobid, Props sysProps, Props jobProps, Logger log) throws RuntimeException {
 		super(jobid, sysProps, jobProps, log);
 		
-    getJobProps().put("azkaban.job.id", jobid);
+		getJobProps().put("azkaban.job.id", jobid);
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
 		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
 		noUserClasspath = getSysProps().getBoolean("azkaban.no.user.classpath", false);
-		
+		runStaticMethod = getJobProps().getBoolean("run.main.method", false);
+
 		if(shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
 			try {
@@ -132,7 +135,11 @@ public class HadoopJavaJob extends JavaProcessJob {
 			classPath = new ArrayList<String>();
 		}
 
-		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
+		if(runStaticMethod) {
+			classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain2.class));
+		} else {
+			classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
+		}
 		classPath.add(getSourcePathFromClass(Props.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 //		String loggerPath = getSourcePathFromClass(org.apache.log4j.Logger.class);
@@ -262,7 +269,11 @@ public class HadoopJavaJob extends JavaProcessJob {
 	
 	@Override
 	protected String getJavaClass() {
-		return HadoopJavaJobRunnerMain.class.getName();
+		if(runStaticMethod) {
+			return HadoopJavaJobRunnerMain2.class.getName();
+		} else {
+			return HadoopJavaJobRunnerMain.class.getName();
+		}
 	}
 
 	@Override
