@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.hive.ql.parse.HiveParser_IdentifiersParser.booleanValue_return;
 import org.apache.log4j.Logger;
 
 import azkaban.security.commons.HadoopSecurityManager;
@@ -50,21 +51,34 @@ public class HadoopJavaJob extends JavaProcessJob {
 	private Object _javaObject = null;
 	
 	private String userToProxy = null;
+	private boolean useToken = true;
+	private boolean useKeytab = false;
 	private boolean shouldProxy = false;
 	private boolean obtainTokens = false;
 	private boolean noUserClasspath = false;
+	
+	private boolean runStaticMethod = false;
 	
 	private HadoopSecurityManager hadoopSecurityManager;
 
 	public HadoopJavaJob(String jobid, Props sysProps, Props jobProps, Logger log) throws RuntimeException {
 		super(jobid, sysProps, jobProps, log);
 		
-    getJobProps().put("azkaban.job.id", jobid);
+		getJobProps().put("azkaban.job.id", jobid);
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
+		useToken = getSysProps().getBoolean("use.token", true);
+		useKeytab = getSysProps().getBoolean("use.keytab", false);
 		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
+		getJobProps().put("use.token", Boolean.toString(useToken));
+		getJobProps().put("use.keytab", Boolean.toString(useKeytab));
+		if(useKeytab) {
+			getJobProps().put(HadoopSecurityManager.AZKABAN_KEYTAB_LOCATION, getSysProps().getString(HadoopSecurityManager.AZKABAN_KEYTAB_LOCATION));
+			getJobProps().put(HadoopSecurityManager.AZKABAN_PRINCIPAL, getSysProps().getString(HadoopSecurityManager.AZKABAN_PRINCIPAL));
+		}
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
 		noUserClasspath = getSysProps().getBoolean("azkaban.no.user.classpath", false);
-		
+		runStaticMethod = getJobProps().getBoolean("run.main.method", false);
+
 		if(shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
 			try {
@@ -132,7 +146,11 @@ public class HadoopJavaJob extends JavaProcessJob {
 			classPath = new ArrayList<String>();
 		}
 
-		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
+		if(runStaticMethod) {
+			classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain2.class));
+		} else {
+			classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
+		}
 		classPath.add(getSourcePathFromClass(Props.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 //		String loggerPath = getSourcePathFromClass(org.apache.log4j.Logger.class);
@@ -181,7 +199,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 	@Override
 	public void run() throws Exception {
 		File f = null;
-		if(shouldProxy && obtainTokens) {
+		if(useToken && obtainTokens) {
 			userToProxy = getJobProps().getString("user.to.proxy");
 			getLog().info("Need to proxy. Getting tokens.");
 			Props props = new Props();
@@ -262,7 +280,11 @@ public class HadoopJavaJob extends JavaProcessJob {
 	
 	@Override
 	protected String getJavaClass() {
-		return HadoopJavaJobRunnerMain.class.getName();
+		if(runStaticMethod) {
+			return HadoopJavaJobRunnerMain2.class.getName();
+		} else {
+			return HadoopJavaJobRunnerMain.class.getName();
+		}
 	}
 
 	@Override

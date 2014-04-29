@@ -183,7 +183,6 @@ public class HadoopSecureHiveWrapper {
 		}
 
 		//TODO: logFile, still useful?
-		//CliDriver.main(args);
 		logger.info("Executing query: " + hiveScript);
 
 		CliDriver cli = new CliDriver();
@@ -192,10 +191,12 @@ public class HadoopSecureHiveWrapper {
 			logger.warn("Got exception " + returnCode + " from line: " + hiveScript);
 			throw new HiveQueryExecutionException(returnCode, hiveScript);
 		}
+		
+//		CliDriver.main(args);
 	}
 	
 	public static boolean shouldProxy(Properties prop) {
-		String shouldProxy = prop.getProperty(HadoopSecurityManager.ENABLE_PROXYING);
+		String shouldProxy = prop.getProperty(HadoopSecurityManager.SHOULD_PROXY);
 
 		return shouldProxy != null && shouldProxy.equals("true");
 	}
