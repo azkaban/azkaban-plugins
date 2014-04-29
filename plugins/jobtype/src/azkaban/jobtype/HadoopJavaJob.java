@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.hive.ql.parse.HiveParser_IdentifiersParser.booleanValue_return;
 import org.apache.log4j.Logger;
 
 import azkaban.security.commons.HadoopSecurityManager;
@@ -50,6 +51,8 @@ public class HadoopJavaJob extends JavaProcessJob {
 	private Object _javaObject = null;
 	
 	private String userToProxy = null;
+	private boolean useToken = true;
+	private boolean useKeytab = false;
 	private boolean shouldProxy = false;
 	private boolean obtainTokens = false;
 	private boolean noUserClasspath = false;
@@ -63,7 +66,15 @@ public class HadoopJavaJob extends JavaProcessJob {
 		
 		getJobProps().put("azkaban.job.id", jobid);
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
+		useToken = getSysProps().getBoolean("use.token", true);
+		useKeytab = getSysProps().getBoolean("use.keytab", false);
 		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
+		getJobProps().put("use.token", Boolean.toString(useToken));
+		getJobProps().put("use.keytab", Boolean.toString(useKeytab));
+		if(useKeytab) {
+			getJobProps().put(HadoopSecurityManager.AZKABAN_KEYTAB_LOCATION, getSysProps().getString(HadoopSecurityManager.AZKABAN_KEYTAB_LOCATION));
+			getJobProps().put(HadoopSecurityManager.AZKABAN_PRINCIPAL, getSysProps().getString(HadoopSecurityManager.AZKABAN_PRINCIPAL));
+		}
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
 		noUserClasspath = getSysProps().getBoolean("azkaban.no.user.classpath", false);
 		runStaticMethod = getJobProps().getBoolean("run.main.method", false);
@@ -188,7 +199,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 	@Override
 	public void run() throws Exception {
 		File f = null;
-		if(shouldProxy && obtainTokens) {
+		if(useToken && obtainTokens) {
 			userToProxy = getJobProps().getString("user.to.proxy");
 			getLog().info("Need to proxy. Getting tokens.");
 			Props props = new Props();

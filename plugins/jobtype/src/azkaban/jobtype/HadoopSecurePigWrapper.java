@@ -166,7 +166,7 @@ public class HadoopSecurePigWrapper {
 	}
 	
 	public static boolean shouldProxy(Props prop) {
-		String shouldProxy = prop.getString(HadoopSecurityManager.ENABLE_PROXYING);
+		String shouldProxy = prop.getString(HadoopSecurityManager.SHOULD_PROXY);
 		return shouldProxy != null && shouldProxy.equals("true");
 	}
 }
