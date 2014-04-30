@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import org.apache.hadoop.hive.ql.parse.HiveParser_IdentifiersParser.booleanValue_return;
 import org.apache.log4j.Logger;
 
 import azkaban.security.commons.HadoopSecurityManager;
@@ -57,8 +56,6 @@ public class HadoopJavaJob extends JavaProcessJob {
 	private boolean obtainTokens = false;
 	private boolean noUserClasspath = false;
 	
-	private boolean runStaticMethod = false;
-	
 	private HadoopSecurityManager hadoopSecurityManager;
 
 	public HadoopJavaJob(String jobid, Props sysProps, Props jobProps, Logger log) throws RuntimeException {
@@ -77,7 +74,6 @@ public class HadoopJavaJob extends JavaProcessJob {
 		}
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
 		noUserClasspath = getSysProps().getBoolean("azkaban.no.user.classpath", false);
-		runStaticMethod = getJobProps().getBoolean("run.main.method", false);
 
 		if(shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
@@ -146,11 +142,8 @@ public class HadoopJavaJob extends JavaProcessJob {
 			classPath = new ArrayList<String>();
 		}
 
-		if(runStaticMethod) {
-			classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain2.class));
-		} else {
-			classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
-		}
+
+		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
 		classPath.add(getSourcePathFromClass(Props.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 //		String loggerPath = getSourcePathFromClass(org.apache.log4j.Logger.class);
@@ -280,11 +273,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 	
 	@Override
 	protected String getJavaClass() {
-		if(runStaticMethod) {
-			return HadoopJavaJobRunnerMain2.class.getName();
-		} else {
-			return HadoopJavaJobRunnerMain.class.getName();
-		}
+		return HadoopJavaJobRunnerMain.class.getName();
 	}
 
 	@Override
