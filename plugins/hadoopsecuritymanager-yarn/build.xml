@@ -6,15 +6,14 @@
 	<property name="dist.dir" value="${base.dir}/dist/hadoopsecuritymanager-yarn" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
+	<property name="hive.lib.dir" value="${basedir}/lib/hivelib" />
+	<property name="hadoop.lib.dir" value="${basedir}/lib/hadooplib" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
 	<property name="java.src.dir" value="${basedir}/src" />
 	<!--property name="conf.dir" value="${basedir}/conf" /-->
 	<property name="azkaban-hadoopsecuritymanager-yarn-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
-	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
-
-	<property file="build.properties" />
 
 	<property environment="env" />
 
@@ -25,7 +24,17 @@
 
         <fileset dir="${ext.lib.dir}">
 			<include name="*.jar" />
+			<exclude name="hadoop-core*.jar"/>
 		</fileset>
+
+		<fileset dir="${hadoop.lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+
+		<fileset dir="${hive.lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+
 		<pathelement path="${dist.classes.dir}" />
 	</path>
 	
@@ -39,23 +48,9 @@
 		<delete dir="${dist.jar.dir}" />
 		<delete dir="${dist.classes.dir}" />
 		<delete dir="${dist.packages.dir}" />
-    <delete>
-      <fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
-      </fileset>
-    </delete>
 	</target>
 
 	<target name="build" description="Compile main source tree java files">
-		<!-- copy the latest securitymanager jar -->
-    <delete>
-      <fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
-      </fileset>
-    </delete>
-    <copy todir="${lib.dir}">
-			<fileset file="${hadoopsecuritymanagerjar}">
-			</fileset>
-		</copy>
-
 		<delete dir="${dist.classes.dir}" />
 		<mkdir dir="${dist.classes.dir}" />
 		
@@ -67,7 +62,6 @@
 	</target>
 	
 	<target name="jars" depends="build" description="Compile main source tree java files">
-
 		<mkdir dir="${dist.jar.dir}" />
 		<jar destfile="${azkaban-hadoopsecuritymanager-yarn-jar}">
 			<fileset dir="${dist.classes.dir}">
@@ -76,7 +70,7 @@
 		</jar>
 	</target>
 
-	 <target name="package-hadoopsecuritymanager" depends="jars" description="Creates a package for the webserver">
+	 <target name="package-hadoopsecuritymanager-yarn" depends="jars" description="Creates a package for the webserver">
 		<delete dir="${dist.packages.dir}" />
 		<mkdir dir="${dist.packages.dir}" />
 		<mkdir dir="${dist.packages.dir}/lib" />
@@ -84,10 +78,10 @@
         <!-- Copy Azkaban jars and libs-->
 		<copy file="${azkaban-hadoopsecuritymanager-yarn-jar}" todir="${dist.packages.dir}/lib" />
 		<copy todir="${dist.packages.dir}/lib" >
-			<fileset dir="${lib.dir}" >
+			<!--fileset dir="${lib.dir}" >
 				<exclude name="hadoop-core*.jar"/>
 				<exclude name="azkaban*.jar"/>
-			</fileset>
+			</fileset-->
 		</copy>
 
         <!-- Tarball it -->
@@ -96,7 +90,7 @@
 		</tar>
 	</target>
 
-	<target name="package" depends="package-hadoopsecuritymanager" description="Create all packages">
+	<target name="package" depends="package-hadoopsecuritymanager-yarn" description="Create all packages">
 	</target>
 
 </project>
