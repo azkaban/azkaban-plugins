@@ -32,17 +32,20 @@ class HiveQueryExecutorModule {
   private CliSessionState ss = null;
 
   HiveConf provideHiveConf() {
-    if(this.hiveConf != null) return this.hiveConf;
-    else this.hiveConf = new HiveConf();
+    if (this.hiveConf != null) {
+      return this.hiveConf;
+    } else {
+      this.hiveConf = new HiveConf(SessionState.class);
+    }
 
     troublesomeConfig(HIVEHISTORYFILELOC, hiveConf);
     troublesomeConfig(SCRATCHDIR, hiveConf);
     
     if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-    	System.out.println("Setting hadoop tokens ... ");
-		hiveConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-		System.setProperty("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-	}
+      System.out.println("Setting hadoop tokens ... ");
+      hiveConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+      System.setProperty("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+    }
 
     return hiveConf;
   }
@@ -52,13 +55,14 @@ class HiveQueryExecutorModule {
   }
 
   CliSessionState provideCliSessionState() {
-    if(ss != null) return ss;
+    if (ss != null) {
+      return ss;
+    }
     ss = new CliSessionState(provideHiveConf());
     SessionState.start(ss);
     return ss;
   }
 
-  //@Override
   protected void configure() { /** Nothing to do **/ }
 }
 
