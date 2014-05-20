@@ -37,6 +37,10 @@ import azkaban.reportal.util.BoundedOutputStream;
 import azkaban.reportal.util.ReportalRunnerException;
 import azkaban.utils.Props;
 
+import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
+
 public abstract class ReportalAbstractRunner {
 
 	private static final String REPORTAL_VARIABLE_PREFIX = "reportal.variable.";
@@ -66,8 +70,8 @@ public abstract class ReportalAbstractRunner {
 
 		// Get the hadoop token
 		Configuration conf = new Configuration();
-		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-			conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+		if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
+			conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
 		}
 
 		// Get properties
@@ -104,7 +108,7 @@ public abstract class ReportalAbstractRunner {
 		TimeZone.setDefault(TimeZone.getTimeZone(timeZone));
 		
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    SimpleDateFormat hourFormat = new SimpleDateFormat("yyyy-MM-dd-HH");
+		SimpleDateFormat hourFormat = new SimpleDateFormat("yyyy-MM-dd-HH");
 		
 		variables.put("hive_current_hour", hourFormat.format(cal.getTime()));
 		variables.put("hive_current_day", dateFormat.format(cal.getTime()));

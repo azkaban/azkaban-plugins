@@ -42,6 +42,10 @@ import org.apache.hadoop.hive.shims.ShimLoader;
 
 import azkaban.reportal.util.BoundedOutputStream;
 
+import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
+
 public class ReportalHiveRunner extends ReportalAbstractRunner {
 
 	public ReportalHiveRunner(String jobName, Properties props) {
@@ -53,8 +57,8 @@ public class ReportalHiveRunner extends ReportalAbstractRunner {
 		System.out.println("Reportal Hive: Setting up Hive");
 		HiveConf conf = new HiveConf(SessionState.class);
 
-		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-			conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+		if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
+			conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
 		}
 
 		File tempTSVFile = new File("./temp.tsv");
