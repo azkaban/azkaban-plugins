@@ -15,8 +15,10 @@
  */
 package azkaban.jobtype;
 
+import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEAUXJARS;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORECONNECTURLKEY;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -69,7 +71,7 @@ public class HadoopSecureHiveWrapper {
 			UserGroupInformation proxyUser = null;
 			String userToProxy = prop.getProperty("user.to.proxy");
 			if(securityEnabled) {
-				String filelocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
+				String filelocation = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
 				if(filelocation == null) {
 					throw new RuntimeException("hadoop token information not set.");
 				}		
@@ -86,7 +88,7 @@ public class HadoopSecureHiveWrapper {
 
 				loginUser = UserGroupInformation.getLoginUser();
 				logger.info("Current logged in user is " + loginUser.getUserName());
-				
+
 				logger.info("Creating proxy user.");
 				proxyUser = UserGroupInformation.createProxyUser(userToProxy, loginUser);
 		
@@ -120,16 +122,16 @@ public class HadoopSecureHiveWrapper {
 		
 		final HiveConf hiveConf = new HiveConf(SessionState.class); // provideHiveConf();
 		
-	    if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-	    	System.out.println("Setting hadoop tokens ... ");
-			hiveConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-			System.setProperty("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+		if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
+			System.out.println("Setting hadoop tokens ... ");
+			hiveConf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
+			System.setProperty(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
 		}
-	    
-	    logger.info("HiveConf = " + hiveConf);
+
+		logger.info("HiveConf = " + hiveConf);
 		logger.info("According to the conf, we're talking to the Hive hosted at: "
 				+ HiveConf.getVar(hiveConf, METASTORECONNECTURLKEY));
-	    
+
 		String orig = HiveConf.getVar(hiveConf, HIVEAUXJARS);
 		String expanded = expandHiveAuxJarsPath(orig);
 		if (orig == null || orig.equals(expanded)) {
@@ -160,10 +162,6 @@ public class HadoopSecureHiveWrapper {
 			Thread.currentThread().setContextClassLoader(loader);
 		}
 		
-		//TODO: says so by oozie, not sure if it is true
-		// Have to explicitly unset this property or Hive will not set it.
-		//hiveConf.set("mapred.job.name", "");
-
 		// See https://issues.apache.org/jira/browse/HIVE-1411
 		hiveConf.set("datanucleus.plugin.pluginRegistryBundleCheck", "LOG");
 
@@ -182,8 +180,6 @@ public class HadoopSecureHiveWrapper {
 			throw new IllegalArgumentException("Can't process arguments from session state");
 		}
 
-		//TODO: logFile, still useful?
-		//CliDriver.main(args);
 		logger.info("Executing query: " + hiveScript);
 
 		CliDriver cli = new CliDriver();

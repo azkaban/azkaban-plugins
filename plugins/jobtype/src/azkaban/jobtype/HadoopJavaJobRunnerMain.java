@@ -46,6 +46,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
+
 public class HadoopJavaJobRunnerMain {
 
 	public static final String JOB_CLASS = "job.class";
@@ -114,7 +118,7 @@ public class HadoopJavaJobRunnerMain {
 			if (shouldProxy(prop)) {
 				String userToProxy = prop.getProperty("user.to.proxy");
 				if(securityEnabled) {
-					String filelocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
+					String filelocation = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
 					_logger.info("Found token file " + filelocation);
 					_logger.info("Security enabled is " + UserGroupInformation.isSecurityEnabled());
 					
@@ -199,8 +203,8 @@ public class HadoopJavaJobRunnerMain {
 			public Void run() throws Exception {
 				
 				Configuration conf = new Configuration();
-				if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-					conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+				if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
+					conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
 				}
 				
 				runMethod(obj, runMethod);
