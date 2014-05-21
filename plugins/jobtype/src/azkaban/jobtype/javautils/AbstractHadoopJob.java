@@ -51,226 +51,227 @@ import azkaban.utils.JSONUtils;
 import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
-
 public abstract class AbstractHadoopJob {
-  private static final Logger logger = Logger.getLogger(AbstractHadoopJob.class);
+	private static final Logger logger = Logger.getLogger(AbstractHadoopJob.class);
+	
+	public static String COMMON_FILE_DATE_PATTERN = "yyyy-MM-dd-HH-mm";
+	public static final String HADOOP_PREFIX = "hadoop-conf.";
 
-  public static String COMMON_FILE_DATE_PATTERN = "yyyy-MM-dd-HH-mm";
-  public static final String HADOOP_PREFIX = "hadoop-conf.";
-
-  private RunningJob runningJob;
-  private final Props props;
-  private final String jobName;
-
-  private JobConf jobconf;
+	private RunningJob runningJob;
+	private final Props props;
+	private final String jobName;
+	
+	private JobConf jobconf;
   private JobClient jobClient;
-  private Configuration conf;
+	private Configuration conf;
 
   private boolean visualizer;
   private MapReduceJobState mapReduceJobState;
   private String jobStatsFileName;
 
-  public AbstractHadoopJob(String name, Props props) {
-    this.props = props;
-    this.jobName = name;
-    conf = new Configuration();
-    jobconf = new JobConf(conf);
-    jobconf.setJobName(name);
+	public AbstractHadoopJob(String name, Props props) {
+		this.props = props;
+		this.jobName = name;
+		conf = new Configuration();
+		jobconf = new JobConf(conf);
+		jobconf.setJobName(name);
 
     visualizer = props.getBoolean("mr.listener.visualizer", false) == true;
     if (visualizer == true) {
       jobStatsFileName = props.getString("azkaban.job.attachment.file");
     }
-  }
+	}
+	
+	public JobConf getJobConf() {
+		return jobconf;
+	}
+	
+	public Configuration getConf() {
+		return conf;
+	}
+	
+	public String getJobName() {
+		return this.jobName;
+	}
 
-  public JobConf getJobConf() {
-    return jobconf;
-  }
+	public void run()	throws Exception {
+		JobConf conf = getJobConf();
+		
+		if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
+			conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
+		}
+		
+		jobClient = new JobClient(conf);
+		runningJob = jobClient.submitJob(conf);
+		logger.info("See " + runningJob.getTrackingURL() + " for details.");
+		jobClient.monitorAndPrintJob(conf, runningJob);
+		
+		if (!runningJob.isSuccessful()) {
+			throw new Exception("Hadoop job:" + getJobName() + " failed!");
+		}
 
-  public Configuration getConf() {
-    return conf;
-  }
+		// dump all counters
+		Counters counters = runningJob.getCounters();
+		for (String groupName: counters.getGroupNames()) {
+			Counters.Group group = counters.getGroup(groupName);
+			logger.info("Group: " + group.getDisplayName());
+			for (Counter counter: group)
+				logger.info(counter.getDisplayName() + ":\t" + counter.getValue());
+		}
+		updateMapReduceJobState(conf);
+	}
+	
+	@SuppressWarnings("rawtypes") 
+	public JobConf createJobConf(Class<? extends Mapper> mapperClass) throws IOException, URISyntaxException {
+		JobConf conf = createJobConf(mapperClass, null);
+		conf.setNumReduceTasks(0);
+		return conf;
+	}
 
-  public String getJobName() {
-    return this.jobName;
-  }
+	@SuppressWarnings("rawtypes") 
+	public JobConf createJobConf(Class<? extends Mapper> mapperClass, Class<? extends Reducer> reducerClass, Class<? extends Reducer> combinerClass) throws IOException, URISyntaxException {
+		JobConf conf = createJobConf(mapperClass, reducerClass);
+		conf.setCombinerClass(combinerClass);
+		return conf;
+	}
 
-  public void run() throws Exception {
-    JobConf conf = getJobConf();
+	@SuppressWarnings("rawtypes") 
+	public JobConf createJobConf(Class<? extends Mapper> mapperClass, Class<? extends Reducer> reducerClass) throws IOException, URISyntaxException {
+		JobConf conf = new JobConf();
+		// set custom class loader with custom find resource strategy.
 
-    if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
-      conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
-    }
+		conf.setJobName(getJobName());
+		conf.setMapperClass(mapperClass);
+		if(reducerClass != null) {
+			conf.setReducerClass(reducerClass);
+		}
 
-    jobClient = new JobClient(conf);
-    runningJob = jobClient.submitJob(conf);
-    logger.info("See " + runningJob.getTrackingURL() + " for details.");
-    jobClient.monitorAndPrintJob(conf, runningJob);
+		if (props.getBoolean("is.local", false)) {
+			conf.set("mapred.job.tracker", "local");
+			conf.set("fs.default.name", "file:///");
+			conf.set("mapred.local.dir", "/tmp/map-red");
 
-    if (!runningJob.isSuccessful()) {
-      throw new Exception("Hadoop job:" + getJobName() + " failed!");
-    }
+			logger.info("Running locally, no hadoop jar set.");
+		}
+		else {
+			HadoopUtils.setClassLoaderAndJar(conf, getClass());
+			logger.info("Setting hadoop jar file for class:" + getClass() + "  to " + conf.getJar());
+			logger.info("*************************************************************************");
+			logger.info("          Running on Real Hadoop Cluster(" + conf.get("mapred.job.tracker")
+					+ ")           ");
+			logger.info("*************************************************************************");
+		}
 
-    // dump all counters
-    Counters counters = runningJob.getCounters();
-    for (String groupName : counters.getGroupNames()) {
-      Counters.Group group = counters.getGroup(groupName);
-      logger.info("Group: " + group.getDisplayName());
-      for (Counter counter : group)
-        logger.info(counter.getDisplayName() + ":\t" + counter.getValue());
-    }
-    updateMapReduceJobState(conf);
-  }
+		// set JVM options if present
+		if (props.containsKey("mapred.child.java.opts")) {
+			conf.set("mapred.child.java.opts", props.getString("mapred.child.java.opts"));
+			logger.info("mapred.child.java.opts set to " + props.getString("mapred.child.java.opts"));
+		}
 
-  @SuppressWarnings("rawtypes")
-  public JobConf createJobConf(Class<? extends Mapper> mapperClass) throws IOException, URISyntaxException {
-    JobConf conf = createJobConf(mapperClass, null);
-    conf.setNumReduceTasks(0);
-    return conf;
-  }
+		// set input and output paths if they are present
+		if (props.containsKey("input.paths")) {
+			List<String> inputPaths = props.getStringList("input.paths");
+			if (inputPaths.size() == 0)
+				throw new IllegalArgumentException("Must specify at least one value for property 'input.paths'");
+			for (String path : inputPaths) {
+				HadoopUtils.addAllSubPaths(conf, new Path(path));
+			}
+		}
 
-  @SuppressWarnings("rawtypes")
-  public JobConf createJobConf(Class<? extends Mapper> mapperClass, Class<? extends Reducer> reducerClass,
-      Class<? extends Reducer> combinerClass) throws IOException, URISyntaxException {
-    JobConf conf = createJobConf(mapperClass, reducerClass);
-    conf.setCombinerClass(combinerClass);
-    return conf;
-  }
+		if (props.containsKey("output.path")) {
+			String location = props.get("output.path");
+			FileOutputFormat.setOutputPath(conf, new Path(location));
 
-  @SuppressWarnings("rawtypes")
-  public JobConf createJobConf(Class<? extends Mapper> mapperClass, Class<? extends Reducer> reducerClass)
-      throws IOException, URISyntaxException {
-    JobConf conf = new JobConf();
-    // set custom class loader with custom find resource strategy.
+			// For testing purpose only remove output file if exists
+			if (props.getBoolean("force.output.overwrite", false)) {
+				FileSystem fs = FileOutputFormat.getOutputPath(conf).getFileSystem(conf);
+				fs.delete(FileOutputFormat.getOutputPath(conf), true);
+			}
+		}
 
-    conf.setJobName(getJobName());
-    conf.setMapperClass(mapperClass);
-    if (reducerClass != null) {
-      conf.setReducerClass(reducerClass);
-    }
+		// Adds External jars to hadoop classpath
+		String externalJarList = props.getString("hadoop.external.jarFiles", null);
+		if (externalJarList != null) {
+			FileSystem fs = FileSystem.get(conf);
+			String[] jarFiles = externalJarList.split(",");
+			for (String jarFile : jarFiles) {
+				logger.info("Adding extenral jar File:" + jarFile);
+				DistributedCache.addFileToClassPath(new Path(jarFile), conf, fs);
+			}
+		}
 
-    if (props.getBoolean("is.local", false)) {
-      conf.set("mapred.job.tracker", "local");
-      conf.set("fs.default.name", "file:///");
-      conf.set("mapred.local.dir", "/tmp/map-red");
+		// Adds distributed cache files
+		String cacheFileList = props.getString("hadoop.cache.files", null);
+		if (cacheFileList != null) {
+			String[] cacheFiles = cacheFileList.split(",");
+			for (String cacheFile : cacheFiles) {
+				logger.info("Adding Distributed Cache File:" + cacheFile);
+				DistributedCache.addCacheFile(new URI(cacheFile), conf);
+			}
+		}
 
-      logger.info("Running locally, no hadoop jar set.");
-    } else {
-      HadoopUtils.setClassLoaderAndJar(conf, getClass());
-      logger.info("Setting hadoop jar file for class:" + getClass() + "  to " + conf.getJar());
-      logger.info("*************************************************************************");
-      logger.info("          Running on Real Hadoop Cluster(" + conf.get("mapred.job.tracker") + ")           ");
-      logger.info("*************************************************************************");
-    }
+		// Adds distributed cache files
+		String archiveFileList = props.getString("hadoop.cache.archives", null);
+		if (archiveFileList != null) {
+			String[] archiveFiles = archiveFileList.split(",");
+			for (String archiveFile : archiveFiles) {
+				logger.info("Adding Distributed Cache Archive File:" + archiveFile);
+				DistributedCache.addCacheArchive(new URI(archiveFile), conf);
+			}
+		}
 
-    // set JVM options if present
-    if (props.containsKey("mapred.child.java.opts")) {
-      conf.set("mapred.child.java.opts", props.getString("mapred.child.java.opts"));
-      logger.info("mapred.child.java.opts set to " + props.getString("mapred.child.java.opts"));
-    }
+		String hadoopCacheJarDir = props.getString("hdfs.default.classpath.dir", null);
+		if (hadoopCacheJarDir != null) {
+			FileSystem fs = FileSystem.get(conf);
+			if ( fs != null ) {
+				FileStatus[] status = fs.listStatus(new Path(hadoopCacheJarDir));
 
-    // set input and output paths if they are present
-    if (props.containsKey("input.paths")) {
-      List<String> inputPaths = props.getStringList("input.paths");
-      if (inputPaths.size() == 0)
-        throw new IllegalArgumentException("Must specify at least one value for property 'input.paths'");
-      for (String path : inputPaths) {
-        HadoopUtils.addAllSubPaths(conf, new Path(path));
-      }
-    }
+				if (status != null ) {
+					for ( int i = 0; i < status.length; ++i ) {
+						if (!status[i].isDir()) {
+							Path path = new Path( hadoopCacheJarDir, status[i].getPath().getName() );
+							logger.info("Adding Jar to Distributed Cache Archive File:" + path);
 
-    if (props.containsKey("output.path")) {
-      String location = props.get("output.path");
-      FileOutputFormat.setOutputPath(conf, new Path(location));
+							DistributedCache.addFileToClassPath(path, conf, fs);
+						}
+					}
+				}
+				else {
+					logger.info("hdfs.default.classpath.dir " + hadoopCacheJarDir + " is empty.");
+				}
+			}
+			else {
+				logger.info("hdfs.default.classpath.dir " + hadoopCacheJarDir + " filesystem doesn't exist");
+			}
+		}
 
-      // For testing purpose only remove output file if exists
-      if (props.getBoolean("force.output.overwrite", false)) {
-        FileSystem fs = FileOutputFormat.getOutputPath(conf).getFileSystem(conf);
-        fs.delete(FileOutputFormat.getOutputPath(conf), true);
-      }
-    }
+		for (String key : getProps().getKeySet()) {
+			String lowerCase = key.toLowerCase();
+			if (lowerCase.startsWith(HADOOP_PREFIX)) {
+				String newKey = key.substring(HADOOP_PREFIX.length());
+				conf.set(newKey, getProps().get(key));
+			}
+		}
 
-    // Adds External jars to hadoop classpath
-    String externalJarList = props.getString("hadoop.external.jarFiles", null);
-    if (externalJarList != null) {
-      FileSystem fs = FileSystem.get(conf);
-      String[] jarFiles = externalJarList.split(",");
-      for (String jarFile : jarFiles) {
-        logger.info("Adding extenral jar File:" + jarFile);
-        DistributedCache.addFileToClassPath(new Path(jarFile), conf, fs);
-      }
-    }
+		HadoopUtils.setPropsInJob(conf, getProps());
+		
+		// put in tokens
+		if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
+			conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
+		}
+		
+		return conf;
+	}
 
-    // Adds distributed cache files
-    String cacheFileList = props.getString("hadoop.cache.files", null);
-    if (cacheFileList != null) {
-      String[] cacheFiles = cacheFileList.split(",");
-      for (String cacheFile : cacheFiles) {
-        logger.info("Adding Distributed Cache File:" + cacheFile);
-        DistributedCache.addCacheFile(new URI(cacheFile), conf);
-      }
-    }
+	public Props getProps() {
+		return this.props;
+	}
 
-    // Adds distributed cache files
-    String archiveFileList = props.getString("hadoop.cache.archives", null);
-    if (archiveFileList != null) {
-      String[] archiveFiles = archiveFileList.split(",");
-      for (String archiveFile : archiveFiles) {
-        logger.info("Adding Distributed Cache Archive File:" + archiveFile);
-        DistributedCache.addCacheArchive(new URI(archiveFile), conf);
-      }
-    }
-
-    String hadoopCacheJarDir = props.getString("hdfs.default.classpath.dir", null);
-    if (hadoopCacheJarDir != null) {
-      FileSystem fs = FileSystem.get(conf);
-      if (fs != null) {
-        FileStatus[] status = fs.listStatus(new Path(hadoopCacheJarDir));
-
-        if (status != null) {
-          for (int i = 0; i < status.length; ++i) {
-            if (!status[i].isDir()) {
-              Path path = new Path(hadoopCacheJarDir, status[i].getPath().getName());
-              logger.info("Adding Jar to Distributed Cache Archive File:" + path);
-
-              DistributedCache.addFileToClassPath(path, conf, fs);
-            }
-          }
-        } else {
-          logger.info("hdfs.default.classpath.dir " + hadoopCacheJarDir + " is empty.");
-        }
-      } else {
-        logger.info("hdfs.default.classpath.dir " + hadoopCacheJarDir + " filesystem doesn't exist");
-      }
-    }
-
-    for (String key : getProps().getKeySet()) {
-      String lowerCase = key.toLowerCase();
-      if (lowerCase.startsWith(HADOOP_PREFIX)) {
-        String newKey = key.substring(HADOOP_PREFIX.length());
-        conf.set(newKey, getProps().get(key));
-      }
-    }
-
-    HadoopUtils.setPropsInJob(conf, getProps());
-
-    // put in tokens
-    if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
-      conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
-    }
-
-    return conf;
-  }
-
-  public Props getProps() {
-    return this.props;
-  }
-
-  public void cancel() throws Exception {
-    if (runningJob != null) {
-      runningJob.killJob();
-    }
-  }
+	public void cancel() throws Exception {
+		if (runningJob != null) {
+			runningJob.killJob();
+		}
+	}
 
   private void updateMapReduceJobState(JobConf jobConf) {
     if (runningJob == null || visualizer == false) {
@@ -281,9 +282,11 @@ public abstract class AbstractHadoopJob {
       JobID jobId = runningJob.getID();
       TaskReport[] mapTaskReport = jobClient.getMapTaskReports(jobId);
       TaskReport[] reduceTaskReport = jobClient.getReduceTaskReports(jobId);
-      mapReduceJobState = new MapReduceJobState(runningJob, mapTaskReport, reduceTaskReport);
+      mapReduceJobState = new MapReduceJobState(
+          runningJob, mapTaskReport, reduceTaskReport);
       writeMapReduceJobState(jobConf);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       logger.error("Cannot update MapReduceJobState");
     }
   }
@@ -291,7 +294,7 @@ public abstract class AbstractHadoopJob {
   private Object statsToJson(JobConf jobConf) {
     List<Object> jsonObj = new ArrayList<Object>();
     Map<String, Object> jobJsonObj = new HashMap<String, Object>();
-    Properties conf = StatsUtils.getJobConf(jobConf);
+		Properties conf = StatsUtils.getJobConf(jobConf);
     jobJsonObj.put("state", mapReduceJobState.toJson());
     jobJsonObj.put("conf", StatsUtils.propertiesToJson(conf));
     jsonObj.add(jobJsonObj);
@@ -303,20 +306,22 @@ public abstract class AbstractHadoopJob {
     try {
       mrStateFile = new File(jobStatsFileName);
       JSONUtils.toJSON(statsToJson(jobConf), mrStateFile);
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       logger.error("Cannot write JSON file.");
     }
   }
-
-  public double getProgress() throws IOException {
-    if (runningJob == null) {
-      return 0.0;
+	
+	public double getProgress() throws IOException {
+		if (runningJob == null) {
+			return 0.0;
     }
-    return (double) (runningJob.mapProgress() + runningJob.reduceProgress()) / 2.0d;
-  }
+    return (double) (runningJob.mapProgress() + 
+        runningJob.reduceProgress()) / 2.0d;
+	}
 
-  public Counters getCounters() throws IOException {
-    return runningJob.getCounters();
-  }
+	public Counters getCounters() throws IOException {
+		return runningJob.getCounters();
+	}
 
 }

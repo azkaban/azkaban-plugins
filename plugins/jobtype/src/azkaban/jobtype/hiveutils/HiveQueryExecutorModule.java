@@ -43,7 +43,7 @@ class HiveQueryExecutorModule {
 
     troublesomeConfig(HIVEHISTORYFILELOC, hiveConf);
     troublesomeConfig(SCRATCHDIR, hiveConf);
-
+    
     if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
       System.out.println("Setting hadoop tokens ... ");
       hiveConf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
@@ -66,7 +66,6 @@ class HiveQueryExecutorModule {
     return ss;
   }
 
-  protected void configure() {
-    /** Nothing to do **/
-  }
+  protected void configure() { /** Nothing to do **/ }
 }
+
