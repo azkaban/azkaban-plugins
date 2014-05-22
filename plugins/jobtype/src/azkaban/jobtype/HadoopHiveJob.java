@@ -35,6 +35,9 @@ import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
 
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
+
 public class HadoopHiveJob extends JavaProcessJob {
 
 	public static final String HIVE_SCRIPT = "hive.script";
@@ -86,7 +89,7 @@ public class HadoopHiveJob extends JavaProcessJob {
 			props.putAll(getJobProps());
 			props.putAll(getSysProps());
 			tokenFile = getHadoopTokens(props);
-			getJobProps().put("env."+"HADOOP_TOKEN_FILE_LOCATION", tokenFile.getAbsolutePath());
+			getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION, tokenFile.getAbsolutePath());
 		}
 
 		try {
@@ -162,7 +165,6 @@ public class HadoopHiveJob extends JavaProcessJob {
 	
 	@Override
 	protected String getJavaClass() {
-		//return shouldProxy ? HADOOP_SECURE_PIG_WRAPPER : PIG_JAVA_CLASS;
 		return HADOOP_SECURE_HIVE_WRAPPER;
 	}
 
@@ -187,8 +189,6 @@ public class HadoopHiveJob extends JavaProcessJob {
 			args += " " + typeSysJVMArgs;
 		}
 		
-		//make sure queryloglocation, execscratchdir, auxjarpath, iotmpdir are in place in settings
-		
 		if(shouldProxy) {
 			info("Setting up secure proxy info for child process");
 			String secure;
@@ -209,8 +209,6 @@ public class HadoopHiveJob extends JavaProcessJob {
 	@Override
 	protected String getMainArguments() {
 		ArrayList<String> list = new ArrayList<String>();
-		
-//		list.add("-hiveconf " + getHiveAuxJarPath());
 		
 		Map<String, String> map = getHiveConf();
 		if (map != null) {

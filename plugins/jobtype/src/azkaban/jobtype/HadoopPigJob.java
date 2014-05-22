@@ -36,6 +36,9 @@ import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
 
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
+
 /*
  * need lib:
  * apache pig
@@ -55,8 +58,6 @@ public class HadoopPigJob extends JavaProcessJob {
 	public static final String HADOOP_UGI = "hadoop.job.ugi";
 	public static final String DEBUG = "debug";
 
-	// should point to the specific pig installation libs
-//	public static String PIG_JAVA_CLASS = "org.apache.pig.Main";
 	public static String HADOOP_SECURE_PIG_WRAPPER = "azkaban.jobtype.HadoopSecurePigWrapper";
 	
 	private String userToProxy = null;
@@ -75,7 +76,6 @@ public class HadoopPigJob extends JavaProcessJob {
 		super(jobid, sysProps, jobProps, log);
 		
 		HADOOP_SECURE_PIG_WRAPPER = HadoopSecurePigWrapper.class.getName();
-//		PIG_JAVA_CLASS = org.apache.pig.Main.class.getName();
 		
 		getJobProps().put("azkaban.job.id", jobid);
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
@@ -107,7 +107,7 @@ public class HadoopPigJob extends JavaProcessJob {
 			props.putAll(getJobProps());
 			props.putAll(getSysProps());
 			f = getHadoopTokens(props);
-			getJobProps().put("env."+"HADOOP_TOKEN_FILE_LOCATION", f.getAbsolutePath());
+			getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION, f.getAbsolutePath());
 		}
 		try {
 			super.run();
@@ -182,7 +182,6 @@ public class HadoopPigJob extends JavaProcessJob {
 	
 	@Override
 	protected String getJavaClass() {
-		//return shouldProxy ? HADOOP_SECURE_PIG_WRAPPER : PIG_JAVA_CLASS;
 		return HADOOP_SECURE_PIG_WRAPPER;
 	}
 
@@ -252,7 +251,6 @@ public class HadoopPigJob extends JavaProcessJob {
 			pigLogFile = File.createTempFile("piglogfile", ".log", new File(getWorkingDirectory()));
 			jobProps.put("env."+"PIG_LOG_FILE", pigLogFile.getAbsolutePath());
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

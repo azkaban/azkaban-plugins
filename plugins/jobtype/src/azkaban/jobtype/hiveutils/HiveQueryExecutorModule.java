@@ -20,8 +20,11 @@ import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.session.SessionState;
 
+import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEHISTORYFILELOC;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.SCRATCHDIR;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
 
 /**
  * Guice-like module for creating a Hive instance.  Easily turned back into
@@ -32,17 +35,20 @@ class HiveQueryExecutorModule {
   private CliSessionState ss = null;
 
   HiveConf provideHiveConf() {
-    if(this.hiveConf != null) return this.hiveConf;
-    else this.hiveConf = new HiveConf();
+    if (this.hiveConf != null) {
+      return this.hiveConf;
+    } else {
+      this.hiveConf = new HiveConf(SessionState.class);
+    }
 
     troublesomeConfig(HIVEHISTORYFILELOC, hiveConf);
     troublesomeConfig(SCRATCHDIR, hiveConf);
     
-    if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-    	System.out.println("Setting hadoop tokens ... ");
-		hiveConf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-		System.setProperty("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-	}
+    if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
+      System.out.println("Setting hadoop tokens ... ");
+      hiveConf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
+      System.setProperty(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
+    }
 
     return hiveConf;
   }
@@ -52,13 +58,14 @@ class HiveQueryExecutorModule {
   }
 
   CliSessionState provideCliSessionState() {
-    if(ss != null) return ss;
+    if (ss != null) {
+      return ss;
+    }
     ss = new CliSessionState(provideHiveConf());
     SessionState.start(ss);
     return ss;
   }
 
-  //@Override
   protected void configure() { /** Nothing to do **/ }
 }
 
