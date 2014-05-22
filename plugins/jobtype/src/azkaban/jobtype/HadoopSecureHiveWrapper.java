@@ -52,12 +52,12 @@ public class HadoopSecureHiveWrapper {
 	
 	public static void main(final String[] args) throws Exception {
 		
-		
-
 		String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
 		Properties prop = new Properties();
 		prop.load(new BufferedReader(new FileReader(propsFile)));
 		
+    HadoopConfigurationInjector.injectLinks();
+
 		hiveScript = prop.getProperty("hive.script");
 
 		final Configuration conf = new Configuration();

@@ -149,6 +149,8 @@ public class HadoopJavaJob extends JavaProcessJob {
 //			classPath.add(new File(hadoopHome, "conf").getPath());
 //		}
 		
+    classPath.add(HadoopConfigurationInjector.getPath(getJobProps(), getWorkingDirectory()));
+
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
 		if(typeClassPath != null) {
 			// fill in this when load this jobtype
@@ -180,6 +182,8 @@ public class HadoopJavaJob extends JavaProcessJob {
 
 	@Override
 	public void run() throws Exception {
+    HadoopConfigurationInjector.prepareLinks(getJobProps(), getWorkingDirectory());
+
 		File f = null;
 		if(shouldProxy && obtainTokens) {
 			userToProxy = getJobProps().getString("user.to.proxy");

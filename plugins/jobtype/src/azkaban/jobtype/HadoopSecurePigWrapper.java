@@ -29,9 +29,11 @@ import azkaban.utils.Props;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.security.PrivilegedExceptionAction;
+import java.util.Properties;
 import java.util.Set;
 
 public class HadoopSecurePigWrapper {
@@ -79,6 +81,9 @@ public class HadoopSecurePigWrapper {
 	public static void main(final String[] args) throws Exception {
 		String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
 		props = new Props(null, new File(propsFile));
+
+    HadoopConfigurationInjector.injectLinks();
+
 		final Configuration conf = new Configuration();
 		
     UserGroupInformation.setConfiguration(conf);
