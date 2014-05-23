@@ -32,7 +32,6 @@ import azkaban.jobExecutor.JavaProcessJob;
 
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
-
 public class HadoopJavaJob extends JavaProcessJob {
 
 	public static final String RUN_METHOD_PARAM = "method.run";
@@ -45,41 +44,40 @@ public class HadoopJavaJob extends JavaProcessJob {
 	public static final String DEFAULT_PROGRESS_METHOD = "getProgress";
 
 	private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
-	
+
 	private String _runMethod;
 	private String _cancelMethod;
 	private String _progressMethod;
 
 	private Object _javaObject = null;
-	
+
 	private String userToProxy = null;
 	private boolean shouldProxy = false;
 	private boolean obtainTokens = false;
 	private boolean noUserClasspath = false;
-	
+
 	private HadoopSecurityManager hadoopSecurityManager;
 
 	public HadoopJavaJob(String jobid, Props sysProps, Props jobProps, Logger log) throws RuntimeException {
 		super(jobid, sysProps, jobProps, log);
-		
+
 		getJobProps().put("azkaban.job.id", jobid);
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
 		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
 		noUserClasspath = getSysProps().getBoolean("azkaban.no.user.classpath", false);
-		
-		if(shouldProxy) {
+
+		if (shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
 			try {
 				hadoopSecurityManager = loadHadoopSecurityManager(sysProps, log);
-			}
-			catch(RuntimeException e) {
+			} catch (RuntimeException e) {
 				e.printStackTrace();
 				throw new RuntimeException("Failed to get hadoop security manager!" + e.getCause());
 			}
 		}
 	}
-	
+
 	private HadoopSecurityManager loadHadoopSecurityManager(Props props, Logger logger) throws RuntimeException {
 
 		Class<?> hadoopSecurityManagerClass = props.getClass(HADOOP_SECURITY_MANAGER_CLASS_PARAM, true, HadoopJavaJob.class.getClassLoader());
@@ -88,10 +86,9 @@ public class HadoopJavaJob extends JavaProcessJob {
 
 		try {
 			Method getInstanceMethod = hadoopSecurityManagerClass.getMethod("getInstance", Props.class);
-			hadoopSecurityManager = (HadoopSecurityManager) getInstanceMethod.invoke(hadoopSecurityManagerClass, props);
-		} 
-		catch (InvocationTargetException e) {
-			getLog().error("Could not instantiate Hadoop Security Manager "+ hadoopSecurityManagerClass.getName() + e.getCause());
+			hadoopSecurityManager = (HadoopSecurityManager)getInstanceMethod.invoke(hadoopSecurityManagerClass, props);
+		} catch (InvocationTargetException e) {
+			getLog().error("Could not instantiate Hadoop Security Manager " + hadoopSecurityManagerClass.getName() + e.getCause());
 			throw new RuntimeException(e.getCause());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -123,11 +120,11 @@ public class HadoopJavaJob extends JavaProcessJob {
 		}
 		return args;
 	}
-	
+
 	@Override
 	protected List<String> getClassPaths() {
 		List<String> classPath;
-		if(!noUserClasspath) {
+		if (!noUserClasspath) {
 			classPath = super.getClassPaths();
 		}
 		else {
@@ -138,28 +135,29 @@ public class HadoopJavaJob extends JavaProcessJob {
 		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
 		classPath.add(getSourcePathFromClass(Props.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
-		
+
+		classPath.add(HadoopConfigurationInjector.getPath(getJobProps(), getWorkingDirectory()));
+
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
-		if(typeClassPath != null) {
+		if (typeClassPath != null) {
 			// fill in this when load this jobtype
 			String pluginDir = getSysProps().get("plugin.dir");
-			for(String jar : typeClassPath) {
+			for (String jar: typeClassPath) {
 				File jarFile = new File(jar);
-				if(!jarFile.isAbsolute()) {
+				if (!jarFile.isAbsolute()) {
 					jarFile = new File(pluginDir + File.separatorChar + jar);
 				}
-				
-				if(!classPath.contains(jarFile.getAbsoluteFile())) {
+
+				if (!classPath.contains(jarFile.getAbsoluteFile())) {
 					classPath.add(jarFile.getAbsolutePath());
 				}
 			}
 		}
-		
-		
+
 		List<String> typeGlobalClassPath = getSysProps().getStringList("jobtype.global.classpath", null, ",");
-		if(typeGlobalClassPath != null) {
-			for(String jar : typeGlobalClassPath) {
-				if(!classPath.contains(jar)) {
+		if (typeGlobalClassPath != null) {
+			for (String jar: typeGlobalClassPath) {
+				if (!classPath.contains(jar)) {
 					classPath.add(jar);
 				}
 			}
@@ -170,14 +168,16 @@ public class HadoopJavaJob extends JavaProcessJob {
 
 	@Override
 	public void run() throws Exception {
+		HadoopConfigurationInjector.prepareLinks(getJobProps(), getWorkingDirectory());
+
 		File f = null;
-		if(shouldProxy && obtainTokens) {
+		if (shouldProxy && obtainTokens) {
 			userToProxy = getJobProps().getString("user.to.proxy");
 			getLog().info("Need to proxy. Getting tokens.");
 			Props props = new Props();
 			props.putAll(getJobProps());
 			props.putAll(getSysProps());
-			
+
 			f = getHadoopTokens(props);
 			getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION, f.getAbsolutePath());
 		}
@@ -186,29 +186,28 @@ public class HadoopJavaJob extends JavaProcessJob {
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new Exception(e);
-		}
-		finally {
-			if(f != null) {
-				try{
+		} finally {
+			if (f != null) {
+				try {
 					cancelHadoopTokens(f);
 				} catch (Throwable t) {
 					t.printStackTrace();
 					getLog().error("Failed to cancel tokens.");
 				}
-				if(f.exists()) {
+				if (f.exists()) {
 					f.delete();
 				}
 			}
 		}
 	}
-	
+
 	private static String getSourcePathFromClass(Class<?> containedClass) {
 		File file = new File(containedClass.getProtectionDomain().getCodeSource().getLocation().getPath());
 
 		if (!file.isDirectory() && file.getName().endsWith(".class")) {
 			String name = containedClass.getName();
 			StringTokenizer tokenizer = new StringTokenizer(name, ".");
-			while(tokenizer.hasMoreTokens()) {
+			while (tokenizer.hasMoreTokens()) {
 				tokenizer.nextElement();
 
 				file = file.getParentFile();
@@ -219,7 +218,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 			return containedClass.getProtectionDomain().getCodeSource().getLocation().getPath();
 		}
 	}
-	
+
 	protected File getHadoopTokens(Props props) throws HadoopSecurityManagerException {
 
 		File tokenFile = null;
@@ -229,12 +228,12 @@ public class HadoopJavaJob extends JavaProcessJob {
 			e.printStackTrace();
 			throw new HadoopSecurityManagerException("Failed to create the token file.", e);
 		}
-		
+
 		hadoopSecurityManager.prefetchToken(tokenFile, props, getLog());
-		
+
 		return tokenFile;
 	}
-	
+
 	private void cancelHadoopTokens(File f) {
 		try {
 			hadoopSecurityManager.cancelTokens(f, userToProxy, getLog());
@@ -245,9 +244,9 @@ public class HadoopJavaJob extends JavaProcessJob {
 			e.printStackTrace();
 			getLog().error(e.getCause() + e.getMessage());
 		}
-		
+
 	}
-	
+
 	@Override
 	protected String getJavaClass() {
 		return HadoopJavaJobRunnerMain.class.getName();

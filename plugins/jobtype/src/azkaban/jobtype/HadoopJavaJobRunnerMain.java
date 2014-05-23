@@ -17,7 +17,6 @@
 package azkaban.jobtype;
 
 import azkaban.jobExecutor.ProcessJob;
-
 import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
 
@@ -49,7 +48,6 @@ import java.util.Properties;
 import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
-
 public class HadoopJavaJobRunnerMain {
 
 	public static final String JOB_CLASS = "job.class";
@@ -72,7 +70,7 @@ public class HadoopJavaJobRunnerMain {
 	public String _jobName;
 	public Object _javaObject;
 	private boolean _isFinished = false;
-	
+
 	private static boolean securityEnabled;
 
 	public static void main(String[] args) throws Exception {
@@ -82,6 +80,7 @@ public class HadoopJavaJobRunnerMain {
 
 	public HadoopJavaJobRunnerMain() throws Exception {
 		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
 			public void run() {
 				cancelJob();
 			}
@@ -90,7 +89,7 @@ public class HadoopJavaJobRunnerMain {
 		try {
 			_jobName = System.getenv(ProcessJob.JOB_NAME_ENV);
 			String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
-			
+
 			_logger = Logger.getRootLogger();
 			_logger.removeAllAppenders();
 			ConsoleAppender appender = new ConsoleAppender(DEFAULT_LAYOUT);
@@ -99,9 +98,11 @@ public class HadoopJavaJobRunnerMain {
 
 			Properties prop = new Properties();
 			prop.load(new BufferedReader(new FileReader(propsFile)));
-			
+
+			HadoopConfigurationInjector.injectLinks();
+
 			final Configuration conf = new Configuration();
-			
+
 			UserGroupInformation.setConfiguration(conf);
 			securityEnabled = UserGroupInformation.isSecurityEnabled();
 
@@ -111,27 +112,26 @@ public class HadoopJavaJobRunnerMain {
 				throw new Exception("Class name is not set.");
 			}
 			_logger.info("Class name " + className);
-			
+
 			UserGroupInformation loginUser = null;
 			UserGroupInformation proxyUser = null;
-			
+
 			if (shouldProxy(prop)) {
 				String userToProxy = prop.getProperty("user.to.proxy");
-				if(securityEnabled) {
+				if (securityEnabled) {
 					String filelocation = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
 					_logger.info("Found token file " + filelocation);
 					_logger.info("Security enabled is " + UserGroupInformation.isSecurityEnabled());
-					
+
 					_logger.info("Setting mapreduce.job.credentials.binary to " + filelocation);
 					System.setProperty("mapreduce.job.credentials.binary", filelocation);
-				
+
 					_logger.info("Proxying enabled.");
-					
+
 					loginUser = UserGroupInformation.getLoginUser();
-	
+
 					_logger.info("Current logged in user is " + loginUser.getUserName());
-	
-					
+
 					proxyUser = UserGroupInformation.createProxyUser(userToProxy, loginUser);
 					for (Token<?> token: loginUser.getTokens()) {
 						proxyUser.addToken(token);
@@ -142,16 +142,17 @@ public class HadoopJavaJobRunnerMain {
 				}
 				_logger.info("Proxied as user " + userToProxy);
 			}
-			
+
 			// Create the object using proxy
 			if (shouldProxy(prop)) {
 				_javaObject = getObjectAsProxyUser(prop, _logger, _jobName, className, proxyUser);
-			} else {
+			}
+			else {
 				_javaObject = getObject(_jobName, className, prop, _logger);
 			}
-			
+
 			_logger.info("Got object " + _javaObject.toString());
-//			
+			//
 			_javaObject = getObject(_jobName, className, prop, _logger);
 			if (_javaObject == null) {
 				_logger.info("Could not create java object to run job: " + className);
@@ -166,11 +167,12 @@ public class HadoopJavaJobRunnerMain {
 			if (shouldProxy(prop)) {
 				_logger.info("Proxying enabled.");
 				runMethodAsUser(prop, _javaObject, runMethod, proxyUser);
-			} else {
+			}
+			else {
 				_logger.info("Proxy check failed, not proxying run.");
 				runMethod(_javaObject, runMethod);
 			}
-			
+
 			_isFinished = true;
 
 			// Get the generated properties and store them to disk, to be read
@@ -197,16 +199,16 @@ public class HadoopJavaJobRunnerMain {
 	}
 
 	private void runMethodAsUser(Properties prop, final Object obj, final String runMethod, final UserGroupInformation ugi) throws IOException,
-			InterruptedException {
+	InterruptedException {
 		ugi.doAs(new PrivilegedExceptionAction<Void>() {
 			@Override
 			public Void run() throws Exception {
-				
+
 				Configuration conf = new Configuration();
 				if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
 					conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
 				}
-				
+
 				runMethod(obj, runMethod);
 				return null;
 			}
@@ -214,7 +216,7 @@ public class HadoopJavaJobRunnerMain {
 	}
 
 	private void runMethod(Object obj, String runMethod) throws IllegalAccessException, InvocationTargetException,
-			NoSuchMethodException {
+	NoSuchMethodException {
 		obj.getClass().getMethod(runMethod, new Class<?>[] {}).invoke(obj);
 	}
 
@@ -225,7 +227,7 @@ public class HadoopJavaJobRunnerMain {
 			_logger.info("  no gend props");
 			return;
 		}
-		for (String key : outputProperties.getKeySet()) {
+		for (String key: outputProperties.getKeySet()) {
 			_logger.info("  gend prop " + key + " value:" + outputProperties.get(key));
 		}
 
@@ -235,7 +237,7 @@ public class HadoopJavaJobRunnerMain {
 		}
 
 		Map<String, String> properties = new LinkedHashMap<String, String>();
-		for (String key : outputProperties.getKeySet()) {
+		for (String key: outputProperties.getKeySet()) {
 			properties.put(key, outputProperties.get(key));
 		}
 
@@ -287,12 +289,12 @@ public class HadoopJavaJobRunnerMain {
 			final String className, final UserGroupInformation ugi) throws Exception {
 
 		Object obj = ugi.doAs(
-		new PrivilegedExceptionAction<Object>() {
-			@Override
-			public Object run() throws Exception {
-				return getObject(jobName, className, prop, logger);
-			}
-		});
+				new PrivilegedExceptionAction<Object>() {
+					@Override
+					public Object run() throws Exception {
+						return getObject(jobName, className, prop, logger);
+					}
+				});
 
 		return obj;
 	}
@@ -307,15 +309,14 @@ public class HadoopJavaJobRunnerMain {
 		}
 
 		Class<?> propsClass = null;
-		for (String propClassName : PROPS_CLASSES) {
+		for (String propClassName: PROPS_CLASSES) {
 			try {
 				propsClass = HadoopJavaJobRunnerMain.class.getClassLoader().loadClass(propClassName);
+			} catch (ClassNotFoundException e) {
 			}
-			catch (ClassNotFoundException e) {
-			}
-			
+
 			if (propsClass != null && getConstructor(runningClass, String.class, propsClass) != null) {
-				//is this the props class 
+				// is this the props class
 				break;
 			}
 			propsClass = null;
@@ -330,31 +331,36 @@ public class HadoopJavaJobRunnerMain {
 			Constructor<?> con = getConstructor(runningClass, String.class, propsClass);
 			logger.info("Constructor found " + con.toGenericString());
 			obj = con.newInstance(jobName, props);
-		} else if (getConstructor(runningClass, String.class, Properties.class) != null) {
-			
+		}
+		else if (getConstructor(runningClass, String.class, Properties.class) != null) {
+
 			Constructor<?> con = getConstructor(runningClass, String.class, Properties.class);
 			logger.info("Constructor found " + con.toGenericString());
 			obj = con.newInstance(jobName, properties);
-		} else if (getConstructor(runningClass, String.class, Map.class) != null) {
+		}
+		else if (getConstructor(runningClass, String.class, Map.class) != null) {
 			Constructor<?> con = getConstructor(runningClass, String.class, Map.class);
 			logger.info("Constructor found " + con.toGenericString());
 
 			HashMap<Object, Object> map = new HashMap<Object, Object>();
-			for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+			for (Map.Entry<Object, Object> entry: properties.entrySet()) {
 				map.put(entry.getKey(), entry.getValue());
 			}
 			obj = con.newInstance(jobName, map);
-		} else if (getConstructor(runningClass, String.class) != null) {
+		}
+		else if (getConstructor(runningClass, String.class) != null) {
 			Constructor<?> con = getConstructor(runningClass, String.class);
 			logger.info("Constructor found " + con.toGenericString());
 			obj = con.newInstance(jobName);
-		} else if (getConstructor(runningClass) != null) {
+		}
+		else if (getConstructor(runningClass) != null) {
 			Constructor<?> con = getConstructor(runningClass);
 			logger.info("Constructor found " + con.toGenericString());
 			obj = con.newInstance();
-		} else {
+		}
+		else {
 			logger.error("Constructor not found. Listing available Constructors.");
-			for (Constructor<?> c : runningClass.getConstructors()) {
+			for (Constructor<?> c: runningClass.getConstructors()) {
 				logger.info(c.toGenericString());
 			}
 		}
@@ -369,7 +375,7 @@ public class HadoopJavaJobRunnerMain {
 			return null;
 		}
 	}
-	
+
 	public boolean shouldProxy(Properties prop) {
 		String shouldProxy = prop.getProperty(HadoopSecurityManager.ENABLE_PROXYING);
 

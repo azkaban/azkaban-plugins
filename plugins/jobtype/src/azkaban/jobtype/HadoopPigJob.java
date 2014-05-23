@@ -38,7 +38,6 @@ import azkaban.utils.StringUtils;
 
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
-
 /*
  * need lib:
  * apache pig
@@ -59,36 +58,35 @@ public class HadoopPigJob extends JavaProcessJob {
 	public static final String DEBUG = "debug";
 
 	public static String HADOOP_SECURE_PIG_WRAPPER = "azkaban.jobtype.HadoopSecurePigWrapper";
-	
+
 	private String userToProxy = null;
 	private boolean shouldProxy = false;
 	private boolean obtainTokens = false;
-	
+
 	private boolean userPigJar;
 
 	private HadoopSecurityManager hadoopSecurityManager;
-	
+
 	private File pigLogFile = null;
-	
+
 	private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
-	
+
 	public HadoopPigJob(String jobid, Props sysProps, Props jobProps, Logger log) throws IOException {
 		super(jobid, sysProps, jobProps, log);
-		
+
 		HADOOP_SECURE_PIG_WRAPPER = HadoopSecurePigWrapper.class.getName();
-		
+
 		getJobProps().put("azkaban.job.id", jobid);
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
 		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
 		userPigJar = getJobProps().getBoolean("use.user.pig.jar", false);
-		
+
 		if (shouldProxy) {
 			getLog().info("Initiating hadoop security manager.");
 			try {
 				hadoopSecurityManager = loadHadoopSecurityManager(sysProps, log);
-			}
-			catch(RuntimeException e) {
+			} catch (RuntimeException e) {
 				throw new RuntimeException("Failed to get hadoop security manager!" + e);
 			}
 		}
@@ -96,6 +94,8 @@ public class HadoopPigJob extends JavaProcessJob {
 
 	@Override
 	public void run() throws Exception {
+		HadoopConfigurationInjector.prepareLinks(getJobProps(), getWorkingDirectory());
+
 		File f = null;
 		if (shouldProxy && obtainTokens) {
 			userToProxy = getJobProps().getString("user.to.proxy");
@@ -117,17 +117,16 @@ public class HadoopPigJob extends JavaProcessJob {
 			t.printStackTrace();
 			getLog().error("caught error running the job");
 			throw new Exception(t);
-		}
-		finally{
+		} finally {
 			if (f != null) {
-				cancelHadoopTokens(f);	
+				cancelHadoopTokens(f);
 				if (f.exists()) {
 					f.delete();
 				}
 			}
 		}
 	}
-	
+
 	private void cancelHadoopTokens(File f) {
 		try {
 			hadoopSecurityManager.cancelTokens(f, userToProxy, getLog());
@@ -138,21 +137,20 @@ public class HadoopPigJob extends JavaProcessJob {
 			e.printStackTrace();
 			getLog().error(e.getCause() + e.getMessage());
 		}
-		
+
 	}
 
 	private HadoopSecurityManager loadHadoopSecurityManager(Props props, Logger logger) throws RuntimeException {
-		
+
 		Class<?> hadoopSecurityManagerClass = props.getClass(HADOOP_SECURITY_MANAGER_CLASS_PARAM, true, HadoopPigJob.class.getClassLoader());
 		getLog().info("Loading hadoop security manager " + hadoopSecurityManagerClass.getName());
 		HadoopSecurityManager hadoopSecurityManager = null;
 
 		try {
 			Method getInstanceMethod = hadoopSecurityManagerClass.getMethod("getInstance", Props.class);
-			hadoopSecurityManager = (HadoopSecurityManager) getInstanceMethod.invoke(hadoopSecurityManagerClass, props);
-		} 
-		catch (InvocationTargetException e) {
-			getLog().error("Could not instantiate Hadoop Security Manager "+ hadoopSecurityManagerClass.getName() + e.getCause());
+			hadoopSecurityManager = (HadoopSecurityManager)getInstanceMethod.invoke(hadoopSecurityManagerClass, props);
+		} catch (InvocationTargetException e) {
+			getLog().error("Could not instantiate Hadoop Security Manager " + hadoopSecurityManagerClass.getName() + e.getCause());
 			throw new RuntimeException(e.getCause());
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -162,7 +160,7 @@ public class HadoopPigJob extends JavaProcessJob {
 		return hadoopSecurityManager;
 
 	}
-	
+
 	protected File getHadoopTokens(Props props) throws HadoopSecurityManagerException {
 
 		File tokenFile = null;
@@ -172,12 +170,12 @@ public class HadoopPigJob extends JavaProcessJob {
 			e.printStackTrace();
 			throw new HadoopSecurityManagerException("Failed to create the token file.", e);
 		}
-		
+
 		hadoopSecurityManager.prefetchToken(tokenFile, props, getLog());
 
 		return tokenFile;
 	}
-	
+
 	@Override
 	protected String getJavaClass() {
 		return HADOOP_SECURE_PIG_WRAPPER;
@@ -191,12 +189,12 @@ public class HadoopPigJob extends JavaProcessJob {
 		if (typeGlobalJVMArgs != null) {
 			args += " " + typeGlobalJVMArgs;
 		}
-		
+
 		List<String> udfImport = getUDFImportList();
 		if (udfImport.size() > 0) {
 			args += " -Dudf.import.list=" + super.createArguments(udfImport, ":");
 		}
-		
+
 		List<String> additionalJars = getAdditionalJarsList();
 		if (additionalJars.size() > 0) {
 			args += " -Dpig.additional.jars=" + super.createArguments(additionalJars, ":");
@@ -207,17 +205,18 @@ public class HadoopPigJob extends JavaProcessJob {
 			args += " -Dhadoop.job.ugi=" + hadoopUGI;
 		}
 
-		if(shouldProxy) {
+		if (shouldProxy) {
 			info("Setting up secure proxy info for child process");
 			String secure;
 			secure = " -D" + HadoopSecurityManager.USER_TO_PROXY + "=" + getJobProps().getString(HadoopSecurityManager.USER_TO_PROXY);
 			String extraToken = getSysProps().getString(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, "false");
-			if(extraToken != null) {
+			if (extraToken != null) {
 				secure += " -D" + HadoopSecurityManager.OBTAIN_BINARY_TOKEN + "=" + extraToken;
 			}
 			info("Secure settings = " + secure);
 			args += secure;
-		} else	{
+		}
+		else {
 			info("Not setting up secure proxy info for child process");
 		}
 
@@ -229,76 +228,78 @@ public class HadoopPigJob extends JavaProcessJob {
 		ArrayList<String> list = new ArrayList<String>();
 		Map<String, String> map = getPigParams();
 		if (map != null) {
-			for (Map.Entry<String, String> entry : map.entrySet()) {
+			for (Map.Entry<String, String> entry: map.entrySet()) {
 				list.add("-param " + StringUtils.shellQuote(entry.getKey() + "=" + entry.getValue(), StringUtils.SINGLE_QUOTE));
 			}
 		}
 
 		List<String> paramFiles = getPigParamFiles();
 		if (paramFiles != null) {
-			for (String paramFile : paramFiles) {
+			for (String paramFile: paramFiles) {
 				list.add("-param_file " + paramFile);
 			}
 		}
-		
+
 		if (getDebug()) {
 			list.add("-debug");
 		}
-		
+
 		try {
 			pigLogFile = File.createTempFile("piglogfile", ".log", new File(getWorkingDirectory()));
-			jobProps.put("env."+"PIG_LOG_FILE", pigLogFile.getAbsolutePath());
+			jobProps.put("env." + "PIG_LOG_FILE", pigLogFile.getAbsolutePath());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		if(pigLogFile != null) {
+
+		if (pigLogFile != null) {
 			list.add("-logfile " + pigLogFile.getAbsolutePath());
 		}
 
 		list.add(getScript());
 
-		return StringUtils.join((Collection<String>) list, " ");
+		return StringUtils.join((Collection<String>)list, " ");
 	}
 
 	@Override
 	protected List<String> getClassPaths() {
-		
+
 		List<String> classPath = super.getClassPaths();
 
 		classPath.add(getSourcePathFromClass(Props.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
-		//assuming pig 0.8 and up
-		if(!userPigJar) {
+		// assuming pig 0.8 and up
+		if (!userPigJar) {
 			classPath.add(getSourcePathFromClass(PigRunner.class));
 		}
+
+		classPath.add(HadoopConfigurationInjector.getPath(getJobProps(), getWorkingDirectory()));
+
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
-		if(typeClassPath != null) {
+		if (typeClassPath != null) {
 			// fill in this when load this jobtype
 			String pluginDir = getSysProps().get("plugin.dir");
-			for(String jar : typeClassPath) {
+			for (String jar: typeClassPath) {
 				File jarFile = new File(jar);
-				if(!jarFile.isAbsolute()) {
+				if (!jarFile.isAbsolute()) {
 					jarFile = new File(pluginDir + File.separatorChar + jar);
 				}
-				
-				if(!classPath.contains(jarFile.getAbsoluteFile())) {
+
+				if (!classPath.contains(jarFile.getAbsoluteFile())) {
 					classPath.add(jarFile.getAbsolutePath());
 				}
 			}
 		}
-		
-		
+
 		List<String> typeGlobalClassPath = getSysProps().getStringList("jobtype.global.classpath", null, ",");
-		if(typeGlobalClassPath != null) {
-			for(String jar : typeGlobalClassPath) {
-				if(!classPath.contains(jar)) {
+		if (typeGlobalClassPath != null) {
+			for (String jar: typeGlobalClassPath) {
+				if (!classPath.contains(jar)) {
 					classPath.add(jar);
 				}
 			}
 		}
-		
+
 		return classPath;
 	}
 
@@ -314,10 +315,10 @@ public class HadoopPigJob extends JavaProcessJob {
 		List<String> udfImports = new ArrayList<String>();
 		List<String> typeImports = getSysProps().getStringList(UDF_IMPORT, null, ",");
 		List<String> jobImports = getJobProps().getStringList(UDF_IMPORT, null, ",");
-		if(typeImports != null) {
+		if (typeImports != null) {
 			udfImports.addAll(typeImports);
 		}
-		if(jobImports != null) {
+		if (jobImports != null) {
 			udfImports.addAll(jobImports);
 		}
 		return udfImports;
@@ -327,19 +328,19 @@ public class HadoopPigJob extends JavaProcessJob {
 		List<String> additionalJars = new ArrayList<String>();
 		List<String> typeJars = getSysProps().getStringList(PIG_ADDITIONAL_JARS, null, ",");
 		List<String> jobJars = getJobProps().getStringList(PIG_ADDITIONAL_JARS, null, ",");
-		if(typeJars != null) {
+		if (typeJars != null) {
 			additionalJars.addAll(typeJars);
 		}
-		if(jobJars != null) {
+		if (jobJars != null) {
 			additionalJars.addAll(jobJars);
 		}
 		return additionalJars;
 	}
-	
+
 	protected String getHadoopUGI() {
 		return getJobProps().getString(HADOOP_UGI, null);
 	}
-	
+
 	protected Map<String, String> getPigParams() {
 		return getJobProps().getMapByPrefix(PIG_PARAM_PREFIX);
 	}
@@ -347,11 +348,10 @@ public class HadoopPigJob extends JavaProcessJob {
 	protected List<String> getPigParamFiles() {
 		return getJobProps().getStringList(PIG_PARAM_FILES, null, ",");
 	}
-	
-	
+
 	private static String getSourcePathFromClass(Class<?> containedClass) {
 		File file = new File(containedClass.getProtectionDomain().getCodeSource().getLocation().getPath());
-		
+
 		if (!file.isDirectory() && file.getName().endsWith(".class")) {
 			String name = containedClass.getName();
 			StringTokenizer tokenizer = new StringTokenizer(name, ".");
@@ -361,10 +361,10 @@ public class HadoopPigJob extends JavaProcessJob {
 			}
 
 			return file.getPath();
-		} else {
+		}
+		else {
 			return containedClass.getProtectionDomain().getCodeSource()
 					.getLocation().getPath();
 		}
 	}
 }
-
