@@ -31,78 +31,73 @@ import azkaban.utils.Props;
  * HadoopConfigurationInjector is responsible for inserting links back to the
  * Azkaban UI in configurations. It is assumed that the necessary links have
  * already been loaded into the properties.
- * 
  * After writing the necessary links as a xml file as required by Hadoop's
  * configuration, clients may add the links as a default resource so that they
  * are included in any Configuration constructed
- * 
  */
 public class HadoopConfigurationInjector {
-  Logger _logger = Logger.getRootLogger();
+	/**
+	 * To be called by the forked process to load the generated links
+	 */
+	public static void injectLinks() {
+		Configuration.addDefaultResource("azkaban-links.xml");
+	}
 
-  /**
-   * To be called by the forked process to load the generated links
-   * 
-   */
-  public static void injectLinks() {
-    Configuration.addDefaultResource("azkaban-links.xml");
-  }
+	public static String getPath(Props jobProps, String workingDir) {
+		return new File(workingDir, getDirName(jobProps)).toString();
+	}
 
-  public static String getPath(Props jobProps, String workingDir){
-    return new File(workingDir, getDirName(jobProps)).toString();
-  }
+	/**
+	 * Write out links to a xml file so that they may be loaded by a client as a
+	 * configuration resource
+	 * 
+	 * @param props
+	 * @param workingDir
+	 */
+	public static void prepareLinks(Props props, String workingDir) {
+		try {
+			File file = getLinkFile(props, workingDir);
+			Configuration conf = new Configuration(false);
+			// These are equivalent to
+			// CommonJobProperties.[EXECUTION,WORKFLOW,JOB,JOBEXEC]_LINK respectively,
+			// but we use literals for backwards compatibility.
+			loadProp(props, conf, "azkaban.link.execution.url");
+			loadProp(props, conf, "azkaban.link.workflow.url");
+			loadProp(props, conf, "azkaban.link.job.url");
+			loadProp(props, conf, "azkaban.link.jobexec.url");
+			OutputStream xmlOut = new FileOutputStream(file);
+			conf.writeXml(xmlOut);
+			xmlOut.close();
+		} catch (IOException e) {
 
-  /**
-   * Write out links to a xml file so that they may be loaded by a client as a
-   * configuration resource
-   * 
-   * @param props
-   * @param workingDir
-   */
-  public static void prepareLinks(Props props, String workingDir) {
-    try {
-      File file = getLinkFile(props, workingDir);
-      Configuration conf = new Configuration(false);
-      // These are equivalent to
-      // CommonJobProperties.[EXECUTION,WORKFLOW,JOB,JOBEXEC]_LINK respectively,
-      // but we use literals for backwards compatibility.
-      loadProp(props, conf, "azkaban.link.execution.url");
-      loadProp(props, conf, "azkaban.link.workflow.url");
-      loadProp(props, conf, "azkaban.link.job.url");
-      loadProp(props, conf, "azkaban.link.jobexec.url");
-      OutputStream xmlOut = new FileOutputStream(file);
-      conf.writeXml(xmlOut);
-      xmlOut.close();
-    } catch (IOException e) {
+		}
+	}
 
-    }
-  }
+	public static File getLinkFile(Props props, String workingDir) {
+		File jobDir = new File(workingDir, getDirName(props));
+		if (!jobDir.exists()) {
+			jobDir.mkdir();
+		}
 
-  public static File getLinkFile(Props props, String workingDir) {
-    File jobDir = new File(workingDir, getDirName(props));
-    if (!jobDir.exists()){
-      jobDir.mkdir();
-    }
+		return new File(jobDir, "azkaban-links.xml");
+	}
 
-    return new File(jobDir, "azkaban-links.xml");
-  }
+	/**
+	 * For classpath reasons, we'll put each link file in a separate directory.
+	 * This must be called only after the job id has been inserted by the Job
+	 * 
+	 * @param workingDir
+	 * @param jobProps
+	 * @return
+	 */
+	public static String getDirName(Props jobProps) {
+		return "_link_" + jobProps.get("azkaban.job.id");
+	}
 
-  /**
-   * For classpath reasons, we'll put each link file in a separate directory.
-   * This must be called only after the job id has been inserted by the Job
-   * 
-   * @param workingDir
-   * @param jobProps
-   * @return
-   */
-  public static String getDirName(Props jobProps){
-    return "_link_"+jobProps.get("azkaban.job.id");
-  }
-
-  public static void loadProp(Props props, Configuration conf, String name) {
-    String prop = props.get(name);
-    if (prop != null){
-      conf.set(name, prop);
-    }
-  }
+	public static void loadProp(Props props, Configuration conf, String name) {
+		String prop = props.get(name);
+		if (prop != null) {
+			conf.set(name, prop);
+		}
+	}
 }
