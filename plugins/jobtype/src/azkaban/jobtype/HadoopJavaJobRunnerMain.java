@@ -96,6 +96,9 @@ public class HadoopJavaJobRunnerMain {
 			appender.activateOptions();
 			_logger.addAppender(appender);
 
+			Properties prop = new Properties();
+			prop.load(new BufferedReader(new FileReader(propsFile)));
+
 			HadoopConfigurationInjector.injectLinks();
 
 			final Configuration conf = new Configuration();
