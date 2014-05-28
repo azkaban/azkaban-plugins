@@ -149,14 +149,12 @@ public class HadoopJavaJobRunnerMain {
 			} else {
 				_javaObject = getObject(_jobName, className, prop, _logger);
 			}
-			
-			_logger.info("Got object " + _javaObject.toString());
-//			
-			_javaObject = getObject(_jobName, className, prop, _logger);
+
 			if (_javaObject == null) {
 				_logger.info("Could not create java object to run job: " + className);
 				throw new Exception("Could not create running object");
 			}
+			_logger.info("Got object " + _javaObject.toString());
 
 			_cancelMethod = prop.getProperty(CANCEL_METHOD_PARAM, DEFAULT_CANCEL_METHOD);
 
