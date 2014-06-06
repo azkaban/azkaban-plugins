@@ -64,33 +64,33 @@ public class ReportalMailCreator implements MailCreator {
 	}
 
 	@Override
-	public boolean createFirstErrorMessage(ExecutableFlow flow, EmailMessage message, String azkabanName, String clientHostname, String clientPortNumber, String... vars) {
+	public boolean createFirstErrorMessage(ExecutableFlow flow, EmailMessage message, String azkabanName, String scheme, String clientHostname, String clientPortNumber, String... vars) {
 
 		ExecutionOptions option = flow.getExecutionOptions();
 		Set<String> emailList = new HashSet<String>(option.getFailureEmails());
 
-		return createEmail(flow, emailList, message, "Failure", azkabanName, clientHostname, clientPortNumber, false);
+		return createEmail(flow, emailList, message, "Failure", azkabanName, scheme, clientHostname, clientPortNumber, false);
 	}
 
 	@Override
-	public boolean createErrorEmail(ExecutableFlow flow, EmailMessage message, String azkabanName, String clientHostname, String clientPortNumber, String... vars) {
+	public boolean createErrorEmail(ExecutableFlow flow, EmailMessage message, String azkabanName, String scheme, String clientHostname, String clientPortNumber, String... vars) {
 
 		ExecutionOptions option = flow.getExecutionOptions();
 		Set<String> emailList = new HashSet<String>(option.getFailureEmails());
 
-		return createEmail(flow, emailList, message, "Failure", azkabanName, clientHostname, clientPortNumber, false);
+		return createEmail(flow, emailList, message, "Failure", azkabanName, scheme, clientHostname, clientPortNumber, false);
 	}
 
 	@Override
-	public boolean createSuccessEmail(ExecutableFlow flow, EmailMessage message, String azkabanName, String clientHostname, String clientPortNumber, String... vars) {
+	public boolean createSuccessEmail(ExecutableFlow flow, EmailMessage message, String azkabanName, String scheme, String clientHostname, String clientPortNumber, String... vars) {
 
 		ExecutionOptions option = flow.getExecutionOptions();
 		Set<String> emailList = new HashSet<String>(option.getSuccessEmails());
 		
-		return createEmail(flow, emailList, message, "Success", azkabanName, clientHostname, clientPortNumber, true);
+		return createEmail(flow, emailList, message, "Success", azkabanName, scheme, clientHostname, clientPortNumber, true);
 	}
 	
-	private boolean createEmail(ExecutableFlow flow, Set<String> emailList, EmailMessage message, String status, String azkabanName, String clientHostname, String clientPortNumber, boolean printData) {
+	private boolean createEmail(ExecutableFlow flow, Set<String> emailList, EmailMessage message, String status, String azkabanName, String scheme, String clientHostname, String clientPortNumber, boolean printData) {
 		
 		Project project = azkaban.getProjectManager().getProject(flow.getProjectId());
 
@@ -98,7 +98,7 @@ public class ReportalMailCreator implements MailCreator {
 			message.addAllToAddress(emailList);
 			message.setMimeType("text/html");
 			message.setSubject("Report " + status + ": " + project.getMetadata().get("title"));
-			String urlPrefix = "https://" + clientHostname + ":" + clientPortNumber + "/reportal";
+			String urlPrefix = scheme + "://" + clientHostname + ":" + clientPortNumber + "/reportal";
 			try {
 				return createMessage(project, flow, message, urlPrefix, printData);
 			} catch (Exception e) {
