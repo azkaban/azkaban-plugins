@@ -13,7 +13,10 @@
 	<property name="azkaban-hadoopsecuritymanager-yarn-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
 	<property name="version.file" value="${base.dir}/dist/package.version" />
+	<property name="hadoopsecuritymanager-common.java.src.dir" value="${base.dir}/plugins/hadoopsecuritymanager-common/src" />
+
 	<property file="build.properties" />
+	
 
 	<property environment="env" />
 
@@ -45,12 +48,13 @@
 	</target>
 
 	<target name="build" depends="clean" description="Compile main source tree java files">
+		
 		<!-- copy the latest securitymanager jar -->
-    <delete>
-      <fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
-      </fileset>
-    </delete>
-    <copy todir="${lib.dir}">
+    	<delete>
+      		<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
+      		</fileset>
+    	</delete>
+    	<copy todir="${lib.dir}">
 			<fileset file="${hadoopsecuritymanagerjar}">
 			</fileset>
 		</copy>
@@ -61,6 +65,7 @@
 		<javac fork="true" destdir="${dist.classes.dir}"
 			target="1.6" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
+			<src path="${hadoopsecuritymanager-common.java.src.dir}" />
 			<classpath refid="main.classpath" />
 		</javac>
 	</target>
