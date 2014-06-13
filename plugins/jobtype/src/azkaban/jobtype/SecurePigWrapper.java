@@ -56,10 +56,8 @@ public class SecurePigWrapper {
           }
 
           // For Pig jobs that need to do extra communication with the
-          // JobTracker,
-          // it's necessary to pre-fetch a token and include it in the
-          // credentials
-          // cache
+          // JobTracker, it's necessary to pre-fetch a token and include it in
+          // the credentials cache
           private void prefetchToken() throws InterruptedException, IOException {
             String shouldPrefetch = p.getProperty(OBTAIN_BINARY_TOKEN);
             if (shouldPrefetch != null && shouldPrefetch.equals("true")) {
@@ -70,7 +68,6 @@ public class SecurePigWrapper {
               JobConf jc = new JobConf(conf);
               JobClient jobClient = new JobClient(jc);
               logger.info("Pre-fetching: Got new JobClient: " + jc);
-              // logger.info(conf.get("fs.default.name"));
               Token<DelegationTokenIdentifier> mrdt =
                   jobClient.getDelegationToken(new Text("hi"));
               job.getCredentials().addToken(new Text("howdy"), mrdt);

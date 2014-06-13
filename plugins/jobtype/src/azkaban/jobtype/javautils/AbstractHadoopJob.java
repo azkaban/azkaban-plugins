@@ -162,14 +162,12 @@ public abstract class AbstractHadoopJob {
       logger.info("Running locally, no hadoop jar set.");
     } else {
       HadoopUtils.setClassLoaderAndJar(conf, getClass());
-      logger.info("Setting hadoop jar file for class:" + getClass() + "  to "
-          + conf.getJar());
-      logger
-          .info("*************************************************************************");
+      logger.info("Setting hadoop jar file for class:" + getClass()
+          + "  to " + conf.getJar());
+      logger.info("*************************************************************************");
       logger.info("          Running on Real Hadoop Cluster("
           + conf.get("mapred.job.tracker") + ")           ");
-      logger
-          .info("*************************************************************************");
+      logger.info("*************************************************************************");
     }
 
     // set JVM options if present

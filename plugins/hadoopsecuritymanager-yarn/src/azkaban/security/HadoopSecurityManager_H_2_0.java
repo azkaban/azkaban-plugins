@@ -154,11 +154,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
   public synchronized UserGroupInformation getProxiedUser(String userToProxy)
       throws HadoopSecurityManagerException {
     // don't do privileged actions in case the hadoop is not secured.
-    // if(!isHadoopSecurityEnabled()) {
-    // logger.error("Can't get proxy user with unsecured cluster");
-    // return null;
-    // }
-
     if (userToProxy == null) {
       throw new HadoopSecurityManagerException("userToProxy can't be null");
     }
@@ -207,7 +202,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
     if (value == null) {
       throw new HadoopSecurityManagerException(s + " not set in properties.");
     }
-    // logger.info("Secure proxy configuration: Property " + s + " = " + value);
     return value;
   }
 
@@ -257,12 +251,10 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
       final String userToProxy, final Logger logger)
       throws HadoopSecurityManagerException {
 
-    // final Configuration conf = new Configuration();
     logger.info("Getting hadoop tokens for " + userToProxy);
 
     try {
       getProxiedUser(userToProxy).doAs(
-      // UserGroupInformation.getCurrentUser().doAs(
           new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
@@ -274,7 +266,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
                 throws InterruptedException, IOException,
                 HadoopSecurityManagerException {
 
-              // logger.info("Pre-fetching DFS token");
               FileSystem fs = FileSystem.get(conf);
               // check if we get the correct FS, and most importantly, the conf
               logger.info("Getting DFS token from "
@@ -285,10 +276,7 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
                 throw new HadoopSecurityManagerException(
                     "Failed to fetch DFS token for " + userToProxy);
               }
-              // logger.info("Created DFS token: " + fsToken.toString());
 
-              // Job job = new
-              // Job(conf,"totally phony, extremely fake, not real job");
               JobConf jc = new JobConf(conf);
               JobClient jobClient = new JobClient(jc);
               logger.info("Pre-fetching JT token: Got new JobClient: " + jc);
@@ -300,13 +288,9 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
                 throw new HadoopSecurityManagerException(
                     "Failed to fetch JT token for " + userToProxy);
               }
-              // logger.info("Created JT token: " + mrdt.toString());
 
               jc.getCredentials().addToken(new Text("howdy"), mrdt);
               jc.getCredentials().addToken(fsToken.getService(), fsToken);
-
-              // File temp = File.createTempFile("mr-azkaban", ".token");
-              // temp.deleteOnExit();
 
               FileOutputStream fos = null;
               DataOutputStream dos = null;
@@ -372,11 +356,9 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
           }
         });
       } catch (IOException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
         throw new HadoopSecurityManagerException("Failed to cancel token", e);
       } catch (InterruptedException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
         throw new HadoopSecurityManagerException("Failed to cancel token", e);
       }
@@ -400,11 +382,9 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
           }
         });
       } catch (IOException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
         throw new HadoopSecurityManagerException("Failed to cancel token", e);
       } catch (InterruptedException e) {
-        // TODO Auto-generated catch block
         e.printStackTrace();
         throw new HadoopSecurityManagerException("Failed to cancel token", e);
       }

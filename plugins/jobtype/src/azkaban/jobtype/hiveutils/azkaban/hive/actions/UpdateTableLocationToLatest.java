@@ -35,14 +35,15 @@ import java.util.Properties;
 import static azkaban.jobtype.hiveutils.azkaban.Utils.verifyProperty;
 
 /**
- * Alter the specified table's location to the 'latest' directory found in specified base directory, where
- * latest is defined as greate lexically.</p>
+ * Alter the specified table's location to the 'latest' directory found in
+ * specified base directory, where latest is defined as greate lexically.</p>
  *
  * For example, if we have a base dir foo with directories:</p>
  *   /foo/2012-01-01</p>
  *       /2012-01-02</p>
  *       /2012-01-03</p>
- * and we specify table as 'bar', this action will execute ALTER TABLE bar SET LOCATION '/foo/2012-01-03';</p>
+ * and we specify table as 'bar', this action will execute
+ * ALTER TABLE bar SET LOCATION '/foo/2012-01-03';</p>
  * </p>
  */
 @AzkHiveAction(Constants.UPDATE_TABLE_LOCATION_TO_LATEST)
@@ -116,14 +117,9 @@ public class UpdateTableLocationToLatest implements HiveAction {
       throws HiveViaAzkabanException, IOException {
     ArrayList<String> directories = null;
 
-    directories = Utils.fetchDirectories(fs, basePath, /*
-                                                        * Alter Table Set
-                                                        * Location requires full
-                                                        * URI...
-                                                        * https://issues.apache
-                                                        * .org
-                                                        * /jira/browse/HIVE-3860
-                                                        */true);
+    // Alter Table Set Location requires full URI...
+    // https://issues.apache.org/jira/browse/HIVE-3860
+    directories = Utils.fetchDirectories(fs, basePath, true);
 
     if (directories.size() == 0) {
       throw new HiveViaAzkabanException(

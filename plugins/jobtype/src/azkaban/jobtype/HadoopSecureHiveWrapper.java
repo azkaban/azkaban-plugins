@@ -120,7 +120,7 @@ public class HadoopSecureHiveWrapper {
 
   public static void runHive(String[] args) throws Exception {
 
-    final HiveConf hiveConf = new HiveConf(SessionState.class); // provideHiveConf();
+    final HiveConf hiveConf = new HiveConf(SessionState.class);
 
     if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
       System.out.println("Setting hadoop tokens ... ");

@@ -99,40 +99,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
       logger.info("HADOOP_HOME not set, using default hadoop config.");
     }
 
-    // not really doable in this simple way. commenting out for now.
-    // logger.info("loading additional hadoop confs");
-    // List<String> hadoopConfPaths = props.getStringList("other.conf.dir", new
-    // ArrayList<String>(), ",");
-    // for(String conf : hadoopConfPaths) {
-    // try {
-    // for(File f : new File(conf).listFiles()) {
-    // if(f.getName().endsWith(".xml")) {
-    // resources.add(f.toURI().toURL());
-    // logger.info("adding to classpath " + f.toURI().toURL());
-    // }
-    // }
-    //
-    // } catch (MalformedURLException e) {
-    // throw new JobTypeManagerException(e);
-    // }
-    // }
-    // logger.info("Loading additional hadoop jars");
-    // List<String> hadoopJarLibPath = props.getStringList("hadoop.jar.lib.dir",
-    // new ArrayList<String>(), ",");
-    // for(String dir : hadoopJarLibPath) {
-    // try {
-    // for(File f : new File(dir).listFiles()) {
-    // if(f.getName().endsWith(".jar")) {
-    // resources.add(f.toURI().toURL());
-    // logger.info("adding to classpath " + f.toURI().toURL());
-    // }
-    // }
-    //
-    // } catch (MalformedURLException e) {
-    // throw new JobTypeManagerException(e);
-    // }
-    // }
-
     ucl = new URLClassLoader(resources.toArray(new URL[resources.size()]));
 
     conf = new Configuration();
@@ -167,8 +133,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
       // try login
       try {
         if (loginUser == null) {
-          // Thread.currentThread().setContextClassLoader(ucl);
-
           logger.info("No login user. Creating login user");
           logger.info("Logging with " + keytabPrincipal + " and "
               + keytabLocation);
@@ -203,7 +167,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
         }
       }
     }
-    // Thread.currentThread().setContextClassLoader(ucl);
     return hsmInstance;
   }
 
@@ -314,12 +277,10 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
       final String userToProxy, final Logger logger)
       throws HadoopSecurityManagerException {
 
-    // final Configuration conf = new Configuration();
     logger.info("Getting hadoop tokens for " + userToProxy);
 
     try {
       getProxiedUser(userToProxy).doAs(
-      // UserGroupInformation.getCurrentUser().doAs(
           new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
@@ -331,7 +292,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
                 throws InterruptedException, IOException,
                 HadoopSecurityManagerException {
 
-              // logger.info("Pre-fetching DFS token");
               FileSystem fs = FileSystem.get(conf);
               // check if we get the correct FS, and most importantly, the conf
               logger.info("Getting DFS token from "
@@ -347,8 +307,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
               logger.info("Token id: " + fsToken.getIdentifier());
               logger.info("Token service: " + fsToken.getService());
 
-              // Job job = new
-              // Job(conf,"totally phony, extremely fake, not real job");
               JobConf jc = new JobConf(conf);
               JobClient jobClient = new JobClient(jc);
               logger.info("Pre-fetching JT token: Got new JobClient: " + jc);
@@ -383,8 +341,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
                 }
               }
               // stash them to cancel after use.
-              // System.out.println("Total tokens: nn " + nnTokens.size() +
-              // " jt " + jtTokens.size());
               logger.info("Tokens loaded in " + tokenFile.getAbsolutePath());
             }
           });
@@ -500,7 +456,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
       final Props props, final Logger logger)
       throws HadoopSecurityManagerException {
 
-    // final Configuration conf = new Configuration();
     final String userToProxy = props.getString(USER_TO_PROXY);
 
     logger.info("Getting hadoop tokens for " + userToProxy);
@@ -512,7 +467,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
         logger.info("Pre-fetching Hive MetaStore token from hive");
 
         HiveConf hiveConf = new HiveConf();
-        // hiveConf.setClassLoader(ucl);
         logger.info("HiveConf.ConfVars.METASTOREURIS.varname "
             + hiveConf.get(HiveConf.ConfVars.METASTOREURIS.varname));
         logger.info("HIVE_METASTORE_SASL_ENABLED "
@@ -547,7 +501,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
 
     try {
       getProxiedUser(userToProxy).doAs(
-      // UserGroupInformation.getCurrentUser().doAs(
           new PrivilegedExceptionAction<Void>() {
             @Override
             public Void run() throws Exception {
@@ -561,7 +514,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
               logger.info("Here is the props for " + OBTAIN_NAMENODE_TOKEN
                   + ": " + props.getBoolean(OBTAIN_NAMENODE_TOKEN));
               if (props.getBoolean(OBTAIN_NAMENODE_TOKEN, false)) {
-                // logger.info("Pre-fetching DFS token");
                 FileSystem fs = FileSystem.get(conf);
                 // check if we get the correct FS, and most importantly, the
                 // conf
@@ -577,7 +529,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
                 logger.info("Token id: " + fsToken.getIdentifier());
                 logger.info("Token service: " + fsToken.getService());
                 cred.addToken(fsToken.getService(), fsToken);
-                // nnTokens.put(tokenFile.getName(), fsToken);
               }
 
               if (props.getBoolean(OBTAIN_JOBTRACKER_TOKEN, false)) {
@@ -596,7 +547,6 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
                 logger.info("Token id: " + mrdt.getIdentifier());
                 logger.info("Token service: " + mrdt.getService());
                 cred.addToken(mrdt.getService(), mrdt);
-                // jtTokens.put(tokenFile.getName(), mrdt);
               }
             }
           });
@@ -615,10 +565,8 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
           fos.close();
         }
       }
-      // stash them to cancel after use.
 
-      // System.out.println("Total tokens: nn " + nnTokens.size() + " jt " +
-      // jtTokens.size());
+      // stash them to cancel after use.
       logger.info("Tokens loaded in " + tokenFile.getAbsolutePath());
 
     } catch (Exception e) {
@@ -630,6 +578,5 @@ public class HadoopSecurityManager_H_1_0 extends HadoopSecurityManager {
       throw new HadoopSecurityManagerException("Failed to get hadoop tokens! "
           + t.getMessage() + t.getCause());
     }
-
   }
 }

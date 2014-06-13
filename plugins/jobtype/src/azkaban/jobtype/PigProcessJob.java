@@ -192,10 +192,6 @@ public class PigProcessJob extends JavaProcessJob {
     return getJobProps().getString(PIG_SCRIPT);
   }
 
-  // protected List<String> getUDFImportList() {
-  // return getProps().getStringList(UDF_IMPORT, null, ",");
-  // }
-
   protected List<String> getUDFImportList() {
     List<String> udfImports = new ArrayList<String>();
     List<String> typeImports =

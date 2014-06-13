@@ -84,8 +84,11 @@ public class DropAllPartitionsAddLatest implements HiveAction {
   public DropAllPartitionsAddLatest(Properties p, HiveQueryExecutor hqe)
       throws HiveViaAzkabanException {
     // The goal here is to get to a fluent API ala
-    // LinkedInHive.get("magic").forDatabase("u_jhoman").forTable("zoiks").dropPartition("date-stamp","2012-01-01")
-    // .addPartition("date-stamp","2012-01-02", "/some/path").go();
+    // LinkedInHive.get("magic")
+    //     .forDatabase("u_jhoman")
+    //     .forTable("zoiks")
+    //     .dropPartition("date-stamp","2012-01-01")
+    //     .addPartition("date-stamp","2012-01-02", "/some/path").go();
     this.database = verifyProperty(p, HIVE_DATABASE);
     this.tables = verifyProperty(p, HIVE_TABLE).split(",");
     this.partition = verifyProperty(p, HIVE_PARTITION);

@@ -194,11 +194,10 @@ public class HadoopJavaJobRunnerMain {
         Props outputProps = new Props(null, properties);
         outputGeneratedProperties(outputProps);
       } catch (NoSuchMethodException e) {
-        _logger
-            .info(String
-                .format(
-                    "Apparently there isn't a method[%s] on object[%s], using empty Props object instead.",
-                    GET_GENERATED_PROPERTIES_METHOD, _javaObject));
+        _logger.info(String.format(
+            "Apparently there isn't a method[%s] on object[%s], using "
+                + "empty Props object instead.",
+            GET_GENERATED_PROPERTIES_METHOD, _javaObject));
         outputGeneratedProperties(new Props());
       }
     } catch (Exception e) {

@@ -146,10 +146,6 @@ public class HadoopSecurePigWrapper {
     throw new RuntimeException("Pig job failed.");
   }
 
-  // private static void cancelJob() throws Exception {
-  // // doesn't seem needed as the job dies by itself if the process is killed
-  // }
-
   private static void handleError(File pigLog) throws Exception {
     System.out.println();
     System.out.println("Pig logfile dump:");
