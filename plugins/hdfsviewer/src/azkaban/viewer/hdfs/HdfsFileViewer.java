@@ -14,7 +14,7 @@
  * the License.
  */
 
-package	azkaban.viewer.hdfs;
+package azkaban.viewer.hdfs;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -26,19 +26,15 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AccessControlException;
 
 public abstract class HdfsFileViewer {
-	public Set<Capability> getCapabilities(FileSystem fs, Path path)
+  public Set<Capability> getCapabilities(FileSystem fs, Path path)
       throws AccessControlException {
-		return EnumSet.noneOf(Capability.class);
-	}
+    return EnumSet.noneOf(Capability.class);
+  }
 
-	public abstract void displayFile(
-			FileSystem fs,
-			Path path,
-			OutputStream outStream,
-			int startLine,
-			int endLine) throws IOException;
+  public abstract void displayFile(FileSystem fs, Path path,
+      OutputStream outStream, int startLine, int endLine) throws IOException;
 
-	public String getSchema(FileSystem fs, Path path) {
-		return null;
-	}
+  public String getSchema(FileSystem fs, Path path) {
+    return null;
+  }
 }

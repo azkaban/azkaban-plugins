@@ -32,86 +32,80 @@ import org.apache.hadoop.fs.permission.AccessControlException;
 import org.apache.log4j.Logger;
 
 /**
- * Reads a image file if the file size is not larger than {@value #MAX_IMAGE_FILE_SIZE}.
+ * Reads a image file if the file size is not larger than
+ * {@value #MAX_IMAGE_FILE_SIZE}.
  *
  * @author ximeng
  */
-
 public class ImageFileViewer extends HdfsFileViewer {
 
-	private static Logger logger = Logger.getLogger(ImageFileViewer.class);
-	private static final long MAX_IMAGE_FILE_SIZE = 10485760L;
+  private static Logger logger = Logger.getLogger(ImageFileViewer.class);
+  private static final long MAX_IMAGE_FILE_SIZE = 10485760L;
 
-	private HashSet<String> acceptedSuffix;
+  private HashSet<String> acceptedSuffix;
 
-	public ImageFileViewer() {
-		final String[] imageSuffix = {
-			".jpg", ".jpeg", ".tif", ".tiff", ".png", ".gif", ".bmp", ".svg"
-		};
-		acceptedSuffix = new HashSet<String>(Arrays.asList(imageSuffix));
-	}
+  public ImageFileViewer() {
+    final String[] imageSuffix = {
+      ".jpg", ".jpeg", ".tif", ".tiff", ".png", ".gif", ".bmp", ".svg"
+    };
+    acceptedSuffix = new HashSet<String>(Arrays.asList(imageSuffix));
+  }
 
   @Override
-	public Set<Capability> getCapabilities(FileSystem fs, Path path)
+  public Set<Capability> getCapabilities(FileSystem fs, Path path)
       throws AccessControlException {
-		String fileName = path.getName();
-		int pos = fileName.lastIndexOf('.');
-		if (pos < 0) {
-			return EnumSet.noneOf(Capability.class);
-		}
+    String fileName = path.getName();
+    int pos = fileName.lastIndexOf('.');
+    if (pos < 0) {
+      return EnumSet.noneOf(Capability.class);
+    }
 
-		String suffix = fileName.substring(pos).toLowerCase();
-		if (acceptedSuffix.contains(suffix)) {
-			long len = 0;
-			try {
-				len = fs.getFileStatus(path).getLen();
-			}
-      catch (AccessControlException e) {
+    String suffix = fileName.substring(pos).toLowerCase();
+    if (acceptedSuffix.contains(suffix)) {
+      long len = 0;
+      try {
+        len = fs.getFileStatus(path).getLen();
+      } catch (AccessControlException e) {
         throw e;
+      } catch (IOException e) {
+        e.printStackTrace();
+        return EnumSet.noneOf(Capability.class);
       }
-			catch (IOException e) {
-				e.printStackTrace();
-				return EnumSet.noneOf(Capability.class);
-			}
 
-			if (len <= MAX_IMAGE_FILE_SIZE) {
-				return EnumSet.of(Capability.READ);
-			}
-		}
+      if (len <= MAX_IMAGE_FILE_SIZE) {
+        return EnumSet.of(Capability.READ);
+      }
+    }
 
-		return EnumSet.noneOf(Capability.class);
-	}
+    return EnumSet.noneOf(Capability.class);
+  }
 
-	public void displayFile(FileSystem fs,
-			Path path,
-			OutputStream outputStream,
-			int startLine,
-			int endLine) throws IOException {
+  public void displayFile(FileSystem fs, Path path, OutputStream outputStream,
+      int startLine, int endLine) throws IOException {
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("read in image file");
-		}
+    if (logger.isDebugEnabled()) {
+      logger.debug("read in image file");
+    }
 
-		InputStream inputStream = null;
-		try {
-			inputStream = new BufferedInputStream(fs.open(path));
-			BufferedOutputStream output = new BufferedOutputStream(outputStream);
-			long outputSize = 0L;
-			byte[] buffer = new byte[16384];
-			int len;
-			while ((len = inputStream.read(buffer)) != -1) {
-				output.write(buffer, 0, len);
-				outputSize += len;
-				if (outputSize > MAX_IMAGE_FILE_SIZE) {
-					break;
-				}
-			}
-			output.flush();
-		}
-		finally {
-			if (inputStream != null) {
-				inputStream.close();
-			}
-		}
-	}
+    InputStream inputStream = null;
+    try {
+      inputStream = new BufferedInputStream(fs.open(path));
+      BufferedOutputStream output = new BufferedOutputStream(outputStream);
+      long outputSize = 0L;
+      byte[] buffer = new byte[16384];
+      int len;
+      while ((len = inputStream.read(buffer)) != -1) {
+        output.write(buffer, 0, len);
+        outputSize += len;
+        if (outputSize > MAX_IMAGE_FILE_SIZE) {
+          break;
+        }
+      }
+      output.flush();
+    } finally {
+      if (inputStream != null) {
+        inputStream.close();
+      }
+    }
+  }
 }

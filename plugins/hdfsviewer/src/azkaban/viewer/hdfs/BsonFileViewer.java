@@ -36,73 +36,71 @@ import com.mongodb.util.JSON;
  * File viewer for Mongo bson files.
  *
  * @author adilaijaz
- *
  */
 public final class BsonFileViewer extends HdfsFileViewer {
 
-	/**
-	 * The maximum time spent, in milliseconds, while reading records from the file.
-	 */
-	private static long STOP_TIME = 2000l;
+  /**
+   * The maximum time spent, in milliseconds, while reading records from the
+   * file.
+   */
+  private static long STOP_TIME = 2000l;
 
-	@Override
-	public Set<Capability> getCapabilities(FileSystem fs, Path path)
+  @Override
+  public Set<Capability> getCapabilities(FileSystem fs, Path path)
       throws AccessControlException {
-		if (path.getName().endsWith(".bson")) {
-			return EnumSet.of(Capability.READ);
-		}
-		return EnumSet.noneOf(Capability.class);
-	}
+    if (path.getName().endsWith(".bson")) {
+      return EnumSet.of(Capability.READ);
+    }
+    return EnumSet.noneOf(Capability.class);
+  }
 
-	@Override
-	public void displayFile(
-			FileSystem fs,
-			Path path,
-			OutputStream outStream,
-			int startLine,
-			int endLine) throws IOException {
+  @Override
+  public void displayFile(FileSystem fs, Path path, OutputStream outStream,
+      int startLine, int endLine) throws IOException {
 
-		FSDataInputStream in = null;
-		try {
-			in = fs.open(path, 16 * 1024 * 1024);
+    FSDataInputStream in = null;
+    try {
+      in = fs.open(path, 16 * 1024 * 1024);
 
-			long endTime = System.currentTimeMillis() + STOP_TIME;
+      long endTime = System.currentTimeMillis() + STOP_TIME;
 
-			BasicBSONCallback callback = new BasicBSONCallback();
-			BasicBSONDecoder decoder = new BasicBSONDecoder();
+      BasicBSONCallback callback = new BasicBSONCallback();
+      BasicBSONDecoder decoder = new BasicBSONDecoder();
 
-			/*
-			 * keep reading and rendering bsonObjects until one of these conditions is met:
-			 *
-			 * a. we have rendered all bsonObjects desired.
-			 * b. we have run out of time.
-			 */
-			for (int lineno = 1; lineno <= endLine && System.currentTimeMillis() <= endTime; lineno++) {
-				if (lineno < startLine) {
-					continue;
-				}
+      /*
+       * keep reading and rendering bsonObjects until one of these conditions is
+       * met:
+       *
+       * a. we have rendered all bsonObjects desired. b. we have run out of
+       * time.
+       */
+      for (int lineno = 1; lineno <= endLine
+          && System.currentTimeMillis() <= endTime; lineno++) {
+        if (lineno < startLine) {
+          continue;
+        }
 
-				callback.reset();
-				decoder.decode(in, callback);
+        callback.reset();
+        decoder.decode(in, callback);
 
-				BSONObject value = (BSONObject) callback.get();
+        BSONObject value = (BSONObject) callback.get();
 
-				StringBuilder bldr = new StringBuilder();
-				bldr.append("\n\n Record ");
-				bldr.append(lineno);
-				bldr.append('\n');
-				JSON.serialize(value, bldr);
-				outStream.write(bldr.toString().getBytes("UTF-8"));
-			}
-		}
-		catch (IOException e) {
-			outStream.write(("Error in display avro file: " + e.getLocalizedMessage()).getBytes("UTF-8"));
-		}
-		finally {
-			if (in != null) {
-				in.close();
-			}
-			outStream.flush();
-		}
-	}
+        StringBuilder bldr = new StringBuilder();
+        bldr.append("\n\n Record ");
+        bldr.append(lineno);
+        bldr.append('\n');
+        JSON.serialize(value, bldr);
+        outStream.write(bldr.toString().getBytes("UTF-8"));
+      }
+    } catch (IOException e) {
+      outStream
+          .write(("Error in display avro file: " + e.getLocalizedMessage())
+              .getBytes("UTF-8"));
+    } finally {
+      if (in != null) {
+        in.close();
+      }
+      outStream.flush();
+    }
+  }
 }

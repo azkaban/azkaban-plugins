@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,7 +17,8 @@
 package azkaban.jobtype.hiveutils.azkaban.hive.actions;
 
 class AlterTableLocationQL implements HQL {
-  // alter table zoip set location 'hdfs://eat1-magicnn01.grid.linkedin.com:9000/user/jhoman/b';
+  // alter table zoip set location
+  // 'hdfs://eat1-magicnn01.grid.linkedin.com:9000/user/jhoman/b';
   private final String table;
   private final String newLocation;
 
@@ -32,4 +33,3 @@ class AlterTableLocationQL implements HQL {
     return "ALTER TABLE " + table + " SET LOCATION '" + newLocation + "';";
   }
 }
-

@@ -1,12 +1,12 @@
 /*
  * Copyright 2014 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -49,12 +49,12 @@ azkaban.LogDataModel = Backbone.Model.extend({
   },
 
   refresh: function() {
-    var requestURL = contextURL + "/executor"; 
+    var requestURL = contextURL + "/executor";
     var finished = false;
 
     var date = new Date();
     var startTime = date.getTime();
-    
+
     while (!finished) {
       var requestData = {
         "execid": execId,
@@ -135,23 +135,23 @@ azkaban.LogDataModel = Backbone.Model.extend({
         break;
       }
     }
-    
+
     if (commandStartIndex != -1) {
       var commandProperties = {};
 
       var command = lines[commandStartIndex].substring(this.COMMAND_START.length);
       commandProperties.Command = command;
-      
+
       this.parseCommandProperty(command, commandProperties, "Classpath", this.CLASSPATH_REGEX, ':');
       this.parseCommandProperty(command, commandProperties, "-D", this.ENVIRONMENT_VARIABLES_REGEX);
       this.parseCommandProperty(command, commandProperties, "Memory Settings", this.JVM_MEMORY_REGEX);
       this.parseCommandProperty(command, commandProperties, "Params", this.PIG_PARAMS_REGEX);
-      
+
       this.set("commandProperties", commandProperties);
 
       return true;
     }
-    
+
     return false;
   },
 
@@ -223,7 +223,7 @@ azkaban.LogDataModel = Backbone.Model.extend({
         break;
       }
     }
-    
+
     if (index != -1) {
       var table = [];
       var line;
@@ -258,7 +258,7 @@ azkaban.LogDataModel = Backbone.Model.extend({
       // parse query text, which could span multiple lines
       var queryStartIndex = parsingCommandIndex + this.HIVE_PARSING_START.length;
       var query = line.substring(queryStartIndex) + "<br/>";
-      
+
       i++;
       while (i < numLines && (line = lines[i]).indexOf(this.HIVE_PARSING_END) === -1) {
         query += line + "<br/>";
@@ -266,7 +266,7 @@ azkaban.LogDataModel = Backbone.Model.extend({
       }
       hiveQueries.push(query);
       i++;
-      
+
       // parse the query's Map-Reduce jobs, if any.
       var numMRJobs = 0;
       while (i < numLines) {
@@ -275,16 +275,16 @@ azkaban.LogDataModel = Backbone.Model.extend({
           // query involves map reduce jobs
           var numMRJobs = parseInt(line.substring(this.HIVE_NUM_MAP_REDUCE_JOBS_STRING.length),10);
           i++;
-          
+
           // get the map reduce jobs summary
           while (i < numLines) {
             line = lines[i];
             if (line.indexOf(this.HIVE_MAP_REDUCE_JOBS_SUMMARY) !== -1) {
               // job summary table found
               i++;
-              
+
               var queryJobs = [];
-              
+
               var previousJob = -1;
               var numJobsSeen = 0;
               while (numJobsSeen < numMRJobs && i < numLines) {
@@ -296,7 +296,7 @@ azkaban.LogDataModel = Backbone.Model.extend({
                     i++;
                     continue;
                   }
-                  
+
                   var job = [];
                   job.push("<a href='" + this.get("jobTrackerUrlsOrdered")[currMapReduceJob++] + "'>" + currJob + "</a>");
                   job.push(match[2]);
@@ -314,15 +314,15 @@ azkaban.LogDataModel = Backbone.Model.extend({
                 }
                 i++;
               }
-              
+
               if (numJobsSeen === numMRJobs) {
                 hiveQueryJobs.push(queryJobs);
               }
-              
+
               break;
             }
             i++;
-          } 
+          }
           break;
         }
         else if (line.indexOf(this.HIVE_PARSING_START) !== -1) {
