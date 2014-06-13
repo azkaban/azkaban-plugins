@@ -16,6 +16,9 @@
 	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
 	<property file="build.properties" />
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-${version}.jar"/>
+	<property name="hadoopsecuritymanagerjar-yarn" value="${base.dir}/dist/hadoopsecuritymanager-yarn/jars/azkaban-hadoopsecuritymanager-yarn-${version}.jar"/>
+	<property name="hadoopsecuritymanager-common.java.src.dir" value="${base.dir}/plugins/hadoopsecuritymanager-common/src" />
+
 	<property name="version.file" value="${base.dir}/dist/package.version" />
 	<property environment="env" />
 
@@ -70,6 +73,8 @@
 		<javac fork="true" destdir="${dist.classes.dir}"
 			target="1.6" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
+			<src path="${hadoopsecuritymanager-common.java.src.dir}" />
+
 			<exclude name="**/examples/**"/>
 			<classpath refid="main.classpath" />
 		</javac>
@@ -119,6 +124,9 @@
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.12.0" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive-0.8.1" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive" />
+		
+		<!-- Copy hadoopsecuritymanager-yarn file -->
+		<copy file="${hadoopsecuritymanagerjar-yarn}" todir="${dist.packages.dir}" />
 		
 		<!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
