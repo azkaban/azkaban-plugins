@@ -1,12 +1,12 @@
 /*
  * Copyright 2012 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -37,87 +37,96 @@ import org.apache.hadoop.mapred.FileOutputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
 import org.apache.log4j.Logger;
 
-
 import azkaban.jobtype.javautils.AbstractHadoopJob;
 import azkaban.utils.Props;
 
-public class WordCount extends AbstractHadoopJob{
+public class WordCount extends AbstractHadoopJob {
 
-	private static final Logger logger = Logger.getLogger(WordCount.class);
-	
-	private final String inputPath;
-	private final String outputPath;
-	private boolean forceOutputOverrite;
-	
-	public WordCount(String name, Props props) {
-		super(name, props);
-		this.inputPath = props.getString("input.path");
-		this.outputPath = props.getString("output.path");
-		this.forceOutputOverrite = props.getBoolean("force.output.overwrite", false);
-	}
+  private static final Logger logger = Logger.getLogger(WordCount.class);
 
-	public static class Map extends MapReduceBase implements Mapper<LongWritable, Text, Text, IntWritable> {
-		
-		static enum Counters { INPUT_WORDS };
-		
-		private final static IntWritable one = new IntWritable(1);
-		private Text word = new Text();
-		
-		private long numRecords = 0;
-		
-		@Override
-		public void map(LongWritable key, Text value, OutputCollector<Text, IntWritable> output, Reporter reporter) throws IOException {
-			String line = value.toString();
-			StringTokenizer tokenizer = new StringTokenizer(line);
-			while (tokenizer.hasMoreTokens()) {
-				word.set(tokenizer.nextToken());
-				output.collect(word, one);
-				reporter.incrCounter(Counters.INPUT_WORDS, 1);
-			}
-			
-			if ((++numRecords % 100) == 0) {
-				reporter.setStatus("Finished processing " + numRecords + " records " + "from the input file");
-			}
-		}
-	}
+  private final String inputPath;
+  private final String outputPath;
+  private boolean forceOutputOverrite;
 
-	public static class Reduce extends MapReduceBase implements Reducer<Text, IntWritable, Text, IntWritable> {
-		@Override
-		public void reduce(Text key, Iterator<IntWritable> values, OutputCollector<Text, IntWritable> output, Reporter reporter) throws IOException {
-			int sum = 0;
-			while (values.hasNext()) {
-				sum += values.next().get();
-			}
-			output.collect(key, new IntWritable(sum));
-		}
-	}
-	
-	public void run() throws Exception {
-		logger.info(String.format("Starting %s", getClass().getSimpleName()));
+  public WordCount(String name, Props props) {
+    super(name, props);
+    this.inputPath = props.getString("input.path");
+    this.outputPath = props.getString("output.path");
+    this.forceOutputOverrite =
+        props.getBoolean("force.output.overwrite", false);
+  }
 
-		// hadoop conf should be on the classpath
-		JobConf jobconf = getJobConf();
-		jobconf.setJarByClass(WordCount.class);
-		
-		jobconf.setOutputKeyClass(Text.class);
-		jobconf.setOutputValueClass(IntWritable.class);
+  public static class Map extends MapReduceBase implements
+      Mapper<LongWritable, Text, Text, IntWritable> {
 
-		jobconf.setMapperClass(Map.class);
-		jobconf.setReducerClass( Reduce.class);
+    static enum Counters {
+      INPUT_WORDS
+    };
 
-		jobconf.setInputFormat(TextInputFormat.class);
-		jobconf.setOutputFormat(TextOutputFormat.class);
+    private final static IntWritable one = new IntWritable(1);
+    private Text word = new Text();
 
-		FileInputFormat.addInputPath(jobconf, new Path(inputPath));
-		FileOutputFormat.setOutputPath(jobconf, new Path(outputPath));
-		
-		if (forceOutputOverrite)
-		{
-			FileSystem fs = FileOutputFormat.getOutputPath(jobconf).getFileSystem(jobconf);
-			fs.delete(FileOutputFormat.getOutputPath(jobconf), true);
-		}
-		
-		super.run();
-	}
-	
+    private long numRecords = 0;
+
+    @Override
+    public void map(LongWritable key, Text value,
+        OutputCollector<Text, IntWritable> output, Reporter reporter)
+        throws IOException {
+      String line = value.toString();
+      StringTokenizer tokenizer = new StringTokenizer(line);
+      while (tokenizer.hasMoreTokens()) {
+        word.set(tokenizer.nextToken());
+        output.collect(word, one);
+        reporter.incrCounter(Counters.INPUT_WORDS, 1);
+      }
+
+      if ((++numRecords % 100) == 0) {
+        reporter.setStatus("Finished processing " + numRecords + " records "
+            + "from the input file");
+      }
+    }
+  }
+
+  public static class Reduce extends MapReduceBase implements
+      Reducer<Text, IntWritable, Text, IntWritable> {
+    @Override
+    public void reduce(Text key, Iterator<IntWritable> values,
+        OutputCollector<Text, IntWritable> output, Reporter reporter)
+        throws IOException {
+      int sum = 0;
+      while (values.hasNext()) {
+        sum += values.next().get();
+      }
+      output.collect(key, new IntWritable(sum));
+    }
+  }
+
+  public void run() throws Exception {
+    logger.info(String.format("Starting %s", getClass().getSimpleName()));
+
+    // hadoop conf should be on the classpath
+    JobConf jobconf = getJobConf();
+    jobconf.setJarByClass(WordCount.class);
+
+    jobconf.setOutputKeyClass(Text.class);
+    jobconf.setOutputValueClass(IntWritable.class);
+
+    jobconf.setMapperClass(Map.class);
+    jobconf.setReducerClass(Reduce.class);
+
+    jobconf.setInputFormat(TextInputFormat.class);
+    jobconf.setOutputFormat(TextOutputFormat.class);
+
+    FileInputFormat.addInputPath(jobconf, new Path(inputPath));
+    FileOutputFormat.setOutputPath(jobconf, new Path(outputPath));
+
+    if (forceOutputOverrite) {
+      FileSystem fs =
+          FileOutputFormat.getOutputPath(jobconf).getFileSystem(jobconf);
+      fs.delete(FileOutputFormat.getOutputPath(jobconf), true);
+    }
+
+    super.run();
+  }
+
 }

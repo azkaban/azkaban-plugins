@@ -58,7 +58,7 @@ public class PigJobStats {
 
   public PigJobStats() {
   }
-  
+
   public PigJobStats(
       int numberMaps,
       int numberReduces,
@@ -82,7 +82,7 @@ public class PigJobStats {
       List<PigIoStats> inputStats,
       List<PigIoStats> outputStats) {
     this.numberMaps = numberMaps;
-    this.numberReduces = numberReduces;;
+    this.numberReduces = numberReduces;
 
     this.minMapTime = minMapTime;
     this.maxMapTime = maxMapTime;
@@ -124,7 +124,7 @@ public class PigJobStats {
 
     bytesWritten = stats.getBytesWritten();
     hdfsBytesWritten = stats.getHdfsBytesWritten();
-    
+
     mapInputRecords = stats.getMapInputRecords();
     mapOutputRecords = stats.getMapOutputRecords();
     reduceInputRecords = stats.getReduceInputRecords();
@@ -141,59 +141,103 @@ public class PigJobStats {
     List<InputStats> inputs = stats.getInputs();
     inputStats = new ArrayList<PigIoStats>();
     for (InputStats input : inputs) {
-      inputStats.add(new PigIoStats(
-          input.getName(),
-          input.getLocation(),
-          input.getBytes(),
-          input.getNumberRecords()));
+      inputStats.add(new PigIoStats(input.getName(), input.getLocation(), input
+          .getBytes(), input.getNumberRecords()));
     }
-    
+
     List<OutputStats> outputs = stats.getOutputs();
     outputStats = new ArrayList<PigIoStats>();
     for (OutputStats output : outputs) {
-      outputStats.add(new PigIoStats(
-          output.getName(),
-          output.getLocation(),
-          output.getBytes(),
-          output.getNumberRecords()));
+      outputStats.add(new PigIoStats(output.getName(), output.getLocation(),
+          output.getBytes(), output.getNumberRecords()));
     }
   }
 
-  public int getNumberMaps() { return numberMaps; }
-  public int getNumberReduces() { return numberReduces; }
-  
-  public long getMinMapTime() { return minMapTime; }
-  public long getMaxMapTime() { return maxMapTime; }
-  public long getAvgMapTime() { return avgMapTime; }
+  public int getNumberMaps() {
+    return numberMaps;
+  }
 
-  public long getMinReduceTime() { return minReduceTime; }
-  public long getMaxReduceTime() { return maxReduceTime; }
-  public long getAvgReduceTime() { return avgReduceTime; }
+  public int getNumberReduces() {
+    return numberReduces;
+  }
 
-  public long getBytesWritten() { return bytesWritten; }
-  public long getHdfsBytesWritten() { return hdfsBytesWritten; }
+  public long getMinMapTime() {
+    return minMapTime;
+  }
 
-  public long getMapInputRecords() { return mapInputRecords; }
-  public long getMapOutputRecords() { return mapOutputRecords; }
-  public long getReduceInputRecords() { return reduceInputRecords; }
-  public long getReduceOutputRecords() { return reduceOutputRecords; }
+  public long getMaxMapTime() {
+    return maxMapTime;
+  }
 
-  public long getProactiveSpillCountObjects() { 
+  public long getAvgMapTime() {
+    return avgMapTime;
+  }
+
+  public long getMinReduceTime() {
+    return minReduceTime;
+  }
+
+  public long getMaxReduceTime() {
+    return maxReduceTime;
+  }
+
+  public long getAvgReduceTime() {
+    return avgReduceTime;
+  }
+
+  public long getBytesWritten() {
+    return bytesWritten;
+  }
+
+  public long getHdfsBytesWritten() {
+    return hdfsBytesWritten;
+  }
+
+  public long getMapInputRecords() {
+    return mapInputRecords;
+  }
+
+  public long getMapOutputRecords() {
+    return mapOutputRecords;
+  }
+
+  public long getReduceInputRecords() {
+    return reduceInputRecords;
+  }
+
+  public long getReduceOutputRecords() {
+    return reduceOutputRecords;
+  }
+
+  public long getProactiveSpillCountObjects() {
     return proactiveSpillCountObjects;
   }
+
   public long getProactiveSpillCountRecs() {
     return proactiveSpillCountRecs;
   }
 
-  public long getRecordsWritten() { return recordsWritten; }
-  public long getSmmSpillCount() { return smmSpillCount; }
+  public long getRecordsWritten() {
+    return recordsWritten;
+  }
 
-  public String getErrorMessage() { return errorMessage; }
-  public List<PigIoStats> getInputStats() { return inputStats; }
-  public List<PigIoStats> getOutputStats() { return outputStats; }
+  public long getSmmSpillCount() {
+    return smmSpillCount;
+  }
 
-  private static List<Object> statsToJson(
-      List<PigIoStats> stats) {
+  public String getErrorMessage() {
+    return errorMessage;
+  }
+
+  public List<PigIoStats> getInputStats() {
+    return inputStats;
+  }
+
+  public List<PigIoStats> getOutputStats() {
+    return outputStats;
+  }
+
+  private static List<Object> statsToJson(List<PigIoStats> stats) {
     List<Object> jsonObj = new ArrayList<Object>();
     for (PigIoStats stat : stats) {
       jsonObj.add(stat.toJson());
@@ -203,10 +247,10 @@ public class PigJobStats {
 
   private static List<PigIoStats> statsFromJson(Object obj) {
     List<PigIoStats> stats = new ArrayList<PigIoStats>();
-    
+
     @SuppressWarnings("unchecked")
     List<Object> jsonStats = (ArrayList<Object>) obj;
-    
+
     for (Object jsonStat : jsonStats) {
       stats.add(PigIoStats.fromJson(jsonStat));
     }
@@ -214,27 +258,27 @@ public class PigJobStats {
   }
 
   public Object toJson() {
-		Map<String, Object> jsonObj = new HashMap<String, Object>();
-		jsonObj.put("numberMaps", Integer.toString(numberMaps));
-		jsonObj.put("numberReduces", Integer.toString(numberReduces));
-		jsonObj.put("minMapTime", Long.toString(minMapTime));
-		jsonObj.put("maxMapTime", Long.toString(maxMapTime));
-		jsonObj.put("avgMapTime", Long.toString(avgMapTime));
-		jsonObj.put("minReduceTime", Long.toString(minReduceTime));
-		jsonObj.put("maxReduceTime", Long.toString(maxReduceTime));
-		jsonObj.put("avgReduceTime", Long.toString(avgReduceTime));
-		jsonObj.put("bytesWritten", Long.toString(bytesWritten));
-		jsonObj.put("hdfsBytesWritten", Long.toString(hdfsBytesWritten));
-		jsonObj.put("mapInputRecords", Long.toString(mapInputRecords));
-		jsonObj.put("mapOutputRecords", Long.toString(mapOutputRecords));
-		jsonObj.put("reduceInputRecords", Long.toString(reduceInputRecords));
-		jsonObj.put("reduceOutputRecords", Long.toString(reduceOutputRecords));
-		jsonObj.put("proactiveSpillCountObjects", 
+    Map<String, Object> jsonObj = new HashMap<String, Object>();
+    jsonObj.put("numberMaps", Integer.toString(numberMaps));
+    jsonObj.put("numberReduces", Integer.toString(numberReduces));
+    jsonObj.put("minMapTime", Long.toString(minMapTime));
+    jsonObj.put("maxMapTime", Long.toString(maxMapTime));
+    jsonObj.put("avgMapTime", Long.toString(avgMapTime));
+    jsonObj.put("minReduceTime", Long.toString(minReduceTime));
+    jsonObj.put("maxReduceTime", Long.toString(maxReduceTime));
+    jsonObj.put("avgReduceTime", Long.toString(avgReduceTime));
+    jsonObj.put("bytesWritten", Long.toString(bytesWritten));
+    jsonObj.put("hdfsBytesWritten", Long.toString(hdfsBytesWritten));
+    jsonObj.put("mapInputRecords", Long.toString(mapInputRecords));
+    jsonObj.put("mapOutputRecords", Long.toString(mapOutputRecords));
+    jsonObj.put("reduceInputRecords", Long.toString(reduceInputRecords));
+    jsonObj.put("reduceOutputRecords", Long.toString(reduceOutputRecords));
+    jsonObj.put("proactiveSpillCountObjects",
         Long.toString(proactiveSpillCountObjects));
-		jsonObj.put("proactiveSpillCountRecs", 
-				Long.toString(proactiveSpillCountRecs));
-		jsonObj.put("recordsWritten", Long.toString(recordsWritten));
-		jsonObj.put("smmSpillCount", Long.toString(smmSpillCount));
+    jsonObj.put("proactiveSpillCountRecs",
+        Long.toString(proactiveSpillCountRecs));
+    jsonObj.put("recordsWritten", Long.toString(recordsWritten));
+    jsonObj.put("smmSpillCount", Long.toString(smmSpillCount));
     jsonObj.put("errorMessage", errorMessage);
     jsonObj.put("inputStats", statsToJson(inputStats));
     jsonObj.put("outputStats", statsToJson(outputStats));
@@ -245,8 +289,7 @@ public class PigJobStats {
   public static PigJobStats fromJson(Object obj) throws Exception {
     Map<String, Object> jsonObj = (HashMap<String, Object>) obj;
     int numberMaps = Integer.parseInt((String) jsonObj.get("numberMaps"));
-    int numberReduces = 
-        Integer.parseInt((String) jsonObj.get("numberReduces"));
+    int numberReduces = Integer.parseInt((String) jsonObj.get("numberReduces"));
     long minMapTime = Long.parseLong((String) jsonObj.get("minMapTime"));
     long maxMapTime = Long.parseLong((String) jsonObj.get("maxMapTime"));
     long avgMapTime = Long.parseLong((String) jsonObj.get("avgMapTime"));
@@ -258,11 +301,11 @@ public class PigJobStats {
         Long.parseLong((String) jsonObj.get("hdfsBytesWritten"));
     long mapInputRecords =
         Long.parseLong((String) jsonObj.get("mapInputRecords"));
-    long mapOutputRecords = 
+    long mapOutputRecords =
         Long.parseLong((String) jsonObj.get("mapOutputRecords"));
     long reduceInputRecords =
         Long.parseLong((String) jsonObj.get("reduceInputRecords"));
-    long reduceOutputRecords = 
+    long reduceOutputRecords =
         Long.parseLong((String) jsonObj.get("reduceOutputRecords"));
     long proactiveSpillCountObjects =
         Long.parseLong((String) jsonObj.get("proactiveSpillCountObjects"));
@@ -274,28 +317,12 @@ public class PigJobStats {
     List<PigIoStats> inputs = statsFromJson(jsonObj.get("inputStats"));
     List<PigIoStats> outputs = statsFromJson(jsonObj.get("outputStats"));
     String errorMessage = (String) jsonObj.get("errorMessage");
-    
-    return new PigJobStats(
-        numberMaps,
-        numberReduces,
-        minMapTime,
-        maxMapTime,
-        avgMapTime,
-        minReduceTime,
-        maxReduceTime,
-        avgReduceTime,
-        bytesWritten,
-        hdfsBytesWritten,
-        mapInputRecords,
-        mapOutputRecords,
-        reduceInputRecords,
-        reduceOutputRecords,
-        proactiveSpillCountObjects,
-        proactiveSpillCountRecs,
-        recordsWritten,
-        smmSpillCount,
-        errorMessage,
-        inputs,
-        outputs);
+
+    return new PigJobStats(numberMaps, numberReduces, minMapTime, maxMapTime,
+        avgMapTime, minReduceTime, maxReduceTime, avgReduceTime, bytesWritten,
+        hdfsBytesWritten, mapInputRecords, mapOutputRecords,
+        reduceInputRecords, reduceOutputRecords, proactiveSpillCountObjects,
+        proactiveSpillCountRecs, recordsWritten, smmSpillCount, errorMessage,
+        inputs, outputs);
   }
 }

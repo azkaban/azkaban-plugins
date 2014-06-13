@@ -52,206 +52,202 @@ import azkaban.webapp.plugin.PluginRegistry;
 import azkaban.webapp.plugin.ViewerPlugin;
 
 public class JavaViewerServlet extends LoginAbstractAzkabanServlet {
-	private static final String PROXY_USER_SESSION_KEY = 
-			"hdfs.browser.proxy.user";
-	private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = 
-			"hadoop.security.manager.class";
-	private static Logger logger = Logger.getLogger(JavaViewerServlet.class);
+  private static final String PROXY_USER_SESSION_KEY =
+      "hdfs.browser.proxy.user";
+  private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM =
+      "hadoop.security.manager.class";
+  private static Logger logger = Logger.getLogger(JavaViewerServlet.class);
 
-	private Props props;
-	private File webResourcesPath;
+  private Props props;
+  private File webResourcesPath;
 
-	private String viewerName;
-	private String viewerPath;
+  private String viewerName;
+  private String viewerPath;
 
-	private ExecutorManagerAdapter executorManager;
-	private ProjectManager projectManager;
+  private ExecutorManagerAdapter executorManager;
+  private ProjectManager projectManager;
 
-	private String outputDir;
+  private String outputDir;
 
-	public JavaViewerServlet(Props props) {
-		this.props = props;
-		viewerName = props.getString("viewer.name");
-		viewerPath = props.getString("viewer.path");
+  public JavaViewerServlet(Props props) {
+    this.props = props;
+    viewerName = props.getString("viewer.name");
+    viewerPath = props.getString("viewer.path");
 
-		webResourcesPath = new File(
-				new File(props.getSource()).getParentFile().getParentFile(), "web");
-		webResourcesPath.mkdirs();
-		setResourceDirectory(webResourcesPath);
-	}
-
-	@Override
-	public void init(ServletConfig config) throws ServletException {
-		super.init(config);
-		AzkabanWebServer server = (AzkabanWebServer) getApplication();
-		executorManager = server.getExecutorManager();
-		projectManager = server.getProjectManager();
-	}
-
-  private void handleDefault(HttpServletRequest request,
-      HttpServletResponse response, Session session)
-      throws ServletException, IOException {
-
-		Page page = newPage(request, response, session, 
-				"azkaban/viewer/javaviewer/javaviewer.vm");
-		page.add("viewerPath", viewerPath);
-		page.add("viewerName", viewerName);
-    page.add("errorMsg", "No job execution specified.");
-		page.render();
+    webResourcesPath =
+        new File(new File(props.getSource()).getParentFile().getParentFile(),
+            "web");
+    webResourcesPath.mkdirs();
+    setResourceDirectory(webResourcesPath);
   }
 
-	private Project getProjectByPermission(int projectId, User user,
-			Permission.Type type) {
-		Project project = projectManager.getProject(projectId);
-		if (project == null) {
-			return null;
-		}
-		if (!hasPermission(project, user, type)) {
-			return null;
-		}
-		return project;
-	}
+  @Override
+  public void init(ServletConfig config) throws ServletException {
+    super.init(config);
+    AzkabanWebServer server = (AzkabanWebServer) getApplication();
+    executorManager = server.getExecutorManager();
+    projectManager = server.getProjectManager();
+  }
+
+  private void handleDefault(HttpServletRequest request,
+      HttpServletResponse response, Session session) throws ServletException,
+      IOException {
+
+    Page page =
+        newPage(request, response, session,
+            "azkaban/viewer/javaviewer/javaviewer.vm");
+    page.add("viewerPath", viewerPath);
+    page.add("viewerName", viewerName);
+    page.add("errorMsg", "No job execution specified.");
+    page.render();
+  }
+
+  private Project getProjectByPermission(int projectId, User user,
+      Permission.Type type) {
+    Project project = projectManager.getProject(projectId);
+    if (project == null) {
+      return null;
+    }
+    if (!hasPermission(project, user, type)) {
+      return null;
+    }
+    return project;
+  }
 
   private void handleViewer(HttpServletRequest request,
-      HttpServletResponse response, Session session)
-      throws ServletException, IOException {
-		Page page = newPage(request, response, session, 
-				"azkaban/viewer/javaviewer/javaviewer.vm");
-		page.add("viewerPath", viewerPath);
-		page.add("viewerName", viewerName);
+      HttpServletResponse response, Session session) throws ServletException,
+      IOException {
+    Page page =
+        newPage(request, response, session,
+            "azkaban/viewer/javaviewer/javaviewer.vm");
+    page.add("viewerPath", viewerPath);
+    page.add("viewerName", viewerName);
 
-		int execId = Integer.parseInt(getParam(request, "execid"));
-		String jobId = getParam(request, "jobid");
-	
-		ExecutableFlow exFlow = null;
-		Project project = null;
-		try {
-			exFlow = executorManager.getExecutableFlow(execId);
-			project = getProjectByPermission(
-					exFlow.getProjectId(), session.getUser(), Type.READ);
-			if (project == null) {
-				page.add("errorMsg", 
-						"No permission to view project " + exFlow.getProjectId());
-				page.render();
-				return;
-			}
-			
-			ExecutableNode node = exFlow.getExecutableNode(jobId);
-			if (node == null) {
-				page.add("errorMsg", "Job " + jobId + " doesn't exist in " + 
-						exFlow.getExecutionId());
-				return;
-			}
-		
-			List<ViewerPlugin> jobViewerPlugins = PluginRegistry.getRegistry()
-					.getViewerPluginsForJobType(node.getType());
-			page.add("jobViewerPlugins", jobViewerPlugins);
-		}
-		catch (ExecutorManagerException e) {
-			page.add("errorMsg", "Error getting project '" + e.getMessage() + "'");
-			page.render();
-			return;
-		}
+    int execId = Integer.parseInt(getParam(request, "execid"));
+    String jobId = getParam(request, "jobid");
 
-		if (project == null) {
-			page.add("errorMsg", "Error getting project " + exFlow.getProjectId());
-			page.render();
-			return;
-		}
-		page.add("projectName", project.getName());
-		page.add("execid", execId);
-		page.add("jobid", jobId);
-		page.add("flowid", exFlow.getFlowId());
-		page.render();
-	}
+    ExecutableFlow exFlow = null;
+    Project project = null;
+    try {
+      exFlow = executorManager.getExecutableFlow(execId);
+      project =
+          getProjectByPermission(exFlow.getProjectId(), session.getUser(),
+              Type.READ);
+      if (project == null) {
+        page.add("errorMsg",
+            "No permission to view project " + exFlow.getProjectId());
+        page.render();
+        return;
+      }
 
-	private void ajaxFetchStats(
-			HttpServletRequest request,
-			HttpServletResponse response, 
-			HashMap<String, Object> ret, 
-			User user,
-			ExecutableFlow exFlow) throws ServletException {
-		Project project = getProjectByPermission(
-				exFlow.getProjectId(), user, Type.READ);
-		if (project == null) {
-			ret.put("error", 
-					"No permission to read project " + exFlow.getProjectId());
-			return;
-		}
+      ExecutableNode node = exFlow.getExecutableNode(jobId);
+      if (node == null) {
+        page.add("errorMsg",
+            "Job " + jobId + " doesn't exist in " + exFlow.getExecutionId());
+        return;
+      }
 
-		String jobId = getParam(request, "jobid");
-		response.setCharacterEncoding("utf-8");
-		List<Object> jsonObj = null;
-		try {
-			ExecutableNode node = exFlow.getExecutableNode(jobId);
-			if (node == null) {
-				ret.put("error", "Job " + jobId + " doesn't exist in " +
-						exFlow.getExecutionId());
-				return;
-			}
-			
-			jsonObj = executorManager.getExecutionJobStats(
-					exFlow, jobId, node.getAttempt());
-		}
-		catch (ExecutorManagerException e) {
-			ret.put("error", "Error retrieving job stats " + jobId);
-			return;
-		}
-		ret.put("jobs", jsonObj);
-	}
+      List<ViewerPlugin> jobViewerPlugins =
+          PluginRegistry.getRegistry().getViewerPluginsForJobType(
+              node.getType());
+      page.add("jobViewerPlugins", jobViewerPlugins);
+    } catch (ExecutorManagerException e) {
+      page.add("errorMsg", "Error getting project '" + e.getMessage() + "'");
+      page.render();
+      return;
+    }
 
-	private void handleAjaxAction(HttpServletRequest request,
-			HttpServletResponse response, Session session) 
-			throws ServletException, IOException {
-		HashMap<String, Object> ret = new HashMap<String, Object>();
-		String ajaxName = getParam(request, "ajax");
-		if (hasParam(request, "execid")) {
-			int execId = getIntParam(request, "execid");
-			ExecutableFlow exFlow = null;
-			try {
-				exFlow = executorManager.getExecutableFlow(execId);
-			}
-			catch (ExecutorManagerException e) {
-				ret.put("error", "Error fetching execution '" + execId + "': " +
-						e.getMessage());
-			}
+    if (project == null) {
+      page.add("errorMsg", "Error getting project " + exFlow.getProjectId());
+      page.render();
+      return;
+    }
+    page.add("projectName", project.getName());
+    page.add("execid", execId);
+    page.add("jobid", jobId);
+    page.add("flowid", exFlow.getFlowId());
+    page.render();
+  }
 
-			if (exFlow == null) {
-				ret.put("error", "Cannot find execution '" + execId + "'");
-			}
-			else {
-				if (ajaxName.equals("fetchstats")) {
-					ajaxFetchStats(request, response, ret, session.getUser(), exFlow);
-				}
-			}
-		}
+  private void ajaxFetchStats(HttpServletRequest request,
+      HttpServletResponse response, HashMap<String, Object> ret, User user,
+      ExecutableFlow exFlow) throws ServletException {
+    Project project =
+        getProjectByPermission(exFlow.getProjectId(), user, Type.READ);
+    if (project == null) {
+      ret.put("error", "No permission to read project " + exFlow.getProjectId());
+      return;
+    }
 
-		if (ret != null) {
-			this.writeJSON(response, ret);
-		}
-	}
-		
+    String jobId = getParam(request, "jobid");
+    response.setCharacterEncoding("utf-8");
+    List<Object> jsonObj = null;
+    try {
+      ExecutableNode node = exFlow.getExecutableNode(jobId);
+      if (node == null) {
+        ret.put("error",
+            "Job " + jobId + " doesn't exist in " + exFlow.getExecutionId());
+        return;
+      }
+
+      jsonObj =
+          executorManager
+              .getExecutionJobStats(exFlow, jobId, node.getAttempt());
+    } catch (ExecutorManagerException e) {
+      ret.put("error", "Error retrieving job stats " + jobId);
+      return;
+    }
+    ret.put("jobs", jsonObj);
+  }
+
+  private void handleAjaxAction(HttpServletRequest request,
+      HttpServletResponse response, Session session) throws ServletException,
+      IOException {
+    HashMap<String, Object> ret = new HashMap<String, Object>();
+    String ajaxName = getParam(request, "ajax");
+    if (hasParam(request, "execid")) {
+      int execId = getIntParam(request, "execid");
+      ExecutableFlow exFlow = null;
+      try {
+        exFlow = executorManager.getExecutableFlow(execId);
+      } catch (ExecutorManagerException e) {
+        ret.put("error",
+            "Error fetching execution '" + execId + "': " + e.getMessage());
+      }
+
+      if (exFlow == null) {
+        ret.put("error", "Cannot find execution '" + execId + "'");
+      } else {
+        if (ajaxName.equals("fetchstats")) {
+          ajaxFetchStats(request, response, ret, session.getUser(), exFlow);
+        }
+      }
+    }
+
+    if (ret != null) {
+      this.writeJSON(response, ret);
+    }
+  }
+
   @Override
-	protected void handleGet(HttpServletRequest request, 
-			HttpServletResponse response, Session session)
-			throws ServletException, IOException {
-		if (hasParam(request, "ajax")) {
-			handleAjaxAction(request, response, session);
-		}
-		else if (hasParam(request, "execid") && hasParam(request, "jobid")) {
+  protected void handleGet(HttpServletRequest request,
+      HttpServletResponse response, Session session) throws ServletException,
+      IOException {
+    if (hasParam(request, "ajax")) {
+      handleAjaxAction(request, response, session);
+    } else if (hasParam(request, "execid") && hasParam(request, "jobid")) {
       handleViewer(request, response, session);
-		}
-		else {
+    } else {
       handleDefault(request, response, session);
     }
-	}
+  }
 
-	@Override
-	protected void handlePost(HttpServletRequest request,
-			HttpServletResponse response, Session session)
-			throws ServletException, IOException {
-		if (hasParam(request, "ajax")) {
-			handleAjaxAction(request, response, session);
-		}
-	}
+  @Override
+  protected void handlePost(HttpServletRequest request,
+      HttpServletResponse response, Session session) throws ServletException,
+      IOException {
+    if (hasParam(request, "ajax")) {
+      handleAjaxAction(request, response, session);
+    }
+  }
 }

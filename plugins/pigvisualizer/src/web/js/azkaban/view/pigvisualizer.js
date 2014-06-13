@@ -16,7 +16,7 @@
 
 var jobDetailsView;
 azkaban.JobDetailsView = Backbone.View.extend({
-	events: {
+  events: {
     "click #details-tab": "handleDetailsTabClick",
     "click #counters-tab": "handleCountersTabClick",
     "click #jobconf-tab": "handleJobConfTabClick"
@@ -59,62 +59,62 @@ azkaban.JobDetailsView = Backbone.View.extend({
 
 var jobStatsView;
 azkaban.JobStatsView = Backbone.View.extend({
-	events: {
-		"click .job": "handleJobClick",
-		"click #resetPanZoomBtn": "handleResetPanZoom",
-		"click #autoPanZoomBtn": "handleAutoPanZoom",
-		"click #jobstats-back-btn": "handleBackButton",
-		"contextMenu li": "handleContextMenuClick",
+  events: {
+    "click .job": "handleJobClick",
+    "click #resetPanZoomBtn": "handleResetPanZoom",
+    "click #autoPanZoomBtn": "handleAutoPanZoom",
+    "click #jobstats-back-btn": "handleBackButton",
+    "contextMenu li": "handleContextMenuClick",
     "click #jobstats-details-btn": "handleJobDetailsModal",
-	},
+  },
 
-	initialize: function (settings) {
-		this.model.bind('change:selected', this.handleSelectionChange, this);
-		this.model.bind('change:graph', this.render, this);
+  initialize: function (settings) {
+    this.model.bind('change:selected', this.handleSelectionChange, this);
+    this.model.bind('change:graph', this.render, this);
 
-		this.contextMenu = settings.contextMenuCallback;
-		this.listNodes = {};
-		this.list = $(this.el).find("#list");
-	},
+    this.contextMenu = settings.contextMenuCallback;
+    this.listNodes = {};
+    this.list = $(this.el).find("#list");
+  },
 
-	handleJobClick: function (evt) {
-		if (!evt.currentTarget.data) {
-			return;
-		}
-		var node = evt.currentTarget.data;
+  handleJobClick: function (evt) {
+    if (!evt.currentTarget.data) {
+      return;
+    }
+    var node = evt.currentTarget.data;
 
-		if (this.model.has("selected")) {
-			var selected = this.model.get("selected");
-			if (selected == node) {
-				this.model.unset("selected");
-			}
-			else {
-				this.model.set({"selected": node});
-			}
-		}
-		else {
-			this.model.set({"selected": node});
-		}
-	},
+    if (this.model.has("selected")) {
+      var selected = this.model.get("selected");
+      if (selected == node) {
+        this.model.unset("selected");
+      }
+      else {
+        this.model.set({"selected": node});
+      }
+    }
+    else {
+      this.model.set({"selected": node});
+    }
+  },
 
-	handleBackButton: function (evt) {
+  handleBackButton: function (evt) {
     console.log("handleBackButton");
-		this.model.unset("selected");
-		$('#jobstats-details').hide();
-		$('#jobstats-list').show();
-	},
+    this.model.unset("selected");
+    $('#jobstats-details').hide();
+    $('#jobstats-list').show();
+  },
 
   reformatConf: function (conf) {
     if (conf == null) {
       return null;
     }
-		var jobConf = [];
-		for (var key in conf) {
-			jobConf.push({
+    var jobConf = [];
+    for (var key in conf) {
+      jobConf.push({
         key: key,
         value: conf[key]
       });
-		}
+    }
     return jobConf;
   },
 
@@ -140,33 +140,33 @@ azkaban.JobStatsView = Backbone.View.extend({
     return jobCounters;
   },
 
-	handleSelectionChange: function (evt) {
-		if (!this.model.hasChanged("selected") || !this.model.has("selected")) {
-			return;
-		}
+  handleSelectionChange: function (evt) {
+    if (!this.model.hasChanged("selected") || !this.model.has("selected")) {
+      return;
+    }
 
-		var previous = this.model.previous("selected");
-		var current = this.model.get("selected");
-		if (current.clicked == true) {
-			this.renderSidebar(current);
-			return;
-		}
+    var previous = this.model.previous("selected");
+    var current = this.model.get("selected");
+    if (current.clicked == true) {
+      this.renderSidebar(current);
+      return;
+    }
 
-		if (current.state.isComplete == "false") {
-			current.jobState = "In Progress";
-		}
-		else if (current.state.isSuccessful == "true") {
-			current.jobState = "Succeeded";
-		}
-		else {
-			current.jobState = "Failed";
-		}
-		current.conf = this.reformatConf(current.conf);
+    if (current.state.isComplete == "false") {
+      current.jobState = "In Progress";
+    }
+    else if (current.state.isSuccessful == "true") {
+      current.jobState = "Succeeded";
+    }
+    else {
+      current.jobState = "Failed";
+    }
+    current.conf = this.reformatConf(current.conf);
     current.counterGroups = this.reformatCounters(current.state.counters);
-		current.clicked = true;
+    current.clicked = true;
 
-		this.renderSidebar(current);
-	},
+    this.renderSidebar(current);
+  },
 
   renderSidebar: function(node) {
     if (node == null) {
@@ -186,75 +186,75 @@ azkaban.JobStatsView = Backbone.View.extend({
   },
 
   handleJobDetailsModal: function(evt) {
-		var current = this.model.get("selected");
+    var current = this.model.get("selected");
     if (current == null) {
       return;
-		}
+    }
     $('#job-details-modal').modal();
   },
 
-	handleAutoPanZoom: function(evt) {
-		var target = evt.currentTarget;
-		if ($(target).hasClass('btn-default')) {
-			$(target).removeClass('btn-default');
-			$(target).addClass('btn-info');
-		}
-		else if ($(target).hasClass('btn-info')) {
-			$(target).removeClass('btn-info');
-			$(target).addClass('btn-default');
-		}
+  handleAutoPanZoom: function(evt) {
+    var target = evt.currentTarget;
+    if ($(target).hasClass('btn-default')) {
+      $(target).removeClass('btn-default');
+      $(target).addClass('btn-info');
+    }
+    else if ($(target).hasClass('btn-info')) {
+      $(target).removeClass('btn-info');
+      $(target).addClass('btn-default');
+    }
 
-		// Using $().hasClass('active') does not work here because it appears that
-		// this is called before the Bootstrap toggle completes.
-		this.model.set({"autoPanZoom": $(target).hasClass('btn-info')});
-	},
+    // Using $().hasClass('active') does not work here because it appears that
+    // this is called before the Bootstrap toggle completes.
+    this.model.set({"autoPanZoom": $(target).hasClass('btn-info')});
+  },
 
-	handleResetPanZoom: function (evt) {
-		this.model.trigger("resetPanZoom");
-	},
+  handleResetPanZoom: function (evt) {
+    this.model.trigger("resetPanZoom");
+  },
 
-	render: function (self) {
-		$('#jobstats-details').hide();
-		var data = this.model.get("data");
-		var nodes = data.nodes;
+  render: function (self) {
+    $('#jobstats-details').hide();
+    var data = this.model.get("data");
+    var nodes = data.nodes;
 
-		this.listNodes = {};
-		if (nodes.length == 0) {
-			console.log("No results");
-			return;
-		}
+    this.listNodes = {};
+    if (nodes.length == 0) {
+      console.log("No results");
+      return;
+    }
 
-		var nodeArray = nodes.slice(0);
-		nodeArray.sort(function(a, b) {
-			var diff = a.y - b.y;
-			if (diff == 0) {
-				return a.x - b.x;
-			}
-			else {
-				return diff;
-			}
-		});
+    var nodeArray = nodes.slice(0);
+    nodeArray.sort(function(a, b) {
+      var diff = a.y - b.y;
+      if (diff == 0) {
+        return a.x - b.x;
+      }
+      else {
+        return diff;
+      }
+    });
 
-		var list = this.list;
-		this.jobs = list;
-		for (var i = 0; i < nodeArray.length; ++i) {
-			var a = document.createElement("a");
+    var list = this.list;
+    this.jobs = list;
+    for (var i = 0; i < nodeArray.length; ++i) {
+      var a = document.createElement("a");
       $(a).addClass("list-group-item");
       $(a).addClass("job");
       $(a).attr('href', '#');
-			$(a).text(nodeArray[i].aliases.join());
-			$(list).append(a);
-			a.data = nodeArray[i];
-			this.listNodes[nodeArray[i].id] = a;
-		}
-	},
+      $(a).text(nodeArray[i].aliases.join());
+      $(list).append(a);
+      a.data = nodeArray[i];
+      this.listNodes[nodeArray[i].id] = a;
+    }
+  },
 
-	handleContextMenuClick: function(evt) {
-		if (this.contextMenu) {
-			this.contextMenu(evt);
-			return false;
-		}
-	}
+  handleContextMenuClick: function(evt) {
+    if (this.contextMenu) {
+      this.contextMenu(evt);
+      return false;
+    }
+  }
 });
 
 var contextMenuView;
@@ -263,35 +263,35 @@ var graphModel;
 
 $(function() {
   $('#graphView').hide();
-	graphModel = new azkaban.GraphModel();
-	graphView = new azkaban.SvgGraphView({
-		el: $('#svgDiv'),
-		model: graphModel,
-		rightClick: {
-			"node": nodeClickCallback,
-			"edge": edgeClickCallback,
-			"graph": graphClickCallback
-		}
-	});
+  graphModel = new azkaban.GraphModel();
+  graphView = new azkaban.SvgGraphView({
+    el: $('#svgDiv'),
+    model: graphModel,
+    rightClick: {
+      "node": nodeClickCallback,
+      "edge": edgeClickCallback,
+      "graph": graphClickCallback
+    }
+  });
 
-	jobStatsView = new azkaban.JobStatsView({
-		el: $('#jobStats'),
-		model: graphModel,
-		contextMenuCallback: jobClickCallback
-	});
+  jobStatsView = new azkaban.JobStatsView({
+    el: $('#jobStats'),
+    model: graphModel,
+    contextMenuCallback: jobClickCallback
+  });
 
   jobDetailsView = new azkaban.JobDetailsView({
     el: $('#job-details-modal'),
   });
 
-	var requestURL = contextURL + "/pigvisualizer";
-	var request = {
-		"ajax": "fetchjobs",
-		"execid": execId,
-		"jobid": jobId
-	};
+  var requestURL = contextURL + "/pigvisualizer";
+  var request = {
+    "ajax": "fetchjobs",
+    "execid": execId,
+    "jobid": jobId
+  };
 
-	var successHandler = function (data) {
+  var successHandler = function (data) {
     if (data == null || data.jobs == null || data.jobs.length == 0) {
       return;
     }
@@ -299,22 +299,22 @@ $(function() {
     $('#placeholder').hide();
     $('#graphView').show();
 
-		var nodes = [];
-		var jobs = data.jobs;
-		for (var i = 0; i < jobs.length; ++i) {
-			var job = jobs[i];
-			job.id = job.name;
-			job.level = parseInt(job.level);
-			job.in = job.parents;
-			job.type = "job";
-			job.clicked = false;
-			nodes.push(job);
-		}
-		data.nodes = nodes;
+    var nodes = [];
+    var jobs = data.jobs;
+    for (var i = 0; i < jobs.length; ++i) {
+      var job = jobs[i];
+      job.id = job.name;
+      job.level = parseInt(job.level);
+      job.in = job.parents;
+      job.type = "job";
+      job.clicked = false;
+      nodes.push(job);
+    }
+    data.nodes = nodes;
 
-		graphModel.addFlow(data);
-		graphModel.trigger("change:graph");
-	};
+    graphModel.addFlow(data);
+    graphModel.trigger("change:graph");
+  };
 
-	$.get(requestURL, request, successHandler, "json");
+  $.get(requestURL, request, successHandler, "json");
 });

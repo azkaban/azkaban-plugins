@@ -26,7 +26,7 @@ li:hover .ec-add-list-actions { visibility: visible; }
 
 
 /* Icons */
-.icon { 
+.icon {
   display: inline-block;
   height: 12px;
   width: 12px;
@@ -36,7 +36,7 @@ li:hover .ec-add-list-actions { visibility: visible; }
   vertical-align: middle;
 }
 
-.icon.icon-medium { 
+.icon.icon-medium {
   height: 16px;
   width: 16px;
 }
@@ -60,10 +60,10 @@ th.headerSortUp { background-image: url(/reportal/images/asc.gif); }
 th.headerSortDown { background-image: url(/reportal/images/desc.gif); }
 .header {
   background-image: url(/reportal/images/bg.gif);
-  cursor: pointer; 
-  font-weight: bold; 
-  background-repeat: no-repeat; 
-  background-position: center right; 
+  cursor: pointer;
+  font-weight: bold;
+  background-repeat: no-repeat;
+  background-position: center right;
 }
 
 /* Buttons */
@@ -85,25 +85,25 @@ form label .required { color: red; }
 
 
 ol#query-list {
-	list-style:decimal;
+  list-style:decimal;
 }
 
 ol {
-	margin-left:40px;
+  margin-left:40px;
 }
 
 ol li div.control-group {
-	margin-left: -40px;
+  margin-left: -40px;
 }
 
 .CodeMirror {
-	overflow-y: hidden;
-	margin-left: 0px;
-	width: 620px;
+  overflow-y: hidden;
+  margin-left: 0px;
+  width: 620px;
 }
 
-.CodeMirror * {			
-	font-size: 14px;
+.CodeMirror * {
+  font-size: 14px;
 }
 
 /* List page */
@@ -116,7 +116,7 @@ ol li div.control-group {
 #search-facet-form .facet-input input { margin-bottom: 6px; }
 
 /* Results */
-.report-actions { float: right; } 
+.report-actions { float: right; }
 .report-actions .btn a:hover { text-decoration: none; }
 .report-actions .btn-icon { float: left; line-height: 0; }
 
@@ -131,19 +131,19 @@ table#report-results td { vertical-align: middle; }
 
 /* Data page */
 .center {
-	float: right;
-	margin-left: 10px;
+  float: right;
+  margin-left: 10px;
 }
 
 .column-title {
-	float: right;
+  float: right;
 }
 .column-data {
-	float: right;
+  float: right;
 }
 
 .no-wrap {
-	white-space: nowrap;
+  white-space: nowrap;
 }
 
 .box-success-message {

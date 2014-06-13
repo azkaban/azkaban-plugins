@@ -32,60 +32,60 @@ import voldemort.serialization.json.JsonTypeSerializer;
 
 public class JsonSequenceFileViewer extends SequenceFileViewer {
 
-	private static Logger logger = Logger.getLogger(JsonSequenceFileViewer.class);
+  private static Logger logger = Logger.getLogger(JsonSequenceFileViewer.class);
 
-	public Set<Capability> getCapabilities(
-      AzkabanSequenceFileReader.Reader reader) {
-		Text keySchema = reader.getMetadata().get(new Text("key.schema"));
-		Text valueSchema = reader.getMetadata().get(new Text("value.schema"));
-		if (keySchema != null && valueSchema != null) {
-			return EnumSet.of(Capability.READ);
-		}
-		return EnumSet.noneOf(Capability.class);
-	}
+  public Set<Capability> getCapabilities(AzkabanSequenceFileReader.Reader reader) {
+    Text keySchema = reader.getMetadata().get(new Text("key.schema"));
+    Text valueSchema = reader.getMetadata().get(new Text("value.schema"));
+    if (keySchema != null && valueSchema != null) {
+      return EnumSet.of(Capability.READ);
+    }
+    return EnumSet.noneOf(Capability.class);
+  }
 
-	public void displaySequenceFile(AzkabanSequenceFileReader.Reader reader,
-			PrintWriter output,
-			int startLine,
-			int endLine) throws IOException {
+  public void displaySequenceFile(AzkabanSequenceFileReader.Reader reader,
+      PrintWriter output, int startLine, int endLine) throws IOException {
 
-		if (logger.isDebugEnabled()) {
-			logger.debug("display json file");
-		}
+    if (logger.isDebugEnabled()) {
+      logger.debug("display json file");
+    }
 
-		BytesWritable keyWritable = new BytesWritable();
-		BytesWritable valueWritable = new BytesWritable();
-		Text keySchema = reader.getMetadata().get(new Text("key.schema"));
-		Text valueSchema = reader.getMetadata().get(new Text("value.schema"));
+    BytesWritable keyWritable = new BytesWritable();
+    BytesWritable valueWritable = new BytesWritable();
+    Text keySchema = reader.getMetadata().get(new Text("key.schema"));
+    Text valueSchema = reader.getMetadata().get(new Text("value.schema"));
 
-		JsonTypeSerializer keySerializer = new JsonTypeSerializer(keySchema.toString());
-		JsonTypeSerializer valueSerializer = new JsonTypeSerializer(valueSchema.toString());
+    JsonTypeSerializer keySerializer =
+        new JsonTypeSerializer(keySchema.toString());
+    JsonTypeSerializer valueSerializer =
+        new JsonTypeSerializer(valueSchema.toString());
 
-		// skip lines before the start line
-		for (int i = 1; i < startLine; i++) {
-			reader.next(keyWritable, valueWritable);
-		}
+    // skip lines before the start line
+    for (int i = 1; i < startLine; i++) {
+      reader.next(keyWritable, valueWritable);
+    }
 
-		// now actually output lines
-		for (int i = startLine; i <= endLine; i++) {
-			boolean readSomething = reader.next(keyWritable, valueWritable);
-			if (!readSomething) {
-				break;
-			}
-			output.write(safeToString(keySerializer.toObject(keyWritable.getBytes())));
-			output.write("\t=>\t");
-			output.write(safeToString(valueSerializer.toObject(valueWritable.getBytes())));
-			output.write("\n");
-			output.flush();
-		}
-	}
+    // now actually output lines
+    for (int i = startLine; i <= endLine; i++) {
+      boolean readSomething = reader.next(keyWritable, valueWritable);
+      if (!readSomething) {
+        break;
+      }
+      output
+          .write(safeToString(keySerializer.toObject(keyWritable.getBytes())));
+      output.write("\t=>\t");
+      output.write(safeToString(valueSerializer.toObject(valueWritable
+          .getBytes())));
+      output.write("\n");
+      output.flush();
+    }
+  }
 
-	private String safeToString(Object value) {
-		if (value == null) {
-			return "null";
-		}
-		else {
-			return value.toString();
-		}
-	}
+  private String safeToString(Object value) {
+    if (value == null) {
+      return "null";
+    } else {
+      return value.toString();
+    }
+  }
 }

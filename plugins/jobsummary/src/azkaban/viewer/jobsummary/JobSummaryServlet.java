@@ -50,144 +50,142 @@ import azkaban.webapp.plugin.PluginRegistry;
 import azkaban.webapp.plugin.ViewerPlugin;
 
 public class JobSummaryServlet extends LoginAbstractAzkabanServlet {
-	private static final String PROXY_USER_SESSION_KEY = 
-			"hdfs.browser.proxy.user";
-	private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = 
-			"hadoop.security.manager.class";
-	private static Logger logger = Logger.getLogger(JobSummaryServlet.class);
+  private static final String PROXY_USER_SESSION_KEY =
+      "hdfs.browser.proxy.user";
+  private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM =
+      "hadoop.security.manager.class";
+  private static Logger logger = Logger.getLogger(JobSummaryServlet.class);
 
-	private Props props;
-	private File webResourcesPath;
+  private Props props;
+  private File webResourcesPath;
 
-	private String viewerName;
-	private String viewerPath;
+  private String viewerName;
+  private String viewerPath;
 
-	private ExecutorManagerAdapter executorManager;
-	private ProjectManager projectManager;
+  private ExecutorManagerAdapter executorManager;
+  private ProjectManager projectManager;
 
-	private String outputDir;
+  private String outputDir;
 
-	public JobSummaryServlet(Props props) {
-		this.props = props;
-		viewerName = props.getString("viewer.name");
-		viewerPath = props.getString("viewer.path");
+  public JobSummaryServlet(Props props) {
+    this.props = props;
+    viewerName = props.getString("viewer.name");
+    viewerPath = props.getString("viewer.path");
 
-		webResourcesPath = new File(
-				new File(props.getSource()).getParentFile().getParentFile(), "web");
-		webResourcesPath.mkdirs();
-		setResourceDirectory(webResourcesPath);
-	}
+    webResourcesPath =
+        new File(new File(props.getSource()).getParentFile().getParentFile(),
+            "web");
+    webResourcesPath.mkdirs();
+    setResourceDirectory(webResourcesPath);
+  }
 
-	private Project getProjectByPermission(
-			int projectId, User user, Permission.Type type) {
-		Project project = projectManager.getProject(projectId);
-		if (project == null) {
-			return null;
-		}
-		if (!hasPermission(project, user, type)) {
-			return null;
-		}
-		return project;
-	}
+  private Project getProjectByPermission(int projectId, User user,
+      Permission.Type type) {
+    Project project = projectManager.getProject(projectId);
+    if (project == null) {
+      return null;
+    }
+    if (!hasPermission(project, user, type)) {
+      return null;
+    }
+    return project;
+  }
 
-	@Override
-	public void init(ServletConfig config) throws ServletException {
-		super.init(config);
-		AzkabanWebServer server = (AzkabanWebServer) getApplication();
-		executorManager = server.getExecutorManager();
-		projectManager = server.getProjectManager();
-	}
-	
-	private void handleViewer(
-			HttpServletRequest req, 
-			HttpServletResponse resp, 
-			Session session) 
-			throws ServletException, IOException {
-
-		Page page = newPage(req, resp, session, 
-				"azkaban/viewer/jobsummary/velocity/jobsummary.vm");
-		page.add("viewerPath", viewerPath);
-		page.add("viewerName", viewerName);
-		
-		User user = session.getUser();
-		int execId = getIntParam(req, "execid");
-		String jobId = getParam(req, "jobid");
-		int attempt = getIntParam(req, "attempt", 0);
-
-		page.add("execid", execId);
-		page.add("jobid", jobId);
-		page.add("attempt", attempt);
-		
-		ExecutableFlow flow = null;
-		ExecutableNode node = null;
-		try {
-			flow = executorManager.getExecutableFlow(execId);
-			if (flow == null) {
-				page.add("errorMsg", "Error loading executing flow " + execId + 
-						": not found.");
-				page.render();
-				return;
-			}
-
-			node = flow.getExecutableNodePath(jobId);
-			if (node == null) {
-				page.add("errorMsg", "Job " + jobId + " doesn't exist in " + 
-						flow.getExecutionId());
-				return;
-			}
-		
-			List<ViewerPlugin> jobViewerPlugins = PluginRegistry.getRegistry()
-					.getViewerPluginsForJobType(node.getType());
-			page.add("jobViewerPlugins", jobViewerPlugins);
-		}
-		catch (ExecutorManagerException e) {
-			page.add("errorMsg", "Error loading executing flow: " + e.getMessage());
-			page.render();
-			return;
-		}
-		
-		int projectId = flow.getProjectId();
-		Project project = getProjectByPermission(projectId, user, Type.READ);
-		if (project == null) {
-			page.render();
-			return;
-		}
-		
-		page.add("projectName", project.getName());
-		page.add("flowid", flow.getId());
-		page.add("parentflowid", node.getParentFlow().getFlowId());
-		page.add("jobname", node.getId());
-		
-		page.render();
-	}
-	
-	private void handleDefault(
-			HttpServletRequest request,
-			HttpServletResponse response,
-			Session session) throws ServletException, IOException {
-		Page page = newPage(request, response, session, 
-				"azkaban/viewer/jobsummary/velocity/jobsummary.vm");
-		page.add("viewerPath", viewerPath);
-		page.add("viewerName", viewerName);
-		page.add("errorMsg", "No job execution specified.");
-		page.render();
-	}
-  
   @Override
-	protected void handleGet(HttpServletRequest request, 
-			HttpServletResponse response, Session session)
-			throws ServletException, IOException {
-		if (hasParam(request, "execid") && hasParam(request, "jobid")) {
+  public void init(ServletConfig config) throws ServletException {
+    super.init(config);
+    AzkabanWebServer server = (AzkabanWebServer) getApplication();
+    executorManager = server.getExecutorManager();
+    projectManager = server.getProjectManager();
+  }
+
+  private void handleViewer(HttpServletRequest req, HttpServletResponse resp,
+      Session session) throws ServletException, IOException {
+
+    Page page =
+        newPage(req, resp, session,
+            "azkaban/viewer/jobsummary/velocity/jobsummary.vm");
+    page.add("viewerPath", viewerPath);
+    page.add("viewerName", viewerName);
+
+    User user = session.getUser();
+    int execId = getIntParam(req, "execid");
+    String jobId = getParam(req, "jobid");
+    int attempt = getIntParam(req, "attempt", 0);
+
+    page.add("execid", execId);
+    page.add("jobid", jobId);
+    page.add("attempt", attempt);
+
+    ExecutableFlow flow = null;
+    ExecutableNode node = null;
+    try {
+      flow = executorManager.getExecutableFlow(execId);
+      if (flow == null) {
+        page.add("errorMsg", "Error loading executing flow " + execId
+            + ": not found.");
+        page.render();
+        return;
+      }
+
+      node = flow.getExecutableNodePath(jobId);
+      if (node == null) {
+        page.add("errorMsg",
+            "Job " + jobId + " doesn't exist in " + flow.getExecutionId());
+        return;
+      }
+
+      List<ViewerPlugin> jobViewerPlugins =
+          PluginRegistry.getRegistry().getViewerPluginsForJobType(
+              node.getType());
+      page.add("jobViewerPlugins", jobViewerPlugins);
+    } catch (ExecutorManagerException e) {
+      page.add("errorMsg", "Error loading executing flow: " + e.getMessage());
+      page.render();
+      return;
+    }
+
+    int projectId = flow.getProjectId();
+    Project project = getProjectByPermission(projectId, user, Type.READ);
+    if (project == null) {
+      page.render();
+      return;
+    }
+
+    page.add("projectName", project.getName());
+    page.add("flowid", flow.getId());
+    page.add("parentflowid", node.getParentFlow().getFlowId());
+    page.add("jobname", node.getId());
+
+    page.render();
+  }
+
+  private void handleDefault(HttpServletRequest request,
+      HttpServletResponse response, Session session) throws ServletException,
+      IOException {
+    Page page =
+        newPage(request, response, session,
+            "azkaban/viewer/jobsummary/velocity/jobsummary.vm");
+    page.add("viewerPath", viewerPath);
+    page.add("viewerName", viewerName);
+    page.add("errorMsg", "No job execution specified.");
+    page.render();
+  }
+
+  @Override
+  protected void handleGet(HttpServletRequest request,
+      HttpServletResponse response, Session session) throws ServletException,
+      IOException {
+    if (hasParam(request, "execid") && hasParam(request, "jobid")) {
       handleViewer(request, response, session);
-		}
-		else {
+    } else {
       handleDefault(request, response, session);
     }
-	}
+  }
 
-	@Override
-	protected void handlePost(HttpServletRequest request,
-			HttpServletResponse response, Session session)
-			throws ServletException, IOException {
-	}
+  @Override
+  protected void handlePost(HttpServletRequest request,
+      HttpServletResponse response, Session session) throws ServletException,
+      IOException {
+  }
 }
