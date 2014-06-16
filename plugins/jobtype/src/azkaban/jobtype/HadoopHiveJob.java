@@ -79,6 +79,9 @@ public class HadoopHiveJob extends JavaProcessJob {
 
   @Override
   public void run() throws Exception {
+    HadoopConfigurationInjector.prepareLinks(getJobProps(),
+        getWorkingDirectory());
+
     File tokenFile = null;
     if (shouldProxy && obtainTokens) {
       userToProxy = getJobProps().getString("user.to.proxy");
@@ -91,6 +94,7 @@ public class HadoopHiveJob extends JavaProcessJob {
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION,
           tokenFile.getAbsolutePath());
     }
+
     try {
       super.run();
     } catch (Exception e) {
@@ -256,6 +260,8 @@ public class HadoopHiveJob extends JavaProcessJob {
     classPath.add(getSourcePathFromClass(HadoopSecureHiveWrapper.class));
     classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 
+    classPath.add(HadoopConfigurationInjector.getPath(getJobProps(),
+        getWorkingDirectory()));
     List<String> typeClassPath =
         getSysProps().getStringList("jobtype.classpath", null, ",");
     if (typeClassPath != null) {
