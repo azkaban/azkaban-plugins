@@ -163,10 +163,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 
         keytabLocation = props.getString(AZKABAN_KEYTAB_LOCATION);
         keytabPrincipal = props.getString(AZKABAN_PRINCIPAL);
-        // keytabLocation =
-        // props.getString(HadoopSecurityManager.AZKABAN_KEYTAB_LOCATION);
-        // keytabPrincipal =
-        // props.getString(HadoopSecurityManager.AZKABAN_PRINCIPAL);
       } catch (UndefinedPropertyException e) {
         throw new HadoopSecurityManagerException(e.getMessage());
       }
@@ -174,8 +170,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
       // try login
       try {
         if (loginUser == null) {
-          // Thread.currentThread().setContextClassLoader(ucl);
-
           logger.info("No login user. Creating login user");
           logger.info("Logging with " + keytabPrincipal + " and "
               + keytabLocation);
@@ -210,7 +204,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
         }
       }
     }
-    // Thread.currentThread().setContextClassLoader(ucl);
     return hsmInstance;
   }
 
@@ -271,7 +264,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
     if (value == null) {
       throw new HadoopSecurityManagerException(s + " not set in properties.");
     }
-    // logger.info("Secure proxy configuration: Property " + s + " = " + value);
     return value;
   }
 
@@ -390,8 +382,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
                 }
               }
               // stash them to cancel after use.
-              // System.out.println("Total tokens: nn " + nnTokens.size() +
-              // " jt " + jtTokens.size());
               logger.info("Tokens loaded in " + tokenFile.getAbsolutePath());
             }
           });
@@ -561,7 +551,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
         logger.info("Pre-fetching Hive MetaStore token from hive");
 
         HiveConf hiveConf = new HiveConf();
-        // hiveConf.setClassLoader(ucl);
         logger.info("HiveConf.ConfVars.METASTOREURIS.varname "
             + hiveConf.get(HiveConf.ConfVars.METASTOREURIS.varname));
         logger.info("HIVE_METASTORE_SASL_ENABLED "
@@ -608,8 +597,7 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
       try {
         jhsdt = getDelegationTokenFromHS(hsProxy);
       } catch (Exception e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        logger.error("Failed to fetch JH token",e);
       }
       if (jhsdt == null) {
         logger.error("Failed to fetch JH token");
@@ -701,8 +689,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
       }
       // stash them to cancel after use.
 
-      // System.out.println("Total tokens: nn " + nnTokens.size() + " jt " +
-      // jtTokens.size());
       logger.info("Tokens loaded in " + tokenFile.getAbsolutePath());
 
     } catch (Exception e) {
