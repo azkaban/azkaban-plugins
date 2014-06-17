@@ -17,7 +17,6 @@
 package azkaban.jobtype;
 
 import azkaban.jobExecutor.ProcessJob;
-
 import azkaban.utils.JSONUtils;
 import azkaban.utils.Props;
 
@@ -83,6 +82,7 @@ public class HadoopJavaJobRunnerMain {
 
   public HadoopJavaJobRunnerMain() throws Exception {
     Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
       public void run() {
         cancelJob();
       }
@@ -100,6 +100,8 @@ public class HadoopJavaJobRunnerMain {
 
       Properties prop = new Properties();
       prop.load(new BufferedReader(new FileReader(propsFile)));
+
+      HadoopConfigurationInjector.injectLinks();
 
       final Configuration conf = new Configuration();
 

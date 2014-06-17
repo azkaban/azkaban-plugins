@@ -97,6 +97,9 @@ public class HadoopPigJob extends JavaProcessJob {
 
   @Override
   public void run() throws Exception {
+    HadoopConfigurationInjector.prepareLinks(getJobProps(),
+        getWorkingDirectory());
+
     File f = null;
     if (shouldProxy && obtainTokens) {
       userToProxy = getJobProps().getString("user.to.proxy");
@@ -294,6 +297,9 @@ public class HadoopPigJob extends JavaProcessJob {
     classPath.add(getSourcePathFromClass(Props.class));
     classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
     classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
+
+    classPath.add(HadoopConfigurationInjector.getPath(getJobProps(), getWorkingDirectory()));
+
     // assuming pig 0.8 and up
     if (!userPigJar) {
       classPath.add(getSourcePathFromClass(PigRunner.class));

@@ -58,6 +58,8 @@ public class HadoopSecureHiveWrapper {
     Properties prop = new Properties();
     prop.load(new BufferedReader(new FileReader(propsFile)));
 
+    HadoopConfigurationInjector.injectLinks();
+
     hiveScript = prop.getProperty("hive.script");
 
     final Configuration conf = new Configuration();
