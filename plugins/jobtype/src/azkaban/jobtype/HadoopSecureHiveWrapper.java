@@ -211,7 +211,7 @@ public class HadoopSecureHiveWrapper {
    * won't be running from the script, it's up to us to do that work here. We
    * use a heuristic that if there is no occurrence of ".jar" in the original,
    * it needs expansion. Otherwise it's already been done for us.
-   * 
+   *
    * Also, surround the files with uri niceities.
    */
   static String expandHiveAuxJarsPath(String original) throws IOException {

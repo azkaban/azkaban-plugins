@@ -32,8 +32,8 @@ import azkaban.utils.Props;
  * Azkaban UI in configurations. It is assumed that the necessary links have
  * already been loaded into the properties. After writing the necessary links as
  * a xml file as required by Hadoop's configuration, clients may add the links
- * as a default resource so that they are included in any Configuration
- * constructed
+ * as a default resource using injectLinks() so that they are included in any
+ * Configuration constructed
  */
 public class HadoopConfigurationInjector {
   /**
@@ -60,8 +60,7 @@ public class HadoopConfigurationInjector {
       Configuration conf = new Configuration(false);
       // These are equivalent to
       // CommonJobProperties.[EXECUTION,WORKFLOW,JOB,JOBEXEC,ATTEMPT]_LINK
-      // respectively,
-      // but we use literals for backwards compatibility.
+      // respectively, but we use literals for backwards compatibility.
       loadProp(props, conf, "azkaban.link.execution.url");
       loadProp(props, conf, "azkaban.link.workflow.url");
       loadProp(props, conf, "azkaban.link.job.url");
@@ -75,6 +74,9 @@ public class HadoopConfigurationInjector {
     }
   }
 
+  /**
+   * Resolve the location of the file containing the link configuration file
+   */
   public static File getLinkFile(Props props, String workingDir) {
     File jobDir = new File(workingDir, getDirName(props));
     if (!jobDir.exists()) {
