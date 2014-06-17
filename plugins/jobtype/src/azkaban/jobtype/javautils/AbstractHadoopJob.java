@@ -48,6 +48,9 @@ import azkaban.jobtype.StatsUtils;
 import azkaban.utils.Props;
 import azkaban.utils.JSONUtils;
 
+import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
 public abstract class AbstractHadoopJob {
 	private static final Logger logger = Logger.getLogger(AbstractHadoopJob.class);
 	
@@ -94,8 +97,8 @@ public abstract class AbstractHadoopJob {
 	public void run()	throws Exception {
 		JobConf conf = getJobConf();
 		
-		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-			conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+		if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
+			conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
 		}
 		
 		jobClient = new JobClient(conf);
@@ -103,8 +106,6 @@ public abstract class AbstractHadoopJob {
 		logger.info("See " + runningJob.getTrackingURL() + " for details.");
 		jobClient.monitorAndPrintJob(conf, runningJob);
 		
-    //runningJob.waitForCompletion();
-
 		if (!runningJob.isSuccessful()) {
 			throw new Exception("Hadoop job:" + getJobName() + " failed!");
 		}
@@ -117,7 +118,7 @@ public abstract class AbstractHadoopJob {
 			for (Counter counter: group)
 				logger.info(counter.getDisplayName() + ":\t" + counter.getValue());
 		}
-    updateMapReduceJobState(conf);
+		updateMapReduceJobState(conf);
 	}
 	
 	@SuppressWarnings("rawtypes") 
@@ -255,8 +256,8 @@ public abstract class AbstractHadoopJob {
 		HadoopUtils.setPropsInJob(conf, getProps());
 		
 		// put in tokens
-		if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-			conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+		if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
+			conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
 		}
 		
 		return conf;
@@ -269,7 +270,7 @@ public abstract class AbstractHadoopJob {
 	public void cancel() throws Exception {
 		if (runningJob != null) {
 			runningJob.killJob();
-    }
+		}
 	}
 
   private void updateMapReduceJobState(JobConf jobConf) {

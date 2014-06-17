@@ -30,6 +30,9 @@ import azkaban.security.commons.HadoopSecurityManagerException;
 import azkaban.utils.Props;
 import azkaban.jobExecutor.JavaProcessJob;
 
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
+
 public class HadoopJavaJob extends JavaProcessJob {
 
 	public static final String RUN_METHOD_PARAM = "method.run";
@@ -59,7 +62,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 	public HadoopJavaJob(String jobid, Props sysProps, Props jobProps, Logger log) throws RuntimeException {
 		super(jobid, sysProps, jobProps, log);
 		
-    getJobProps().put("azkaban.job.id", jobid);
+		getJobProps().put("azkaban.job.id", jobid);
 		shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
 		getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
 		obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
@@ -135,19 +138,6 @@ public class HadoopJavaJob extends JavaProcessJob {
 		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
 		classPath.add(getSourcePathFromClass(Props.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
-//		String loggerPath = getSourcePathFromClass(org.apache.log4j.Logger.class);
-//		if (!classPath.contains(loggerPath)) {
-//			classPath.add(loggerPath);
-//		}
-
-		// Add hadoop home to classpath
-//		String hadoopHome = System.getenv("HADOOP_HOME");
-//		if (hadoopHome == null) {
-//			info("HADOOP_HOME not set, using default hadoop config.");
-//		} else {
-//			info("Using hadoop config found in " + hadoopHome);
-//			classPath.add(new File(hadoopHome, "conf").getPath());
-//		}
 		
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
 		if(typeClassPath != null) {
@@ -189,7 +179,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 			props.putAll(getSysProps());
 			
 			f = getHadoopTokens(props);
-			getJobProps().put("env."+"HADOOP_TOKEN_FILE_LOCATION", f.getAbsolutePath());
+			getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION, f.getAbsolutePath());
 		}
 		try {
 			super.run();
@@ -223,7 +213,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 
 				file = file.getParentFile();
 			}
-			return file.getPath();  
+			return file.getPath();
 		}
 		else {
 			return containedClass.getProtectionDomain().getCodeSource().getLocation().getPath();
@@ -241,8 +231,6 @@ public class HadoopJavaJob extends JavaProcessJob {
 		}
 		
 		hadoopSecurityManager.prefetchToken(tokenFile, props, getLog());
-		
-		//props.put("env."+"HADOOP_TOKEN_FILE_LOCATION", tokenFile.getAbsolutePath());
 		
 		return tokenFile;
 	}

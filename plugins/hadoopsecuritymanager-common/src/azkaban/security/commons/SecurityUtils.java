@@ -55,11 +55,6 @@ public class SecurityUtils {
 		throw new IllegalArgumentException("conf can't be null");
 	}
 	UserGroupInformation.setConfiguration(conf);
-	// don't do privileged actions in case the hadoop is not secured.
-//	if(!UserGroupInformation.isSecurityEnabled()) {
-//		//we don't get into whether to allow impersonation as anybody in unsecured grid
-//		return null;
-//	}
 
 	if(toProxy == null) {
 		throw new IllegalArgumentException("toProxy can't be null");
@@ -109,7 +104,6 @@ public class SecurityUtils {
 	
 	public static final String OBTAIN_BINARY_TOKEN = "obtain.binary.token";
 	public static final String MAPREDUCE_JOB_CREDENTIALS_BINARY = "mapreduce.job.credentials.binary";
-	public static final String HADOOP_TOKEN_FILE_LOCATION = "HADOOP_TOKEN_FILE_LOCATION";
 	
 	public static synchronized void prefetchToken(final File tokenFile, final Props p, final Logger logger) throws InterruptedException, IOException {
 		
@@ -118,7 +112,6 @@ public class SecurityUtils {
 		logger.info("Getting proxy user for "+p.toString());
 
 		getProxiedUser(p.toProperties(), logger, conf).doAs(
-		//UserGroupInformation.getCurrentUser().doAs(
 			new PrivilegedExceptionAction<Void>() {
 					@Override
 					public Void run() throws Exception {
@@ -140,15 +133,11 @@ public class SecurityUtils {
 							JobConf jc = new JobConf(conf);
 							JobClient jobClient = new JobClient(jc);
 							logger.info("Pre-fetching job token: Got new JobClient: " + jc);
-							//logger.info(conf.get("fs.default.name"));
 							Token<DelegationTokenIdentifier> mrdt = jobClient.getDelegationToken(new Text("hi"));
 							logger.info("Created token: " + mrdt.toString());
 							
 							job.getCredentials().addToken(new Text("howdy"), mrdt);
 							job.getCredentials().addToken(fsToken.getService(), fsToken);
-			
-				//			File temp = File.createTempFile("mr-azkaban", ".token");
-				//			temp.deleteOnExit();
 				
 							FileOutputStream fos = null;
 							DataOutputStream dos = null;
@@ -166,7 +155,6 @@ public class SecurityUtils {
 							}
 							logger.info("Loading hadoop tokens into " + tokenFile.getAbsolutePath());
 							p.put("HadoopTokenFileLoc", tokenFile.getAbsolutePath());
-						//p.put(MAPREDUCE_JOB_CREDENTIALS_BINARY, tokenFile.getAbsolutePath());
 						} else {
 							logger.info("Not pre-fetching token");
 						}

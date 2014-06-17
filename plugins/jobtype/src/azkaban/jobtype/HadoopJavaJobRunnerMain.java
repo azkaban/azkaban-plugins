@@ -46,6 +46,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
+
 public class HadoopJavaJobRunnerMain {
 
 	public static final String JOB_CLASS = "job.class";
@@ -114,7 +118,7 @@ public class HadoopJavaJobRunnerMain {
 			if (shouldProxy(prop)) {
 				String userToProxy = prop.getProperty("user.to.proxy");
 				if(securityEnabled) {
-					String filelocation = System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
+					String filelocation = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
 					_logger.info("Found token file " + filelocation);
 					_logger.info("Security enabled is " + UserGroupInformation.isSecurityEnabled());
 					
@@ -145,14 +149,12 @@ public class HadoopJavaJobRunnerMain {
 			} else {
 				_javaObject = getObject(_jobName, className, prop, _logger);
 			}
-			
-			_logger.info("Got object " + _javaObject.toString());
-//			
-			_javaObject = getObject(_jobName, className, prop, _logger);
+
 			if (_javaObject == null) {
 				_logger.info("Could not create java object to run job: " + className);
 				throw new Exception("Could not create running object");
 			}
+			_logger.info("Got object " + _javaObject.toString());
 
 			_cancelMethod = prop.getProperty(CANCEL_METHOD_PARAM, DEFAULT_CANCEL_METHOD);
 
@@ -199,8 +201,8 @@ public class HadoopJavaJobRunnerMain {
 			public Void run() throws Exception {
 				
 				Configuration conf = new Configuration();
-				if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-					conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+				if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
+					conf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY, System.getenv(HADOOP_TOKEN_FILE_LOCATION));
 				}
 				
 				runMethod(obj, runMethod);
