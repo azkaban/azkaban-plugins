@@ -534,9 +534,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
       final Props props, final Logger logger)
       throws HadoopSecurityManagerException {
 
-    logger
-        .info("//////////// offical built version of prefetchTokein /////////////////////");
-
     final String userToProxy = props.getString(USER_TO_PROXY);
 
     logger.info("Getting hadoop tokens for " + userToProxy);
