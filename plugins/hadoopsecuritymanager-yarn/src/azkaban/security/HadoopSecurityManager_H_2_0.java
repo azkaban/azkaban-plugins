@@ -93,7 +93,7 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
   public static final Text DEFAULT_RENEWER = new Text("azkaban mr tokens");
 
   private static final String HIVE_METASTORE_SASL_ENABLED =
-      "hive.metastore.sasl.enabled";
+      HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.toString();
   private static final String HIVE_METASTORE_KERBEROS_PRINCIPAL =
       "hive.metastore.kerberos.principal";
   private static final String HIVE_METASTORE_LOCAL = "hive.metastore.local";
@@ -597,7 +597,7 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
       try {
         jhsdt = getDelegationTokenFromHS(hsProxy);
       } catch (Exception e) {
-        logger.error("Failed to fetch JH token",e);
+        logger.error("Failed to fetch JH token", e);
       }
       if (jhsdt == null) {
         logger.error("Failed to fetch JH token");
