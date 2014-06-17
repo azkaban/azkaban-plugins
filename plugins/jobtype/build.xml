@@ -16,7 +16,7 @@
 	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
 	<property file="build.properties" />
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-${version}.jar"/>
-	<property name="hadoopsecuritymanagerjar-yarn" value="${base.dir}/dist/hadoopsecuritymanager-yarn/jars/azkaban-hadoopsecuritymanager-yarn-${version}.jar"/>
+	<property name="hadoopsecuritymanagerjar-yarn" value="${base.dir}/dist/hadoopsecuritymanager-yarn/jars/azkaban-hadoopsecuritymanageryarn-${version}.jar"/>
 	<property name="hadoopsecuritymanager-common.java.src.dir" value="${base.dir}/plugins/hadoopsecuritymanager-common/src" />
 
 	<property name="version.file" value="${base.dir}/dist/package.version" />
