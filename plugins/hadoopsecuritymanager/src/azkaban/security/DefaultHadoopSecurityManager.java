@@ -27,77 +27,85 @@ import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.security.commons.HadoopSecurityManagerException;
 import azkaban.utils.Props;
 
-/* 
- * This is just get by compile, or in the case of no hadoop installation. Otherwise, 
- * there needs to be a real HadoopSecurityManger plugin for the hadoop installation,   
- * even if the hadoop installation is not security enabled.
+/**
+ * This is just get by compile, or in the case of no hadoop installation.
+ * Otherwise, there needs to be a real HadoopSecurityManger plugin for the
+ * hadoop installation, even if the hadoop installation is not security enabled.
  */
-
 public class DefaultHadoopSecurityManager extends HadoopSecurityManager {
 
-	private static final Logger logger = Logger.getLogger(DefaultHadoopSecurityManager.class);
+  private static final Logger logger = Logger
+      .getLogger(DefaultHadoopSecurityManager.class);
 
-	private static HadoopSecurityManager hsmInstance = null;
+  private static HadoopSecurityManager hsmInstance = null;
 
-	private DefaultHadoopSecurityManager(Props props) {
-		logger.info("Default Hadoop Security Manager is used. Only do this on a non-hadoop cluster!");
-	}
-	
-	public static HadoopSecurityManager getInstance(Props props) throws HadoopSecurityManagerException, IOException {
-		if(hsmInstance == null) {
-			synchronized (DefaultHadoopSecurityManager.class) {
-				if(hsmInstance == null) {
-						logger.info("getting new instance");
-						hsmInstance = new DefaultHadoopSecurityManager(props);
-				}
-			}
-		}
-		return hsmInstance;		
-	}
-	
-	@Override
-	public UserGroupInformation getProxiedUser(String toProxy) throws HadoopSecurityManagerException {
-		throw new HadoopSecurityManagerException("No real Hadoop Security Manager is set!");
-	}
+  private DefaultHadoopSecurityManager(Props props) {
+    logger.info("Default Hadoop Security Manager is used. Only do this on "
+        + "a non-hadoop cluster!");
+  }
 
-	/**
-	* Create a proxied user, taking all parameters, including which user to proxy
-	* from provided Properties.
-	*/
-	@Override
-	public UserGroupInformation getProxiedUser(Props prop) throws HadoopSecurityManagerException {
-		throw new HadoopSecurityManagerException("No real Hadoop Security Manager is set!");
-	}
+  public static HadoopSecurityManager getInstance(Props props)
+      throws HadoopSecurityManagerException, IOException {
+    if (hsmInstance == null) {
+      synchronized (DefaultHadoopSecurityManager.class) {
+        if (hsmInstance == null) {
+          logger.info("getting new instance");
+          hsmInstance = new DefaultHadoopSecurityManager(props);
+        }
+      }
+    }
+    return hsmInstance;
+  }
 
-	@Override
-	public boolean isHadoopSecurityEnabled() throws HadoopSecurityManagerException {
-		throw new HadoopSecurityManagerException("No real Hadoop Security Manager is set!");
-	}
+  @Override
+  public UserGroupInformation getProxiedUser(String toProxy)
+      throws HadoopSecurityManagerException {
+    throw new HadoopSecurityManagerException(
+        "No real Hadoop Security Manager is set!");
+  }
 
-	@Override
-	public FileSystem getFSAsUser(String user) throws HadoopSecurityManagerException {
-		throw new HadoopSecurityManagerException("No real Hadoop Security Manager is set!");
-	}
+  /**
+   * Create a proxied user, taking all parameters, including which user to proxy
+   * from provided Properties.
+   */
+  @Override
+  public UserGroupInformation getProxiedUser(Props prop)
+      throws HadoopSecurityManagerException {
+    throw new HadoopSecurityManagerException(
+        "No real Hadoop Security Manager is set!");
+  }
 
-	@Override
-	public void prefetchToken(File tokenFile, String userToProxy, Logger logger)
-			throws HadoopSecurityManagerException {
-		throw new HadoopSecurityManagerException("No real Hadoop Security Manager is set!");		
-	}
+  @Override
+  public boolean isHadoopSecurityEnabled()
+      throws HadoopSecurityManagerException {
+    throw new HadoopSecurityManagerException(
+        "No real Hadoop Security Manager is set!");
+  }
 
-	@Override
-	public void cancelTokens(File tokenFile, String userToProxy, Logger logger)
-			throws HadoopSecurityManagerException {
-		// TODO Auto-generated method stub
-		
-	}
+  @Override
+  public FileSystem getFSAsUser(String user)
+      throws HadoopSecurityManagerException {
+    throw new HadoopSecurityManagerException(
+        "No real Hadoop Security Manager is set!");
+  }
 
-	@Override
-	public void prefetchToken(File tokenFile, Props props, Logger logger)
-			throws HadoopSecurityManagerException {
-		throw new HadoopSecurityManagerException("No real Hadoop Security Manager is set!");	
-	}
+  @Override
+  public void prefetchToken(File tokenFile, String userToProxy, Logger logger)
+      throws HadoopSecurityManagerException {
+    throw new HadoopSecurityManagerException(
+        "No real Hadoop Security Manager is set!");
+  }
+
+  @Override
+  public void cancelTokens(File tokenFile, String userToProxy, Logger logger)
+      throws HadoopSecurityManagerException {
+  }
+
+  @Override
+  public void prefetchToken(File tokenFile, Props props, Logger logger)
+      throws HadoopSecurityManagerException {
+    throw new HadoopSecurityManagerException(
+        "No real Hadoop Security Manager is set!");
+  }
 
 }
-
-
