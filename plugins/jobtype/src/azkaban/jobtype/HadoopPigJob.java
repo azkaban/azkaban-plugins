@@ -116,11 +116,11 @@ public class HadoopPigJob extends JavaProcessJob {
       super.run();
     } catch (Exception e) {
       e.printStackTrace();
-      getLog().error("caught exception running the job");
+      getLog().error("caught exception running the job", e);
       throw new Exception(e);
     } catch (Throwable t) {
       t.printStackTrace();
-      getLog().error("caught error running the job");
+      getLog().error("caught error running the job", t);
       throw new Exception(t);
     } finally {
       if (f != null) {

@@ -77,6 +77,10 @@ ${current.time}
 		</subant>
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
+			<fileset dir="plugins/hadoopsecuritymanager-yarn" includes="build.xml" />
+		</subant>
+		<subant target="package">
+			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/hdfsviewer" includes="build.xml" />
 		</subant>
 		<subant target="package">

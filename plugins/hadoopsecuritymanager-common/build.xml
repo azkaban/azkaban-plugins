@@ -1,18 +1,17 @@
 <?xml version="1.0"?>
 
-<project name="hadoopsecuritymanager" basedir="." default="all">
+<project name="hadoopsecuritymanager-common" basedir="." default="all">
 	<property file="build.properties" />
 	<property name="base.dir" value="${basedir}/../.." />
-	<property name="dist.dir" value="${base.dir}/dist/hadoopsecuritymanager" />
+	<property name="dist.dir" value="${base.dir}/dist/hadoopsecuritymanager-common" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
 	<property name="java.src.dir" value="${basedir}/src" />
-	<property name="azkaban-hadoopsecuritymanager-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
+	<property name="azkaban-hadoopsecuritymanager-common-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="version.file" value="${base.dir}/dist/package.version" />
-	<property name="hadoopsecuritymanager-common.java.src.dir" value="${base.dir}/plugins/hadoopsecuritymanager-common/src" />
 	<property file="build.properties" />
 
 	<property environment="env" />
@@ -47,43 +46,17 @@
 		<javac fork="true" destdir="${dist.classes.dir}"
 			target="1.6" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
-			<src path="${hadoopsecuritymanager-common.java.src.dir}" />
 			<classpath refid="main.classpath" />
 		</javac>
 	</target>
 	
 	<target name="jars" depends="build" description="Compile main source tree java files">
 		<mkdir dir="${dist.jar.dir}" />
-		<jar destfile="${azkaban-hadoopsecuritymanager-jar}">
+		<jar destfile="${azkaban-hadoopsecuritymanager-common-jar}">
 			<fileset dir="${dist.classes.dir}">
 				<include name="**/*.*" />
 			</fileset>
 		</jar>
-	</target>
-
-	 <target name="package-hadoopsecuritymanager" depends="jars" description="Creates a package for the webserver">
-		<delete dir="${dist.packages.dir}" />
-		<mkdir dir="${dist.packages.dir}" />
-		<mkdir dir="${dist.packages.dir}/lib" />
-
-        <!-- Copy Azkaban jars and libs-->
-		<copy file="${azkaban-hadoopsecuritymanager-jar}" todir="${dist.packages.dir}/lib" />
-		<copy todir="${dist.packages.dir}/lib" >
-			<fileset dir="${lib.dir}" >
-				<exclude name="hadoop-core*.jar"/>
-				<exclude name="azkaban*.jar"/>
-			</fileset>
-		</copy>
-	 	<!-- Copy build version file -->
-	 	<copy file="${version.file}" todir="${dist.packages.dir}" />
-
-        <!-- Tarball it -->
-		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
-			<tarfileset dir="${dist.packages.dir}" prefix="${name}-${version}" filemode="755" />
-		</tar>
-	</target>
-
-	<target name="package" depends="package-hadoopsecuritymanager" description="Create all packages">
 	</target>
 
 </project>
