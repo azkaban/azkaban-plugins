@@ -44,9 +44,9 @@ import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.security.commons.HadoopSecurityManagerException;
 import azkaban.user.User;
 import azkaban.utils.Props;
+import azkaban.server.session.Session;
 import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
 import azkaban.webapp.servlet.Page;
-import azkaban.webapp.session.Session;
 
 public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
   private static final long serialVersionUID = 1L;

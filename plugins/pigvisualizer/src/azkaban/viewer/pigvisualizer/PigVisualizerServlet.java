@@ -41,6 +41,7 @@ import azkaban.jobtype.MapReduceJobState;
 import azkaban.jobtype.StatsUtils;
 import azkaban.project.Project;
 import azkaban.project.ProjectManager;
+import azkaban.server.session.Session;
 import azkaban.user.Permission;
 import azkaban.user.Permission.Type;
 import azkaban.user.User;
@@ -49,7 +50,6 @@ import azkaban.utils.JSONUtils;
 import azkaban.webapp.AzkabanWebServer;
 import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
 import azkaban.webapp.servlet.Page;
-import azkaban.webapp.session.Session;
 import azkaban.webapp.plugin.PluginRegistry;
 import azkaban.webapp.plugin.ViewerPlugin;
 

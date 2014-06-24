@@ -64,6 +64,7 @@ import azkaban.reportal.util.StreamProviderHDFS;
 import azkaban.scheduler.ScheduleManager;
 import azkaban.scheduler.ScheduleManagerException;
 import azkaban.security.commons.HadoopSecurityManager;
+import azkaban.server.session.Session;
 import azkaban.user.Permission;
 import azkaban.user.Permission.Type;
 import azkaban.user.User;
@@ -74,7 +75,6 @@ import azkaban.utils.Props;
 import azkaban.webapp.AzkabanWebServer;
 import azkaban.webapp.servlet.LoginAbstractAzkabanServlet;
 import azkaban.webapp.servlet.Page;
-import azkaban.webapp.session.Session;
 
 public class ReportalServlet extends LoginAbstractAzkabanServlet {
   private static final String REPORTAL_VARIABLE_PREFIX = "reportal.variable.";
