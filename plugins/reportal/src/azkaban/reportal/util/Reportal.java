@@ -181,6 +181,8 @@ public class Reportal {
       }
 
       ExecutionOptions options = new ExecutionOptions();
+      // don't run flow concurrently
+      options.setConcurrentOption(ExecutionOptions.CONCURRENT_OPTION_SKIP);
       options.getFlowParameters().put("reportal.execution.user",
           user.getUserId());
       options.getFlowParameters().put("reportal.title", report.title);
