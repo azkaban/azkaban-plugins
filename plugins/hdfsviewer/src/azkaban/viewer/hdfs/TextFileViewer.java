@@ -36,6 +36,8 @@ public class TextFileViewer extends HdfsFileViewer {
   private static Logger logger = Logger.getLogger(TextFileViewer.class);
   private HashSet<String> acceptedSuffix = new HashSet<String>();
 
+  private static final String VIEWER_NAME = "Text";
+
   public TextFileViewer() {
     acceptedSuffix.add(".txt");
     acceptedSuffix.add(".csv");
@@ -44,6 +46,11 @@ public class TextFileViewer extends HdfsFileViewer {
     acceptedSuffix.add(".html");
     acceptedSuffix.add(".json");
     acceptedSuffix.add(".log");
+  }
+
+  @Override
+  public String getName() {
+    return VIEWER_NAME;
   }
 
   @Override
