@@ -60,8 +60,6 @@ public class ParquetFileViewer extends HdfsFileViewer {
     AvroParquetReader<GenericRecord> parquetReader = null;
     try {
       parquetReader = new AvroParquetReader<GenericRecord>(path);
-    } catch (AccessControlException e) {
-      throw e;
     } catch (IOException e) {
       if (logger.isDebugEnabled()) {
         logger.debug(path.toUri().getPath() + " is not a Parquet file.");

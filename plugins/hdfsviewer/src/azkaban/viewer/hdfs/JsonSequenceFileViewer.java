@@ -71,8 +71,8 @@ public class JsonSequenceFileViewer extends SequenceFileViewer {
       if (!readSomething) {
         break;
       }
-      output
-          .write(safeToString(keySerializer.toObject(keyWritable.getBytes())));
+      output.write(
+          safeToString(keySerializer.toObject(keyWritable.getBytes())));
       output.write("\t=>\t");
       output.write(safeToString(valueSerializer.toObject(valueWritable
           .getBytes())));

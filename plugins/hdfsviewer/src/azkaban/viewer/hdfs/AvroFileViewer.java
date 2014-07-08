@@ -66,8 +66,8 @@ public class AvroFileViewer extends HdfsFileViewer {
     } catch (IOException e) {
       if (logger.isDebugEnabled()) {
         logger.debug(path.toUri().getPath() + " is not an avro file.");
-        logger
-            .debug("Error in getting avro schema: " + e.getLocalizedMessage());
+        logger.debug("Error in getting avro schema: "
+            + e.getLocalizedMessage());
       }
       return EnumSet.noneOf(Capability.class);
     } finally {
