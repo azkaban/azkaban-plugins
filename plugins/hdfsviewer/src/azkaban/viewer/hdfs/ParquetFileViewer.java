@@ -48,7 +48,14 @@ public class ParquetFileViewer extends HdfsFileViewer {
   private static Logger logger = Logger.getLogger(ParquetFileViewer.class);
 
   // Will spend 5 seconds trying to pull data and then stop.
-  final private static long STOP_TIME = 2000l;
+  private final static long STOP_TIME = 2000l;
+
+  private static final String VIEWER_NAME = "Parquet";
+
+  @Override
+  public String getName() {
+    return VIEWER_NAME;
+  }
 
   @Override
   public Set<Capability> getCapabilities(FileSystem fs, Path path)

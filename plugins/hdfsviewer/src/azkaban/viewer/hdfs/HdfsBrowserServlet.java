@@ -358,7 +358,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
       try {
         capabilities = viewer.getCapabilities(fs, path);
       } catch (AccessControlException e) {
-        page.add("error_message", "Permission denied(" + i +  "): " + e.getMessage());
+        page.add("error_message", "Permission denied (" + viewer.getName()
+            + "): " + e.getMessage());
         page.add("no_fs", "true");
         page.render();
         return;

@@ -49,11 +49,19 @@ public class AvroFileViewer extends HdfsFileViewer {
   // Will spend 5 seconds trying to pull data and then stop.
   private static long STOP_TIME = 2000l;
 
+  private static final String VIEWER_NAME = "Avro";
+
+  @Override
+  public String getName() {
+    return VIEWER_NAME;
+  }
+
   @Override
   public Set<Capability> getCapabilities(FileSystem fs, Path path)
       throws AccessControlException {
-    if (logger.isDebugEnabled())
+    if (logger.isDebugEnabled()) {
       logger.debug("path:" + path.toUri().getPath());
+    }
 
     DataFileStream<Object> avroDataStream = null;
     try {
@@ -83,8 +91,9 @@ public class AvroFileViewer extends HdfsFileViewer {
 
   @Override
   public String getSchema(FileSystem fs, Path path) {
-    if (logger.isDebugEnabled())
+    if (logger.isDebugEnabled()) {
       logger.debug("path:" + path.toUri().getPath());
+    }
 
     DataFileStream<Object> avroDataStream = null;
     try {
@@ -94,8 +103,8 @@ public class AvroFileViewer extends HdfsFileViewer {
     } catch (IOException e) {
       if (logger.isDebugEnabled()) {
         logger.debug(path.toUri().getPath() + " is not an avro file.");
-        logger
-            .debug("Error in getting avro schema: " + e.getLocalizedMessage());
+        logger.debug("Error in getting avro schema: "
+            + e.getLocalizedMessage());
       }
       return null;
     } finally {
@@ -111,8 +120,9 @@ public class AvroFileViewer extends HdfsFileViewer {
 
   private DataFileStream<Object> getAvroDataStream(FileSystem fs, Path path)
       throws IOException {
-    if (logger.isDebugEnabled())
+    if (logger.isDebugEnabled()) {
       logger.debug("path:" + path.toUri().getPath());
+    }
 
     GenericDatumReader<Object> avroReader = new GenericDatumReader<Object>();
     InputStream hdfsInputStream = null;
@@ -143,8 +153,9 @@ public class AvroFileViewer extends HdfsFileViewer {
   public void displayFile(FileSystem fs, Path path, OutputStream outputStream,
       int startLine, int endLine) throws IOException {
 
-    if (logger.isDebugEnabled())
+    if (logger.isDebugEnabled()) {
       logger.debug("display avro file:" + path.toUri().getPath());
+    }
 
     DataFileStream<Object> avroDatastream = null;
     JsonGenerator g = null;
@@ -154,9 +165,8 @@ public class AvroFileViewer extends HdfsFileViewer {
       Schema schema = avroDatastream.getSchema();
       DatumWriter<Object> avroWriter = new GenericDatumWriter<Object>(schema);
 
-      g =
-          new JsonFactory()
-              .createJsonGenerator(outputStream, JsonEncoding.UTF8);
+      g = new JsonFactory().createJsonGenerator(
+          outputStream, JsonEncoding.UTF8);
       g.useDefaultPrettyPrinter();
       Encoder encoder = EncoderFactory.get().jsonEncoder(schema, g);
 

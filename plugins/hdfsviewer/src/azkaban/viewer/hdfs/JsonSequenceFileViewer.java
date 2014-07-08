@@ -31,6 +31,12 @@ import azkaban.viewer.hdfs.AzkabanSequenceFileReader;
 import voldemort.serialization.json.JsonTypeSerializer;
 
 public class JsonSequenceFileViewer extends SequenceFileViewer {
+  private static final String VIEWER_NAME = "JSON Sequence File";
+
+  @Override
+  public String getName() {
+    return VIEWER_NAME;
+  }
 
   private static Logger logger = Logger.getLogger(JsonSequenceFileViewer.class);
 

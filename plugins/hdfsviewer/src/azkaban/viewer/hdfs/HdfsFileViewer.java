@@ -26,6 +26,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.AccessControlException;
 
 public abstract class HdfsFileViewer {
+  public abstract String getName();
+
   public Set<Capability> getCapabilities(FileSystem fs, Path path)
       throws AccessControlException {
     return EnumSet.noneOf(Capability.class);

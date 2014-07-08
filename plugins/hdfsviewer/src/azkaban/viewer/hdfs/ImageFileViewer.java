@@ -41,6 +41,7 @@ public class ImageFileViewer extends HdfsFileViewer {
 
   private static Logger logger = Logger.getLogger(ImageFileViewer.class);
   private static final long MAX_IMAGE_FILE_SIZE = 10485760L;
+  private static final String VIEWER_NAME = "Image";
 
   private HashSet<String> acceptedSuffix;
 
@@ -49,6 +50,11 @@ public class ImageFileViewer extends HdfsFileViewer {
       ".jpg", ".jpeg", ".tif", ".tiff", ".png", ".gif", ".bmp", ".svg"
     };
     acceptedSuffix = new HashSet<String>(Arrays.asList(imageSuffix));
+  }
+
+  @Override
+  public String getName() {
+    return VIEWER_NAME;
   }
 
   @Override
