@@ -543,7 +543,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
    * Returns a list of file Objects that contain a "name" property with the file
    * name, a "content" property with the lines in the file, and a "hasMore"
    * property if the file contains more than NUM_PREVIEW_ROWS lines.
-   *
+   * 
    * @param fileList
    * @param locationFull
    * @param streamProvider
@@ -764,7 +764,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
   /**
    * Validates and saves a report, returning the project id of the saved report
    * if successful, and null otherwise.
-   *
+   * 
    * @param req
    * @param resp
    * @param session
@@ -1143,6 +1143,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     exflow.addAllProxyUsers(project.getProxyUsers());
 
     ExecutionOptions options = exflow.getExecutionOptions();
+
+    // don't run flow concurrently
+    options.setConcurrentOption(ExecutionOptions.CONCURRENT_OPTION_SKIP);
 
     int i = 0;
     for (Variable variable : report.variables) {
