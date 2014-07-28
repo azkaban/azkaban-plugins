@@ -78,6 +78,7 @@ public class JavaJobRunnerMain {
 
   public JavaJobRunnerMain() throws Exception {
     Runtime.getRuntime().addShutdownHook(new Thread() {
+      @Override
       public void run() {
         cancelJob();
       }
@@ -102,6 +103,8 @@ public class JavaJobRunnerMain {
         throw new Exception("Class name is not set.");
       }
       _logger.info("Class name " + className);
+
+      HadoopConfigurationInjector.injectLinks();
 
       // Create the object using proxy
       if (SecurityUtils.shouldProxy(prop)) {

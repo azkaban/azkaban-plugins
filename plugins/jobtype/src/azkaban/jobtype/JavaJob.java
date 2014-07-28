@@ -67,6 +67,9 @@ public class JavaJob extends JavaProcessJob {
     classPath.add(getSourcePathFromClass(Props.class));
     classPath.add(getSourcePathFromClass(SecurityUtils.class));
 
+    classPath.add(HadoopConfigurationInjector.getPath(getJobProps(),
+        getWorkingDirectory()));
+
     String loggerPath = getSourcePathFromClass(org.apache.log4j.Logger.class);
     if (!classPath.contains(loggerPath)) {
       classPath.add(loggerPath);
@@ -141,5 +144,13 @@ public class JavaJob extends JavaProcessJob {
         + ", _cancelMethod='" + _cancelMethod + '\'' + ", _progressMethod='"
         + _progressMethod + '\'' + ", _javaObject=" + _javaObject + ", props="
         + props + '}';
+  }
+
+
+  @Override
+  public void run() throws Exception {
+    HadoopConfigurationInjector.prepareLinks(getJobProps(),
+        getWorkingDirectory());
+    super.run();
   }
 }
