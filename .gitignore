@@ -1,7 +1,9 @@
-dist/
 azkaban-hadoopsecuritymanager-*.jar
-azkaban-pigvisualizer-*.jar
 azkaban-jobtype-*.jar
+azkaban-pigvisualizer-*.jar
 /bin
+.classpath
+dist/
+.project
 .settings
 *.swp
