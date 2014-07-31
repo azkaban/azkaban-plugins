@@ -43,14 +43,24 @@ public class StatsUtils {
   private static Logger logger = Logger.getLogger(StatsUtils.class);
 
   private static final Set<String> JOB_CONF_KEYS = new HashSet<String>(
-      Arrays.asList(new String[] { "mapred.job.map.memory.mb",
-          "mapred.job.reduce.memory.mb", "mapred.child.java.opts",
-          "mapred.cache.files", "mapred.cache.archives",
-          "mapred.cache.files.filesizes", "mapred.min.split.size",
-          "mapred.max.split.size", "mapred.output.compress",
-          "mapred.output.compression.type", "mapred.output.compression.codec",
-          "mapred.compress.map.output", "mapred.map.output.compression.codec",
-          "mapred.queue.names", "mapred.job.queue.name", "io.sort.mb" }));
+      Arrays.asList(new String[] { 
+          "mapred.job.map.memory.mb",
+          "mapred.job.reduce.memory.mb", 
+          "mapred.child.java.opts",
+          "mapred.cache.files", 
+          "mapred.cache.archives",
+          "mapred.cache.files.filesizes", 
+          "mapred.min.split.size",
+          "mapred.max.split.size", 
+          "mapred.output.compress",
+          "mapred.output.compression.type", 
+          "mapred.output.compression.codec",
+          "mapred.compress.map.output", 
+          "mapred.map.output.compression.codec",
+          "mapred.queue.names", 
+          "mapred.job.queue.name", 
+          "io.sort.mb" 
+      }));
 
   public static Properties getJobConf(RunningJob runningJob) {
     try {
