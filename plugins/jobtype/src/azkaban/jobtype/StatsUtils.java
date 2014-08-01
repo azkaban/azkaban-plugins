@@ -16,19 +16,18 @@
 
 package azkaban.jobtype;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Properties;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -36,6 +35,7 @@ import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.mapred.Counters.Counter;
 import org.apache.hadoop.mapred.Counters.Group;
 import org.apache.hadoop.mapred.RunningJob;
+import org.apache.log4j.Logger;
 import org.apache.pig.impl.util.ObjectSerializer;
 
 public class StatsUtils {
@@ -43,23 +43,23 @@ public class StatsUtils {
   private static Logger logger = Logger.getLogger(StatsUtils.class);
 
   private static final Set<String> JOB_CONF_KEYS = new HashSet<String>(
-      Arrays.asList(new String[] {
+      Arrays.asList(new String[] { 
           "mapred.job.map.memory.mb",
-          "mapred.job.reduce.memory.mb",
+          "mapred.job.reduce.memory.mb", 
           "mapred.child.java.opts",
-          "mapred.cache.files",
+          "mapred.cache.files", 
           "mapred.cache.archives",
-          "mapred.cache.files.filesizes",
+          "mapred.cache.files.filesizes", 
           "mapred.min.split.size",
-          "mapred.max.split.size",
+          "mapred.max.split.size", 
           "mapred.output.compress",
-          "mapred.output.compression.type",
+          "mapred.output.compression.type", 
           "mapred.output.compression.codec",
-          "mapred.compress.map.output",
+          "mapred.compress.map.output", 
           "mapred.map.output.compression.codec",
-          "mapred.queue.names",
-          "mapred.job.queue.name",
-          "io.sort.mb"
+          "mapred.queue.names", 
+          "mapred.job.queue.name", 
+          "io.sort.mb" 
       }));
 
   public static Properties getJobConf(RunningJob runningJob) {
@@ -103,9 +103,11 @@ public class StatsUtils {
 
   public static Object propertiesToJson(Properties properties) {
     Map<String, String> jsonObj = new HashMap<String, String>();
-    Set<String> keys = properties.stringPropertyNames();
-    for (String key : keys) {
-      jsonObj.put(key, properties.getProperty(key));
+    if (properties != null) {
+      Set<String> keys = properties.stringPropertyNames();
+      for (String key : keys) {
+        jsonObj.put(key, properties.getProperty(key));
+      }
     }
     return jsonObj;
   }

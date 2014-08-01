@@ -63,6 +63,10 @@ public class HadoopConfigurationInjector {
       loadProp(props, conf, "azkaban.link.job.url");
       loadProp(props, conf, "azkaban.link.jobexec.url");
       loadProp(props, conf, "azkaban.link.attempt.url");
+
+      loadProp(props, conf, "azkaban.job.outnodes");
+      loadProp(props, conf, "azkaban.job.innodes");
+
       OutputStream xmlOut = new FileOutputStream(file);
       conf.writeXml(xmlOut);
       xmlOut.close();
