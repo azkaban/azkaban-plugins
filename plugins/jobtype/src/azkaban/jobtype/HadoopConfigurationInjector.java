@@ -17,10 +17,10 @@ package azkaban.jobtype;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.log4j.Logger;
 
 import azkaban.utils.Props;
 
@@ -33,6 +33,7 @@ import azkaban.utils.Props;
  * Configuration constructed
  */
 public class HadoopConfigurationInjector {
+  private static Logger _logger = Logger.getLogger(HadoopConfigurationInjector.class);
   /**
    * To be called by the forked process to load the generated links
    */
@@ -70,8 +71,8 @@ public class HadoopConfigurationInjector {
       OutputStream xmlOut = new FileOutputStream(file);
       conf.writeXml(xmlOut);
       xmlOut.close();
-    } catch (IOException e) {
-
+    } catch (Throwable e) {
+      _logger.error("Encountered error while preparing links", e);
     }
   }
 
@@ -96,7 +97,11 @@ public class HadoopConfigurationInjector {
    * @return
    */
   public static String getDirName(Props jobProps) {
-    return "_link_" + jobProps.get("azkaban.job.id");
+    String jobId = jobProps.get("azkaban.job.id");
+    if ((jobId == null) || (jobId.length() == 0)) {
+      throw new RuntimeException("azkaban.job.id was not set");
+    }
+    return "_link_" + jobId;
   }
 
   public static void loadProp(Props props, Configuration conf, String name) {

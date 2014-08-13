@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
+
 import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.security.commons.SecurityUtils;
 import azkaban.utils.Props;
@@ -45,6 +46,8 @@ public class JavaJob extends JavaProcessJob {
 
   public JavaJob(String jobid, Props sysProps, Props jobProps, Logger log) {
     super(jobid, sysProps, new Props(sysProps, jobProps), log);
+    
+    getJobProps().put("azkaban.job.id", jobid);
   }
 
   @Override
