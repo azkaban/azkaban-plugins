@@ -102,22 +102,19 @@ public class ReportalHiveRunner extends ReportalAbstractRunner {
       HiveConf.setVar(conf, HiveConf.ConfVars.HIVEAUXJARS, expanded);
     }
 
-    if (!ShimLoader.getHadoopShims().usesJobShell()) {
-      // hadoop-20 and above - we need to augment classpath using hiveconf
-      // components
-      // see also: code in ExecDriver.java
-      ClassLoader loader = conf.getClassLoader();
-      String auxJars = HiveConf.getVar(conf, HiveConf.ConfVars.HIVEAUXJARS);
+    // hadoop-20 and above - we need to augment classpath using hiveconf
+    // components
+    // see also: code in ExecDriver.java
+    ClassLoader loader = conf.getClassLoader();
+    String auxJars = HiveConf.getVar(conf, HiveConf.ConfVars.HIVEAUXJARS);
 
-      System.out.println("Got auxJars = " + auxJars);
+    System.out.println("Got auxJars = " + auxJars);
 
-      if (StringUtils.isNotBlank(auxJars)) {
-        loader =
-            Utilities.addToClassPath(loader, StringUtils.split(auxJars, ","));
-      }
-      conf.setClassLoader(loader);
-      Thread.currentThread().setContextClassLoader(loader);
+    if (StringUtils.isNotBlank(auxJars)) {
+      loader = Utilities.addToClassPath(loader, StringUtils.split(auxJars, ","));
     }
+    conf.setClassLoader(loader);
+    Thread.currentThread().setContextClassLoader(loader);
 
     CliDriver cli = new CliDriver();
     int returnValue = 0;
