@@ -41,6 +41,7 @@ import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Master;
+import org.apache.hadoop.mapreduce.security.TokenCache;
 import org.apache.hadoop.mapreduce.security.token.delegation.DelegationTokenIdentifier;
 import org.apache.hadoop.mapreduce.server.jobtracker.JTConfig;
 import org.apache.hadoop.mapreduce.v2.api.HSClientProtocol;
@@ -81,6 +82,8 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
   public static final String HADOOP_JOB_TRACKER_2 =
       "mapreduce.jobtracker.address";
   public static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
+
+  private static final String OTHER_NAMENODES_TO_GET_TOKEN = "other_namenodes";
 
   public static final Text DEFAULT_RENEWER = new Text("azkaban mr tokens");
 
@@ -649,6 +652,22 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
             logger.info("Token service: " + fsToken.getService());
 
             cred.addToken(fsToken.getService(), fsToken);
+
+            // getting additional name nodes tokens
+            String otherNamenodes = props.get(OTHER_NAMENODES_TO_GET_TOKEN);
+            if ((otherNamenodes != null) && (otherNamenodes.length() > 0)) {
+              logger.info(OTHER_NAMENODES_TO_GET_TOKEN + ": '" + otherNamenodes
+                  + "'");
+              String[] nameNodeArr = otherNamenodes.split(",");
+              Path[] ps = new Path[nameNodeArr.length];
+              for (int i = 0; i < ps.length; i++) {
+                ps[i] = new Path(nameNodeArr[i].trim());
+              }
+              TokenCache.obtainTokensForNamenodes(cred, ps, conf);
+              logger.info("Successfully fetched tokens for: " + otherNamenodes);
+            } else {
+              logger.info(OTHER_NAMENODES_TO_GET_TOKEN + " was not configured");
+            }
           }
 
           if (props.getBoolean(OBTAIN_JOBTRACKER_TOKEN, false)) {
