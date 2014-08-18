@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Ansible managed: /home/mzhou/code/ansible/hadoop-ansible/roles/cdh_hadoop_gateway/templates/mapred-site.xml modified on 2014-07-24 12:34:23 by mzhou on mzhou-server -->
+
+<configuration>
+    <property>
+        <name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+    <property>
+        <name>yarn.app.mapreduce.am.staging-dir</name>
+        <value>/user</value>
+    </property>
+
+    <!-- MapReduce Job Configurations -->
+    <property>
+      <name>mapreduce.map.java.opts</name>
+      <value>-Xmx1G -Xms512m -Djava.net.preferIPv4Stack=true</value>
+    </property>
+    <property>
+      <name>mapreduce.reduce.java.opts</name>
+      <value>-Xmx1G -Xms512m -Djava.net.preferIPv4Stack=true</value>
+    </property>
+    <property>
+      <name>mapreduce.job.reduce.slowstart.completedmaps</name>
+      <value>.90</value>
+    </property>
+    <property>
+      <name>mapreduce.io.sort.factor</name>
+      <value>100</value>
+    </property>
+    <property>
+      <name>mapreduce.io.sort.mb</name>
+      <value>256</value>
+    </property>
+    <property>
+      <name>mapreduce.spill.percent</name>
+      <value>0.95</value>
+    </property>
+    <property>
+      <name>mapreduce.reduce.parallel.copies</name>
+      <value>10</value>
+    </property>
+    <property>
+      <name>mapreduce.task.userlog.limit.kb</name>
+      <value>5120</value>
+      <final>true</final>
+    </property>
+    <property>
+      <name>mapreduce.jobtracker.maxtasks.per.job</name>
+      <value>10000</value>
+    </property>
+    <property>
+      <name>mapreduce.job.ubertask.enable</name>
+      <value>true</value>
+    </property>
+    <property>
+      <name>mapreduce.job.maps</name>
+      <value>1</value>
+    </property>
+    <property>
+      <name>mapreduce.job.reduces</name>
+      <value>1</value>
+    </property>
+    <!-- MapReduce intermediate compression -->
+    <property>
+        <name>mapreduce.map.output.compress</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>mapreduce.map.output.compress.codec</name>
+        <value>org.apache.hadoop.io.compress.SnappyCodec</value>
+    </property>
+    <!-- MapReduce final output compression -->
+    <property>
+        <name>mapreduce.output.fileoutputformat.compress</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>mapred.output.fileoutputformat.compress.codec</name>
+        <value>org.apache.hadoop.io.compress.SnappyCodec</value>
+    </property>
+    <property>
+        <name>mapreduce.output.fileoutputformat.compress.type</name>
+        <value>BLOCK</value>
+    </property>
+
+</configuration>

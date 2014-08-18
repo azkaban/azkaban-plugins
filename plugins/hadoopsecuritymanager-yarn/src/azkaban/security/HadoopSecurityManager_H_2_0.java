@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.io.Text;
@@ -97,18 +98,25 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 
 	private final RecordFactory recordFactory = RecordFactoryProvider.getRecordFactory(null);
 	
+	private static Path defaultFsPath;
+	
 	
 	private HadoopSecurityManager_H_2_0(Props props) throws HadoopSecurityManagerException, IOException {
 		
 		// for now, assume the same/compatible native library, the same/compatible hadoop-core jar
 		String hadoopHome = props.getString("hadoop.home", null);
 		String hadoopConfDir = props.getString("hadoop.conf.dir", null);
-
+		String hadoopLibDir = props.getString("hadoop.lib.dir", null);
+		
+		
 		if(hadoopHome == null) {
 			hadoopHome = System.getenv("HADOOP_HOME");
 		}
 		if(hadoopConfDir == null) {
 			hadoopConfDir = System.getenv("HADOOP_CONF_DIR");
+		}
+		if(hadoopLibDir == null) {
+			hadoopLibDir = System.getenv("HADOOP_LIB_DIR");
 		}
 		
 		List<URL> resources = new ArrayList<URL>();	
@@ -122,10 +130,15 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 			logger.info("HADOOP_HOME not set, using default hadoop config.");
 		}
 		
-		ucl = new URLClassLoader(resources.toArray(new URL[resources.size()]));
+		ucl = new URLClassLoader(resources.toArray(new URL[resources.size()]), this.getClass().getClassLoader());
 
 		conf = new Configuration();
 		conf.setClassLoader(ucl);
+		
+		defaultFsPath = new Path(conf.get("fs.defaultFS"));
+		
+		conf.set("fs.hdfs.impl", org.apache.hadoop.hdfs.DistributedFileSystem.class.getName());
+		conf.set("fs.file.impl", org.apache.hadoop.fs.LocalFileSystem.class.getName());
 		
 		if(props.containsKey("fs.hdfs.impl.disable.cache")) {
 			logger.info("Setting fs.hdfs.impl.disable.cache to " + props.get("fs.hdfs.impl.disable.cache"));
@@ -245,7 +258,7 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 	public FileSystem getFSAsUser(String user) throws HadoopSecurityManagerException {
 		FileSystem fs;
 		try {
-			logger.info("Getting file system as " + user);
+			logger.info("Getting distributed file system as " + user);
 			UserGroupInformation ugi = getProxiedUser(user);
 			
 			if (ugi != null) {
@@ -254,6 +267,7 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 					@Override	
 					public FileSystem run() {
 						try {
+							// assuming one wants to access hdfs
 							return FileSystem.get(conf);
 						} catch (IOException e) {
 							throw new RuntimeException(e);
@@ -267,7 +281,8 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 		}
 		catch (Exception e)
 		{
-			throw new HadoopSecurityManagerException("Failed to get FileSystem. ", e);
+			e.printStackTrace();
+			throw new HadoopSecurityManagerException("Failed to get FileSystem." + e.getMessage());
 		}
 		return fs;
 	}

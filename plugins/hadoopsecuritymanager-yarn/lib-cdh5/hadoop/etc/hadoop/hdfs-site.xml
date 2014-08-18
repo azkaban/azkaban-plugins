@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Ansible managed: /home/mzhou/code/ansible/hadoop-ansible/roles/cdh_hadoop_gateway/templates/hdfs-site.xml modified on 2014-07-24 13:55:25 by mzhou on mzhou-server -->
+
+<configuration>
+
+  <!-- common server name -->
+  <property>
+    <name>dfs.nameservices</name>
+    <value>tango</value>
+  </property>
+
+  <property>
+    <name>hadoop.tmp.dir</name>
+    <value>/disk1/tmp/hadoop-${user.name}</value>
+    <final>true</final>
+  </property>
+
+  <!-- HA configuration, see http://www.cloudera.com/content/cloudera-content/cloudera-docs/CDH4/latest/PDF/CDH4-High-Availability-Guide.pdf -->
+  <property>
+    <name>dfs.ha.namenodes.tango</name>
+    <value>nn1,nn2</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.rpc-address.tango.nn1</name>
+    <value>ec2-54-210-128-156.compute-1.amazonaws.com:8020</value>
+  </property>
+  <property>
+    <name>dfs.namenode.rpc-address.tango.nn2</name>
+    <value>ec2-54-210-109-233.compute-1.amazonaws.com:8020</value>
+  </property>
+
+  <property>
+    <name>dfs.namenode.http-address.tango.nn1</name>
+    <value>ec2-54-210-128-156.compute-1.amazonaws.com:50070</value>
+  </property>
+  <property>
+    <name>dfs.namenode.http-address.tango.nn2</name>
+    <value>ec2-54-210-109-233.compute-1.amazonaws.com:50070</value>
+  </property>
+
+  <!-- Client failover -->
+  <property>
+    <name>dfs.client.failover.proxy.provider.tango</name>
+    <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+  </property>
+
+  <!-- Replication factor -->
+  <property>
+    <name>dfs.replication</name>
+    <value>3</value>
+  </property>
+
+  <property>
+    <name>dfs.blocksize</name>
+    <value>268435456</value>
+  </property>
+
+</configuration>

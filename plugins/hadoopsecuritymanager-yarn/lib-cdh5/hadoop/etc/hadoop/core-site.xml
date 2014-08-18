@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Ansible managed: /home/mzhou/code/ansible/hadoop-ansible/roles/cdh_hadoop_gateway/templates/core-site.xml modified on 2014-07-24 12:32:24 by mzhou on mzhou-server -->
+
+<configuration>
+
+  <!-- the default path prefix used by the Hadoop FS client when none is given -->
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://tango</value>
+  </property>
+
+  <!-- The size of buffer for use in sequence files. -->
+  <property>
+    <name>io.file.buffer.size</name>
+    <value>131072</value>
+    <final>true</final>
+  </property>
+
+  <!-- enable trash -->
+  <property>
+    <name>fs.trash.interval</name>
+    <value>1440</value>
+  </property>
+
+
+  <property>
+    <name>io.compression.codecs</name>
+    <value>org.apache.hadoop.io.compress.DefaultCodec,org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec,com.hadoop.compression.lzo.LzoCodec,com.hadoop.compression.lzo.LzopCodec,org.apache.hadoop.io.compress.SnappyCodec</value>
+    <final>true</final>
+  </property>
+
+  <property>
+    <name>io.compression.codec.lzo.class</name>
+    <value>com.hadoop.compression.lzo.LzoCodec</value>
+  </property>
+
+  
+
+  <property><name>fs.s3.impl</name><value>org.apache.hadoop.fs.s3native.NativeS3FileSystem</value></property>
+
+  <property><name>fs.s3n.awsSecretAccessKey</name><value>K7GBewYnADiwFOOVLYyQdOFIFM+9bjW5IlWxOzva</value></property>
+
+  <property><name>fs.s3n.awsAccessKeyId</name><value>AKIAJY34YQ47DFVQ7MSQ</value></property>
+
+  <property><name>fs.s3.buffer.dir</name><value>/disk4/mnt/var/lib/hadoop/s3</value></property>
+
+  <property><name>fs.s3bfs.impl</name><value>org.apache.hadoop.fs.s3.S3FileSystem</value></property>
+
+  <property><name>fs.s3.awsSecretAccessKey</name><value>K7GBewYnADiwFOOVLYyQdOFIFM+9bjW5IlWxOzva</value></property>
+
+  <property><name>fs.s3bfs.awsAccessKeyId</name><value>AKIAJY34YQ47DFVQ7MSQ</value></property>
+
+  <property><name>fs.s3bfs.awsSecretAccessKey</name><value>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</value></property>
+
+  <property><name>fs.s3.awsAccessKeyId</name><value>AKIAJY34YQ47DFVQ7MSQ</value></property>
+
+</configuration>

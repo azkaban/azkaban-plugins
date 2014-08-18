@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<!-- Ansible managed: /home/mzhou/code/ansible/hadoop-ansible/roles/cdh_hadoop_gateway/templates/yarn-site.xml modified on 2014-07-24 14:12:00 by mzhou on mzhou-server -->
+
+<configuration>
+
+  <!-- Resource Manager -->
+  <property>
+    <name>yarn.resourcemanager.scheduler.address</name>
+    <value>ec2-54-210-127-147.compute-1.amazonaws.com:8030</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.resource-tracker.address</name>
+    <value>ec2-54-210-127-147.compute-1.amazonaws.com:8031</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.address</name>
+    <value>ec2-54-210-127-147.compute-1.amazonaws.com:8032</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.admin.address</name>
+    <value>ec2-54-210-127-147.compute-1.amazonaws.com:8033</value>
+  </property>
+  <property>
+    <name>yarn.resourcemanager.webapp.address</name>
+    <value>ec2-54-210-127-147.compute-1.amazonaws.com:8088</value>
+  </property>
+
+  <!-- Application Configurations -->
+  <property>
+    <description>Classpath for typical applications.</description>
+    <name>yarn.application.classpath</name>
+    <value>
+      $HADOOP_CONF_DIR,
+      $HADOOP_COMMON_HOME/*,$HADOOP_COMMON_HOME/lib/*,
+      $HADOOP_HDFS_HOME/*,$HADOOP_HDFS_HOME/lib/*,
+      $HADOOP_MAPRED_HOME/*,$HADOOP_MAPRED_HOME/lib/*,
+      $HADOOP_YARN_HOME/*,$HADOOP_YARN_HOME/lib/*
+    </value>
+  </property>
+  <property>
+    <name>yarn.app.mapreduce.am.staging-dir</name>
+    <value>/user</value>
+  </property>
+
+</configuration>

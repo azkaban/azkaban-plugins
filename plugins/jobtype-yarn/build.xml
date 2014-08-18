@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+
+<project name="azkaban-jobtype-yarn" basedir="." default="all">
+	<property file="build.properties" />
+	<property name="base.dir" value="${basedir}/../.." />
+	<property name="dist.dir" value="${base.dir}/dist/jobtype-yarn" />
+	<property name="lib.dir" value="${basedir}/lib" />
+	<property name="ext.lib.dir" value="${base.dir}/extlib" />
+	<property name="dist.jar.dir" value="${dist.dir}/jars" />
+	<property name="dist.classes.dir" value="${dist.dir}/classes" />
+	<property name="dist.packages.dir" value="${dist.dir}/packages" />
+	<property name="java.src.dir" value="${basedir}/src" />
+	<property name="azkaban-jobtype-yarn-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
+	<property name="jobtypes.dir" value="${basedir}/jobtypes" />
+	<property name="javatype.dir" value="${basedir}/jobtypes/java" />
+	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
+	<property file="build.properties" />
+	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager-yarn/jars/azkaban-hadoopsecuritymanager-yarn-2.2.jar"/>
+
+	<property environment="env" />
+
+	<path id="main.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+
+		<fileset dir="${ext.lib.dir}">
+            <include name="*.jar" />
+		</fileset>
+
+		<pathelement path="${dist.classes.dir}" />
+	</path>
+	
+	<!-- set the build number based on environment variable, otherwise blank -->
+	<property environment="env" description="System environment variables (including those set by Hudson)" />
+
+	<target name="all" depends="clean, jars" description="Builds all jars" />
+
+	<target name="clean" description="Delete generated files.">
+		<echo message="Deleting generated files in dist" />
+		<delete dir="${dist.jar.dir}" />
+		<delete dir="${dist.classes.dir}" />
+		<delete dir="${dist.packages.dir}" />
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-yarn-*.jar">
+			</fileset>
+		</delete>
+	</target>
+
+	<target name="build" description="Compile main source tree java files">
+		<delete>
+			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-yarn-*.jar">
+			</fileset>
+		</delete>
+		<!-- copy the latest securitymanager jar -->
+		<copy todir="${lib.dir}">
+			<fileset file="${hadoopsecuritymanagerjar}">
+			</fileset>
+		</copy>
+
+		<delete dir="${dist.classes.dir}" />
+		<mkdir dir="${dist.classes.dir}" />
+
+		<!--copy todir="${dist.classes.dir}">
+            <fileset dir="${java.src.dir}">
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy-->
+		
+		<javac fork="true" destdir="${dist.classes.dir}"
+			target="1.6" debug="true" deprecation="false" failonerror="true">
+			<src path="${java.src.dir}" />
+			<exclude name="**/examples/**"/>
+			<classpath refid="main.classpath" />
+		</javac>
+	</target>
+	
+	<target name="jars" depends="build" description="Compile main source tree java files">
+
+		<mkdir dir="${dist.jar.dir}" />
+		<jar destfile="${azkaban-jobtype-yarn-jar}">
+			<fileset dir="${dist.classes.dir}">
+				<include name="**/*.*" />
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="package-jobtype" depends="jars" description="Creates a package for jobtypes">
+        <delete dir="${dist.packages.dir}" />
+		<mkdir dir="${dist.packages.dir}" />
+
+		<!-- Build jobtypes directory-->
+		<copy todir="${dist.packages.dir}" >
+			<fileset dir="${jobtypes.dir}" >
+			</fileset>
+		</copy>
+
+		<!-- Copy jobtype jar-->
+		<copy file="${azkaban-jobtype-yarn-jar}" todir="${dist.packages.dir}/java" />
+		<copy file="${azkaban-jobtype-yarn-jar}" todir="${dist.packages.dir}/hadoopJava" />
+		<copy file="${azkaban-jobtype-yarn-jar}" todir="${dist.packages.dir}/pig-0.9.2" />
+		<copy file="${azkaban-jobtype-yarn-jar}" todir="${dist.packages.dir}/pig-0.10.0" />
+		<copy file="${azkaban-jobtype-yarn-jar}" todir="${dist.packages.dir}/pig-0.10.1" />
+		<copy file="${azkaban-jobtype-yarn-jar}" todir="${dist.packages.dir}/pig-0.11.0" />
+		<copy file="${azkaban-jobtype-yarn-jar}" todir="${dist.packages.dir}/hive-0.8.1" />
+
+		<!-- Copy hadoopsecuritymanager-->
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/java" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hadoopJava" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.9.2" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.10.0" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.10.1" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.11.0" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive-0.8.1" />
+		
+		<!-- Tarball it -->
+		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
+			<tarfileset dir="${dist.packages.dir}" prefix="${name}-${version}" filemode="755" />
+		</tar>
+	</target>
+
+	<target name="package" depends="package-jobtype" description="Create all packages">
+	</target>
+
+</project>
