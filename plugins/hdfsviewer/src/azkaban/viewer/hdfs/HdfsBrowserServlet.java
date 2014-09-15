@@ -173,7 +173,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
     if (hasParam(req, "action") && getParam(req, "action").equals("goHomeDir")) {
       username = getParam(req, "proxyname");
     } else if (allowGroupProxy) {
-      String proxyName = (String) session.getSessionData(PROXY_USER_SESSION_KEY);
+      String proxyName =
+          (String) session.getSessionData(PROXY_USER_SESSION_KEY);
       if (proxyName != null) {
         username = proxyName;
       }
@@ -193,9 +194,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
         handleFsDisplay(username, req, resp, session);
       }
     } catch (Exception e) {
-      e.printStackTrace();
       throw new IllegalStateException("Error processing request: "
-          + e.getMessage());
+          + e.getMessage(), e);
     }
   }
 
@@ -270,11 +270,22 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 
     Path path = getPath(req);
     if (logger.isDebugEnabled()) {
-      logger.debug("path=" + path.toString());
+      logger.debug("path: '" + path.toString() + "'");
     }
-    if (!fs.exists(path)) {
+
+    try {
+      if (!fs.exists(path)) {
+        errorPage(user, req, resp, session, path.toUri().getPath()
+            + " does not exist.");
+        fs.close();
+        return;
+      }
+    } catch (IOException ioe) {
+      logger.error("Got exception while checking for existence of path '" + path
+          + "'", ioe);
       errorPage(user, req, resp, session, path.toUri().getPath()
-          + " does not exist.");
+          + " Encountered error while trying to detect if path '" + path
+          + "' exists. Reason: " + ioe.getMessage());
       fs.close();
       return;
     }
@@ -334,8 +345,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
       HttpServletRequest req, HttpServletResponse resp, Session session,
       Path path) throws IOException {
 
-    Page page = newPage(req, resp, session,
-        "azkaban/viewer/hdfs/velocity/hdfs-file.vm");
+    Page page =
+        newPage(req, resp, session, "azkaban/viewer/hdfs/velocity/hdfs-file.vm");
     page.add("allowproxy", allowGroupProxy);
     page.add("viewerPath", viewerPath);
     page.add("viewerName", viewerName);
