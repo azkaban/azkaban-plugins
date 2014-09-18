@@ -40,7 +40,7 @@ The job types in this package can be installed as follows:
 
 1. run ant in the azkaban-plugins directory, make sure you have installed the "dustjs-linkedin" module via "npm install -g less dustjs-linkedin"
 
-1. compile hadoopsecuritymanager
+2. compile hadoopsecuritymanager
 
 cd plugins/
 cd hadoopsecuritymanager/
@@ -48,7 +48,7 @@ ant
 
 ## this builds azkaban-hadoopsecuritymanager-0.10.jar
 
-2. build jobtype plugins, package with aforementioned directory structure
+3. build jobtype plugins, package with aforementioned directory structure
 
 cd plugins/
 cd jobtype/
