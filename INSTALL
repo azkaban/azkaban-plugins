@@ -12,7 +12,7 @@ Regardless, these hadoop jobs need hadoopsecuritymanager plugin for getting toke
 
 *****************Plugin Directory Structure*****************
 
-The jobtype plugins should be organized into a flat structure. 
+The jobtype plugins should be organized into a flat structure.
 for example:
 
 azkaban-executor-server/
@@ -28,15 +28,17 @@ One can use common.properties for system wide properties that will be inherited 
 Inside each jobtype directory, Azkaban2 looks for private.properties, which needs a minimum of following:
 jobtype.classpath 	---- the job type specific classes that this pluging classloader should load, and should be on individual job's classpath.
 jobtype.class		---- the plugin class that implements this job type.
-     
+
 The directory name will be inferred as the job type name in Azkaban2.
 
 One can have other settings that are not exposed to users in private.properties, and those visable to users in plugin.properties. These settings will inherit the global settings in common.properties and commonprivate.properties respectively.
-				
+
 
 *****************How to Install:*****************
 
 The job types in this package can be installed as follows:
+
+1. run ant in the azkaban-plugins directory, make sure you have installed the "dustjs-linkedin" module via "npm install -g less dustjs-linkedin"
 
 1. compile hadoopsecuritymanager
 
