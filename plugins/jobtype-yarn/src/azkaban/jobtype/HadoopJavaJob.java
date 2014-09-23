@@ -149,19 +149,6 @@ public class HadoopJavaJob extends JavaProcessJob {
 		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
 		classPath.add(getSourcePathFromClass(Props.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
-//		String loggerPath = getSourcePathFromClass(org.apache.log4j.Logger.class);
-//		if (!classPath.contains(loggerPath)) {
-//			classPath.add(loggerPath);
-//		}
-
-		// Add hadoop home to classpath
-//		String hadoopHome = System.getenv("HADOOP_HOME");
-//		if (hadoopHome == null) {
-//			info("HADOOP_HOME not set, using default hadoop config.");
-//		} else {
-//			info("Using hadoop config found in " + hadoopHome);
-//			classPath.add(new File(hadoopHome, "conf").getPath());
-//		}
 		
 		Set<String> items = new HashSet<String>();
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");

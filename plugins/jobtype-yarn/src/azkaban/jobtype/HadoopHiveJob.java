@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
@@ -227,13 +229,15 @@ public class HadoopHiveJob extends JavaProcessJob {
 
 	@Override
 	protected List<String> getClassPaths() {
-		
-		List<String> classPath = super.getClassPaths();
+		List<String> classPath;
 
+		classPath = super.getClassPaths();
+
+		classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
 		classPath.add(getSourcePathFromClass(Props.class));
-		classPath.add(getSourcePathFromClass(HadoopSecureHiveWrapper.class));
 		classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
-
+		
+		Set<String> items = new HashSet<String>();
 		List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
 		if(typeClassPath != null) {
 			// fill in this when load this jobtype
@@ -243,9 +247,9 @@ public class HadoopHiveJob extends JavaProcessJob {
 				if(!jarFile.isAbsolute()) {
 					jarFile = new File(pluginDir + File.separatorChar + jar);
 				}
-				
-				if(!classPath.contains(jarFile.getAbsoluteFile())) {
-					classPath.add(jarFile.getAbsolutePath());
+				items.add(jarFile.getAbsolutePath());
+				if(jarFile.isDirectory()) {
+					items.add(jarFile.getAbsolutePath() + File.separatorChar + "*");
 				}
 			}
 		}
@@ -254,12 +258,16 @@ public class HadoopHiveJob extends JavaProcessJob {
 		List<String> typeGlobalClassPath = getSysProps().getStringList("jobtype.global.classpath", null, ",");
 		if(typeGlobalClassPath != null) {
 			for(String jar : typeGlobalClassPath) {
-				if(!classPath.contains(jar)) {
-					classPath.add(jar);
+				File dir = new File(jar);
+				items.add(dir.getAbsolutePath());
+				if(dir.isDirectory()) {
+					items.add(dir.getAbsolutePath() + File.separatorChar + "*");
 				}
 			}
 		}
 		
+		classPath.addAll(items);
+
 		return classPath;
 	}
 
