@@ -38,6 +38,7 @@ import azkaban.utils.StringUtils;
 public class HadoopHiveJob extends JavaProcessJob {
 
 	public static final String HIVE_SCRIPT = "hive.script";
+	public static final String HIVE_INIT_SCRIPT = "hive.init.script";
 	private static final String HIVE_PARAM_PREFIX = "hiveconf.";
 	public static final String HADOOP_SECURE_HIVE_WRAPPER = "azkaban.jobtype.HadoopSecureHiveWrapper";
 	
@@ -221,6 +222,12 @@ public class HadoopHiveJob extends JavaProcessJob {
 			list.add("hive.root.logger=INFO,console");
 		}
 		
+		String initScript = getInitScript();
+		if(initScript != null && initScript.length()>0) {
+			list.add("-i");
+			list.add(initScript);
+		}
+		
 		list.add("-f");
 		list.add(getScript());
 
@@ -271,6 +278,10 @@ public class HadoopHiveJob extends JavaProcessJob {
 		return classPath;
 	}
 
+	protected String getInitScript() {
+		return getJobProps().getString(HIVE_INIT_SCRIPT);
+	}
+	
 	protected String getScript() {
 		return getJobProps().getString(HIVE_SCRIPT);
 	}

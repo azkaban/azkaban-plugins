@@ -185,14 +185,14 @@ public class HadoopSecureHiveWrapper {
 		//TODO: logFile, still useful?
 		logger.info("Executing query: " + hiveScript);
 
-		CliDriver cli = new CliDriver();
-		int returnCode = cli.processFile(hiveScript);
-		if (returnCode != 0) {
-			logger.warn("Got exception " + returnCode + " from line: " + hiveScript);
-			throw new HiveQueryExecutionException(returnCode, hiveScript);
-		}
+//		CliDriver cli = new CliDriver();
+//		int returnCode = cli.processFile(hiveScript);
+//		if (returnCode != 0) {
+//			logger.warn("Got exception " + returnCode + " from line: " + hiveScript);
+//			throw new HiveQueryExecutionException(returnCode, hiveScript);
+//		}
 		
-//		CliDriver.main(args);
+		CliDriver.main(args);
 	}
 	
 	public static boolean shouldProxy(Properties prop) {
