@@ -262,7 +262,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     else if (ajaxName.equals("subscribe")) {
       boolean wasSubscribed = ReportalHelper.isSubscribeProject(project, user);
       if (!wasSubscribed && reportal.getAccessViewers().size() > 0
-          && !project.hasPermission(user, Type.READ)) {
+          && !hasPermission(project, user, Type.READ)) {
         ret.put("error", "You do not have permissions to view this reportal.");
       } else {
         try {
@@ -378,7 +378,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     }
 
     if (reportal.getAccessViewers().size() > 0
-        && !project.hasPermission(session.getUser(), Type.READ)) {
+        && !hasPermission(project, session.getUser(), Type.READ)) {
       page.add("errorMsg", "You are not allowed to view this report.");
       page.render();
       return;
@@ -620,7 +620,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     }
 
     if (reportal.getAccessExecutors().size() > 0
-        && !project.hasPermission(session.getUser(), Type.EXECUTE)) {
+        && !hasPermission(project, session.getUser(), Type.EXECUTE)) {
       page.add("errorMsg", "You are not allowed to run this report.");
       page.render();
       return;
@@ -695,7 +695,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
       return;
     }
 
-    if (!project.hasPermission(session.getUser(), Type.ADMIN)) {
+    if (!hasPermission(project, session.getUser(), Type.ADMIN)) {
       errors.add("You are not allowed to edit this report.");
       page.add("errorMsgs", errors);
       page.render();
@@ -1119,7 +1119,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     User user = session.getUser();
 
     if (report.getAccessExecutors().size() > 0
-        && !project.hasPermission(user, Type.EXECUTE)) {
+        && !hasPermission(project, user, Type.EXECUTE)) {
       ret.put("error", "You are not allowed to run this report.");
       return;
     }
