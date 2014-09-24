@@ -727,7 +727,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
     page.render();
   }
-  
+
   @Override
   protected void handlePost(HttpServletRequest req, HttpServletResponse resp,
       Session session) throws ServletException, IOException {
