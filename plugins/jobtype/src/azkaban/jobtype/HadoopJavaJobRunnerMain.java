@@ -16,19 +16,8 @@
 
 package azkaban.jobtype;
 
-import azkaban.jobExecutor.ProcessJob;
-import azkaban.utils.JSONUtils;
-import azkaban.utils.Props;
-
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Layout;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-
-import azkaban.security.commons.HadoopSecurityManager;
+import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -45,8 +34,18 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
-import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.token.Token;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Layout;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+
+import azkaban.jobExecutor.ProcessJob;
+import azkaban.security.commons.HadoopSecurityManager;
+import azkaban.utils.JSONUtils;
+import azkaban.utils.Props;
 
 public class HadoopJavaJobRunnerMain {
 
@@ -186,15 +185,21 @@ public class HadoopJavaJobRunnerMain {
                 new Class<?>[] {});
         Object outputGendProps =
             generatedPropertiesMethod.invoke(_javaObject, new Object[] {});
-        final Method toPropertiesMethod =
-            outputGendProps.getClass().getMethod("toProperties",
-                new Class<?>[] {});
-        Properties properties =
-            (Properties) toPropertiesMethod.invoke(outputGendProps,
-                new Object[] {});
 
-        Props outputProps = new Props(null, properties);
-        outputGeneratedProperties(outputProps);
+        if (outputGendProps != null) {
+          final Method toPropertiesMethod =
+              outputGendProps.getClass().getMethod("toProperties",
+                  new Class<?>[] {});
+          Properties properties =
+              (Properties) toPropertiesMethod.invoke(outputGendProps,
+                  new Object[] {});
+
+          Props outputProps = new Props(null, properties);
+          outputGeneratedProperties(outputProps);
+        } else {
+          _logger.info(GET_GENERATED_PROPERTIES_METHOD
+              + " method returned null.  No properties to pass along");
+        }
       } catch (NoSuchMethodException e) {
         _logger.info(String.format(
             "Apparently there isn't a method[%s] on object[%s], using "
