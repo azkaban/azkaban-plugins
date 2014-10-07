@@ -20,6 +20,13 @@ import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEAUXJARS;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORECONNECTURLKEY;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
+import java.util.Properties;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.cli.CliDriver;
@@ -28,7 +35,6 @@ import org.apache.hadoop.hive.cli.OptionsProcessor;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.log4j.Logger;
@@ -36,13 +42,6 @@ import org.apache.log4j.Logger;
 import azkaban.jobExecutor.ProcessJob;
 import azkaban.jobtype.hiveutils.HiveQueryExecutionException;
 import azkaban.security.commons.HadoopSecurityManager;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.security.PrivilegedExceptionAction;
-import java.util.Properties;
 
 public class HadoopSecureHiveWrapper {
 
@@ -124,6 +123,8 @@ public class HadoopSecureHiveWrapper {
 
     final HiveConf hiveConf = new HiveConf(SessionState.class);
 
+    populateHiveConf(hiveConf, args);
+
     if (System.getenv(HADOOP_TOKEN_FILE_LOCATION) != null) {
       System.out.println("Setting hadoop tokens ... ");
       hiveConf.set(MAPREDUCE_JOB_CREDENTIALS_BINARY,
@@ -160,7 +161,8 @@ public class HadoopSecureHiveWrapper {
     logger.info("Got auxJars = " + auxJars);
 
     if (StringUtils.isNotBlank(auxJars)) {
-      loader = Utilities.addToClassPath(loader, StringUtils.split(auxJars, ","));
+      loader =
+          Utilities.addToClassPath(loader, StringUtils.split(auxJars, ","));
     }
     hiveConf.setClassLoader(loader);
     Thread.currentThread().setContextClassLoader(loader);
@@ -236,6 +238,47 @@ public class HadoopSecureHiveWrapper {
     }
 
     return sb.toString();
+  }
+
+  /**
+   * Extract hiveconf from command line arguments and populate them into
+   * HiveConf
+   * 
+   * An exammple: -hiveconf 'zipcode=10', -hiveconf
+   * hive.root.logger=INFO,console
+   * 
+   * @param hiveConf
+   * @param args
+   */
+  private static void populateHiveConf(HiveConf hiveConf, String[] args) {
+
+    if (args == null) {
+      return;
+    }
+
+    int index = 0;
+    for (; index < args.length; index++) {
+      if ("-hiveconf".equals(args[index])) {
+        String hiveConfParam = args[++index];
+
+        String[] tokens = hiveConfParam.split("=");
+        if (tokens.length == 2) {
+          String name = tokens[0];
+          if (name.startsWith("'") || name.startsWith("\"")) {
+            name = name.substring(1);
+          }
+
+          String value = tokens[1];
+          if (value.endsWith("'") || value.endsWith("\"")) {
+            value = value.substring(1);
+          }
+          logger.info("Setting: " + name + " value:" + value + " to hiveConf");
+          hiveConf.set(name, value);
+        } else {
+          logger.warn("Invalid hiveconf: " + hiveConfParam);
+        }
+      }
+    }
   }
 
 }
