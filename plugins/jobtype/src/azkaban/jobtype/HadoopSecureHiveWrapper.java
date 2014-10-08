@@ -16,8 +16,6 @@
 package azkaban.jobtype;
 
 import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
-import static azkaban.utils.StringUtils.DOUBLE_QUOTE;
-import static azkaban.utils.StringUtils.SINGLE_QUOTE;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEAUXJARS;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORECONNECTURLKEY;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
@@ -46,11 +44,6 @@ import azkaban.jobtype.hiveutils.HiveQueryExecutionException;
 import azkaban.security.commons.HadoopSecurityManager;
 
 public class HadoopSecureHiveWrapper {
-
-  private static final String DOUBLE_QUOTE_STRING = Character
-      .toString(DOUBLE_QUOTE);
-  private static final String SINGLE_QUOTE_STRING = Character
-      .toString(SINGLE_QUOTE);
 
   private static boolean securityEnabled;
   private static final Logger logger = Logger.getRootLogger();
