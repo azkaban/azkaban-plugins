@@ -16,6 +16,8 @@
 package azkaban.jobtype;
 
 import static azkaban.security.commons.SecurityUtils.MAPREDUCE_JOB_CREDENTIALS_BINARY;
+import static azkaban.utils.StringUtils.DOUBLE_QUOTE;
+import static azkaban.utils.StringUtils.SINGLE_QUOTE;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEAUXJARS;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORECONNECTURLKEY;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
@@ -25,6 +27,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
@@ -44,6 +49,11 @@ import azkaban.jobtype.hiveutils.HiveQueryExecutionException;
 import azkaban.security.commons.HadoopSecurityManager;
 
 public class HadoopSecureHiveWrapper {
+
+  private static final String DOUBLE_QUOTE_STRING = Character
+      .toString(DOUBLE_QUOTE);
+  private static final String SINGLE_QUOTE_STRING = Character
+      .toString(SINGLE_QUOTE);
 
   private static boolean securityEnabled;
   private static final Logger logger = Logger.getRootLogger();
@@ -190,6 +200,14 @@ public class HadoopSecureHiveWrapper {
     logger.info("Executing query: " + hiveScript);
 
     CliDriver cli = new CliDriver();
+    Map<String, String> hiveVarMap = getHiveVarMap(args);
+
+    logger.info("hiveVarMap: " + hiveVarMap);
+
+    if (!hiveVarMap.isEmpty()) {
+      cli.setHiveVariables(getHiveVarMap(args));
+    }
+
     int returnCode = cli.processFile(hiveScript);
     if (returnCode != 0) {
       logger.warn("Got exception " + returnCode + " from line: " + hiveScript);
@@ -258,7 +276,7 @@ public class HadoopSecureHiveWrapper {
     int index = 0;
     for (; index < args.length; index++) {
       if ("-hiveconf".equals(args[index])) {
-        String hiveConfParam = args[++index];
+        String hiveConfParam = stripSingleDoubleQuote(args[++index]);
 
         String[] tokens = hiveConfParam.split("=");
         if (tokens.length == 2) {
@@ -273,4 +291,53 @@ public class HadoopSecureHiveWrapper {
     }
   }
 
+  private static Map<String, String> getHiveVarMap(String[] args) {
+
+    if (args == null) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, String> hiveVarMap = new HashMap<String, String>();
+    int index = 0;
+    for (; index < args.length; index++) {
+      if ("-hivevar".equals(args[index])) {
+        String hiveVarParam = stripSingleDoubleQuote(args[++index]);
+
+        String[] tokens = hiveVarParam.split("=");
+        if (tokens.length == 2) {
+          String name = tokens[0];
+          String value = tokens[1];
+          logger.info("Setting hivevar: " + name + "=" + value);
+          hiveVarMap.put(name, value);
+        } else {
+          logger.warn("Invalid hivevar: " + hiveVarParam);
+        }
+      }
+    }
+    return hiveVarMap;
+  }
+
+  /**
+   * Strip single quote or double quote at either end of the string
+   * 
+   * @param input
+   * @return string with w/o leading or trailing single or double quote
+   */
+  private static String stripSingleDoubleQuote(String input) {
+    if (StringUtils.isEmpty(input)) {
+      return input;
+    }
+
+    if (input.startsWith(SINGLE_QUOTE_STRING)
+        || input.startsWith(DOUBLE_QUOTE_STRING)) {
+      input = input.substring(1);
+    }
+
+    if (input.endsWith(SINGLE_QUOTE_STRING)
+        || input.endsWith(DOUBLE_QUOTE_STRING)) {
+      input = input.substring(0, input.length() - 1);
+    }
+
+    return input;
+  }
 }

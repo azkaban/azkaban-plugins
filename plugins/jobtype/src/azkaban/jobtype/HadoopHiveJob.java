@@ -16,6 +16,8 @@
 
 package azkaban.jobtype;
 
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -28,19 +30,17 @@ import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 
+import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.security.commons.HadoopSecurityManagerException;
-
-import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
-
-import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 public class HadoopHiveJob extends JavaProcessJob {
 
   public static final String HIVE_SCRIPT = "hive.script";
-  private static final String HIVE_PARAM_PREFIX = "hiveconf.";
+  private static final String HIVECONF_PARAM_PREFIX = "hiveconf.";
+  private static final String HIVEVAR_PARAM_PREFIX = "hivevar.";
   public static final String HADOOP_SECURE_HIVE_WRAPPER =
       "azkaban.jobtype.HadoopSecureHiveWrapper";
 
@@ -231,6 +231,7 @@ public class HadoopHiveJob extends JavaProcessJob {
   protected String getMainArguments() {
     ArrayList<String> list = new ArrayList<String>();
 
+    // for hivevar
     Map<String, String> map = getHiveConf();
     if (map != null) {
       for (Map.Entry<String, String> entry : map.entrySet()) {
@@ -243,6 +244,16 @@ public class HadoopHiveJob extends JavaProcessJob {
     if (debug) {
       list.add("-hiveconf");
       list.add("hive.root.logger=INFO,console");
+    }
+
+    // for hivevar
+    Map<String, String> hiveVarMap = getHiveVar();
+    if (hiveVarMap != null) {
+      for (Map.Entry<String, String> entry : hiveVarMap.entrySet()) {
+        list.add("-hivevar "
+            + StringUtils.shellQuote(entry.getKey() + "=" + entry.getValue(),
+                StringUtils.SINGLE_QUOTE));
+      }
     }
 
     list.add("-f");
@@ -297,7 +308,11 @@ public class HadoopHiveJob extends JavaProcessJob {
   }
 
   protected Map<String, String> getHiveConf() {
-    return getJobProps().getMapByPrefix(HIVE_PARAM_PREFIX);
+    return getJobProps().getMapByPrefix(HIVECONF_PARAM_PREFIX);
+  }
+
+  protected Map<String, String> getHiveVar() {
+    return getJobProps().getMapByPrefix(HIVEVAR_PARAM_PREFIX);
   }
 
   private static String getSourcePathFromClass(Class<?> containedClass) {
