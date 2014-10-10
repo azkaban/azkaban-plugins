@@ -231,13 +231,13 @@ public class HadoopHiveJob extends JavaProcessJob {
   protected String getMainArguments() {
     ArrayList<String> list = new ArrayList<String>();
 
-    // for hivevar
+    // for hiveconf
     Map<String, String> map = getHiveConf();
     if (map != null) {
       for (Map.Entry<String, String> entry : map.entrySet()) {
-        list.add("-hiveconf "
-            + StringUtils.shellQuote(entry.getKey() + "=" + entry.getValue(),
-                StringUtils.SINGLE_QUOTE));
+        list.add("-hiveconf");
+        list.add(StringUtils.shellQuote(
+            entry.getKey() + "=" + entry.getValue(), StringUtils.SINGLE_QUOTE));
       }
     }
 
@@ -250,9 +250,9 @@ public class HadoopHiveJob extends JavaProcessJob {
     Map<String, String> hiveVarMap = getHiveVar();
     if (hiveVarMap != null) {
       for (Map.Entry<String, String> entry : hiveVarMap.entrySet()) {
-        list.add("-hivevar "
-            + StringUtils.shellQuote(entry.getKey() + "=" + entry.getValue(),
-                StringUtils.SINGLE_QUOTE));
+        list.add("-hivevar");
+        list.add(StringUtils.shellQuote(
+            entry.getKey() + "=" + entry.getValue(), StringUtils.SINGLE_QUOTE));
       }
     }
 
