@@ -91,12 +91,12 @@
                     <br/>
       #end
 
-                    $errorMsg
+                    $esc.html($errorMsg)
     #end
         </div>
   #else
     #if($error_message != "null")
-        <div class="box-error-message">$error_message</div>
+        <div class="box-error-message">$esc.html($error_message)</div>
     #elseif($success_message != "null")
         <div class="box-success-message">$success_message</div>
     #end
