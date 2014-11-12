@@ -305,7 +305,7 @@ public class HadoopPigJob extends JavaProcessJob {
       classPath.add(getSourcePathFromClass(PigRunner.class));
     }
 
-    // merging classpaths from plugins.properties
+    // merging classpaths from plugin.properties
     mergeClassPaths(classPath, getJobProps().getStringList("jobtype.classpath", null, ","));
     // merging classpaths from private.properties
     mergeClassPaths(classPath, getSysProps().getStringList("jobtype.classpath", null, ","));
