@@ -97,11 +97,16 @@ public class HadoopConfigurationInjector {
    * @return
    */
   public static String getDirName(Props jobProps) {
-    String jobId = jobProps.get("azkaban.job.id");
-    if ((jobId == null) || (jobId.length() == 0)) {
-      throw new RuntimeException("azkaban.job.id was not set");
+    String dirSuffix = jobProps.get("azkaban.flow.nested.path");
+
+    if((dirSuffix == null) || (dirSuffix.length() == 0)) {
+      dirSuffix = jobProps.get("azkaban.job.id");
+      if ((dirSuffix == null) || (dirSuffix.length() == 0)) {
+        throw new RuntimeException("azkaban.flow.nested.path and azkaban.job.id were not set");
+      }
     }
-    return "_link_" + jobId;
+
+    return "_link_" + dirSuffix;
   }
 
   public static void loadProp(Props props, Configuration conf, String name) {
