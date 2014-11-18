@@ -304,8 +304,26 @@ public class HadoopPigJob extends JavaProcessJob {
     if (!userPigJar) {
       classPath.add(getSourcePathFromClass(PigRunner.class));
     }
-    List<String> typeClassPath =
-        getSysProps().getStringList("jobtype.classpath", null, ",");
+
+    // merging classpaths from plugin.properties
+    mergeClassPaths(classPath, getJobProps().getStringList("jobtype.classpath", null, ","));
+    // merging classpaths from private.properties
+    mergeClassPaths(classPath, getSysProps().getStringList("jobtype.classpath", null, ","));
+
+    List<String> typeGlobalClassPath =
+        getSysProps().getStringList("jobtype.global.classpath", null, ",");
+    if (typeGlobalClassPath != null) {
+      for (String jar : typeGlobalClassPath) {
+        if (!classPath.contains(jar)) {
+          classPath.add(jar);
+        }
+      }
+    }
+
+    return classPath;
+  }
+
+  private void mergeClassPaths(List<String> classPath, List<String> typeClassPath) {
     if (typeClassPath != null) {
       // fill in this when load this jobtype
       String pluginDir = getSysProps().get("plugin.dir");
@@ -320,18 +338,6 @@ public class HadoopPigJob extends JavaProcessJob {
         }
       }
     }
-
-    List<String> typeGlobalClassPath =
-        getSysProps().getStringList("jobtype.global.classpath", null, ",");
-    if (typeGlobalClassPath != null) {
-      for (String jar : typeGlobalClassPath) {
-        if (!classPath.contains(jar)) {
-          classPath.add(jar);
-        }
-      }
-    }
-
-    return classPath;
   }
 
   protected boolean getDebug() {
