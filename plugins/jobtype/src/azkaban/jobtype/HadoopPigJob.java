@@ -371,11 +371,11 @@ public class HadoopPigJob extends JavaProcessJob {
     return additionalJars;
   }
 
-  private void mergeAdditionalJars(List<String> additionalJars, String additionalJarPropery) {
+  private void mergeAdditionalJars(List<String> additionalJars, String additionalJarProperty) {
     List<String> typeJars =
-        getSysProps().getStringList(additionalJarPropery, null, ",");
+        getSysProps().getStringList(additionalJarProperty, null, ",");
     List<String> jobJars =
-        getJobProps().getStringList(additionalJarPropery, null, ",");
+        getJobProps().getStringList(additionalJarProperty, null, ",");
     if (typeJars != null) {
       additionalJars.addAll(typeJars);
     }
