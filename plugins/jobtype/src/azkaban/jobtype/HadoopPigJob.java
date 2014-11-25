@@ -52,6 +52,7 @@ public class HadoopPigJob extends JavaProcessJob {
   public static final String PIG_SCRIPT = "pig.script";
   public static final String UDF_IMPORT = "udf.import.list";
   public static final String PIG_ADDITIONAL_JARS = "pig.additional.jars";
+  public static final String DEFAULT_PIG_ADDITIONAL_JARS = "default.pig.additional.jars";
   public static final String PIG_PARAM_PREFIX = "param.";
   public static final String PIG_PARAM_FILES = "paramfile";
   public static final String HADOOP_UGI = "hadoop.job.ugi";
@@ -365,17 +366,25 @@ public class HadoopPigJob extends JavaProcessJob {
 
   protected List<String> getAdditionalJarsList() {
     List<String> additionalJars = new ArrayList<String>();
-    List<String> typeJars =
-        getSysProps().getStringList(PIG_ADDITIONAL_JARS, null, ",");
+    mergeAdditionalJars(additionalJars, PIG_ADDITIONAL_JARS);
+    mergeAdditionalJars(additionalJars, DEFAULT_PIG_ADDITIONAL_JARS);
+    return additionalJars;
+  }
+
+  /** Merging all additional jars first from user specified/plugin.properties 
+   * then private.properties for additionalJarProperty property 
+   */
+  private void mergeAdditionalJars(List<String> additionalJars, String additionalJarProperty) {
     List<String> jobJars =
-        getJobProps().getStringList(PIG_ADDITIONAL_JARS, null, ",");
-    if (typeJars != null) {
-      additionalJars.addAll(typeJars);
-    }
+        getJobProps().getStringList(additionalJarProperty, null, ",");
+    List<String> typeJars =
+        getSysProps().getStringList(additionalJarProperty, null, ",");
     if (jobJars != null) {
       additionalJars.addAll(jobJars);
     }
-    return additionalJars;
+    if (typeJars != null) {
+      additionalJars.addAll(typeJars);
+    }
   }
 
   protected String getHadoopUGI() {
@@ -410,3 +419,4 @@ public class HadoopPigJob extends JavaProcessJob {
     }
   }
 }
+
