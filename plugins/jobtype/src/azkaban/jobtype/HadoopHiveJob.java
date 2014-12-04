@@ -81,6 +81,8 @@ public class HadoopHiveJob extends JavaProcessJob {
   public void run() throws Exception {
     HadoopConfigurationInjector.prepareLinks(getJobProps(),
         getWorkingDirectory());
+    HadoopConfigurationInjector.prepareConf(getJobProps(),
+        getWorkingDirectory());
 
     File tokenFile = null;
     if (shouldProxy && obtainTokens) {

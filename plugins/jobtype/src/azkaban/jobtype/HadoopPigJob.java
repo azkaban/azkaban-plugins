@@ -100,6 +100,8 @@ public class HadoopPigJob extends JavaProcessJob {
   public void run() throws Exception {
     HadoopConfigurationInjector.prepareLinks(getJobProps(),
         getWorkingDirectory());
+    HadoopConfigurationInjector.prepareConf(getJobProps(),
+        getWorkingDirectory());
 
     File f = null;
     if (shouldProxy && obtainTokens) {

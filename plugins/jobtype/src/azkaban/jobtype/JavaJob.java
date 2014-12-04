@@ -154,6 +154,8 @@ public class JavaJob extends JavaProcessJob {
   public void run() throws Exception {
     HadoopConfigurationInjector.prepareLinks(getJobProps(),
         getWorkingDirectory());
+    HadoopConfigurationInjector.prepareConf(getJobProps(),
+        getWorkingDirectory());
     super.run();
   }
 }

@@ -85,6 +85,7 @@ public class HadoopSecurePigWrapper {
     props = new Props(null, new File(propsFile));
 
     HadoopConfigurationInjector.injectLinks();
+    HadoopConfigurationInjector.injectConf();
 
     final Configuration conf = new Configuration();
 
