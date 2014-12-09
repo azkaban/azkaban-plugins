@@ -84,8 +84,7 @@ public class HadoopSecurePigWrapper {
     String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
     props = new Props(null, new File(propsFile));
 
-    HadoopConfigurationInjector.injectLinks();
-    HadoopConfigurationInjector.injectConf();
+    HadoopConfigurationInjector.injectResources();
 
     final Configuration conf = new Configuration();
 

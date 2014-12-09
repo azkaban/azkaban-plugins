@@ -98,9 +98,7 @@ public class HadoopPigJob extends JavaProcessJob {
 
   @Override
   public void run() throws Exception {
-    HadoopConfigurationInjector.prepareLinks(getJobProps(),
-        getWorkingDirectory());
-    HadoopConfigurationInjector.prepareConf(getJobProps(),
+    HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(),
         getWorkingDirectory());
 
     File f = null;

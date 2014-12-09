@@ -25,32 +25,31 @@ import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
 
-import azkaban.utils.Props;
 
 /**
  * HadoopConfigurationInjector is responsible for inserting links back to the
- * Azkaban UI in configurations. It is assumed that the necessary links have
- * already been loaded into the properties. After writing the necessary links as
- * a xml file as required by Hadoop's configuration, clients may add the links
- * as a default resource using injectLinks() so that they are included in any
- * Configuration constructed
+ * Azkaban UI in configurations and for automatically injecting designated job
+ * properties into the Hadoop configuration.
+ * <p>
+ * It is assumed that the necessary links have already been loaded into the
+ * properties. After writing the necessary links as a xml file as required by
+ * Hadoop's configuration, clients may add the links as a default resource
+ * using injectResources() so that they are included in any Configuration
+ * constructed.
  */
 public class HadoopConfigurationInjector {
   private static Logger _logger = Logger.getLogger(HadoopConfigurationInjector.class);
+  private static String azkabanInjectFile = "azkaban-inject.xml";
+  private static String azkabanLinksFile = "azkaban-links.xml";
 
-  /**
-   * To be called by the forked process to load the Hadoop conf properties.
+  /*
+   * To be called by the forked process to load the generated links and Hadoop
+   * configuration properties to automatically inject.
    */
-  public static void injectConf() {
-    Configuration.addDefaultResource("hadoop-conf.xml");
-  }
-
-  /**
-   * To be called by the forked process to load the generated links.
-   */
-  public static void injectLinks() {
-    Configuration.addDefaultResource("azkaban-links.xml");
-  }
+  public static void injectResources() {
+    Configuration.addDefaultResource(azkabanInjectFile);
+    Configuration.addDefaultResource(azkabanLinksFile);
+   }
 
   /**
    * Gets the path to the directory in which the generated links and Hadoop
@@ -64,13 +63,25 @@ public class HadoopConfigurationInjector {
   }
 
   /**
+   * Writes out the XML configuration files that will be injected by the client
+   * as configuration resources.
+   *
+   * @param props The Azkaban properties
+   * @param workingDir The Azkaban job working directory
+   */
+  public static void prepareResourcesToInject(Props props, String workingDir) {
+    prepareConf(props, workingDir);
+    prepareLinks(props, workingDir);
+   }
+
+  /**
    * Write out links to a xml file so that they may be loaded by a client as a
    * configuration resource.
    * 
    * @param props The Azkaban properties
    * @param workingDir The Azkaban job working directory
    */
-  public static void prepareLinks(Props props, String workingDir) {
+  private static void prepareLinks(Props props, String workingDir) {
     try {
       Configuration conf = new Configuration(false);
       // These are equivalent to
@@ -84,7 +95,7 @@ public class HadoopConfigurationInjector {
       loadProp(props, conf, "azkaban.job.outnodes");
       loadProp(props, conf, "azkaban.job.innodes");
 
-      File file = getConfFile(props, workingDir, "azkaban-links.xml");
+      File file = getConfFile(props, workingDir, azkabanLinksFile);
       OutputStream xmlOut = new FileOutputStream(file);
       conf.writeXml(xmlOut);
       xmlOut.close();
@@ -100,7 +111,7 @@ public class HadoopConfigurationInjector {
    * @param props The Azkaban properties
    * @param workingDir The Azkaban job working directory
    */
-  public static void prepareConf(Props props, String workingDir) {
+  private static void prepareConf(Props props, String workingDir) {
     try {
       Configuration conf = new Configuration(false);
       String confPrefix = "hadoop-conf.";
@@ -114,7 +125,7 @@ public class HadoopConfigurationInjector {
 
       // Note that we'll still write out the file, even if we didn't set any
       // properties, as the injectConf method expects this file to be present.
-      File file = getConfFile(props, workingDir, "hadoop-conf.xml");
+      File file = getConfFile(props, workingDir, azkabanInjectFile);
       OutputStream xmlOut = new FileOutputStream(file);
       conf.writeXml(xmlOut);
       xmlOut.close();

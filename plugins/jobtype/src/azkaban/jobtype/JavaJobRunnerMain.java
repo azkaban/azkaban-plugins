@@ -104,8 +104,7 @@ public class JavaJobRunnerMain {
       }
       _logger.info("Class name " + className);
 
-      HadoopConfigurationInjector.injectLinks();
-      HadoopConfigurationInjector.injectConf();
+      HadoopConfigurationInjector.injectResources();
 
       // Create the object using proxy
       if (SecurityUtils.shouldProxy(prop)) {
