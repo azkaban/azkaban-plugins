@@ -114,7 +114,7 @@ public class HadoopConfigurationInjector {
   private static void prepareConf(Props props, String workingDir) {
     try {
       Configuration conf = new Configuration(false);
-      String confPrefix = "hadoop-conf.";
+      String confPrefix = "azkaban-inject.";
       Map<String, String> confProperties = props.getMapByPrefix(confPrefix);
 
       for (Map.Entry<String, String> entry : confProperties.entrySet()) {
