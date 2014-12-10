@@ -39,8 +39,11 @@ import org.apache.log4j.Logger;
  */
 public class HadoopConfigurationInjector {
   private static Logger _logger = Logger.getLogger(HadoopConfigurationInjector.class);
-  private static String azkabanInjectFile = "azkaban-inject.xml";
-  private static String azkabanLinksFile = "azkaban-links.xml";
+  private static final String azkabanInjectFile = "azkaban-inject.xml";
+  private static final String azkabanLinksFile = "azkaban-links.xml";
+
+  // Prefix for properties to be automatically injected into the Hadoop conf.
+  public static final String injectPrefix = "azkaban-inject.";
 
   /*
    * To be called by the forked process to load the generated links and Hadoop
@@ -49,7 +52,7 @@ public class HadoopConfigurationInjector {
   public static void injectResources() {
     Configuration.addDefaultResource(azkabanInjectFile);
     Configuration.addDefaultResource(azkabanLinksFile);
-   }
+  }
 
   /**
    * Gets the path to the directory in which the generated links and Hadoop
@@ -114,11 +117,10 @@ public class HadoopConfigurationInjector {
   private static void prepareConf(Props props, String workingDir) {
     try {
       Configuration conf = new Configuration(false);
-      String confPrefix = "azkaban-inject.";
-      Map<String, String> confProperties = props.getMapByPrefix(confPrefix);
+      Map<String, String> confProperties = props.getMapByPrefix(injectPrefix);
 
       for (Map.Entry<String, String> entry : confProperties.entrySet()) {
-        String confKey = entry.getKey().replace(confPrefix, "");
+        String confKey = entry.getKey().replace(injectPrefix, "");
         String confVal = entry.getValue();
         conf.set(confKey, confVal);
       }
