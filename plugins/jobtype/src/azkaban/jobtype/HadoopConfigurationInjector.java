@@ -56,7 +56,7 @@ public class HadoopConfigurationInjector {
    * Writes out the XML configuration file that will be injected by the client
    * as a configuration resource.
    * <p>
-   * This will file include a series of links injected by Azkaban as well as
+   * This file will include a series of links injected by Azkaban as well as
    * any job properties that begin with the designated injection prefix.
    *
    * @param props The Azkaban properties
