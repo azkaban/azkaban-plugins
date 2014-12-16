@@ -15,48 +15,58 @@
  */
 package azkaban.jobtype;
 
+import azkaban.utils.Props;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
 
-import azkaban.utils.Props;
 
 /**
  * HadoopConfigurationInjector is responsible for inserting links back to the
- * Azkaban UI in configurations. It is assumed that the necessary links have
- * already been loaded into the properties. After writing the necessary links as
- * a xml file as required by Hadoop's configuration, clients may add the links
- * as a default resource using injectLinks() so that they are included in any
- * Configuration constructed
+ * Azkaban UI in configurations and for automatically injecting designated job
+ * properties into the Hadoop configuration.
+ * <p>
+ * It is assumed that the necessary links have already been loaded into the
+ * properties. After writing the necessary links as a xml file as required by
+ * Hadoop's configuration, clients may add the links as a default resource
+ * using injectResources() so that they are included in any Configuration
+ * constructed.
  */
 public class HadoopConfigurationInjector {
   private static Logger _logger = Logger.getLogger(HadoopConfigurationInjector.class);
-  /**
-   * To be called by the forked process to load the generated links
+  private static final String injectFile = "hadoop-inject.xml";
+
+  // Prefix for properties to be automatically injected into the Hadoop conf.
+  public static final String injectPrefix = "hadoop-inject.";
+
+  /*
+   * To be called by the forked process to load the generated links and Hadoop
+   * configuration properties to automatically inject.
    */
-  public static void injectLinks() {
-    Configuration.addDefaultResource("azkaban-links.xml");
+  public static void injectResources() {
+    Configuration.addDefaultResource(injectFile);
   }
 
-  public static String getPath(Props jobProps, String workingDir) {
-    return new File(workingDir, getDirName(jobProps)).toString();
-  }
-
   /**
-   * Write out links to a xml file so that they may be loaded by a client as a
-   * configuration resource
-   * 
-   * @param props
-   * @param workingDir
+   * Writes out the XML configuration file that will be injected by the client
+   * as a configuration resource.
+   * <p>
+   * This file will include a series of links injected by Azkaban as well as
+   * any job properties that begin with the designated injection prefix.
+   *
+   * @param props The Azkaban properties
+   * @param workingDir The Azkaban job working directory
    */
-  public static void prepareLinks(Props props, String workingDir) {
+  public static void prepareResourcesToInject(Props props, String workingDir) {
     try {
-      File file = getLinkFile(props, workingDir);
       Configuration conf = new Configuration(false);
-      // These are equivalent to
+
+      // First, inject a series of Azkaban links. These are equivalent to
       // CommonJobProperties.[EXECUTION,WORKFLOW,JOB,JOBEXEC,ATTEMPT]_LINK
       // respectively, but we use literals for backwards compatibility.
       loadProp(props, conf, "azkaban.link.execution.url");
@@ -64,51 +74,81 @@ public class HadoopConfigurationInjector {
       loadProp(props, conf, "azkaban.link.job.url");
       loadProp(props, conf, "azkaban.link.jobexec.url");
       loadProp(props, conf, "azkaban.link.attempt.url");
-
       loadProp(props, conf, "azkaban.job.outnodes");
       loadProp(props, conf, "azkaban.job.innodes");
 
+      // Next, automatically inject any properties that begin with the
+      // designated injection prefix.
+      Map<String, String> confProperties = props.getMapByPrefix(injectPrefix);
+
+      for (Map.Entry<String, String> entry : confProperties.entrySet()) {
+        String confKey = entry.getKey().replace(injectPrefix, "");
+        String confVal = entry.getValue();
+        conf.set(confKey, confVal);
+      }
+
+      // Now write out the configuration file to inject.
+      File file = getConfFile(props, workingDir, injectFile);
       OutputStream xmlOut = new FileOutputStream(file);
       conf.writeXml(xmlOut);
       xmlOut.close();
     } catch (Throwable e) {
-      _logger.error("Encountered error while preparing links", e);
+      _logger.error("Encountered error while preparing the Hadoop configuration resource file", e);
     }
   }
 
   /**
-   * Resolve the location of the file containing the link configuration file
+   * Resolve the location of the file containing the configuration file.
+   *
+   * @param props The Azkaban properties
+   * @param workingDir The Azkaban job working directory
+   * @param fileName The desired configuration file name
    */
-  public static File getLinkFile(Props props, String workingDir) {
+  public static File getConfFile(Props props, String workingDir, String fileName) {
     File jobDir = new File(workingDir, getDirName(props));
     if (!jobDir.exists()) {
       jobDir.mkdir();
     }
-
-    return new File(jobDir, "azkaban-links.xml");
+    return new File(jobDir, fileName);
   }
 
   /**
    * For classpath reasons, we'll put each link file in a separate directory.
-   * This must be called only after the job id has been inserted by the Job
+   * This must be called only after the job id has been inserted by the job.
    * 
-   * @param workingDir
-   * @param jobProps
-   * @return
+   * @param props The Azkaban properties
    */
-  public static String getDirName(Props jobProps) {
-    String dirSuffix = jobProps.get("azkaban.flow.nested.path");
+  public static String getDirName(Props props) {
+    String dirSuffix = props.get("azkaban.flow.nested.path");
 
     if ((dirSuffix == null) || (dirSuffix.length() == 0)) {
-      dirSuffix = jobProps.get("azkaban.job.id");
+      dirSuffix = props.get("azkaban.job.id");
       if ((dirSuffix == null) || (dirSuffix.length() == 0)) {
         throw new RuntimeException("azkaban.flow.nested.path and azkaban.job.id were not set");
       }
     }
 
-    return "_link_" + dirSuffix;
+    return "_resources_" + dirSuffix;
   }
 
+  /**
+   * Gets the path to the directory in which the generated links and Hadoop
+   * conf properties files are written.
+   *
+   * @param props The Azkaban properties
+   * @param workingDir The Azkaban job working directory
+   */
+  public static String getPath(Props props, String workingDir) {
+    return new File(workingDir, getDirName(props)).toString();
+  }
+
+  /**
+   * Loads an Azkaban property into the Hadoop configuration.
+   *
+   * @param props The Azkaban properties
+   * @param conf The Hadoop configuration
+   * @param name The property name to load from the Azkaban properties into the Hadoop configuration
+   */
   public static void loadProp(Props props, Configuration conf, String name) {
     String prop = props.get(name);
     if (prop != null) {

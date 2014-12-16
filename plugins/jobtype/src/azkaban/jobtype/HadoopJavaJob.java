@@ -186,7 +186,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 
   @Override
   public void run() throws Exception {
-    HadoopConfigurationInjector.prepareLinks(getJobProps(),
+    HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(),
         getWorkingDirectory());
 
     File f = null;
