@@ -1,12 +1,12 @@
 /*
  * Copyright 2014 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -77,6 +77,8 @@ public class HadoopConfigurationInjector {
       loadProp(props, conf, "azkaban.job.outnodes");
       loadProp(props, conf, "azkaban.job.innodes");
 
+      addHadoopProperties(props);
+
       // Next, automatically inject any properties that begin with the
       // designated injection prefix.
       Map<String, String> confProperties = props.getMapByPrefix(injectPrefix);
@@ -97,6 +99,16 @@ public class HadoopConfigurationInjector {
     }
   }
 
+  private static void addHadoopProperties(Props props) {
+    props.put(injectPrefix + "azkaban.flow.flowid", props.get("azkaban.flow.flowid"));
+    props.put(injectPrefix + "azkaban.flow.execid", props.get("azkaban.flow.execid"));
+    props.put(injectPrefix + "azkaban.job.id", props.get("azkaban.job.id"));
+    props.put(injectPrefix + "azkaban.flow.projectname", props.get("azkaban.flow.projectname"));
+    props.put(injectPrefix + "azkaban.flow.projectversion", props.get("azkaban.flow.projectversion"));
+    props.put(injectPrefix + "azkaban.flow.projectlastchangeddate", props.get("azkaban.flow.projectlastchangeddate"));
+    props.put(injectPrefix + "azkaban.flow.projectlasychangedby", props.get("azkaban.flow.projectlasychangedby"));
+  }
+
   /**
    * Resolve the location of the file containing the configuration file.
    *
@@ -115,7 +127,7 @@ public class HadoopConfigurationInjector {
   /**
    * For classpath reasons, we'll put each link file in a separate directory.
    * This must be called only after the job id has been inserted by the job.
-   * 
+   *
    * @param props The Azkaban properties
    */
   public static String getDirName(Props props) {
