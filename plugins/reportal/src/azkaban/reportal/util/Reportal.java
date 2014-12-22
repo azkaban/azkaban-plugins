@@ -294,7 +294,7 @@ public class Reportal {
     Utils.zipFolderContent(dataDir, archiveFile);
 
     // Upload zip
-    projectManager.uploadProject(project, archiveFile, "zip", user);
+    projectManager.uploadProject(project, archiveFile, "zip", user, null);
 
     // Empty temp
     if (tempDir.exists()) {

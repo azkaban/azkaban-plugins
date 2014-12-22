@@ -1,12 +1,12 @@
 /*
  * Copyright 2014 LinkedIn Corp.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package azkaban.jobtype;
 
+import azkaban.flow.CommonJobProperties;
 import azkaban.utils.Props;
 
 import java.io.File;
@@ -39,17 +40,17 @@ import org.apache.log4j.Logger;
  */
 public class HadoopConfigurationInjector {
   private static Logger _logger = Logger.getLogger(HadoopConfigurationInjector.class);
-  private static final String injectFile = "hadoop-inject.xml";
+  private static final String INJECT_FILE = "hadoop-inject.xml";
 
   // Prefix for properties to be automatically injected into the Hadoop conf.
-  public static final String injectPrefix = "hadoop-inject.";
+  public static final String INJECT_PREFIX = "hadoop-inject.";
 
   /*
    * To be called by the forked process to load the generated links and Hadoop
    * configuration properties to automatically inject.
    */
   public static void injectResources() {
-    Configuration.addDefaultResource(injectFile);
+    Configuration.addDefaultResource(INJECT_FILE);
   }
 
   /**
@@ -68,32 +69,51 @@ public class HadoopConfigurationInjector {
 
       // First, inject a series of Azkaban links. These are equivalent to
       // CommonJobProperties.[EXECUTION,WORKFLOW,JOB,JOBEXEC,ATTEMPT]_LINK
-      // respectively, but we use literals for backwards compatibility.
-      loadProp(props, conf, "azkaban.link.execution.url");
-      loadProp(props, conf, "azkaban.link.workflow.url");
-      loadProp(props, conf, "azkaban.link.job.url");
-      loadProp(props, conf, "azkaban.link.jobexec.url");
-      loadProp(props, conf, "azkaban.link.attempt.url");
-      loadProp(props, conf, "azkaban.job.outnodes");
-      loadProp(props, conf, "azkaban.job.innodes");
+      addHadoopProperties(props);
 
       // Next, automatically inject any properties that begin with the
       // designated injection prefix.
-      Map<String, String> confProperties = props.getMapByPrefix(injectPrefix);
+      Map<String, String> confProperties = props.getMapByPrefix(INJECT_PREFIX);
 
       for (Map.Entry<String, String> entry : confProperties.entrySet()) {
-        String confKey = entry.getKey().replace(injectPrefix, "");
+        String confKey = entry.getKey().replace(INJECT_PREFIX, "");
         String confVal = entry.getValue();
         conf.set(confKey, confVal);
       }
 
       // Now write out the configuration file to inject.
-      File file = getConfFile(props, workingDir, injectFile);
+      File file = getConfFile(props, workingDir, INJECT_FILE);
       OutputStream xmlOut = new FileOutputStream(file);
       conf.writeXml(xmlOut);
       xmlOut.close();
     } catch (Throwable e) {
       _logger.error("Encountered error while preparing the Hadoop configuration resource file", e);
+    }
+  }
+
+  private static void addHadoopProperty(Props props, String propertyName) {
+      props.put(INJECT_PREFIX + propertyName, props.get(propertyName));
+  }
+
+  private static void addHadoopProperties(Props props) {
+    String[] propsToInject = new String[]{
+        CommonJobProperties.EXEC_ID,
+        CommonJobProperties.JOB_ID,
+        CommonJobProperties.PROJECT_NAME,
+        CommonJobProperties.PROJECT_VERSION,
+        CommonJobProperties.EXECUTION_LINK,
+        CommonJobProperties.JOB_LINK,
+        CommonJobProperties.WORKFLOW_LINK,
+        CommonJobProperties.JOBEXEC_LINK,
+        CommonJobProperties.ATTEMPT_LINK,
+        CommonJobProperties.OUT_NODES,
+        CommonJobProperties.IN_NODES,
+        CommonJobProperties.PROJECT_LAST_CHANGED_DATE,
+        CommonJobProperties.PROJECT_LAST_CHANGED_BY
+    };
+
+    for(String propertyName : propsToInject) {
+      addHadoopProperty(props, propertyName);
     }
   }
 
@@ -115,7 +135,7 @@ public class HadoopConfigurationInjector {
   /**
    * For classpath reasons, we'll put each link file in a separate directory.
    * This must be called only after the job id has been inserted by the job.
-   * 
+   *
    * @param props The Azkaban properties
    */
   public static String getDirName(Props props) {
