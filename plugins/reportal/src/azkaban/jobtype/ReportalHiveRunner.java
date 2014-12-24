@@ -176,6 +176,8 @@ public class ReportalHiveRunner extends ReportalAbstractRunner {
       confBuilder.add("mapred.job.name=\"Reportal: " + jobTitle + "\"");
     }
 
+    confBuilder.add("mapreduce.job.complete.cancel.delegation.tokens=false");
+
     String[] args = new String[confBuilder.size() * 2];
 
     for (int i = 0; i < confBuilder.size(); i++) {
