@@ -40,6 +40,8 @@ import org.apache.log4j.Logger;
  */
 public class HadoopConfigurationInjector {
   private static Logger _logger = Logger.getLogger(HadoopConfigurationInjector.class);
+
+  // File to which the Hadoop configuration to inject will be written.
   private static final String INJECT_FILE = "hadoop-inject.xml";
 
   // Prefix for properties to be automatically injected into the Hadoop conf.
@@ -50,6 +52,17 @@ public class HadoopConfigurationInjector {
    * configuration properties to automatically inject.
    */
   public static void injectResources() {
+    // Add mapred, yarn and hdfs site configs (in addition to core-site, which
+    // is automatically added) as default resources before we add the injected
+    // configuration. This will cause the injected properties to override the
+    // default site properties (instead of vice-versa). This is safe to do,
+    // even when these site files don't exist for your Hadoop installation.
+    Configuration.addDefaultResource("mapred-default.xml");
+    Configuration.addDefaultResource("mapred-site.xml");
+    Configuration.addDefaultResource("yarn-default.xml");
+    Configuration.addDefaultResource("yarn-site.xml");
+    Configuration.addDefaultResource("hdfs-default.xml");
+    Configuration.addDefaultResource("hdfs-site.xml");
     Configuration.addDefaultResource(INJECT_FILE);
   }
 
