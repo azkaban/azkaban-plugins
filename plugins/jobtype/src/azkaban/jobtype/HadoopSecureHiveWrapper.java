@@ -47,6 +47,7 @@ import org.apache.log4j.Logger;
 import azkaban.jobExecutor.ProcessJob;
 import azkaban.jobtype.hiveutils.HiveQueryExecutionException;
 import azkaban.security.commons.HadoopSecurityManager;
+import azkaban.utils.Props;
 
 public class HadoopSecureHiveWrapper {
 
@@ -67,7 +68,7 @@ public class HadoopSecureHiveWrapper {
     Properties prop = new Properties();
     prop.load(new BufferedReader(new FileReader(propsFile)));
 
-    HadoopConfigurationInjector.injectResources();
+    HadoopConfigurationInjector.injectResources(new Props(null, prop));
 
     hiveScript = prop.getProperty("hive.script");
 

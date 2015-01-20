@@ -100,7 +100,7 @@ public class HadoopJavaJobRunnerMain {
       Properties prop = new Properties();
       prop.load(new BufferedReader(new FileReader(propsFile)));
 
-      HadoopConfigurationInjector.injectResources();
+      HadoopConfigurationInjector.injectResources(new Props(null, prop));
 
       final Configuration conf = new Configuration();
 
