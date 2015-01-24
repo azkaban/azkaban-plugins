@@ -65,21 +65,21 @@ public class HadoopSecureHiveWrapper {
   public static void main(final String[] args) throws Exception {
 
     String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
-    Properties prop = new Properties();
-    prop.load(new BufferedReader(new FileReader(propsFile)));
+    Properties props = new Properties();
+    props.load(new BufferedReader(new FileReader(propsFile)));
 
-    HadoopConfigurationInjector.injectResources(new Props(null, prop));
+    HadoopConfigurationInjector.injectResources(new Props(null, props));
 
-    hiveScript = prop.getProperty("hive.script");
+    hiveScript = props.getProperty("hive.script");
 
     final Configuration conf = new Configuration();
 
     UserGroupInformation.setConfiguration(conf);
     securityEnabled = UserGroupInformation.isSecurityEnabled();
 
-    if (shouldProxy(prop)) {
+    if (shouldProxy(props)) {
       UserGroupInformation proxyUser = null;
-      String userToProxy = prop.getProperty("user.to.proxy");
+      String userToProxy = props.getProperty("user.to.proxy");
       if (securityEnabled) {
         String filelocation = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
         if (filelocation == null) {
@@ -216,9 +216,9 @@ public class HadoopSecureHiveWrapper {
     }
   }
 
-  public static boolean shouldProxy(Properties prop) {
+  public static boolean shouldProxy(Properties props) {
     String shouldProxy =
-        prop.getProperty(HadoopSecurityManager.ENABLE_PROXYING);
+        props.getProperty(HadoopSecurityManager.ENABLE_PROXYING);
 
     return shouldProxy != null && shouldProxy.equals("true");
   }
