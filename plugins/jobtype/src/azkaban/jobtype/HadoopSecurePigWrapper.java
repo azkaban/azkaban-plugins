@@ -84,7 +84,7 @@ public class HadoopSecurePigWrapper {
     String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
     props = new Props(null, new File(propsFile));
 
-    HadoopConfigurationInjector.injectResources();
+    HadoopConfigurationInjector.injectResources(props);
 
     final Configuration conf = new Configuration();
 
@@ -166,8 +166,8 @@ public class HadoopSecurePigWrapper {
     }
   }
 
-  public static boolean shouldProxy(Props prop) {
-    String shouldProxy = prop.getString(HadoopSecurityManager.ENABLE_PROXYING);
+  public static boolean shouldProxy(Props props) {
+    String shouldProxy = props.getString(HadoopSecurityManager.ENABLE_PROXYING);
     return shouldProxy != null && shouldProxy.equals("true");
   }
 }

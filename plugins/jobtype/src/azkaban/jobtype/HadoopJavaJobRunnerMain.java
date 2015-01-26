@@ -97,10 +97,10 @@ public class HadoopJavaJobRunnerMain {
       appender.activateOptions();
       _logger.addAppender(appender);
 
-      Properties prop = new Properties();
-      prop.load(new BufferedReader(new FileReader(propsFile)));
+      Properties props = new Properties();
+      props.load(new BufferedReader(new FileReader(propsFile)));
 
-      HadoopConfigurationInjector.injectResources();
+      HadoopConfigurationInjector.injectResources(new Props(null, props));
 
       final Configuration conf = new Configuration();
 
@@ -108,7 +108,7 @@ public class HadoopJavaJobRunnerMain {
       securityEnabled = UserGroupInformation.isSecurityEnabled();
 
       _logger.info("Running job " + _jobName);
-      String className = prop.getProperty(JOB_CLASS);
+      String className = props.getProperty(JOB_CLASS);
       if (className == null) {
         throw new Exception("Class name is not set.");
       }
@@ -117,8 +117,8 @@ public class HadoopJavaJobRunnerMain {
       UserGroupInformation loginUser = null;
       UserGroupInformation proxyUser = null;
 
-      if (shouldProxy(prop)) {
-        String userToProxy = prop.getProperty("user.to.proxy");
+      if (shouldProxy(props)) {
+        String userToProxy = props.getProperty("user.to.proxy");
         if (securityEnabled) {
           String filelocation = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
           _logger.info("Found token file " + filelocation);
@@ -147,11 +147,11 @@ public class HadoopJavaJobRunnerMain {
       }
 
       // Create the object using proxy
-      if (shouldProxy(prop)) {
+      if (shouldProxy(props)) {
         _javaObject =
-            getObjectAsProxyUser(prop, _logger, _jobName, className, proxyUser);
+            getObjectAsProxyUser(props, _logger, _jobName, className, proxyUser);
       } else {
-        _javaObject = getObject(_jobName, className, prop, _logger);
+        _javaObject = getObject(_jobName, className, props, _logger);
       }
 
       if (_javaObject == null) {
@@ -161,15 +161,15 @@ public class HadoopJavaJobRunnerMain {
       _logger.info("Got object " + _javaObject.toString());
 
       _cancelMethod =
-          prop.getProperty(CANCEL_METHOD_PARAM, DEFAULT_CANCEL_METHOD);
+          props.getProperty(CANCEL_METHOD_PARAM, DEFAULT_CANCEL_METHOD);
 
       final String runMethod =
-          prop.getProperty(RUN_METHOD_PARAM, DEFAULT_RUN_METHOD);
+          props.getProperty(RUN_METHOD_PARAM, DEFAULT_RUN_METHOD);
       _logger.info("Invoking method " + runMethod);
 
-      if (shouldProxy(prop)) {
+      if (shouldProxy(props)) {
         _logger.info("Proxying enabled.");
-        runMethodAsUser(prop, _javaObject, runMethod, proxyUser);
+        runMethodAsUser(props, _javaObject, runMethod, proxyUser);
       } else {
         _logger.info("Proxy check failed, not proxying run.");
         runMethod(_javaObject, runMethod);
@@ -213,7 +213,7 @@ public class HadoopJavaJobRunnerMain {
     }
   }
 
-  private void runMethodAsUser(Properties prop, final Object obj,
+  private void runMethodAsUser(Properties props, final Object obj,
       final String runMethod, final UserGroupInformation ugi)
       throws IOException, InterruptedException {
     ugi.doAs(new PrivilegedExceptionAction<Void>() {
@@ -404,9 +404,9 @@ public class HadoopJavaJobRunnerMain {
     }
   }
 
-  public boolean shouldProxy(Properties prop) {
+  public boolean shouldProxy(Properties props) {
     String shouldProxy =
-        prop.getProperty(HadoopSecurityManager.ENABLE_PROXYING);
+        props.getProperty(HadoopSecurityManager.ENABLE_PROXYING);
 
     return shouldProxy != null && shouldProxy.equals("true");
   }

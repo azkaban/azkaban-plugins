@@ -94,23 +94,23 @@ public class JavaJobRunnerMain {
       appender.activateOptions();
       _logger.addAppender(appender);
 
-      Properties prop = new Properties();
-      prop.load(new BufferedReader(new FileReader(propsFile)));
+      Properties props = new Properties();
+      props.load(new BufferedReader(new FileReader(propsFile)));
 
       _logger.info("Running job " + _jobName);
-      String className = prop.getProperty(JOB_CLASS);
+      String className = props.getProperty(JOB_CLASS);
       if (className == null) {
         throw new Exception("Class name is not set.");
       }
       _logger.info("Class name " + className);
 
-      HadoopConfigurationInjector.injectResources();
+      HadoopConfigurationInjector.injectResources(new Props(null, props));
 
       // Create the object using proxy
-      if (SecurityUtils.shouldProxy(prop)) {
-        _javaObject = getObjectAsProxyUser(prop, _logger, _jobName, className);
+      if (SecurityUtils.shouldProxy(props)) {
+        _javaObject = getObjectAsProxyUser(props, _logger, _jobName, className);
       } else {
-        _javaObject = getObject(_jobName, className, prop, _logger);
+        _javaObject = getObject(_jobName, className, props, _logger);
       }
       if (_javaObject == null) {
         _logger.info("Could not create java object to run job: " + className);
@@ -118,15 +118,15 @@ public class JavaJobRunnerMain {
       }
 
       _cancelMethod =
-          prop.getProperty(CANCEL_METHOD_PARAM, DEFAULT_CANCEL_METHOD);
+          props.getProperty(CANCEL_METHOD_PARAM, DEFAULT_CANCEL_METHOD);
 
       final String runMethod =
-          prop.getProperty(RUN_METHOD_PARAM, DEFAULT_RUN_METHOD);
+          props.getProperty(RUN_METHOD_PARAM, DEFAULT_RUN_METHOD);
       _logger.info("Invoking method " + runMethod);
 
-      if (SecurityUtils.shouldProxy(prop)) {
+      if (SecurityUtils.shouldProxy(props)) {
         _logger.info("Proxying enabled.");
-        runMethodAsProxyUser(prop, _javaObject, runMethod);
+        runMethodAsProxyUser(props, _javaObject, runMethod);
       } else {
         _logger.info("Proxy check failed, not proxying run.");
         runMethod(_javaObject, runMethod);
@@ -168,15 +168,15 @@ public class JavaJobRunnerMain {
     }
   }
 
-  private void runMethodAsProxyUser(Properties prop, final Object obj,
+  private void runMethodAsProxyUser(Properties props, final Object obj,
       final String runMethod) throws IOException, InterruptedException {
     UserGroupInformation ugi =
-        SecurityUtils.getProxiedUser(prop, _logger, new Configuration());
+        SecurityUtils.getProxiedUser(props, _logger, new Configuration());
     _logger.info("user " + ugi + " authenticationMethod "
         + ugi.getAuthenticationMethod());
     _logger.info("user " + ugi + " hasKerberosCredentials "
         + ugi.hasKerberosCredentials());
-    SecurityUtils.getProxiedUser(prop, _logger, new Configuration()).doAs(
+    SecurityUtils.getProxiedUser(props, _logger, new Configuration()).doAs(
         new PrivilegedExceptionAction<Void>() {
           @Override
           public Void run() throws Exception {
@@ -262,15 +262,15 @@ public class JavaJobRunnerMain {
     }
   }
 
-  private static Object getObjectAsProxyUser(final Properties prop,
+  private static Object getObjectAsProxyUser(final Properties props,
       final Logger logger, final String jobName, final String className)
       throws Exception {
     Object obj =
-        SecurityUtils.getProxiedUser(prop, logger, new Configuration()).doAs(
+        SecurityUtils.getProxiedUser(props, logger, new Configuration()).doAs(
             new PrivilegedExceptionAction<Object>() {
               @Override
               public Object run() throws Exception {
-                return getObject(jobName, className, prop, logger);
+                return getObject(jobName, className, props, logger);
               }
             });
 
