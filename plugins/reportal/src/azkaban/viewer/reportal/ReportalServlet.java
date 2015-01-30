@@ -841,7 +841,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     report.queries = queryList;
 
     List<String> errors = new ArrayList<String>();
-    String typePermissionError = null;
     for (int i = 0; i < numQueries; i++) {
       Query query = new Query();
 
@@ -856,9 +855,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
       }
 
       if (!type.checkPermission(user) && report.schedule) {
-        errors.add("You do not have permission to schedule Type "
-            + typePermissionError + ".");
-        typePermissionError = query.type;
+        errors.add("You do not have permission to schedule Type " + query.type + ".");
       }
 
       queryList.add(query);
