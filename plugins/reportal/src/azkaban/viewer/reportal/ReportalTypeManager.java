@@ -46,17 +46,15 @@ public class ReportalTypeManager {
     propertiesFile.put("reportal.title", reportal.title);
     propertiesFile.put("reportal.job.title", jobName);
     propertiesFile.put("reportal.job.query", queryScript);
-    if (userName != null) {
-      propertiesFile.put("user.to.proxy", "${reportal.execution.user}");
-      propertiesFile.put("reportal.proxy.user", userName);
-    }
+    propertiesFile.put("user.to.proxy", "${reportal.execution.user}");
+    propertiesFile.put("reportal.proxy.user", "${reportal.execution.user}");
 
     type.buildJobFiles(reportal, propertiesFile, jobFile, jobName, queryScript,
         userName);
 
     propertiesFile.put(CommonJobProperties.JOB_TYPE, type.getJobTypeName());
-    propertiesFile.put(JavaProcessJob.JVM_PARAMS, "-Dreportal.user.name="
-        + userName + " -Dreportal.execid=${azkaban.flow.execid}");
+    propertiesFile.put(JavaProcessJob.JVM_PARAMS, "-Dreportal.user.name=${reportal.execution.user}"
+        + " -Dreportal.execid=${azkaban.flow.execid}");
 
     // Order dependency
     if (dependentJob != null) {
