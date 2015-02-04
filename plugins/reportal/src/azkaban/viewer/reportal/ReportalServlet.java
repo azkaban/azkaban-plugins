@@ -339,7 +339,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
     List<Project> projects = ReportalHelper.getReportalProjects(server);
     page.add("ReportalHelper", ReportalHelper.class);
-    page.add("esc", new EscapeTool());
     page.add("user", session.getUser());
 
     String startDate = DateTime.now().minusWeeks(1).toString("yyyy-MM-dd");
@@ -681,7 +680,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
             "azkaban/viewer/reportal/reportaleditpage.vm");
     preparePage(page, session);
     page.add("ReportalHelper", ReportalHelper.class);
-    page.add("esc", new EscapeTool());
 
     Project project = projectManager.getProject(id);
     Reportal reportal = Reportal.loadFromProject(project);
@@ -785,7 +783,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
             "azkaban/viewer/reportal/reportaleditpage.vm");
     preparePage(page, session);
     page.add("ReportalHelper", ReportalHelper.class);
-    page.add("esc", new EscapeTool());
 
     boolean isEdit = hasParam(req, "id");
     if (isEdit) {
@@ -1196,6 +1193,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("viewerName", viewerName);
     page.add("hideNavigation", !showNav);
     page.add("userid", session.getUser().getUserId());
+    page.add("esc", new EscapeTool());
   }
 
   private class CleanerThread extends Thread {
