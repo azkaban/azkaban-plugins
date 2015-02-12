@@ -16,21 +16,14 @@
 
 package azkaban.jobtype.hiveutils.azkaban.hive.actions;
 
-import org.apache.log4j.Logger;
-
 import azkaban.jobtype.hiveutils.HiveQueryExecutionException;
 import azkaban.jobtype.hiveutils.HiveQueryExecutor;
-import azkaban.jobtype.hiveutils.azkaban.Utils;
 import azkaban.jobtype.hiveutils.azkaban.HiveAction;
 import azkaban.jobtype.hiveutils.azkaban.HiveViaAzkabanException;
+import azkaban.jobtype.hiveutils.azkaban.Utils;
 import azkaban.jobtype.hiveutils.util.AzkabanJobPropertyDescription;
+import org.apache.log4j.Logger;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.Properties;
 
 /**
@@ -52,136 +45,11 @@ public class ExecuteHiveQuery implements HiveAction {
 
   public ExecuteHiveQuery(Properties properties, HiveQueryExecutor hqe)
       throws HiveViaAzkabanException {
-    String singleLine = properties.getProperty(HIVE_QUERY);
-    String multiLine = extractMultilineQuery(properties);
-    String queryFile = extractQueryFromFile(properties);
-    String queryURL = extractQueryFromURL(properties);
-
-    this.q = determineQuery(singleLine, multiLine, queryFile, queryURL);
+    Utils.QueryPropKeys keys = new Utils.QueryPropKeys(HIVE_QUERY, HIVE_QUERY, HIVE_QUERY_FILE, HIVE_QUERY_URL);
+    this. q = Utils.determineQuery(properties, keys);
     this.hqe = hqe;
   }
 
-  private String extractQueryFromFile(Properties properties)
-      throws HiveViaAzkabanException {
-    String file = properties.getProperty(HIVE_QUERY_FILE);
-
-    if (file == null)
-      return null;
-
-    LOG.info("Attempting to read query from file: " + file);
-
-    StringBuilder contents = new StringBuilder();
-    BufferedReader br = null;
-    try {
-      br = new BufferedReader(new FileReader(file));
-
-      String line;
-
-      while ((line = br.readLine()) != null) {
-        contents.append(line);
-        contents.append(System.getProperty("line.separator"));
-      }
-
-    } catch (IOException e) {
-      throw new HiveViaAzkabanException(e);
-    } finally {
-      if (br != null)
-        try {
-          br.close();
-        } catch (IOException e) {
-          // TODO: Just throw IOException and catch-wrap in the constructor...
-          throw new HiveViaAzkabanException(e);
-        }
-    }
-
-    return contents.toString();
-  }
-
-  private String extractQueryFromURL(Properties properties)
-      throws HiveViaAzkabanException {
-    String url = properties.getProperty(HIVE_QUERY_URL);
-
-    if (url == null)
-      return null;
-
-    LOG.info("Attempting to retrieve query from URL: " + url);
-
-    StringBuilder contents = new StringBuilder();
-    BufferedReader br = null;
-
-    try {
-      URL queryURL = new URL(url);
-
-      br = new BufferedReader(new InputStreamReader(queryURL.openStream()));
-      String line;
-
-      while ((line = br.readLine()) != null) {
-        contents.append(line);
-        contents.append(System.getProperty("line.separator"));
-      }
-    } catch (IOException e) {
-      throw new HiveViaAzkabanException(e);
-    } finally {
-      if (br != null)
-        try {
-          br.close();
-        } catch (IOException e) {
-          // TODO: Just throw IOException and catch-wrap in the constructor...
-          throw new HiveViaAzkabanException(e);
-        }
-    }
-
-    return contents.toString();
-  }
-
-  private String determineQuery(String singleLine, String multiLine,
-      String queryFromFile, String queryFromURL) throws HiveViaAzkabanException {
-    int specifiedValues = 0;
-
-    for (String s : new String[] { singleLine, multiLine, queryFromFile,
-        queryFromURL }) {
-      if (s != null)
-        specifiedValues++;
-    }
-
-    if (specifiedValues == 0)
-      throw new HiveViaAzkabanException("Must specify " + HIVE_QUERY + " xor "
-          + HIVE_QUERY + ".nn xor " + HIVE_QUERY_FILE + " xor "
-          + HIVE_QUERY_URL + " in properties. Exiting.");
-
-    if (specifiedValues != 1)
-      throw new HiveViaAzkabanException("Must specify only " + HIVE_QUERY
-          + " or " + HIVE_QUERY + ".nn or " + HIVE_QUERY_FILE + " or "
-          + HIVE_QUERY_URL + " in properties, not more than one. Exiting.");
-
-    if (singleLine != null) {
-      LOG.info("Returning " + HIVE_QUERY + " = " + singleLine);
-      return singleLine;
-    } else if (multiLine != null) {
-      LOG.info("Returning consolidated " + HIVE_QUERY + ".nn = " + multiLine);
-      return multiLine;
-    } else if (queryFromFile != null) {
-      LOG.info("Returning query from file " + queryFromFile);
-      return queryFromFile;
-    } else {
-      LOG.info("Returning query from URL " + queryFromURL);
-      return queryFromURL;
-    }
-  }
-
-  private String extractMultilineQuery(Properties properties) {
-    ArrayList<String> lines = new ArrayList<String>();
-
-    for (int i = 0; i < 100; i++) {
-      String padded = String.format("%02d", i);
-      String value = properties.getProperty(HIVE_QUERY + "." + padded);
-      if (value != null) {
-        lines.add(value);
-      }
-    }
-
-    return Utils.joinNewlines(lines);
-  }
 
   @Override
   public void execute() throws HiveViaAzkabanException {

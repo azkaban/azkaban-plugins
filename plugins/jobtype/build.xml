@@ -113,6 +113,7 @@
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.12.0" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hive-0.8.1" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hive" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/jdbc" />
 
 		<!-- Copy hadoopsecuritymanager-->
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/java" />
@@ -124,6 +125,7 @@
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.12.0" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive-0.8.1" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/jdbc" />
 		
 		<!-- Copy hadoopsecuritymanager-yarn file -->
 		<copy file="${hadoopsecuritymanagerjar-yarn}" todir="${dist.packages.dir}" />

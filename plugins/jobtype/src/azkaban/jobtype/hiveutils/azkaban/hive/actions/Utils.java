@@ -29,6 +29,7 @@ import java.util.ArrayList;
 class Utils {
   private final static Logger LOG = Logger.getLogger(Utils.class);
 
+
   static ArrayList<String> fetchDirectories(FileSystem fs, String location,
       boolean returnFullPath) throws IOException, HiveViaAzkabanException {
     LOG.info("Fetching directories in " + location);
