@@ -129,6 +129,10 @@
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive-0.14.0" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/jdbc" />
 		
+		<!-- Copy hadoopsecuritymanager file -->
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}" />
+		<!-- Copy jobtype jar file -->
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}" />
 		<!-- Copy hadoopsecuritymanager-yarn file -->
 		<copy file="${hadoopsecuritymanagerjar-yarn}" todir="${dist.packages.dir}" />
 		
