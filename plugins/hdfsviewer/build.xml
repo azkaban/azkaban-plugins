@@ -129,7 +129,7 @@
 		</copy>
 		
 		<!-- Copy build version file -->
-		<copy file="${version.file}" todir="${dist.packages.dir}" />
+		<!--<copy file="${version.file}" todir="${dist.packages.dir}" /> -->
 		
 		<!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">

@@ -101,7 +101,7 @@
 		</copy>
 
 		<!-- Copy build version file -->
-		<copy file="${version.file}" todir="${dist.packages.dir}" />
+		<!-- <copy file="${version.file}" todir="${dist.packages.dir}" /> -->
 		
 		<!-- Copy jobtype jar-->
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/java" />
