@@ -166,7 +166,7 @@ public class HadoopConfigurationInjector {
       }
     }
 
-    return "_resources_" + dirSuffix;
+    return "_resources_" + dirSuffix.replace(':', '_');
   }
 
   /**
