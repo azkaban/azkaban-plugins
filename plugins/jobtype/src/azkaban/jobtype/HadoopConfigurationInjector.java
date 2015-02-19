@@ -157,10 +157,10 @@ public class HadoopConfigurationInjector {
    * @param props The Azkaban properties
    */
   public static String getDirName(Props props) {
-    String dirSuffix = props.get("azkaban.flow.nested.path");
+    String dirSuffix = props.get(CommonJobProperties.NESTED_FLOW_PATH);
 
     if ((dirSuffix == null) || (dirSuffix.length() == 0)) {
-      dirSuffix = props.get("azkaban.job.id");
+      dirSuffix = props.get(CommonJobProperties.JOB_ID);
       if ((dirSuffix == null) || (dirSuffix.length() == 0)) {
         throw new RuntimeException("azkaban.flow.nested.path and azkaban.job.id were not set");
       }
