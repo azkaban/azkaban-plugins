@@ -1,9 +1,13 @@
 #!/bin/sh
+#Call this install.sh File in Hadoop Host during Installation of Package
 cd $(dirname $0)
-HIVE_HOME=/usr/hdp/2.2.0.0-2041/hive
-HADOOP_HOME=/usr/hdp/2.2.0.0-2041/hadoop
-MAPREDUCE_HOME=/usr/hdp/2.2.0.0-2041/hadoop-mapreduce
-HDFS_HOME=/usr/hdp/2.2.0.0-2041/hadoop-hdfs
+
+#Set the homes for the following
+HIVE_HOME=
+HADOOP_HOME=
+MAPREDUCE_HOME=
+HDFS_HOME=
+
 cp_lib() {
   cp $HIVE_HOME/lib/$1 lib/
 }
