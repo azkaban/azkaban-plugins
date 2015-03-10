@@ -16,6 +16,8 @@
 
 package azkaban.jobtype;
 
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -29,14 +31,11 @@ import java.util.StringTokenizer;
 import org.apache.log4j.Logger;
 import org.apache.pig.PigRunner;
 
+import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.security.commons.HadoopSecurityManagerException;
-
-import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
-
-import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 /*
  * need lib:
@@ -65,7 +64,7 @@ public class HadoopPigJob extends JavaProcessJob {
   private boolean shouldProxy = false;
   private boolean obtainTokens = false;
 
-  private boolean userPigJar;
+  private final boolean userPigJar;
 
   private HadoopSecurityManager hadoopSecurityManager;
 
@@ -86,10 +85,14 @@ public class HadoopPigJob extends JavaProcessJob {
     obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
     userPigJar = getJobProps().getBoolean("use.user.pig.jar", false);
 
+    // Allow user to enable fetching of HCatalog tokens
+    boolean obtainHcatToken = getJobProps().getBoolean(HadoopSecurityManager.OBTAIN_HCAT_TOKEN, false);
+    getSysProps().put(HadoopSecurityManager.OBTAIN_HCAT_TOKEN, Boolean.toString(obtainHcatToken));
+
     if (shouldProxy) {
       getLog().info("Initiating hadoop security manager.");
       try {
-        hadoopSecurityManager = loadHadoopSecurityManager(sysProps, log);
+        hadoopSecurityManager = loadHadoopSecurityManager(getSysProps(), log);
       } catch (RuntimeException e) {
         throw new RuntimeException("Failed to get hadoop security manager!" + e);
       }
@@ -371,8 +374,8 @@ public class HadoopPigJob extends JavaProcessJob {
     return additionalJars;
   }
 
-  /** Merging all additional jars first from user specified/plugin.properties 
-   * then private.properties for additionalJarProperty property 
+  /** Merging all additional jars first from user specified/plugin.properties
+   * then private.properties for additionalJarProperty property
    */
   private void mergeAdditionalJars(List<String> additionalJars, String additionalJarProperty) {
     List<String> jobJars =
