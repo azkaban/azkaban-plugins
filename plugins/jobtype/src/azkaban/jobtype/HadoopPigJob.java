@@ -85,8 +85,9 @@ public class HadoopPigJob extends JavaProcessJob {
     obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
     userPigJar = getJobProps().getBoolean("use.user.pig.jar", false);
 
-    // Allow user to enable fetching of HCatalog tokens
-    boolean obtainHcatToken = getJobProps().getBoolean(HadoopSecurityManager.OBTAIN_HCAT_TOKEN, false);
+    // Fetch HCatalog token if enabled
+    boolean obtainHcatToken = getSysProps().getBoolean(HadoopSecurityManager.OBTAIN_HCAT_TOKEN, false);
+    obtainHcatToken = getJobProps().getBoolean(HadoopSecurityManager.OBTAIN_HCAT_TOKEN, obtainHcatToken);
     getSysProps().put(HadoopSecurityManager.OBTAIN_HCAT_TOKEN, Boolean.toString(obtainHcatToken));
 
     if (shouldProxy) {
