@@ -140,6 +140,9 @@ public class ReportalMailCreator implements MailCreator {
         .println("<div style='font-size: .8em; margin-top: .5em; margin-bottom: .5em;'>");
     // Status
     message.println(flow.getStatus().name());
+    // Link to View
+    message.println("(<a href='" + urlPrefix + "?view&id="
+        + flow.getProjectId() + "'>View</a>)");
     // Link to logs
     message.println("(<a href='" + urlPrefix + "?view&logs&id="
         + flow.getProjectId() + "&execid=" + flow.getExecutionId()
