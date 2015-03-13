@@ -6,4 +6,5 @@ azkaban-pigvisualizer-*.jar
 dist/
 .project
 .settings
+*.sublime-*
 *.swp
