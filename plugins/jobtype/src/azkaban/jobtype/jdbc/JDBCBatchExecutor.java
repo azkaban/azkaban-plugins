@@ -48,11 +48,16 @@ public class JDBCBatchExecutor {
     public void execute() throws AzkabanJDBCException {
         try {
             Statement statement = this.connection.createStatement();
-            for (String query: this.query.split("\\\n")) {
+            /*
+	     * Introducing Transaction Behaviour
+	     * */
+	    connection.setAutoCommit(false);
+	    for (String query: this.query.split("\\\n")) {
                 LOG.info("Executing: " + query + ".");
                 boolean result = statement.execute(query);
                 LOG.info("Executed: " + query + ", executed: " + result);
             }
+	    connection.commit();
         } catch (SQLException e) {
             throw new AzkabanJDBCException("Error while executing " + this.query, e);
         }
