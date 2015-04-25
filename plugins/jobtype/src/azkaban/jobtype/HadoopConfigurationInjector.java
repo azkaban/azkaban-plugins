@@ -116,6 +116,7 @@ public class HadoopConfigurationInjector {
   private static void addHadoopProperties(Props props) {
     String[] propsToInject = new String[]{
         CommonJobProperties.EXEC_ID,
+        CommonJobProperties.FLOW_ID,
         CommonJobProperties.JOB_ID,
         CommonJobProperties.PROJECT_NAME,
         CommonJobProperties.PROJECT_VERSION,
