@@ -28,10 +28,22 @@ public class JDBCBatchExecutor {
             LOG.info("Initing for: " + p + ", driver: " + driverName);
             Class.forName(driverName);
 
-            String url = p.getProperty("jdbcUrl");
-            String name = p.getProperty("user");
-            String pass = p.getProperty("password");
-            this.connection = DriverManager.getConnection(url, name, pass);
+
+            Properties JDBCConnProps = new Properties();
+
+            String jdbcUrl = p.getProperty("jdbcUrl");
+
+            if (p.getProperty("user") != null) {
+                JDBCConnProps.put("user", p.getProperty("user"));
+            }
+            if (p.getProperty("password") != null) {
+                JDBCConnProps.put("password", p.getProperty("password"));
+            }
+            if (p.getProperty("BackupServerNode") != null) {
+                JDBCConnProps.put("BackupServerNode", p.getProperty("BackupServerNode"));
+            }
+
+            this.connection =DriverManager.getConnection(jdbcUrl,JDBCConnProps);
 
             QueryPropKeys keys = new QueryPropKeys("query", "query", "filename", "scriptUrl");
             this.query = Utils.determineQuery(p, keys);
