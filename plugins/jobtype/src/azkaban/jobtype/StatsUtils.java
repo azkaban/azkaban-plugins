@@ -125,6 +125,10 @@ public class StatsUtils {
 
   public static Object countersToJson(Counters counters) {
     Map<String, Object> jsonObj = new HashMap<String, Object>();
+
+    if(counters==null)
+      return jsonObj;
+
     Collection<String> counterGroups = counters.getGroupNames();
     for (String groupName : counterGroups) {
       Map<String, String> counterStats = new HashMap<String, String>();
