@@ -40,6 +40,8 @@ import azkaban.utils.Props;
 
 public class HadoopSecurePigWrapper {
 
+  private static final String PIG_DUMP_HADOOP_COUNTER_PROPERTY = "pig.dump.hadoopCounter";
+
   private static File pigLogFile;
 
   private static boolean securityEnabled;
@@ -162,7 +164,7 @@ public class HadoopSecurePigWrapper {
    */
   private static void dumpHadoopCounters(PigStats pigStats) {
     try {
-      if (props.getBoolean("pig.dump.hadoopCounter", false)) {
+      if (props.getBoolean(PIG_DUMP_HADOOP_COUNTER_PROPERTY, false)) {
         if (pigStats != null) {
           JobGraph jGraph = pigStats.getJobGraph();
           Iterator<JobStats> iter = jGraph.iterator();
