@@ -1,10 +1,10 @@
-azkaban-hadoopsecuritymanager-*.jar
-azkaban-jobtype-*.jar
-azkaban-pigvisualizer-*.jar
-/bin
-.classpath
 dist/
 .project
 .settings
 *.sublime-*
 *.swp
+.DS_Store
+*.iml
+.idea/*
+out/*
+*.jar

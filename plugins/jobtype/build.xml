@@ -71,7 +71,7 @@
 		</copy-->
 		
 		<javac fork="true" destdir="${dist.classes.dir}"
-			target="1.6" debug="true" deprecation="false" failonerror="true">
+			target="1.7" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
 			<src path="${hadoopsecuritymanager-common.java.src.dir}" />
 
@@ -101,7 +101,7 @@
 		</copy>
 
 		<!-- Copy build version file -->
-		<copy file="${version.file}" todir="${dist.packages.dir}" />
+		<!-- <copy file="${version.file}" todir="${dist.packages.dir}" /> -->
 		
 		<!-- Copy jobtype jar-->
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/java" />
@@ -112,6 +112,8 @@
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.11.0" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.12.0" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hive" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hive-0.14.0" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/jdbc" />
 
 		<!-- Copy hadoopsecuritymanager-->
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/java" />
@@ -122,7 +124,13 @@
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.11.0" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.12.0" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive-0.14.0" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/jdbc" />
 		
+		<!-- Copy hadoopsecuritymanager file -->
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}" />
+		<!-- Copy jobtype jar file -->
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}" />
 		<!-- Copy hadoopsecuritymanager-yarn file -->
 		<copy file="${hadoopsecuritymanagerjar-yarn}" todir="${dist.packages.dir}" />
 		
