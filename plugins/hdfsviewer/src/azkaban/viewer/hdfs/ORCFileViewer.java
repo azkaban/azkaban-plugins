@@ -53,7 +53,7 @@ public class ORCFileViewer extends HdfsFileViewer {
             // no need to close orcreader
             orcReader = OrcFile.createReader(fs, path);
             recordReader = orcReader.rows(null);
-        } catch (IOException e) {
+        } catch (Exception e) {
             if (logger.isDebugEnabled()) {
                 logger.debug(path.toUri().getPath() + " is not a ORC file.");
                 logger.debug("Error in opening ORC file: "
