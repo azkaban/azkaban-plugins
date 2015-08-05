@@ -6,36 +6,39 @@
 	<property name="dist.dir" value="${base.dir}/dist/hdfsviewer" />
 	<property name="dist.conf.dir" value="${dist.dir}/conf" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
+	<property name="dist.tests.dir" value="${dist.dir}/tests" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
-		
+
 	<property name="conf.dir" value="${basedir}/conf" />
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="plugin.ext.lib.dir" value="${basedir}/extlib" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="java.src.dir" value="${basedir}/src" />
-	
+	<property name="java.unit.dir" value="${basedir}/unit" />
+
 	<property name="azkaban-hdfs-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="azkaban-hdfs-src-jar" value="${dist.jar.dir}/${name}-src-${version}.jar" />
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-*.jar"/>
 	<property name="version.file" value="${base.dir}/dist/package.version" />
-		
+
 	<property environment="env" />
-	
+
 	<path id="main.classpath">
 		<fileset dir="${ext.lib.dir}">
 			<include name="*.jar" />
 		</fileset>
-		
+
 		<fileset dir="${plugin.ext.lib.dir}">
 			<include name="*.jar" />
 		</fileset>
-		
+
 		<fileset dir="${lib.dir}">
 			<include name="*.jar" />
 		</fileset>
-		
+
 		<pathelement path="${dist.classes.dir}" />
+		<pathelement path="${dist.tests.dir}" />
 	</path>
 
 	<!-- set the build number based on environment variable, otherwise blank -->
@@ -48,6 +51,7 @@
 		<delete dir="${dist.jar.dir}" />
 		<delete dir="${dist.classes.dir}" />
 		<delete dir="${dist.packages.dir}" />
+		<delete dir="${dist.tests.dir}" />
 		<delete>
 			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
 			</fileset>
@@ -55,7 +59,7 @@
 	</target>
 
 	<target name="build" depends="clean" description="Compile main source tree java files">
-	
+
 		<!-- copy the latest securitymanager jar -->
 		<delete>
 			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
@@ -68,22 +72,44 @@
 
 		<delete dir="${dist.classes.dir}" />
 		<mkdir dir="${dist.classes.dir}" />
-	
+
 		<!-- copy non-java files to classes dir to load from classpath -->
 		<copy todir="${dist.classes.dir}">
 			<fileset dir="${java.src.dir}">
 				<exclude name="**/*.java" />
 			</fileset>
 		</copy>
-		
+
 		<javac fork="true" destdir="${dist.classes.dir}"
 			target="1.6" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
 			<classpath refid="main.classpath" />
 		</javac>
+
 	</target>
-	
-	<target name="jars" depends="build" description="Create azkaban jar">
+
+	<!-- run junit tests -->
+	<target name="test" depends="build" description="Run junit tests">
+		<delete dir="${dist.tests.dir}" />
+		<mkdir dir="${dist.tests.dir}" />
+
+		<copy todir="${dist.tests.dir}">
+			<fileset dir="${java.unit.dir}">
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+
+		<javac fork="true" destdir="${dist.tests.dir}"
+	      target="1.6" debug="true" deprecation="false" failonerror="true">
+			<src path="${java.unit.dir}" />
+			<classpath refid="main.classpath" />
+		</javac>
+
+		<junit printsummary="yes" haltonfailure="yes">
+			<classpath refid="main.classpath" />			<batchtest>				<fileset dir="${dist.tests.dir}">					<include name="**/*Test*" />				</fileset>			</batchtest>			<formatter type="brief" usefile="false"/>		</junit>
+	</target>
+
+	<target name="jars" depends="test" description="Create azkaban jar">
 		<mkdir dir="${dist.jar.dir}" />
 		<jar destfile="${azkaban-hdfs-jar}">
 			<fileset dir="${dist.classes.dir}">
@@ -91,7 +117,7 @@
 			</fileset>
 		</jar>
 	</target>
-	
+
 	<target name="src-jars" description="Create azkaban binary+source jar">
 		<mkdir dir="${dist.jar.dir}" />
 		<jar destfile="${azkaban-hdfs-jar}">
@@ -101,20 +127,20 @@
 			<fileset dir="${java.src.dir}" />
 		</jar>
 	</target>
-	
+
 	<target name="package-hdfs-browser" depends="jars" description="Creates a package for the webserver">
 		<delete dir="${dist.packages.dir}" />
 		<mkdir dir="${dist.packages.dir}" />
 		<mkdir dir="${dist.packages.dir}/conf" />
 		<mkdir dir="${dist.packages.dir}/lib" />
 		<mkdir dir="${dist.packages.dir}/extlib" />
-		
+
 		<!-- Copy conf files -->
 		<copy todir="${dist.packages.dir}/conf" >
 			<fileset dir="${conf.dir}" >
 			</fileset>
 		</copy>
-		
+
 		<!-- Copy Azkaban jars and libs-->
 		<copy file="${azkaban-hdfs-jar}" todir="${dist.packages.dir}/lib" />
 		<copy todir="${dist.packages.dir}/lib" >
@@ -122,21 +148,21 @@
 				<!--exclude name="azkaban*.jar"/-->
 			</fileset>
 		</copy>
-		
+
 		<copy todir="${dist.packages.dir}/extlib" >
 			<fileset dir="${plugin.ext.lib.dir}" >
 			</fileset>
 		</copy>
-		
+
 		<!-- Copy build version file -->
 		<copy file="${version.file}" todir="${dist.packages.dir}" />
-		
+
 		<!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
 			<tarfileset dir="${dist.packages.dir}" prefix="${name}-${version}" filemode="755" />
 		</tar>
 	</target>
-	
+
 	<target name="package" depends="package-hdfs-browser" description="Create all packages">
 	</target>
 </project>
