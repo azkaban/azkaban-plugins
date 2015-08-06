@@ -100,7 +100,7 @@ public class HadoopPigJob extends JavaProcessJob {
     HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(),
         getWorkingDirectory());
 
-    File f = null;
+    File tokenFile = null;
     if (shouldProxy && obtainTokens) {
       userToProxy = getJobProps().getString("user.to.proxy");
       getLog().info("Need to proxy. Getting tokens.");
@@ -108,9 +108,9 @@ public class HadoopPigJob extends JavaProcessJob {
       Props props = new Props();
       props.putAll(getJobProps());
       props.putAll(getSysProps());
-      f = getHadoopTokens(props);
+      tokenFile = getHadoopTokens(props);
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION,
-          f.getAbsolutePath());
+          tokenFile.getAbsolutePath());
     }
     try {
       super.run();
@@ -123,10 +123,10 @@ public class HadoopPigJob extends JavaProcessJob {
       getLog().error("caught error running the job", t);
       throw new Exception(t);
     } finally {
-      if (f != null) {
-        cancelHadoopTokens(f);
-        if (f.exists()) {
-          f.delete();
+      if (tokenFile != null) {
+        cancelHadoopTokens(tokenFile);
+        if (tokenFile.exists()) {
+          tokenFile.delete();
         }
       }
     }
