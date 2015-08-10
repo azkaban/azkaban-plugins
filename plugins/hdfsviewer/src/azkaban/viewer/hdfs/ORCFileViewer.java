@@ -119,7 +119,7 @@ public class ORCFileViewer extends HdfsFileViewer {
             }
             outStream.write(ret.toString().getBytes());
         } catch (IOException e) {
-            outStream.write(("Error in display json file: " + e
+            outStream.write(("Error in display orc file: " + e
                 .getLocalizedMessage()).getBytes("UTF-8"));
             throw e;
         } finally {
