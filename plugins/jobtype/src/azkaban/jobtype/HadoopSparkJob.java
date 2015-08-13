@@ -18,28 +18,42 @@ package azkaban.jobtype;
 
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FilenameFilter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.StringTokenizer;
 
+import javolution.testing.AssertionException;
+
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.log4j.Logger;
 
+import azkaban.flow.CommonJobProperties;
 import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.security.commons.HadoopSecurityManager;
-import azkaban.security.commons.HadoopSecurityManagerException;
 import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
 
+/**
+ * <pre>
+ * The Azkaban adaptor for running a Spark Submit job.
+ * Use this in conjunction with  {@link azkaban.jobtype.HadoopSecureSparkWrapper}
+ *
+ * </pre>
+ * 
+ * @see azkaban.jobtype.HadoopSecureSparkWrapper
+ */
 public class HadoopSparkJob extends JavaProcessJob {
 
   // Azkaban/Java params
-  private static final String USER_TO_PROXY = "user.to.proxy";
-
   private static final String HADOOP_SECURE_SPARK_WRAPPER = HadoopSecureSparkWrapper.class
           .getName();
 
@@ -48,7 +62,7 @@ public class HadoopSparkJob extends JavaProcessJob {
   // Spark params
   private static final String MASTER = "master";
 
-  private static final String JARS_PREFIX = "jars";
+  private static final String SPARK_JARS = "jars";
 
   private static final String EXECUTION_JAR_AZKABAN = "execution.jar";
 
@@ -74,8 +88,16 @@ public class HadoopSparkJob extends JavaProcessJob {
 
   private static final String EXECUTOR_MEMORY_SPARK = "executor-memory";
 
+  private static final String PARAMS = "params";
+
+  private static final String SPARK_CONF_AZKABAN = "spark.conf.";
+
+  private static final String SPARK_CONF_SPARK = "conf";
+
   // Spark default
   private static final String MASTER_DEFAULT = "yarn-cluster";
+
+  private static final String SPARK_JARS_DEFAULT = "./lib/*";
 
   private static final int NUM_EXECUTORS_DEFAULT = 2;
 
@@ -96,32 +118,20 @@ public class HadoopSparkJob extends JavaProcessJob {
 
   private HadoopSecurityManager hadoopSecurityManager;
 
-  private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
-
-  // FileNameFilter for only jar files
-  private static FilenameFilter jarFilter = new FilenameFilter() {
-    @Override
-    public boolean accept(File dir, String name) {
-      if (name.endsWith("\\.jar"))
-        return true;
-      else
-        return false;
-    }
-  };
 
   public HadoopSparkJob(String jobid, Props sysProps, Props jobProps, Logger log) {
     super(jobid, sysProps, jobProps, log);
 
-    getJobProps().put("azkaban.job.id", jobid);
+    getJobProps().put(CommonJobProperties.JOB_ID, jobid);
 
-    shouldProxy = getSysProps().getBoolean("azkaban.should.proxy", false);
-    getJobProps().put("azkaban.should.proxy", Boolean.toString(shouldProxy));
-    obtainTokens = getSysProps().getBoolean("obtain.binary.token", false);
+    shouldProxy = getSysProps().getBoolean(HadoopSecurityManager.ENABLE_PROXYING, false);
+    getJobProps().put(HadoopSecurityManager.ENABLE_PROXYING, Boolean.toString(shouldProxy));
+    obtainTokens = getSysProps().getBoolean(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, false);
 
     if (shouldProxy) {
       getLog().info("Initiating hadoop security manager.");
       try {
-        hadoopSecurityManager = loadHadoopSecurityManager(sysProps, log);
+        hadoopSecurityManager = HadoopJobUtils.loadHadoopSecurityManager(getSysProps(), log);
       } catch (RuntimeException e) {
         throw new RuntimeException("Failed to get hadoop security manager!" + e);
       }
@@ -134,87 +144,30 @@ public class HadoopSparkJob extends JavaProcessJob {
 
     File tokenFile = null;
     if (shouldProxy && obtainTokens) {
-      userToProxy = getJobProps().getString(USER_TO_PROXY);
+      userToProxy = getJobProps().getString(HadoopSecurityManager.USER_TO_PROXY);
       getLog().info("Need to proxy. Getting tokens.");
       // get tokens in to a file, and put the location in props
       Props props = new Props();
       props.putAll(getJobProps());
       props.putAll(getSysProps());
-      tokenFile = getHadoopTokens(props);
+      tokenFile = HadoopJobUtils.getHadoopTokens(hadoopSecurityManager, props, getLog());
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION, tokenFile.getAbsolutePath());
     }
 
     try {
-      super.run();
-    } catch (Exception e) {
-      e.printStackTrace();
-      getLog().error("caught exception running the job");
-      throw new Exception(e);
+      super.run();  
     } catch (Throwable t) {
       t.printStackTrace();
       getLog().error("caught error running the job");
       throw new Exception(t);
     } finally {
       if (tokenFile != null) {
-        cancelHadoopTokens(tokenFile);
+        HadoopJobUtils.cancelHadoopTokens(hadoopSecurityManager, userToProxy, tokenFile, getLog());
         if (tokenFile.exists()) {
           tokenFile.delete();
         }
       }
     }
-  }
-
-  private HadoopSecurityManager loadHadoopSecurityManager(Props props, Logger logger)
-          throws RuntimeException {
-
-    Class<?> hadoopSecurityManagerClass = props.getClass(HADOOP_SECURITY_MANAGER_CLASS_PARAM, true,
-            HadoopHiveJob.class.getClassLoader());
-    getLog().info("Loading hadoop security manager " + hadoopSecurityManagerClass.getName());
-    HadoopSecurityManager hadoopSecurityManager = null;
-
-    try {
-      Method getInstanceMethod = hadoopSecurityManagerClass.getMethod("getInstance", Props.class);
-      hadoopSecurityManager = (HadoopSecurityManager) getInstanceMethod.invoke(
-              hadoopSecurityManagerClass, props);
-    } catch (InvocationTargetException e) {
-      getLog().error(
-              "Could not instantiate Hadoop Security Manager "
-                      + hadoopSecurityManagerClass.getName() + e.getCause());
-      throw new RuntimeException(e.getCause());
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e.getCause());
-    }
-
-    return hadoopSecurityManager;
-
-  }
-
-  private void cancelHadoopTokens(File tokenFile) {
-    try {
-      hadoopSecurityManager.cancelTokens(tokenFile, userToProxy, getLog());
-    } catch (HadoopSecurityManagerException e) {
-      e.printStackTrace();
-      getLog().error(e.getCause() + e.getMessage());
-    } catch (Exception e) {
-      e.printStackTrace();
-      getLog().error(e.getCause() + e.getMessage());
-    }
-  }
-
-  protected File getHadoopTokens(Props props) throws HadoopSecurityManagerException {
-
-    File tokenFile = null;
-    try {
-      tokenFile = File.createTempFile("mr-azkaban", ".token");
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new HadoopSecurityManagerException("Failed to create the token file.", e);
-    }
-
-    hadoopSecurityManager.prefetchToken(tokenFile, props, getLog());
-
-    return tokenFile;
   }
 
   @Override
@@ -276,20 +229,16 @@ public class HadoopSparkJob extends JavaProcessJob {
   protected String getMainArguments() {
     ArrayList<String> argList = new ArrayList<String>();
 
-    // what happens if I don't add these 2 things?
-    // args[0] = "--driver-java-options";
-    // args[1] = javaOption(WORKFLOW_LINK) + javaOption(JOB_LINK)
-    // + javaOption(EXECUTION_LINK) + javaOption(ATTEMPT_LINK);
-
     argList.add("--" + MASTER);
     argList.add(jobProps.getString(MASTER, MASTER_DEFAULT));
 
-    logger.info("jars: " + jobProps.getString(JARS_PREFIX, ""));
-    System.out.println("jars: " + jobProps.getString(JARS_PREFIX, ""));
+    logger.info("jars: " + jobProps.getString(SPARK_JARS, SPARK_JARS_DEFAULT));
+    System.out.println("jars: " + jobProps.getString(SPARK_JARS, SPARK_JARS_DEFAULT));
 
-    String jarList = resolveJars(jobProps.getString(JARS_PREFIX, ""));
+    String jarList = HadoopJobUtils.resolveWildCardForJarSpec(getWorkingDirectory(),
+            jobProps.getString(SPARK_JARS, SPARK_JARS_DEFAULT), getLog());
     if (jarList != null && jarList.length() > 0) {
-      argList.add("--" + JARS_PREFIX);
+      argList.add("--" + SPARK_JARS);
       argList.add(jarList);
     }
     argList.add("--" + EXECUTION_CLASS_SPARK);
@@ -304,11 +253,20 @@ public class HadoopSparkJob extends JavaProcessJob {
     argList.add(jobProps.getString(DRIVER_MEMORY_AZKABAN, DRIVER_MEMORY_DEFAULT));
     argList.add("--" + EXECUTOR_MEMORY_SPARK);
     argList.add(jobProps.getString(EXECUTOR_MEMORY_AZKABAN, EXECUTOR_MEMORY_DEFAULT));
-    // always place EXECUTION_JAR_AZKABAN in the last spot
-    argList.add(jobProps.getString(EXECUTION_JAR_AZKABAN));
+    for (Entry<String, String> entry : jobProps.getMapByPrefix(SPARK_CONF_AZKABAN).entrySet()) {
+      argList.add("--" + SPARK_CONF_SPARK);
+      String sparkConfKeyVal = String.format("%s=%s", entry.getKey(), entry.getValue());
+      argList.add(sparkConfKeyVal);
+    }
+    String executionJarName = HadoopJobUtils.resolveExecutionJarName(getWorkingDirectory(),
+            jobProps.getString(EXECUTION_JAR_AZKABAN), getLog());
+    argList.add(executionJarName);
+    argList.add(jobProps.getString(PARAMS, ""));
 
     return StringUtils.join((Collection<String>) argList, " ");
   }
+
+ 
 
   @Override
   protected List<String> getClassPaths() {
@@ -367,56 +325,75 @@ public class HadoopSparkJob extends JavaProcessJob {
     }
   }
 
+  
   /**
-   * Resolves /* and expands them into appropriate jar file names. Only works for jar file as of now
-   * (only known use case)
-   * 
-   * test case required: one replacement, two replacement.
-   * 
-   * @param unresolvedJar
-   * @return jar file list, comma separated, all .../* expanded into actual jar names in order
+   * This cancel method, in addition to the default canceling behavior, also kills the Spark job on
+   * Hadoop
    */
-  private String resolveJars(String unresolvedJar) {
+  @Override
+  public void cancel() throws InterruptedException {
+    super.cancel();
 
-    System.err.println("unResolvedJar: " + unresolvedJar);
+    String azExecId = jobProps.getString("azkaban.flow.execid");
+    String logFileName = String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
+            getId());
+    debug("log file name is: " + logFileName);
 
-    if (unresolvedJar == null || unresolvedJar.isEmpty())
-      return null;
+    String applicationId = findApplicationIdFromLog(logFileName);
+    debug("applicationId is: " + applicationId);
+    if (applicationId == null)
+      return;
 
-    String[] unresolvedJarList = unresolvedJar.split(",");
-
-    StringBuilder resolvedJar = new StringBuilder();
-    for (String s : unresolvedJarList) {
-      // if need resolution
-      System.err.println("currently resolving jar: " + s);
-      if (s.endsWith("*")) {
-        String fileName = String.format("%s/%s", getWorkingDirectory(),
-                s.substring(0, s.length() - 2));
-        System.err.println(fileName);
-        String[] lsList = new File(fileName).list(jarFilter);
-        System.err.println("absolute path: " + new File(fileName).getAbsolutePath());
-        System.err.println("ls length: " + lsList.length);
-        for (String ls : lsList) {
-          String lsFilename = fileName + "/" + ls + ",";
-          System.err.println(lsFilename);
-          resolvedJar.append(lsFilename);
-        }
-      } else { // no need for resolution
-        resolvedJar.append(s + ",");
-      }
-    }
-
-    logger.error("resolvedJar: " + resolvedJar);
-    System.err.println("resolvedJar: " + resolvedJar);
-
-    // remove the trailing comma
-    // TODO need to check length of resolve jar: if zero don't do anything
-    int lastCharIndex = resolvedJar.length() - 1;
-    if (resolvedJar.charAt(lastCharIndex) == ',') {
-      resolvedJar.deleteCharAt(resolvedJar.length() - 1);
-    }
-
-    return resolvedJar.toString();
+    HadoopJobUtils.killJobOnCluster(applicationId, getLog());
   }
 
+   /**
+   * <pre>
+   * This is in effect does a grep of the log file, and parse out the application_xxx_yyy string
+   * </pre>
+   * 
+   * @param logFileName
+   * @return
+   */
+  private String findApplicationIdFromLog(String logFileName) {
+    String applicationId = null;
+    BufferedReader br = null;
+    try {
+      br = new BufferedReader(new FileReader(logFileName));
+      String input;
+      while ((input = br.readLine()) != null) {
+        if (input.contains("Submitted application"))
+          break;
+      }
+      if (input == null) {
+        return null;
+      }
+      info("found input: " + input);
+      String[] inputSplit = input.split(" ");
+      if (inputSplit.length < 2) {
+        info("cannot find application id");
+        return null;
+      }
+      applicationId = inputSplit[inputSplit.length - 1];
+
+      if (!applicationId.startsWith("application")) {
+        throw new AssertionException(
+                "Internal implementation err: applicationId does not start with application: "
+                        + applicationId);
+      }
+      info("application ID is: " + applicationId);
+      return applicationId;
+    } catch (IOException e) {
+      e.printStackTrace();
+      info("Error while trying to find applicationId for Spark log", e);
+    } finally {
+      try {
+        if (br != null)
+          br.close();
+      } catch (Exception e) {
+        // do nothing
+      }
+    }
+    return applicationId;
+  }
 }
