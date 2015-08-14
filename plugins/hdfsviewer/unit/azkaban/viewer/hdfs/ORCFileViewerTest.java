@@ -18,10 +18,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
+ * <pre>
  * Test cases for ORCFileViewer
  *
  * Validate capability for ORC files Validate false capability for avro, text
  * and parquet schema for ORC files verify raw records from orc files
+ * </pre>
  */
 public class ORCFileViewerTest {
     ORCFileViewer viewer;
@@ -100,21 +102,21 @@ public class ORCFileViewerTest {
 
     /* verify capability for avro files */
     @Test
-    public void avroCapability() throws IOException {
+    public void noAvroCapability() throws IOException {
         assertEquals(unSupportedCapabilities,
             viewer.getCapabilities(fs, getResourcePath("TestAvro.avro")));
     }
 
     /* verify capability for text files */
     @Test
-    public void textCapability() throws IOException {
+    public void noTextCapability() throws IOException {
         assertEquals(unSupportedCapabilities,
             viewer.getCapabilities(fs, getResourcePath("TestTextFile.txt")));
     }
 
     /* verify capability for parquet files */
     @Test
-    public void parquetCapability() throws IOException {
+    public void noParquetCapability() throws IOException {
         assertEquals(unSupportedCapabilities, viewer.getCapabilities(fs,
             getResourcePath("TestParquetFile.parquet")));
     }

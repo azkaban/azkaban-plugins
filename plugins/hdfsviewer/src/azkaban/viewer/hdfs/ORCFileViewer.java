@@ -44,7 +44,7 @@ public class ORCFileViewer extends HdfsFileViewer {
     @Override
     public Set<Capability> getCapabilities(FileSystem fs, Path path) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Parquet file path: " + path.toUri().getPath());
+            logger.debug("orc file path: " + path.toUri().getPath());
         }
 
         Reader orcReader = null;
