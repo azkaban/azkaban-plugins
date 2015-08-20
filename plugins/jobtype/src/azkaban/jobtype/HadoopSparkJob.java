@@ -16,12 +16,18 @@
 
 package azkaban.jobtype;
 
+import static azkaban.flow.CommonJobProperties.ATTEMPT_LINK;
+import static azkaban.flow.CommonJobProperties.EXECUTION_LINK;
+import static azkaban.flow.CommonJobProperties.JOB_LINK;
+import static azkaban.flow.CommonJobProperties.WORKFLOW_LINK;
+import static azkaban.security.commons.HadoopSecurityManager.ENABLE_PROXYING;
+import static azkaban.security.commons.HadoopSecurityManager.OBTAIN_BINARY_TOKEN;
+import static azkaban.security.commons.HadoopSecurityManager.USER_TO_PROXY;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,9 +37,6 @@ import java.util.StringTokenizer;
 
 import javolution.testing.AssertionException;
 
-import org.apache.hadoop.yarn.api.records.ApplicationId;
-import org.apache.hadoop.yarn.client.api.YarnClient;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.log4j.Logger;
 
 import azkaban.flow.CommonJobProperties;
@@ -57,57 +60,9 @@ public class HadoopSparkJob extends JavaProcessJob {
   private static final String HADOOP_SECURE_SPARK_WRAPPER = HadoopSecureSparkWrapper.class
           .getName();
 
-  private static final Logger logger = Logger.getRootLogger();
-
   // Spark params
-  private static final String MASTER = "master";
 
-  private static final String SPARK_JARS = "jars";
-
-  private static final String EXECUTION_JAR_AZKABAN = "execution.jar";
-
-  private static final String EXECUTION_CLASS_AZKABAN = "execution.class";
-
-  private static final String EXECUTION_CLASS_SPARK = "class";
-
-  private static final String NUM_EXECUTORS_AZKABAN = "num.executors";
-
-  private static final String NUM_EXECUTORS_SPARK = "num-executors";
-
-  private static final String EXECUTOR_CORES_AZKABAN = "executor.cores";
-
-  private static final String EXECUTOR_CORES_SPARK = "executor-cores";
-
-  private static final String QUEUE = "queue";
-
-  private static final String DRIVER_MEMORY_AZKABAN = "driver.memory";
-
-  private static final String DRIVER_MEMORY_SPARK = "driver-memory";
-
-  private static final String EXECUTOR_MEMORY_AZKABAN = "executor.memory";
-
-  private static final String EXECUTOR_MEMORY_SPARK = "executor-memory";
-
-  private static final String PARAMS = "params";
-
-  private static final String SPARK_CONF_AZKABAN = "spark.conf.";
-
-  private static final String SPARK_CONF_SPARK = "conf";
-
-  // Spark default
-  private static final String MASTER_DEFAULT = "yarn-cluster";
-
-  private static final String SPARK_JARS_DEFAULT = "./lib/*";
-
-  private static final int NUM_EXECUTORS_DEFAULT = 2;
-
-  private static final int EXECUTOR_CORES_DEFAULT = 1;
-
-  private static final String QUEUE_DEFAULT = "marathon";
-
-  private static final String DRIVER_MEMORY_DEFAULT = "2g";
-
-  private static final String EXECUTOR_MEMORY_DEFAULT = "1g";
+  public static final String DRIVER_JAVA_OPTIONS = "driver-java-options";
 
   // security variables
   private String userToProxy = null;
@@ -118,15 +73,14 @@ public class HadoopSparkJob extends JavaProcessJob {
 
   private HadoopSecurityManager hadoopSecurityManager;
 
-
   public HadoopSparkJob(String jobid, Props sysProps, Props jobProps, Logger log) {
     super(jobid, sysProps, jobProps, log);
 
     getJobProps().put(CommonJobProperties.JOB_ID, jobid);
 
-    shouldProxy = getSysProps().getBoolean(HadoopSecurityManager.ENABLE_PROXYING, false);
-    getJobProps().put(HadoopSecurityManager.ENABLE_PROXYING, Boolean.toString(shouldProxy));
-    obtainTokens = getSysProps().getBoolean(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, false);
+    shouldProxy = getSysProps().getBoolean(ENABLE_PROXYING, false);
+    getJobProps().put(ENABLE_PROXYING, Boolean.toString(shouldProxy));
+    obtainTokens = getSysProps().getBoolean(OBTAIN_BINARY_TOKEN, false);
 
     if (shouldProxy) {
       getLog().info("Initiating hadoop security manager.");
@@ -144,7 +98,7 @@ public class HadoopSparkJob extends JavaProcessJob {
 
     File tokenFile = null;
     if (shouldProxy && obtainTokens) {
-      userToProxy = getJobProps().getString(HadoopSecurityManager.USER_TO_PROXY);
+      userToProxy = getJobProps().getString(USER_TO_PROXY);
       getLog().info("Need to proxy. Getting tokens.");
       // get tokens in to a file, and put the location in props
       Props props = new Props();
@@ -155,7 +109,7 @@ public class HadoopSparkJob extends JavaProcessJob {
     }
 
     try {
-      super.run();  
+      super.run();
     } catch (Throwable t) {
       t.printStackTrace();
       getLog().error("caught error running the job");
@@ -196,7 +150,6 @@ public class HadoopSparkJob extends JavaProcessJob {
       args += " " + typeSysJVMArgs;
     }
 
-    // TODO: check to see if correct
     String typeUserJVMArgs2 = getJobProps().getString("jvm.args", null);
     if (typeUserJVMArgs != null) {
       args += " " + typeUserJVMArgs2;
@@ -227,46 +180,86 @@ public class HadoopSparkJob extends JavaProcessJob {
 
   @Override
   protected String getMainArguments() {
+    return testableGetMainArguments(jobProps, getWorkingDirectory(), getLog());
+  }
+
+  static String testableGetMainArguments(Props jobProps, String workingDir, Logger log) {
+
+    // if we ever need to recreate a failure scenario in the test case
+    log.debug(jobProps);
+    log.debug(workingDir);
+
     ArrayList<String> argList = new ArrayList<String>();
 
-    argList.add("--" + MASTER);
-    argList.add(jobProps.getString(MASTER, MASTER_DEFAULT));
+    // special case handling for DRIVER_JAVA_OPTIONS
+    argList.add("--" + DRIVER_JAVA_OPTIONS);
+    argList.add(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, WORKFLOW_LINK));
+    argList.add(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, JOB_LINK));
+    argList.add(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, EXECUTION_LINK));
+    argList.add(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, ATTEMPT_LINK));
+    String azDriverJavaOptions = SparkJobArg.SPARK_DRIVER_PREFIX.azPropName + DRIVER_JAVA_OPTIONS;
+    if (jobProps.containsKey(azDriverJavaOptions)) {
+      argList.add(jobProps.getString(azDriverJavaOptions));
+    }
 
-    logger.info("jars: " + jobProps.getString(SPARK_JARS, SPARK_JARS_DEFAULT));
-    System.out.println("jars: " + jobProps.getString(SPARK_JARS, SPARK_JARS_DEFAULT));
+    argList.add(SparkJobArg.MASTER.sparkParamName);
+    argList.add(jobProps.getString(SparkJobArg.MASTER.azPropName, SparkJobArg.MASTER.defaultValue));
 
-    String jarList = HadoopJobUtils.resolveWildCardForJarSpec(getWorkingDirectory(),
-            jobProps.getString(SPARK_JARS, SPARK_JARS_DEFAULT), getLog());
+    String jarList = HadoopJobUtils.resolveWildCardForJarSpec(workingDir, jobProps.getString(
+            SparkJobArg.SPARK_JARS.azPropName, SparkJobArg.SPARK_JARS.defaultValue), log);
     if (jarList != null && jarList.length() > 0) {
-      argList.add("--" + SPARK_JARS);
+      argList.add(SparkJobArg.SPARK_JARS.sparkParamName);
       argList.add(jarList);
     }
-    argList.add("--" + EXECUTION_CLASS_SPARK);
-    argList.add(jobProps.getString(EXECUTION_CLASS_AZKABAN));
-    argList.add("--" + NUM_EXECUTORS_SPARK);
-    argList.add(Integer.toString(jobProps.getInt(NUM_EXECUTORS_AZKABAN, NUM_EXECUTORS_DEFAULT)));
-    argList.add("--" + EXECUTOR_CORES_SPARK);
-    argList.add(Integer.toString(jobProps.getInt(EXECUTOR_CORES_AZKABAN, EXECUTOR_CORES_DEFAULT)));
-    argList.add("--" + QUEUE);
-    argList.add(jobProps.getString(QUEUE, QUEUE_DEFAULT));
-    argList.add("--" + DRIVER_MEMORY_SPARK);
-    argList.add(jobProps.getString(DRIVER_MEMORY_AZKABAN, DRIVER_MEMORY_DEFAULT));
-    argList.add("--" + EXECUTOR_MEMORY_SPARK);
-    argList.add(jobProps.getString(EXECUTOR_MEMORY_AZKABAN, EXECUTOR_MEMORY_DEFAULT));
-    for (Entry<String, String> entry : jobProps.getMapByPrefix(SPARK_CONF_AZKABAN).entrySet()) {
-      argList.add("--" + SPARK_CONF_SPARK);
+
+    argList.add(SparkJobArg.EXECUTION_CLASS.sparkParamName);
+    argList.add(jobProps.getString(SparkJobArg.EXECUTION_CLASS.azPropName));
+
+    argList.add(SparkJobArg.NUM_EXECUTORS.sparkParamName);
+    argList.add(jobProps.getString(SparkJobArg.NUM_EXECUTORS.azPropName,
+            SparkJobArg.NUM_EXECUTORS.defaultValue));
+
+    argList.add(SparkJobArg.EXECUTOR_CORES.sparkParamName);
+    argList.add(jobProps.getString(SparkJobArg.EXECUTOR_CORES.azPropName,
+            SparkJobArg.EXECUTOR_CORES.defaultValue));
+
+    argList.add(SparkJobArg.QUEUE.sparkParamName);
+    argList.add(jobProps.getString(SparkJobArg.QUEUE.azPropName, SparkJobArg.QUEUE.defaultValue));
+
+    argList.add(SparkJobArg.DRIVER_MEMORY.sparkParamName);
+    argList.add(jobProps.getString(SparkJobArg.DRIVER_MEMORY.azPropName,
+            SparkJobArg.DRIVER_MEMORY.defaultValue));
+
+    argList.add(SparkJobArg.EXECUTOR_MEMORY.sparkParamName);
+    argList.add(jobProps.getString(SparkJobArg.EXECUTOR_MEMORY.azPropName,
+            SparkJobArg.EXECUTOR_MEMORY.defaultValue));
+
+    for (Entry<String, String> entry : jobProps.getMapByPrefix(
+            SparkJobArg.SPARK_DRIVER_PREFIX.azPropName).entrySet()) {
+      argList.add(SparkJobArg.SPARK_DRIVER_PREFIX.sparkParamName + entry.getKey());
+      argList.add(entry.getValue());
+    }
+
+    for (Entry<String, String> entry : jobProps.getMapByPrefix(
+            SparkJobArg.SPARK_FLAGS_PREFIX.azPropName).entrySet()) {
+      argList.add(SparkJobArg.SPARK_FLAGS_PREFIX.sparkParamName + entry.getKey());
+    }
+
+    for (Entry<String, String> entry : jobProps.getMapByPrefix(
+            SparkJobArg.SPARK_CONF_PREFIX.azPropName).entrySet()) {
+      argList.add(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName);
       String sparkConfKeyVal = String.format("%s=%s", entry.getKey(), entry.getValue());
       argList.add(sparkConfKeyVal);
     }
-    String executionJarName = HadoopJobUtils.resolveExecutionJarName(getWorkingDirectory(),
-            jobProps.getString(EXECUTION_JAR_AZKABAN), getLog());
+
+    String executionJarName = HadoopJobUtils.resolveExecutionJarName(workingDir,
+            jobProps.getString(SparkJobArg.EXECUTION_JAR.azPropName), log);
     argList.add(executionJarName);
-    argList.add(jobProps.getString(PARAMS, ""));
+
+    argList.add(jobProps.getString(SparkJobArg.PARAMS.azPropName, SparkJobArg.PARAMS.defaultValue));
 
     return StringUtils.join((Collection<String>) argList, " ");
   }
-
- 
 
   @Override
   protected List<String> getClassPaths() {
@@ -325,7 +318,6 @@ public class HadoopSparkJob extends JavaProcessJob {
     }
   }
 
-  
   /**
    * This cancel method, in addition to the default canceling behavior, also kills the Spark job on
    * Hadoop
@@ -347,7 +339,7 @@ public class HadoopSparkJob extends JavaProcessJob {
     HadoopJobUtils.killJobOnCluster(applicationId, getLog());
   }
 
-   /**
+  /**
    * <pre>
    * This is in effect does a grep of the log file, and parse out the application_xxx_yyy string
    * </pre>

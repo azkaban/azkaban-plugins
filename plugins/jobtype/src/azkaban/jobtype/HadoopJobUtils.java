@@ -174,8 +174,8 @@ public class HadoopJobUtils {
    * @param userSpecifiedJarName
    * @return the resolved actual jar file name to execute
    */
-  public static String resolveExecutionJarName(String workingDirectory, String userSpecifiedJarName,
-          Logger log) {
+  public static String resolveExecutionJarName(String workingDirectory,
+          String userSpecifiedJarName, Logger log) {
 
     log.debug("Resolving execution jar name: working directory: " + workingDirectory
             + ", user specified name: " + userSpecifiedJarName);
@@ -244,4 +244,12 @@ public class HadoopJobUtils {
     }
   }
 
+  public static String javaOptStringFromAzkabanProps(Props props, String key) {
+    String value = props.get(key);
+    if (value == null) {
+      throw new RuntimeException(String.format("Cannot find property [%s], in azkaban props: [%s]",
+              key, value));
+    }
+    return String.format("-D%s=%s", key, value);
+  }
 }
