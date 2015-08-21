@@ -192,14 +192,23 @@ public class HadoopSparkJob extends JavaProcessJob {
     ArrayList<String> argList = new ArrayList<String>();
 
     // special case handling for DRIVER_JAVA_OPTIONS
-    argList.add("--" + DRIVER_JAVA_OPTIONS);
-    argList.add(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, WORKFLOW_LINK));
-    argList.add(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, JOB_LINK));
-    argList.add(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, EXECUTION_LINK));
-    argList.add(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, ATTEMPT_LINK));
-    String azDriverJavaOptions = SparkJobArg.SPARK_DRIVER_PREFIX.azPropName + DRIVER_JAVA_OPTIONS;
-    if (jobProps.containsKey(azDriverJavaOptions)) {
-      argList.add(jobProps.getString(azDriverJavaOptions));
+    argList.add(SparkJobArg.DRIVER_JAVA_OPTIONS.sparkParamName);
+    StringBuilder driverJavaOptions = new StringBuilder();
+    String[] requiredJavaOpts = { WORKFLOW_LINK, JOB_LINK, EXECUTION_LINK, ATTEMPT_LINK };
+    driverJavaOptions.append(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps,
+            requiredJavaOpts[0]));
+    for (int i = 1; i < requiredJavaOpts.length; i++) {
+      driverJavaOptions.append(" " + HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps,
+              requiredJavaOpts[i]));
+    }
+    if (jobProps.containsKey(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName)) {
+      driverJavaOptions.append(" " + jobProps.getString(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName));
+    }
+    argList.add(driverJavaOptions.toString());
+
+    for (Entry<String, String> entry : jobProps.getMapByPrefix(
+            SparkJobArg.SPARK_FLAG_PREFIX.azPropName).entrySet()) {
+      argList.add(SparkJobArg.SPARK_FLAG_PREFIX.sparkParamName + entry.getKey());
     }
 
     argList.add(SparkJobArg.MASTER.sparkParamName);
@@ -241,11 +250,6 @@ public class HadoopSparkJob extends JavaProcessJob {
     }
 
     for (Entry<String, String> entry : jobProps.getMapByPrefix(
-            SparkJobArg.SPARK_FLAGS_PREFIX.azPropName).entrySet()) {
-      argList.add(SparkJobArg.SPARK_FLAGS_PREFIX.sparkParamName + entry.getKey());
-    }
-
-    for (Entry<String, String> entry : jobProps.getMapByPrefix(
             SparkJobArg.SPARK_CONF_PREFIX.azPropName).entrySet()) {
       argList.add(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName);
       String sparkConfKeyVal = String.format("%s=%s", entry.getKey(), entry.getValue());
@@ -258,7 +262,7 @@ public class HadoopSparkJob extends JavaProcessJob {
 
     argList.add(jobProps.getString(SparkJobArg.PARAMS.azPropName, SparkJobArg.PARAMS.defaultValue));
 
-    return StringUtils.join((Collection<String>) argList, " ");
+    return StringUtils.join((Collection<String>) argList, SparkJobArg.delimiter);
   }
 
   @Override

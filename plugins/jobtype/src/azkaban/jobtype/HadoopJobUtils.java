@@ -236,9 +236,9 @@ public class HadoopJobUtils {
       ApplicationId aid = ApplicationId.newInstance(Long.parseLong(split[1]),
               Integer.parseInt(split[2]));
 
-      log.debug("start klling applicatin: " + aid);
+      log.info("start klling applicatin: " + aid);
       yarnClient.killApplication(aid);
-      log.debug("successfully killed application: " + aid);
+      log.info("successfully killed application: " + aid);
     } catch (Exception e) {
       log.error("Failure while try to kill the hadoop job.  Will skip and continue", e);
     }

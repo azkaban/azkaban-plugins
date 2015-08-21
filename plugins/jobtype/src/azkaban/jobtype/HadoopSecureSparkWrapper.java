@@ -87,9 +87,22 @@ public class HadoopSecureSparkWrapper {
    */
   private static void runSpark(String[] args) {
 
-    logger.info("args: " + Arrays.toString(args));
+    if (args.length == 0) {
+      throw new RuntimeException("SparkSubmit cannot run with zero args");
+    }
 
-    org.apache.spark.deploy.SparkSubmit$.MODULE$.main(args);
+    // munge everything together and repartition based by our ^Z character, instead of by the
+    // default "space" character
+    StringBuilder concat = new StringBuilder();
+    concat.append(args[0]);
+    for (int i = 1; i < args.length; i++) {
+      concat.append(" " + args[i]);
+    }
+
+    final String[] newArgs = concat.toString().split(SparkJobArg.delimiter);
+    logger.info("newArgs: " + Arrays.toString(newArgs));
+
+    org.apache.spark.deploy.SparkSubmit$.MODULE$.main(newArgs);
   }
 
 }

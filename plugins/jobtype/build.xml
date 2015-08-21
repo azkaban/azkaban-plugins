@@ -8,8 +8,11 @@
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
+	<property name="dist.classes.test.dir" value="${dist.dir}/testclasses" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
+	<property name="test.report.dir" value="${dist.dir}/report" />
 	<property name="java.src.dir" value="${basedir}/src" />
+	<property name="java.src.test.dir" value="${basedir}/test" />
 	<property name="azkaban-jobtype-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="jobtypes.dir" value="${basedir}/jobtypes" />
 	<property name="javatype.dir" value="${basedir}/jobtypes/java" />
@@ -44,6 +47,7 @@
 		<delete dir="${dist.jar.dir}" />
 		<delete dir="${dist.classes.dir}" />
 		<delete dir="${dist.packages.dir}" />
+		<delete dir="${test.report.dir}" />
 		<delete>
 			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
 			</fileset>
@@ -78,9 +82,31 @@
 			<exclude name="**/examples/**"/>
 			<classpath refid="main.classpath" />
 		</javac>
+
+
+        <delete dir="${dist.classes.test.dir}" />
+        <mkdir dir="${dist.classes.test.dir}" /> 
+        <javac fork="true" destdir="${dist.classes.test.dir}"
+            target="1.6" debug="true" deprecation="false" failonerror="true">
+            <src path="${java.src.test.dir}" />
+			<classpath refid="main.classpath" />
+        </javac>
+
 	</target>
+
+    <taskdef name="testng" classname="org.testng.TestNGAntTask" classpathref="main.classpath" />
+
+    <target name="test" depends="build" description="running test cases">
+        <mkdir dir="${test.report.dir}"/>
+        <testng outputDir="${test.report.dir}" haltonfailure="true" classpathref="main.classpath">
+            <classpath location="${dist.classes.dir}" />
+            <classpath location="${dist.classes.test.dir}" />
+
+            <classfileset dir="${dist.classes.test.dir}" includes="**/*Test*.class" />
+        </testng>
+    </target>
 	
-	<target name="jars" depends="build" description="Compile main source tree java files">
+	<target name="jars" depends="test" description="Compile main source tree java files">
 
 		<mkdir dir="${dist.jar.dir}" />
 		<jar destfile="${azkaban-jobtype-jar}">

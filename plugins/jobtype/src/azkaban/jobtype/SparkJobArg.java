@@ -14,10 +14,13 @@ public enum SparkJobArg {
   PARAMS("params", "null", ""), //
   SPARK_CONF_PREFIX("spark.conf.", "--conf", ""), //
   SPARK_DRIVER_PREFIX("spark.driver.", "--", ""), //
-  SPARK_FLAGS_PREFIX("spark.flag.", "--", ""); // --help, --verbose, --supervise, --version,
-  // --usage-error
+  DRIVER_JAVA_OPTIONS("spark.driver.driver-java-options", "--driver-java-options", ""),
+  SPARK_FLAG_PREFIX("spark.flag.", "--", ""); // --help, --verbose, --supervise, --version
+
   ;
 
+  public static final String delimiter = "\u001A";
+  
   SparkJobArg(String azPropName, String sparkParamName, String defaultValue) {
     this.azPropName = azPropName;
     this.sparkParamName = sparkParamName;
