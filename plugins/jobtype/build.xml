@@ -94,19 +94,21 @@
 
 	</target>
 
-    <taskdef name="testng" classname="org.testng.TestNGAntTask" classpathref="main.classpath" />
+    <target name="junit" depends="build" description="running test cases">
+        <junit printsummary="yes">
+            <classpath>
+                <path refid="main.classpath" />
+                <pathelement path="${dist.classes.dir}" />
+                <pathelement path="${dist.classes.test.dir}" /> 
+            </classpath>
 
-    <target name="test" depends="build" description="running test cases">
-        <mkdir dir="${test.report.dir}"/>
-        <testng outputDir="${test.report.dir}" haltonfailure="true" classpathref="main.classpath">
-            <classpath location="${dist.classes.dir}" />
-            <classpath location="${dist.classes.test.dir}" />
-
-            <classfileset dir="${dist.classes.test.dir}" includes="**/*Test*.class" />
-        </testng>
+            <batchtest fork="yes">
+                <fileset dir="${dist.classes.test.dir}" includes="**/*Test*.class" />
+            </batchtest>
+        </junit>
     </target>
 	
-	<target name="jars" depends="test" description="Compile main source tree java files">
+	<target name="jars" depends="junit" description="Compile main source tree java files">
 
 		<mkdir dir="${dist.jar.dir}" />
 		<jar destfile="${azkaban-jobtype-jar}">

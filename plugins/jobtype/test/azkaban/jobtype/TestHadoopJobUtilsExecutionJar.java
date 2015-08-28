@@ -5,13 +5,10 @@ import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import azkaban.jobtype.HadoopSparkJob;
-import azkaban.jobtype.SparkJobArg;
 import azkaban.utils.Props;
 
 public class TestHadoopJobUtilsExecutionJar {
@@ -33,12 +30,7 @@ public class TestHadoopJobUtilsExecutionJar {
 
   String delim = SparkJobArg.delimiter;
 
-  @BeforeTest
-  public void beforeTest() throws IOException {
-
-  }
-
-  @BeforeMethod
+  @Before
   public void beforeMethod() throws IOException {
     if (workingDirFile.exists())
       FileUtils.deleteDirectory(workingDirFile);
@@ -57,15 +49,17 @@ public class TestHadoopJobUtilsExecutionJar {
 
     Assert.assertEquals(retval, "");
   }
-  
+
   @Test
   public void testOneLibFolderExpansion() throws IOException {
-    
+
     String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
 
-    Assert.assertEquals(retval, "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
+    Assert.assertEquals(
+            retval,
+            "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
   }
-  
+
   @Test
   public void testTwoLibFolderExpansion() throws IOException {
     File lib2FolderFile = new File(workingDirFile, "lib2");
@@ -74,8 +68,11 @@ public class TestHadoopJobUtilsExecutionJar {
     lib2test1Jar.createNewFile();
     File lib2test2Jar = new File(lib2FolderFile, "test2.jar");
     lib2test2Jar.createNewFile();
-    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*,./lib2/*", logger);
+    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*,./lib2/*",
+            logger);
 
-    Assert.assertEquals(retval, "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar,/tmp/TestHadoopSpark/./lib2/test1.jar,/tmp/TestHadoopSpark/./lib2/test2.jar");
+    Assert.assertEquals(
+            retval,
+            "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar,/tmp/TestHadoopSpark/./lib2/test1.jar,/tmp/TestHadoopSpark/./lib2/test2.jar");
   }
 }

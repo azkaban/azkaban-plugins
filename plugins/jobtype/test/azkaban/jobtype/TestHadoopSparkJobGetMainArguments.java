@@ -5,13 +5,10 @@ import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
-import org.testng.Assert;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import azkaban.jobtype.HadoopSparkJob;
-import azkaban.jobtype.SparkJobArg;
 import azkaban.utils.Props;
 
 public class TestHadoopSparkJobGetMainArguments {
@@ -33,12 +30,9 @@ public class TestHadoopSparkJobGetMainArguments {
 
   String delim = SparkJobArg.delimiter;
 
-  @BeforeTest
-  public void beforeTest() throws IOException {
+  
 
-  }
-
-  @BeforeMethod
+  @Before
   public void beforeMethod() throws IOException {
     if (workingDirFile.exists())
       FileUtils.deleteDirectory(workingDirFile);
