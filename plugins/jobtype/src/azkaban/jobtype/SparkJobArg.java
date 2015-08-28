@@ -12,7 +12,7 @@ public enum SparkJobArg {
   REPOSITORIES("repositories", false), //
   PY_FILES("py-files", false), //
   FILES("files", false), //
-  SPARK_CONF_PREFIX("spark.conf.", "--conf", "",true), //
+  SPARK_CONF_PREFIX("conf.", "--conf", "",true), //
   PROPERTIES_FILE("properties-file", false), //
   DRIVER_MEMORY("driver-memory", "512M", false), //
   DRIVER_JAVA_OPTIONS("driver-java-options", true), //
@@ -20,7 +20,7 @@ public enum SparkJobArg {
   DRIVER_CLASS_PATH("driver-class-path", false), //
   EXECUTOR_MEMORY("executor-memory", "1g", false), //
   PROXY_USER("proxy-user", false), //
-  SPARK_FLAG_PREFIX("spark.flag.", "--", "",true), // --help, --verbose, --supervise, --version
+  SPARK_FLAG_PREFIX("flag.", "--", "",true), // --help, --verbose, --supervise, --version
 
   // Yarn only Arguments
   EXECUTOR_CORES("executor-cores", "1", false), //
