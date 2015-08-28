@@ -17,6 +17,7 @@
 package azkaban.jobtype;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -68,6 +69,17 @@ public class HadoopJobUtils {
     }
   }
 
+  /**
+   * Based on the HADOOP_SECURITY_MANAGER_CLASS_PARAM setting in the incoming props, finds the
+   * correct HadoopSecurityManager Java class
+   * 
+   * @param props
+   * @param log
+   * @return a HadoopSecurityManager object. Will throw exception if any errors occur (including not
+   *         finding a class)
+   * @throws RuntimeException
+   *           : If any errors happen along the way.
+   */
   public static HadoopSecurityManager loadHadoopSecurityManager(Props props, Logger log)
           throws RuntimeException {
 
@@ -93,6 +105,15 @@ public class HadoopJobUtils {
 
   }
 
+  /**
+   * Fetching token with the Azkaban user
+   * 
+   * @param hadoopSecurityManager
+   * @param props
+   * @param log
+   * @return
+   * @throws HadoopSecurityManagerException
+   */
   public static File getHadoopTokens(HadoopSecurityManager hadoopSecurityManager, Props props,
           Logger log) throws HadoopSecurityManagerException {
 
@@ -125,7 +146,8 @@ public class HadoopJobUtils {
   public static String resolveWildCardForJarSpec(String workingDirectory, String unresolvedJarSpec,
           Logger log) {
 
-    log.debug("resolveWildCardForJarSpec: unresolved jar specification: " + unresolvedJarSpec);
+    log.info("resolveWildCardForJarSpec: unresolved jar specification: " + unresolvedJarSpec);
+    log.info("working directory: " + workingDirectory);
 
     if (unresolvedJarSpec == null || unresolvedJarSpec.isEmpty())
       return null;
@@ -136,11 +158,21 @@ public class HadoopJobUtils {
     for (String s : unresolvedJarSpecList) {
       // if need resolution
       if (s.endsWith("*")) {
-        String fileName = String.format("%s/%s", workingDirectory, s.substring(0, s.length() - 2));
-        String[] jarList = new File(fileName).list(jarFilter);
-        for (String ls : jarList) {
-          String lsFilename = fileName + "/" + ls + ",";
-          resolvedJarSpec.append(lsFilename);
+        // remove last 2 characters to get to the folder
+        String dirName = String
+                .format("%s/%s", workingDirectory, s.substring(0, s.length() - 2));
+
+        File[] jars = null;
+        try {
+          jars = getFilesInFolderByRegex(new File(dirName), ".*jar");
+        } catch (FileNotFoundException fnfe) {
+          // if folder doesn't exist, just ignore
+          continue;
+        }
+
+        // if the folder is there, add them to the jar list
+        for (File jar : jars) {
+          resolvedJarSpec.append(jar.toString() + ",");
         }
       } else { // no need for resolution
         resolvedJarSpec.append(s + ",");
@@ -187,31 +219,69 @@ public class HadoopJobUtils {
     // can't use java 1.7 stuff, reverting to a slightly ugly implementation
     String userSpecifiedJarPath = String.format("%s/%s", workingDirectory, userSpecifiedJarName);
     int lastIndexOfSlash = userSpecifiedJarPath.lastIndexOf("/");
-    final String jarname = userSpecifiedJarPath.substring(lastIndexOfSlash + 1);
+    final String jarPrefix = userSpecifiedJarPath.substring(lastIndexOfSlash + 1);
     final String dirName = userSpecifiedJarPath.substring(0, lastIndexOfSlash);
-    log.debug("Resolving execution jar name: dirname: " + dirName + ", jar name:  " + jarname);
-    File[] potentialExecutionJarList = new File(dirName).listFiles(new FilenameFilter() {
+    log.debug("Resolving execution jar name: dirname: " + dirName + ", jar name:  " + jarPrefix);
+
+    File[] potentialExecutionJarList;
+    try {
+      potentialExecutionJarList = getFilesInFolderByRegex(new File(dirName), jarPrefix + ".*jar");
+    } catch (FileNotFoundException e) {
+      throw new IllegalStateException(
+              "execution jar is suppose to be in this folder, but the folder doesn't exist: "
+                      + dirName);
+    }
+
+    if (potentialExecutionJarList.length == 0) {
+      throw new IllegalStateException("unable to find execution jar for Spark at path: "
+              + userSpecifiedJarPath + "*.jar");
+    } else if (potentialExecutionJarList.length > 1) {
+      throw new IllegalStateException(
+              "I find more than one matching instance of the execution jar at the path, don't know which one to use: "
+                      + userSpecifiedJarPath + "*.jar");
+    }
+
+    String resolvedJarName = potentialExecutionJarList[0].toString();
+    log.debug("Resolving execution jar name: resolvedJarName: " + resolvedJarName);
+    return resolvedJarName;
+  }
+
+  /**
+   * 
+   * @return a list of files in the given folder that matches the regex. It may be empty, but will
+   *         never return a null
+   * @throws FileNotFoundException
+   */
+  private static File[] getFilesInFolderByRegex(File folder, final String regex)
+          throws FileNotFoundException {
+    // sanity check
+
+    if (!folder.exists()) {
+      throw new FileNotFoundException();
+
+    }
+    if (!folder.isDirectory()) {
+      throw new IllegalStateException(
+              "execution jar is suppose to be in this folder, but the object present is not a directory: "
+                      + folder);
+    }
+
+    File[] matchingFiles = folder.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
-        if (name.startsWith(jarname.toString()))
+        if (name.matches(regex))
           return true;
         else
           return false;
       }
     });
 
-    if (potentialExecutionJarList.length == 0) {
-      throw new IllegalStateException("unable to find execution jar for Spark at path: "
-              + userSpecifiedJarPath);
-    } else if (potentialExecutionJarList.length > 1) {
+    if (matchingFiles == null) {
       throw new IllegalStateException(
-              "I find more than one matching instance of the execution jar at the path, don't know which one to use: "
-                      + userSpecifiedJarPath);
+              "the ls command in ResolveExecutionJarName threw an IOException");
     }
 
-    String resolvedJarName = potentialExecutionJarList[0].toString();
-    log.debug("Resolving execution jar name: resolvedJarName: " + resolvedJarName);
-    return resolvedJarName;
+    return matchingFiles;
   }
 
   /**

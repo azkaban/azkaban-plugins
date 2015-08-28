@@ -53,7 +53,7 @@ public class TestHadoopSparkJobGetMainArguments {
     jobProps.put("azkaban.link.execution.url", "http://azkaban.link.execution.url");
     jobProps.put("azkaban.link.jobexec.url", "http://azkaban.link.jobexec.url");
     jobProps.put("azkaban.link.attempt.url", "http://azkaban.link.attempt.url");
-    jobProps.put(SparkJobArg.EXECUTION_CLASS.azPropName, "hadoop.spark.job.test.ExecutionClass");
+    jobProps.put(SparkJobArg.CLASS.azPropName, "hadoop.spark.job.test.ExecutionClass");
     jobProps.put(SparkJobArg.EXECUTION_JAR.azPropName, "./lib/hadoop-spark-job-test-execution.jar");
 
   }
@@ -63,25 +63,31 @@ public class TestHadoopSparkJobGetMainArguments {
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
     // the first one, so no delimiter at front
-    Assert.assertTrue(retval.contains("--driver-java-options" + delim));
+    Assert.assertTrue(retval.contains(SparkJobArg.DRIVER_JAVA_OPTIONS.sparkParamName + delim));
     Assert.assertTrue(retval
             .contains(delim
                     + "-Dazkaban.link.workflow.url=http://azkaban.link.workflow.url -Dazkaban.link.job.url=http://azkaban.link.job.url -Dazkaban.link.execution.url=http://azkaban.link.execution.url -Dazkaban.link.attempt.url=http://azkaban.link.attempt.url"
                     + delim));
-    Assert.assertTrue(retval.contains(delim + "--master" + delim + "yarn-cluster" + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.MASTER.sparkParamName + delim
+            + "yarn-cluster" + delim));
     Assert.assertTrue(retval
             .contains(delim
-                    + "--jars"
+                    + SparkJobArg.SPARK_JARS.sparkParamName
                     + delim
                     + "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar"
                     + delim));
-    Assert.assertTrue(retval.contains(delim + "--class" + delim
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.CLASS.sparkParamName + delim
             + "hadoop.spark.job.test.ExecutionClass" + delim));
-    Assert.assertTrue(retval.contains(delim + "--num-executors" + delim + "2" + delim));
-    Assert.assertTrue(retval.contains(delim + "--executor-cores" + delim + "1" + delim));
-    Assert.assertTrue(retval.contains(delim + "--queue" + delim + "marathon" + delim));
-    Assert.assertTrue(retval.contains(delim + "--driver-memory" + delim + "2g" + delim));
-    Assert.assertTrue(retval.contains(delim + "--executor-memory" + delim + "1g" + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.NUM_EXECUTORS.sparkParamName + delim
+            + "2" + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.EXECUTOR_CORES.sparkParamName + delim
+            + "1" + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.QUEUE.sparkParamName + delim + "marathon"
+            + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.DRIVER_MEMORY.sparkParamName + delim
+            + "512M" + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.EXECUTOR_MEMORY.sparkParamName + delim
+            + "1g" + delim));
     // last one, no delimiter at back
     Assert.assertTrue(retval.contains(delim
             + "/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar"));
@@ -104,9 +110,46 @@ public class TestHadoopSparkJobGetMainArguments {
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
-    Assert.assertTrue(retval.contains(delim + "--master" + delim + "NEW_SPARK_MASTER" + delim));
-    Assert.assertFalse(retval.contains(delim + "--master" + delim + "yarn-cluster" + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.MASTER.sparkParamName + delim
+            + "NEW_SPARK_MASTER" + delim));
+    Assert.assertFalse(retval.contains(delim + SparkJobArg.MASTER.sparkParamName + delim
+            + "yarn-cluster" + delim));
 
+  }
+
+  @Test
+  public void testDeployMode() {
+    jobProps.put(SparkJobArg.DEPLOY_MODE.azPropName, "NEW_DEPLOY_MODE");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.DEPLOY_MODE.sparkParamName + delim
+            + "NEW_DEPLOY_MODE" + delim));
+  }
+
+  @Test
+  public void testExecutionClass() throws IOException {
+
+    jobProps.put(SparkJobArg.CLASS.azPropName, "new.ExecutionClass");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.CLASS.sparkParamName + delim
+            + "new.ExecutionClass" + delim));
+    Assert.assertFalse(retval.contains(delim + SparkJobArg.CLASS.sparkParamName + delim
+            + "hadoop.spark.job.test.ExecutionClass" + delim));
+
+  }
+
+  @Test
+  public void testName() throws IOException {
+
+    jobProps.put(SparkJobArg.NAME.azPropName, "NEW_NAME");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.NAME.sparkParamName + delim + "NEW_NAME"
+            + delim));
   }
 
   @Test
@@ -118,11 +161,11 @@ public class TestHadoopSparkJobGetMainArguments {
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
-    Assert.assertTrue(retval.contains(delim + "--jars" + delim + "/tmp/TestHadoopSpark/./"
-            + topLevelJarString + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.SPARK_JARS.sparkParamName + delim
+            + "/tmp/TestHadoopSpark/./" + topLevelJarString + delim));
     Assert.assertFalse(retval
             .contains(delim
-                    + "--jars"
+                    + SparkJobArg.SPARK_JARS.sparkParamName
                     + delim
                     + "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar"
                     + delim));
@@ -130,98 +173,45 @@ public class TestHadoopSparkJobGetMainArguments {
   }
 
   @Test
-  public void testExecutionJar() throws IOException {
+  public void testPackages() throws IOException {
 
-    jobProps.put(SparkJobArg.EXECUTION_JAR.azPropName, "./lib/library");
+    jobProps.put(SparkJobArg.PACKAGES.azPropName, "a:b:c,d:e:f");
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
-    Assert.assertTrue(retval.contains(delim + "/tmp/TestHadoopSpark/./lib/library.jar" + delim));
-
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.PACKAGES.sparkParamName + delim
+            + "a:b:c,d:e:f" + delim));
   }
 
   @Test
-  public void testExecutionClass() throws IOException {
+  public void testRepositories() throws IOException {
 
-    jobProps.put(SparkJobArg.EXECUTION_CLASS.azPropName, "new.ExecutionClass");
+    jobProps.put(SparkJobArg.REPOSITORIES.azPropName, "repo1,repo2");
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
-    Assert.assertTrue(retval.contains(delim + "--class" + delim + "new.ExecutionClass" + delim));
-    Assert.assertFalse(retval.contains(delim + "--class" + delim
-            + "hadoop.spark.job.test.ExecutionClass" + delim));
-
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.REPOSITORIES.sparkParamName + delim
+            + "repo1,repo2" + delim));
   }
 
   @Test
-  public void testNumExecutors() throws IOException {
-
-    jobProps.put(SparkJobArg.NUM_EXECUTORS.azPropName, "1000");
+  public void testPyFiles() {
+    jobProps.put(SparkJobArg.PY_FILES.azPropName, "file1.py,file2.egg,file3.zip");
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
-    Assert.assertTrue(retval.contains(delim + "--num-executors" + delim + "1000" + delim));
-    Assert.assertFalse(retval.contains(delim + "--num-executors" + delim + "2" + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.PY_FILES.sparkParamName + delim
+            + "file1.py,file2.egg,file3.zip" + delim));
   }
 
   @Test
-  public void testExecutorCores() throws IOException {
-
-    jobProps.put(SparkJobArg.EXECUTOR_CORES.azPropName, "2000");
-
-    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
-
-    Assert.assertTrue(retval.contains(delim + "--executor-cores" + delim + "2000" + delim));
-    Assert.assertFalse(retval.contains(delim + "--executor-cores" + delim + "1" + delim));
-
-  }
-
-  @Test
-  public void testQueue() throws IOException {
-
-    jobProps.put(SparkJobArg.QUEUE.azPropName, "my_own_queue");
+  public void testFiles() {
+    jobProps.put(SparkJobArg.FILES.azPropName, "file1.py,file2.egg,file3.zip");
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
-    Assert.assertTrue(retval.contains(delim + "--queue" + delim + "my_own_queue" + delim));
-    Assert.assertFalse(retval.contains(delim + "--queue" + delim + "marathon" + delim));
-
-  }
-
-  @Test
-  public void testDriverMemory() throws IOException {
-
-    jobProps.put(SparkJobArg.DRIVER_MEMORY.azPropName, "1t");
-
-    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
-
-    Assert.assertTrue(retval.contains(delim + "--driver-memory" + delim + "1t" + delim));
-    Assert.assertFalse(retval.contains(delim + "--driver-memory" + delim + "2g" + delim));
-
-  }
-
-  @Test
-  public void testExecutorMemory() throws IOException {
-
-    jobProps.put(SparkJobArg.EXECUTOR_MEMORY.azPropName, "1t");
-
-    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
-
-    Assert.assertTrue(retval.contains(delim + "--executor-memory" + delim + "1t" + delim));
-    Assert.assertFalse(retval.contains(delim + "--executor-memory" + delim + "1g" + delim));
-  }
-
-  @Test
-  public void testParams() throws IOException {
-
-    jobProps.put(SparkJobArg.PARAMS.azPropName, "param1 param2 param3 param4");
-
-    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
-
-    Assert.assertTrue(retval.contains(delim
-            + "/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar" + delim
-            + "param1 param2 param3 param4"));
-
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.FILES.sparkParamName + delim
+            + "file1.py,file2.egg,file3.zip" + delim));
   }
 
   @Test
@@ -243,33 +233,89 @@ public class TestHadoopSparkJobGetMainArguments {
   }
 
   @Test
-  public void testAdditionalDriverJavaOptions() {
-    jobProps.put(SparkJobArg.SPARK_DRIVER_PREFIX.azPropName + HadoopSparkJob.DRIVER_JAVA_OPTIONS,
-            "-Dabc=def -Dfgh=ijk");
+  public void testPropertiesFile() {
+    jobProps.put(SparkJobArg.PROPERTIES_FILE.azPropName, "NEW_PROPERTIES_FILE");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.PROPERTIES_FILE.sparkParamName + delim
+            + "NEW_PROPERTIES_FILE" + delim));
+  }
+
+  @Test
+  public void testDriverMemory() throws IOException {
+
+    jobProps.put(SparkJobArg.DRIVER_MEMORY.azPropName, "1t");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.DRIVER_MEMORY.sparkParamName + delim
+            + "1t" + delim));
+    Assert.assertFalse(retval.contains(delim + SparkJobArg.DRIVER_MEMORY.sparkParamName + delim
+            + "2g" + delim));
+
+  }
+
+  /*
+   * Note that for this test, there are already default stuff in --driver-java-options. So we have
+   * to test to make sure the user specified ones are properly included/appended
+   */
+  @Test
+  public void testDriverJavaOptions() {
+    jobProps.put(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName, "-Dabc=def -Dfgh=ijk");
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
     // only on the ending side has the delimiter
     Assert.assertTrue(retval
-            .contains("-Dazkaban.link.attempt.url=http://azkaban.link.attempt.url -Dabc=def -Dfgh=ijk"
+            .contains(" -Dazkaban.link.attempt.url=http://azkaban.link.attempt.url -Dabc=def -Dfgh=ijk"
                     + delim));
   }
 
   @Test
-  public void testSparkDriver() {
-    jobProps.put(SparkJobArg.SPARK_DRIVER_PREFIX.azPropName + HadoopSparkJob.DRIVER_JAVA_OPTIONS,
-            "-Dabc=def -Dfgh=ijk");
-    jobProps.put(SparkJobArg.SPARK_DRIVER_PREFIX.azPropName + "driver-library-path",
-            "/new/driver/library/path");
+  public void testDriverLibraryPath() {
+    String libraryPathSpec = "/this/is/library/path:/this/is/library/path/too";
+    jobProps.put(SparkJobArg.DRIVER_LIBRARY_PATH.azPropName, libraryPathSpec);
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
-    // only on the ending side has the delimiter
-    Assert.assertTrue(retval
-            .contains("-Dazkaban.link.attempt.url=http://azkaban.link.attempt.url -Dabc=def -Dfgh=ijk"
-                    + delim));
-    Assert.assertTrue(retval.contains(delim + "--driver-library-path" + delim
-            + "/new/driver/library/path" + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.DRIVER_LIBRARY_PATH.sparkParamName
+            + delim + libraryPathSpec + delim));
+  }
+
+  @Test
+  public void testDriverClassPath() {
+    String classPathSpec = "/this/is/class/path:/this/is/class/path/too";
+    jobProps.put(SparkJobArg.DRIVER_CLASS_PATH.azPropName, classPathSpec);
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.DRIVER_CLASS_PATH.sparkParamName + delim
+            + classPathSpec + delim));
+  }
+
+  @Test
+  public void testExecutorMemory() throws IOException {
+
+    jobProps.put(SparkJobArg.EXECUTOR_MEMORY.azPropName, "1t");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.EXECUTOR_MEMORY.sparkParamName + delim
+            + "1t" + delim));
+    Assert.assertFalse(retval.contains(delim + SparkJobArg.EXECUTOR_MEMORY.sparkParamName + delim
+            + "1g" + delim));
+  }
+
+  @Test
+  public void testProxyUser() throws IOException {
+
+    jobProps.put(SparkJobArg.PROXY_USER.azPropName, "NEW_PROXY_USER");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.PROXY_USER.sparkParamName + delim
+            + "NEW_PROXY_USER" + delim));
   }
 
   @Test
@@ -285,4 +331,121 @@ public class TestHadoopSparkJobGetMainArguments {
     Assert.assertTrue(retval.contains("--version"));
     Assert.assertFalse(retval.contains("doesn't matter"));
   }
+
+  /*
+   * End of general SparkSubmit argument section, Start of Yarn specific SparkSubmit arguments
+   */
+
+  @Test
+  public void testExecutorCores() throws IOException {
+
+    jobProps.put(SparkJobArg.EXECUTOR_CORES.azPropName, "2000");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.EXECUTOR_CORES.sparkParamName + delim
+            + "2000" + delim));
+    Assert.assertFalse(retval.contains(delim + SparkJobArg.EXECUTOR_CORES.sparkParamName + delim
+            + "1" + delim));
+
+  }
+
+  @Test
+  public void testDriverCores() throws IOException {
+
+    jobProps.put(SparkJobArg.DRIVER_CORES.azPropName, "2000");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.DRIVER_CORES.sparkParamName + delim
+            + "2000" + delim));
+  }
+
+  @Test
+  public void testQueue() throws IOException {
+
+    jobProps.put(SparkJobArg.QUEUE.azPropName, "my_own_queue");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.QUEUE.sparkParamName + delim
+            + "my_own_queue" + delim));
+    Assert.assertFalse(retval.contains(delim + SparkJobArg.QUEUE.sparkParamName + delim
+            + "marathon" + delim));
+
+  }
+
+  @Test
+  public void testNumExecutors() throws IOException {
+
+    jobProps.put(SparkJobArg.NUM_EXECUTORS.azPropName, "1000");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.NUM_EXECUTORS.sparkParamName + delim
+            + "1000" + delim));
+    Assert.assertFalse(retval.contains(delim + SparkJobArg.NUM_EXECUTORS.sparkParamName + delim
+            + "2" + delim));
+  }
+
+  @Test
+  public void testArchives() throws IOException {
+    String archiveSpec = "archive1,archive2";
+    jobProps.put(SparkJobArg.ARCHIVES.azPropName, archiveSpec);
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.ARCHIVES.sparkParamName + delim
+            + archiveSpec + delim));
+  }
+
+  @Test
+  public void testPrincipal() throws IOException {
+
+    jobProps.put(SparkJobArg.PRINCIPAL.azPropName, "NEW_PRINCIPAL");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.PRINCIPAL.sparkParamName + delim + "NEW_PRINCIPAL"
+            + delim));
+  }
+
+  @Test
+  public void testKeytab() throws IOException {
+
+    jobProps.put(SparkJobArg.KEYTAB.azPropName, "NEW_KEYTAB");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.KEYTAB.sparkParamName + delim + "NEW_KEYTAB" + delim));
+  }
+
+  /*
+   * End of general SparkSubmit argument section, Start of Yarn specific SparkSubmit arguments
+   */
+
+  @Test
+  public void testExecutionJar() throws IOException {
+
+    jobProps.put(SparkJobArg.EXECUTION_JAR.azPropName, "./lib/library");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim + "/tmp/TestHadoopSpark/./lib/library.jar" + delim));
+
+  }
+
+  @Test
+  public void testParams() throws IOException {
+
+    jobProps.put(SparkJobArg.PARAMS.azPropName, "param1 param2 param3 param4");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertTrue(retval.contains(delim
+            + "/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar" + delim
+            + "param1" + delim + "param2" + delim + "param3" + delim + "param4"));
+
+  }
+
 }

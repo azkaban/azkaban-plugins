@@ -24,6 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
+import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 
 /**
@@ -58,7 +59,7 @@ public class HadoopSecureSparkWrapper {
 
     if (HadoopSecureWrapperUtils.shouldProxy(jobProps)) {
       UserGroupInformation proxyUser = null;
-      String userToProxy = jobProps.getProperty("user.to.proxy");
+      String userToProxy = jobProps.getProperty(HadoopSecurityManager.USER_TO_PROXY);
       if (securityEnabled) {
         proxyUser = HadoopSecureWrapperUtils.createSecurityEnabledProxyUser(userToProxy, logger);
       } else {

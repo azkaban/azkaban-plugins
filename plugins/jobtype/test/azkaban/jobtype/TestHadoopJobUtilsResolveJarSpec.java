@@ -1,0 +1,77 @@
+package azkaban.jobtype;
+
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
+import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
+import azkaban.utils.Props;
+
+public class TestHadoopJobUtilsResolveJarSpec {
+  Props jobProps = null;
+
+  Logger logger = Logger.getRootLogger();
+
+  String workingDirString = "/tmp/TestHadoopSpark";
+
+  File workingDirFile = new File(workingDirString);
+
+  File libFolderFile = new File(workingDirFile, "lib");
+
+  String executionJarName = "hadoop-spark-job-test-execution-x.y.z-a.b.c.jar";
+
+  File executionJarFile = new File(libFolderFile, "hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
+
+  File libraryJarFile = new File(libFolderFile, "library.jar");
+
+  String delim = SparkJobArg.delimiter;
+
+  @BeforeTest
+  public void beforeTest() throws IOException {
+
+  }
+
+  @BeforeMethod
+  public void beforeMethod() throws IOException {
+    if (workingDirFile.exists())
+      FileUtils.deleteDirectory(workingDirFile);
+    workingDirFile.mkdirs();
+    libFolderFile.mkdirs();
+    executionJarFile.createNewFile();
+    libraryJarFile.createNewFile();
+
+  }
+
+  // nothing should happen
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testJarDoesNotExist() throws IOException {
+    HadoopJobUtils.resolveExecutionJarName(workingDirString, "./lib/abc.jar", logger);
+  }
+
+  @Test(expectedExceptions = IllegalStateException.class)
+  public void testNoLibFolder() throws IOException {
+    FileUtils.deleteDirectory(libFolderFile);
+    HadoopJobUtils.resolveExecutionJarName(workingDirString, "./lib/abc.jar", logger);
+  }
+
+  @Test
+  public void testSpecificationXXXjar() throws IOException {
+    String retval = HadoopJobUtils.resolveExecutionJarName(workingDirString,
+            "./lib/hadoop-spark.jar", logger);
+
+    Assert.assertEquals(retval, "/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
+  }
+
+  @Test
+  public void testSpecificationXXXprefix() throws IOException {
+    String retval = HadoopJobUtils.resolveExecutionJarName(workingDirString, "./lib/hadoop-spark",
+            logger);
+    
+    Assert.assertEquals(retval, "/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
+  }
+}

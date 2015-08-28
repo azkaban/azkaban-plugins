@@ -198,71 +198,92 @@ public class HadoopSparkJob extends JavaProcessJob {
     driverJavaOptions.append(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps,
             requiredJavaOpts[0]));
     for (int i = 1; i < requiredJavaOpts.length; i++) {
-      driverJavaOptions.append(" " + HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps,
-              requiredJavaOpts[i]));
+      driverJavaOptions.append(" "
+              + HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, requiredJavaOpts[i]));
     }
     if (jobProps.containsKey(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName)) {
-      driverJavaOptions.append(" " + jobProps.getString(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName));
+      driverJavaOptions
+              .append(" " + jobProps.getString(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName));
     }
     argList.add(driverJavaOptions.toString());
 
+    for (SparkJobArg sparkJobArg : SparkJobArg.values()) {
+      if (!sparkJobArg.needSpecialTreatment) {
+        handleStandardArgument(jobProps, argList, sparkJobArg);
+      } else if (sparkJobArg.equals(SparkJobArg.SPARK_JARS)) {
+        sparkJarsHelper(jobProps, workingDir, log, argList);
+      } else if (sparkJobArg.equals(SparkJobArg.SPARK_CONF_PREFIX)) {
+        sparkConfPrefixHelper(jobProps, argList);
+      } else if (sparkJobArg.equals(SparkJobArg.DRIVER_JAVA_OPTIONS)) {
+        // do nothing because already handled above
+      } else if (sparkJobArg.equals(SparkJobArg.SPARK_FLAG_PREFIX)) {
+        sparkFlagPrefixHelper(jobProps, argList);
+      } else if (sparkJobArg.equals(SparkJobArg.EXECUTION_JAR)) {
+        executionJarHelper(jobProps, workingDir, log, argList);
+      } else if (sparkJobArg.equals(SparkJobArg.PARAMS)) {
+        paramsHelper(jobProps, argList);
+      }
+    }
+    return StringUtils.join((Collection<String>) argList, SparkJobArg.delimiter);
+  }
+
+  private static void paramsHelper(Props jobProps, ArrayList<String> argList) {
+    if (jobProps.containsKey(SparkJobArg.PARAMS.azPropName)) {
+      String params = jobProps.getString(SparkJobArg.PARAMS.azPropName);
+      String[] paramsList = params.split(" ");
+      for (String s : paramsList) {
+        argList.add(s);
+      }
+    }
+  }
+
+  private static void executionJarHelper(Props jobProps, String workingDir, Logger log,
+          ArrayList<String> argList) {
+    String executionJarName = HadoopJobUtils.resolveExecutionJarName(workingDir,
+            jobProps.getString(SparkJobArg.EXECUTION_JAR.azPropName), log);
+    argList.add(executionJarName);
+  }
+
+  private static void sparkFlagPrefixHelper(Props jobProps, ArrayList<String> argList) {
     for (Entry<String, String> entry : jobProps.getMapByPrefix(
             SparkJobArg.SPARK_FLAG_PREFIX.azPropName).entrySet()) {
       argList.add(SparkJobArg.SPARK_FLAG_PREFIX.sparkParamName + entry.getKey());
     }
+  }
 
-    argList.add(SparkJobArg.MASTER.sparkParamName);
-    argList.add(jobProps.getString(SparkJobArg.MASTER.azPropName, SparkJobArg.MASTER.defaultValue));
-
+  private static void sparkJarsHelper(Props jobProps, String workingDir, Logger log,
+          ArrayList<String> argList) {
     String jarList = HadoopJobUtils.resolveWildCardForJarSpec(workingDir, jobProps.getString(
             SparkJobArg.SPARK_JARS.azPropName, SparkJobArg.SPARK_JARS.defaultValue), log);
     if (jarList != null && jarList.length() > 0) {
       argList.add(SparkJobArg.SPARK_JARS.sparkParamName);
       argList.add(jarList);
     }
+  }
 
-    argList.add(SparkJobArg.EXECUTION_CLASS.sparkParamName);
-    argList.add(jobProps.getString(SparkJobArg.EXECUTION_CLASS.azPropName));
-
-    argList.add(SparkJobArg.NUM_EXECUTORS.sparkParamName);
-    argList.add(jobProps.getString(SparkJobArg.NUM_EXECUTORS.azPropName,
-            SparkJobArg.NUM_EXECUTORS.defaultValue));
-
-    argList.add(SparkJobArg.EXECUTOR_CORES.sparkParamName);
-    argList.add(jobProps.getString(SparkJobArg.EXECUTOR_CORES.azPropName,
-            SparkJobArg.EXECUTOR_CORES.defaultValue));
-
-    argList.add(SparkJobArg.QUEUE.sparkParamName);
-    argList.add(jobProps.getString(SparkJobArg.QUEUE.azPropName, SparkJobArg.QUEUE.defaultValue));
-
-    argList.add(SparkJobArg.DRIVER_MEMORY.sparkParamName);
-    argList.add(jobProps.getString(SparkJobArg.DRIVER_MEMORY.azPropName,
-            SparkJobArg.DRIVER_MEMORY.defaultValue));
-
-    argList.add(SparkJobArg.EXECUTOR_MEMORY.sparkParamName);
-    argList.add(jobProps.getString(SparkJobArg.EXECUTOR_MEMORY.azPropName,
-            SparkJobArg.EXECUTOR_MEMORY.defaultValue));
-
-    for (Entry<String, String> entry : jobProps.getMapByPrefix(
-            SparkJobArg.SPARK_DRIVER_PREFIX.azPropName).entrySet()) {
-      argList.add(SparkJobArg.SPARK_DRIVER_PREFIX.sparkParamName + entry.getKey());
-      argList.add(entry.getValue());
-    }
-
+  private static void sparkConfPrefixHelper(Props jobProps, ArrayList<String> argList) {
     for (Entry<String, String> entry : jobProps.getMapByPrefix(
             SparkJobArg.SPARK_CONF_PREFIX.azPropName).entrySet()) {
       argList.add(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName);
       String sparkConfKeyVal = String.format("%s=%s", entry.getKey(), entry.getValue());
       argList.add(sparkConfKeyVal);
     }
+  }
 
-    String executionJarName = HadoopJobUtils.resolveExecutionJarName(workingDir,
-            jobProps.getString(SparkJobArg.EXECUTION_JAR.azPropName), log);
-    argList.add(executionJarName);
-
-    argList.add(jobProps.getString(SparkJobArg.PARAMS.azPropName, SparkJobArg.PARAMS.defaultValue));
-
-    return StringUtils.join((Collection<String>) argList, SparkJobArg.delimiter);
+  private static void handleStandardArgument(Props jobProps, ArrayList<String> argList,
+          SparkJobArg sparkJobArg) {
+    if (jobProps.containsKey(sparkJobArg.azPropName)) {
+      argList.add(sparkJobArg.sparkParamName);
+      argList.add(jobProps.getString(sparkJobArg.azPropName));
+    } else {
+      String defaultValue = sparkJobArg.defaultValue;
+      if (defaultValue.length() == 0) {
+        // do nothing
+      } else {
+        argList.add(sparkJobArg.sparkParamName);
+        argList.add(sparkJobArg.defaultValue);
+      }
+    }
   }
 
   @Override
