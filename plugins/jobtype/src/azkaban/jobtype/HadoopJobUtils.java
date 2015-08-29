@@ -16,11 +16,18 @@
 
 package azkaban.jobtype;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.client.api.YarnClient;
@@ -42,17 +49,6 @@ import azkaban.utils.Props;
  */
 
 public class HadoopJobUtils {
-
-  // FileNameFilter for only jar files
-  private static FilenameFilter jarFilter = new FilenameFilter() {
-    @Override
-    public boolean accept(File dir, String name) {
-      if (name.endsWith(".jar"))
-        return true;
-      else
-        return false;
-    }
-  };
 
   public static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
 
@@ -159,8 +155,7 @@ public class HadoopJobUtils {
       // if need resolution
       if (s.endsWith("*")) {
         // remove last 2 characters to get to the folder
-        String dirName = String
-                .format("%s/%s", workingDirectory, s.substring(0, s.length() - 2));
+        String dirName = String.format("%s/%s", workingDirectory, s.substring(0, s.length() - 2));
 
         File[] jars = null;
         try {
@@ -285,6 +280,84 @@ public class HadoopJobUtils {
   }
 
   /**
+   * Pass in a log file, this method will find all the hadoop jobs it has launched, and kills it
+   * 
+   * Only works with Hadoop2
+   * 
+   * @param logFilePath
+   * @param log
+   */
+  public static void killAllSpawnedHadoopJobs(String logFilePath, Logger log) {
+    Set<String> allSpawnedJobs = findApplicationIdFromLog(logFilePath, log);
+    log.info("applicationIds to kill: " + allSpawnedJobs);
+  
+    for (String appId : allSpawnedJobs) {
+      try {
+        killJobOnCluster(appId, log);
+      } catch (Throwable t) {
+        log.warn("something happened while trying to kill this job: " + appId, t);
+      }
+    }
+  }
+
+  /**
+   * <pre>
+   * Takes in a log file, will grep every line to look for the application_id pattern.
+   * If it finds multiple, it will return all of them, de-duped (this is possible in the case of pig jobs)
+   * This can be used in conjunction with the @killJobOnCluster method in this file.
+   * </pre>
+   * 
+   * @param logFilePath
+   * @return a Set. May be empty, but will never be null
+   */
+  public static Set<String> findApplicationIdFromLog(String logFilePath, Logger log) {
+  
+    File logFile = new File(logFilePath);
+  
+    if (!logFile.exists()) {
+      throw new IllegalArgumentException("the logFilePath does not exist: " + logFilePath);
+    }
+    if (!logFile.isFile()) {
+      throw new IllegalArgumentException("the logFilePath specified  is not a valid file: "
+              + logFilePath);
+    }
+    if (!logFile.canRead()) {
+      throw new IllegalArgumentException("unable to read the logFilePath specified: " + logFilePath);
+    }
+  
+    BufferedReader br = null;
+    Set<String> applicationIds = new HashSet<String>();
+    Pattern p = Pattern.compile(".* (application_\\d+_\\d+).*");
+  
+    try {
+      br = new BufferedReader(new FileReader(logFile));
+      String input;
+  
+      // finds all the application IDs
+      while ((input = br.readLine()) != null) {
+        Matcher m = p.matcher(input);
+        if (m.find()) {
+          String appId = m.group(1);
+          if (!applicationIds.contains(appId)) {
+            applicationIds.add(appId);
+          }
+        }
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+      log.info("Error while trying to find applicationId for Spark log", e);
+    } finally {
+      try {
+        if (br != null)
+          br.close();
+      } catch (Exception e) {
+        // do nothing
+      }
+    }
+    return applicationIds;
+  }
+
+  /**
    * <pre>
    * Uses YarnClient to kill the job on HDFS.
    * Using JobClient only works partially:
@@ -306,7 +379,7 @@ public class HadoopJobUtils {
       ApplicationId aid = ApplicationId.newInstance(Long.parseLong(split[1]),
               Integer.parseInt(split[2]));
 
-      log.info("start klling applicatin: " + aid);
+      log.info("start klling application: " + aid);
       yarnClient.killApplication(aid);
       log.info("successfully killed application: " + aid);
     } catch (Exception e) {
@@ -314,6 +387,17 @@ public class HadoopJobUtils {
     }
   }
 
+  /**
+   * <pre>
+   * constructions a javaOpts string based on the Props, and the key given, will return 
+   *  String.format("-D%s=%s", key, value);
+   * </pre>
+   * 
+   * @param props
+   * @param key
+   * @return will return String.format("-D%s=%s", key, value). Throws RuntimeException if props not
+   *         present
+   */
   public static String javaOptStringFromAzkabanProps(Props props, String key) {
     String value = props.get(key);
     if (value == null) {

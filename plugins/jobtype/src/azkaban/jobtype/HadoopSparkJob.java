@@ -351,66 +351,17 @@ public class HadoopSparkJob extends JavaProcessJob {
   public void cancel() throws InterruptedException {
     super.cancel();
 
+    info("Cancel called.  Killing the Spark job on the cluster");
+
     String azExecId = jobProps.getString("azkaban.flow.execid");
-    String logFileName = String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
+    String logFilePath = String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
             getId());
-    debug("log file name is: " + logFileName);
+    info("log file path is: " + logFilePath);
 
-    String applicationId = findApplicationIdFromLog(logFileName);
-    debug("applicationId is: " + applicationId);
-    if (applicationId == null)
-      return;
-
-    HadoopJobUtils.killJobOnCluster(applicationId, getLog());
-  }
-
-  /**
-   * <pre>
-   * This is in effect does a grep of the log file, and parse out the application_xxx_yyy string
-   * </pre>
-   * 
-   * @param logFileName
-   * @return
-   */
-  private String findApplicationIdFromLog(String logFileName) {
-    String applicationId = null;
-    BufferedReader br = null;
     try {
-      br = new BufferedReader(new FileReader(logFileName));
-      String input;
-      while ((input = br.readLine()) != null) {
-        if (input.contains("Submitted application"))
-          break;
-      }
-      if (input == null) {
-        return null;
-      }
-      info("found input: " + input);
-      String[] inputSplit = input.split(" ");
-      if (inputSplit.length < 2) {
-        info("cannot find application id");
-        return null;
-      }
-      applicationId = inputSplit[inputSplit.length - 1];
-
-      if (!applicationId.startsWith("application")) {
-        throw new AssertionException(
-                "Internal implementation err: applicationId does not start with application: "
-                        + applicationId);
-      }
-      info("application ID is: " + applicationId);
-      return applicationId;
-    } catch (IOException e) {
-      e.printStackTrace();
-      info("Error while trying to find applicationId for Spark log", e);
-    } finally {
-      try {
-        if (br != null)
-          br.close();
-      } catch (Exception e) {
-        // do nothing
-      }
+      HadoopJobUtils.killAllSpawnedHadoopJobs(logFilePath, getLog());
+    } catch (Throwable t) {
+      warn("something happened while trying to kill all spawned jobs", t);
     }
-    return applicationId;
   }
 }
