@@ -50,9 +50,9 @@ import azkaban.utils.Props;
 
 public class HadoopJobUtils {
 
-  public static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
-
-  public static final String APPLICATION_ID_REGEX = ".* (application_\\d+_\\d+).*";
+  public static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";  
+  
+  public static final Pattern APPLICATION_ID_PATTERN = Pattern.compile(".* (application_\\d+_\\d+).*");
 
   public static String JOBTYPE_GLOBAL_JVM_ARGS = "jobtype.global.jvm.args";
 
@@ -332,8 +332,7 @@ public class HadoopJobUtils {
     }
 
     BufferedReader br = null;
-    Set<String> applicationIds = new HashSet<String>();
-    Pattern p = Pattern.compile(APPLICATION_ID_REGEX);
+    Set<String> applicationIds = new HashSet<String>();   
 
     try {
       br = new BufferedReader(new FileReader(logFile));
@@ -341,7 +340,7 @@ public class HadoopJobUtils {
 
       // finds all the application IDs
       while ((input = br.readLine()) != null) {
-        Matcher m = p.matcher(input);
+        Matcher m = APPLICATION_ID_PATTERN.matcher(input);
         if (m.find()) {
           String appId = m.group(1);
           if (!applicationIds.contains(appId)) {
