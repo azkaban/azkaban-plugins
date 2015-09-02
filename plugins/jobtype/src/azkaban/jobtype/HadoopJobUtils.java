@@ -50,9 +50,10 @@ import azkaban.utils.Props;
 
 public class HadoopJobUtils {
 
-  public static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";  
-  
-  public static final Pattern APPLICATION_ID_PATTERN = Pattern.compile(".* (application_\\d+_\\d+).*");
+  public static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
+
+  public static final Pattern APPLICATION_ID_PATTERN = Pattern
+          .compile(".* (application_\\d+_\\d+).*");
 
   public static String JOBTYPE_GLOBAL_JVM_ARGS = "jobtype.global.jvm.args";
 
@@ -207,8 +208,12 @@ public class HadoopJobUtils {
   public static String resolveExecutionJarName(String workingDirectory,
           String userSpecifiedJarName, Logger log) {
 
-    log.debug("Resolving execution jar name: working directory: " + workingDirectory
-            + ", user specified name: " + userSpecifiedJarName);
+    if (log.isDebugEnabled()) {
+      String debugMsg = String.format(
+              "Resolving execution jar name: working directory: %s,  user specified name: %s",
+              workingDirectory, userSpecifiedJarName);
+      log.debug(debugMsg);
+    }
 
     // in case user decides to specify with abc.jar, instead of only abc
     if (userSpecifiedJarName.endsWith(".jar"))
@@ -219,7 +224,12 @@ public class HadoopJobUtils {
     int lastIndexOfSlash = userSpecifiedJarPath.lastIndexOf("/");
     final String jarPrefix = userSpecifiedJarPath.substring(lastIndexOfSlash + 1);
     final String dirName = userSpecifiedJarPath.substring(0, lastIndexOfSlash);
-    log.debug("Resolving execution jar name: dirname: " + dirName + ", jar name:  " + jarPrefix);
+
+    if (log.isDebugEnabled()) {
+      String debugMsg = String.format("Resolving execution jar name: dirname: %s, jar name: %s",
+              dirName, jarPrefix);
+      log.debug(debugMsg);
+    }
 
     File[] potentialExecutionJarList;
     try {
@@ -332,7 +342,7 @@ public class HadoopJobUtils {
     }
 
     BufferedReader br = null;
-    Set<String> applicationIds = new HashSet<String>();   
+    Set<String> applicationIds = new HashSet<String>();
 
     try {
       br = new BufferedReader(new FileReader(logFile));
@@ -343,9 +353,7 @@ public class HadoopJobUtils {
         Matcher m = APPLICATION_ID_PATTERN.matcher(input);
         if (m.find()) {
           String appId = m.group(1);
-          if (!applicationIds.contains(appId)) {
-            applicationIds.add(appId);
-          }
+          applicationIds.add(appId);
         }
       }
     } catch (IOException e) {
