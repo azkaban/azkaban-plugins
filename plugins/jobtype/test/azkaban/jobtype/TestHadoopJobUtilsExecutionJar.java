@@ -49,6 +49,17 @@ public class TestHadoopJobUtilsExecutionJar {
 
     Assert.assertEquals(retval, "");
   }
+  
+  // nothing should happen
+  @Test
+  public void testLibFolderHasNothingInIt() throws IOException {
+    FileUtils.deleteDirectory(libFolderFile);
+    libFolderFile.mkdirs();
+    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
+
+    Assert.assertEquals(retval, "");
+  }
+
 
   @Test
   public void testOneLibFolderExpansion() throws IOException {

@@ -52,15 +52,21 @@ public class HadoopJobUtils {
 
   public static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
 
+  public static final String APPLICATION_ID_REGEX = ".* (application_\\d+_\\d+).*";
+
+  public static String JOBTYPE_GLOBAL_JVM_ARGS = "jobtype.global.jvm.args";
+
+  public static String JOBTYPE_JVM_ARGS = "jobtype.jvm.args";
+
+  public static String JVM_ARGS = "jvm.args";
+
   public static void cancelHadoopTokens(HadoopSecurityManager hadoopSecurityManager,
           String userToProxy, File tokenFile, Logger log) {
     try {
       hadoopSecurityManager.cancelTokens(tokenFile, userToProxy, log);
     } catch (HadoopSecurityManagerException e) {
-      e.printStackTrace();
       log.error(e.getCause() + e.getMessage());
     } catch (Exception e) {
-      e.printStackTrace();
       log.error(e.getCause() + e.getMessage());
     }
   }
@@ -93,7 +99,6 @@ public class HadoopJobUtils {
               + hadoopSecurityManagerClass.getName() + e.getCause());
       throw new RuntimeException(e.getCause());
     } catch (Exception e) {
-      e.printStackTrace();
       throw new RuntimeException(e.getCause());
     }
 
@@ -117,7 +122,6 @@ public class HadoopJobUtils {
     try {
       tokenFile = File.createTempFile("mr-azkaban", ".token");
     } catch (Exception e) {
-      e.printStackTrace();
       throw new HadoopSecurityManagerException("Failed to create the token file.", e);
     }
 
@@ -130,9 +134,8 @@ public class HadoopJobUtils {
    * <pre>
    * If there's a * specification in the "jar" argument (e.g. jar=./lib/*,./lib2/*),
    * this method helps to resolve the * into actual jar names inside the folder, and in order.
-   * This is due to the requirement that Spark 14 doesn't seem to do the resolution for users
+   * This is due to the requirement that Spark 1.4 doesn't seem to do the resolution for users
    * 
-   * TODO: test case required: one replacement, two replacement.
    * </pre>
    * 
    * @param unresolvedJarSpec
@@ -142,11 +145,11 @@ public class HadoopJobUtils {
   public static String resolveWildCardForJarSpec(String workingDirectory, String unresolvedJarSpec,
           Logger log) {
 
-    log.info("resolveWildCardForJarSpec: unresolved jar specification: " + unresolvedJarSpec);
-    log.info("working directory: " + workingDirectory);
+    log.debug("resolveWildCardForJarSpec: unresolved jar specification: " + unresolvedJarSpec);
+    log.debug("working directory: " + workingDirectory);
 
     if (unresolvedJarSpec == null || unresolvedJarSpec.isEmpty())
-      return null;
+      return "";
 
     StringBuilder resolvedJarSpec = new StringBuilder();
 
@@ -161,7 +164,7 @@ public class HadoopJobUtils {
         try {
           jars = getFilesInFolderByRegex(new File(dirName), ".*jar");
         } catch (FileNotFoundException fnfe) {
-          // if folder doesn't exist, just ignore
+          log.warn("folder does not exist: " + dirName);
           continue;
         }
 
@@ -170,7 +173,7 @@ public class HadoopJobUtils {
           resolvedJarSpec.append(jar.toString() + ",");
         }
       } else { // no need for resolution
-        resolvedJarSpec.append(s + ",");
+        resolvedJarSpec.append(s).append(",");
       }
     }
 
@@ -286,11 +289,12 @@ public class HadoopJobUtils {
    * 
    * @param logFilePath
    * @param log
+   * @return a Set<String>. The set will contain the applicationIds that this job tried to kill.
    */
-  public static void killAllSpawnedHadoopJobs(String logFilePath, Logger log) {
+  public static Set<String> killAllSpawnedHadoopJobs(String logFilePath, Logger log) {
     Set<String> allSpawnedJobs = findApplicationIdFromLog(logFilePath, log);
     log.info("applicationIds to kill: " + allSpawnedJobs);
-  
+
     for (String appId : allSpawnedJobs) {
       try {
         killJobOnCluster(appId, log);
@@ -298,6 +302,8 @@ public class HadoopJobUtils {
         log.warn("something happened while trying to kill this job: " + appId, t);
       }
     }
+
+    return allSpawnedJobs;
   }
 
   /**
@@ -311,9 +317,9 @@ public class HadoopJobUtils {
    * @return a Set. May be empty, but will never be null
    */
   public static Set<String> findApplicationIdFromLog(String logFilePath, Logger log) {
-  
+
     File logFile = new File(logFilePath);
-  
+
     if (!logFile.exists()) {
       throw new IllegalArgumentException("the logFilePath does not exist: " + logFilePath);
     }
@@ -324,15 +330,15 @@ public class HadoopJobUtils {
     if (!logFile.canRead()) {
       throw new IllegalArgumentException("unable to read the logFilePath specified: " + logFilePath);
     }
-  
+
     BufferedReader br = null;
     Set<String> applicationIds = new HashSet<String>();
-    Pattern p = Pattern.compile(".* (application_\\d+_\\d+).*");
-  
+    Pattern p = Pattern.compile(APPLICATION_ID_REGEX);
+
     try {
       br = new BufferedReader(new FileReader(logFile));
       String input;
-  
+
       // finds all the application IDs
       while ((input = br.readLine()) != null) {
         Matcher m = p.matcher(input);
@@ -344,8 +350,7 @@ public class HadoopJobUtils {
         }
       }
     } catch (IOException e) {
-      e.printStackTrace();
-      log.info("Error while trying to find applicationId for Spark log", e);
+      log.error("Error while trying to find applicationId for Spark log", e);
     } finally {
       try {
         if (br != null)
