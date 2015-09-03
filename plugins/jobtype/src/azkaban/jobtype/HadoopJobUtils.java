@@ -39,8 +39,17 @@ import azkaban.security.commons.HadoopSecurityManagerException;
 import azkaban.utils.Props;
 
 /**
+ * <pre>
  * There are many common methods that's required by the Hadoop*Job.java's. They are all consolidated
  * here.
+ * 
+ * Methods here include getting/setting hadoop tokens,
+ * methods for manipulating lib folder paths and jar paths passed in from Azkaban prop file,
+ * and finally methods for helping to parse logs for application ids, 
+ * and kill the applications via Yarn (very helpful during the cancel method)
+ * 
+ * </pre>
+ * 
  * 
  * @see azkaban.jobtype.HadoopSparkJob
  * @see azkaban.jobtype.HadoopHiveJob
@@ -52,15 +61,27 @@ public class HadoopJobUtils {
 
   public static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
 
+  // the regex to look for while looking for application id's in the hadoop log
   public static final Pattern APPLICATION_ID_PATTERN = Pattern
           .compile(".* (application_\\d+_\\d+).*");
 
-  public static String JOBTYPE_GLOBAL_JVM_ARGS = "jobtype.global.jvm.args";
+  // Azkaban built in property name
+  public static final String JOBTYPE_GLOBAL_JVM_ARGS = "jobtype.global.jvm.args";
 
-  public static String JOBTYPE_JVM_ARGS = "jobtype.jvm.args";
+  // Azkaban built in property name
+  public static final String JOBTYPE_JVM_ARGS = "jobtype.jvm.args";
 
-  public static String JVM_ARGS = "jvm.args";
+  // Azkaban built in property name
+  public static final String JVM_ARGS = "jvm.args";
 
+  /**
+   * Invalidates a Hadoop authentication token file
+   * 
+   * @param hadoopSecurityManager
+   * @param userToProxy
+   * @param tokenFile
+   * @param log
+   */
   public static void cancelHadoopTokens(HadoopSecurityManager hadoopSecurityManager,
           String userToProxy, File tokenFile, Logger log) {
     try {
