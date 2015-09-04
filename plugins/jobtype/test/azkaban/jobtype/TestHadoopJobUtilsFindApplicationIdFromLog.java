@@ -27,7 +27,7 @@ public class TestHadoopJobUtilsFindApplicationIdFromLog {
   }
 
   @Test
-  public void testSparkPreSubmit() throws IOException {
+  public void testNoApplicationId() throws IOException {
     bw.write("28-08-2015 14:05:24 PDT spark INFO - 15/08/28 21:05:24 INFO client.RMProxy: Connecting to ResourceManager at eat1-nertzrm02.grid.linkedin.com/172.20.158.95:8032\n");
     bw.write("28-08-2015 14:05:24 PDT spark INFO - 15/08/28 21:05:24 INFO yarn.Client: Requesting a new application from cluster with 134 NodeManagers\n");
     bw.write("28-08-2015 14:05:24 PDT spark INFO - 15/08/28 21:05:24 INFO yarn.Client: Verifying our application has not requested more than the maximum memory capability of the cluster (55296 MB per container)\n");
@@ -43,7 +43,7 @@ public class TestHadoopJobUtilsFindApplicationIdFromLog {
   }
 
   @Test
-  public void testSparkSubmitJob() throws IOException {
+  public void testOneApplicatinId() throws IOException {
     bw.write("28-08-2015 14:05:32 PDT spark INFO - 15/08/28 21:05:32 INFO spark.SecurityManager: SecurityManager: authentication enabled; ui acls enabled; users with view permissions: Set(*); users with modify permissions: Set(azkaban, jyu)\n");
     bw.write("28-08-2015 14:05:32 PDT spark INFO - 15/08/28 21:05:32 INFO yarn.Client: Submitting application 3099 to ResourceManager\n");
     bw.write("28-08-2015 14:05:33 PDT spark INFO - 15/08/28 21:05:33 INFO impl.YarnClientImpl: Submitted application application_1440264346270_3099\n");
@@ -56,7 +56,7 @@ public class TestHadoopJobUtilsFindApplicationIdFromLog {
   }
 
   @Test
-  public void testSparkJustAfterSubmit() throws IOException {
+  public void testMultipleSameApplicationIdWhenSparkStarts() throws IOException {
     bw.write("28-08-2015 14:05:34 PDT spark INFO - 15/08/28 21:05:34 INFO yarn.Client: Application report for application_1440264346270_3099 (state: ACCEPTED)\n");
     bw.write("28-08-2015 14:05:34 PDT spark INFO - 15/08/28 21:05:34 INFO yarn.Client: \n");
     bw.write("28-08-2015 14:05:34 PDT spark INFO -   client token: Token { kind: YARN_CLIENT_TOKEN, service:  }\n");
@@ -78,7 +78,7 @@ public class TestHadoopJobUtilsFindApplicationIdFromLog {
   }
 
   @Test
-  public void testSparkAfterRunningFor17Hours() throws IOException {
+  public void testMultipleSameApplicationIdForSparkAfterRunningFor17Hours() throws IOException {
     bw.write("28-08-2015 14:11:50 PDT spark INFO - 15/08/28 21:11:50 INFO yarn.Client: Application report for application_1440264346270_3099 (state: RUNNING)\n");
     bw.write("28-08-2015 14:11:51 PDT spark INFO - 15/08/28 21:11:51 INFO yarn.Client: Application report for application_1440264346270_3099 (state: RUNNING)\n");
     bw.write("28-08-2015 14:11:52 PDT spark INFO - 15/08/28 21:11:52 INFO yarn.Client: Application report for application_1440264346270_3099 (state: RUNNING)\n");
@@ -93,7 +93,7 @@ public class TestHadoopJobUtilsFindApplicationIdFromLog {
   }
 
   @Test
-  public void testPigJobWithMultipleMR() throws IOException {
+  public void testLogWithMultipleApplicationIdsAppearingMultipleTimes() throws IOException {
     bw.write("28-08-2015 12:29:38 PDT Training_clickSelectFeatures INFO - INFO Submitted application application_1440264346270_3044\n");
     bw.write("28-08-2015 12:29:38 PDT Training_clickSelectFeatures INFO - INFO The url to track the job: http://eat1-nertzwp02.grid.linkedin.com:8080/proxy/application_1440264346270_3044/\n");
     bw.write("28-08-2015 12:29:38 PDT Training_clickSelectFeatures INFO - INFO See http://eat1-nertzwp02.grid.linkedin.com:8080/proxy/application_1440264346270_3044/ for details.\n");

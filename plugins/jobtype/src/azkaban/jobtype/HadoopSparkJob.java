@@ -241,9 +241,11 @@ public class HadoopSparkJob extends JavaProcessJob {
 
   private static void executionJarHelper(Props jobProps, String workingDir, Logger log,
           List<String> argList) {
-    String executionJarName = HadoopJobUtils.resolveExecutionJarName(workingDir,
-            jobProps.getString(SparkJobArg.EXECUTION_JAR.azPropName), log);
-    argList.add(executionJarName);
+    if (jobProps.containsKey(SparkJobArg.EXECUTION_JAR.azPropName)) {
+      String executionJarName = HadoopJobUtils.resolveExecutionJarName(workingDir,
+              jobProps.getString(SparkJobArg.EXECUTION_JAR.azPropName), log);
+      argList.add(executionJarName);
+    }
   }
 
   private static void sparkFlagPrefixHelper(Props jobProps, List<String> argList) {

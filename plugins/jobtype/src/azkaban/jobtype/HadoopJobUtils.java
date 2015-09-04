@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hadoop.yarn.exceptions.YarnException;
 import org.apache.log4j.Logger;
 
 import azkaban.security.commons.HadoopSecurityManager;
@@ -117,11 +118,12 @@ public class HadoopJobUtils {
       hadoopSecurityManager = (HadoopSecurityManager) getInstanceMethod.invoke(
               hadoopSecurityManagerClass, props);
     } catch (InvocationTargetException e) {
-      log.error("Could not instantiate Hadoop Security Manager "
-              + hadoopSecurityManagerClass.getName() + e.getCause());
-      throw new RuntimeException(e.getCause());
+      String errMsg = "Could not instantiate Hadoop Security Manager "
+              + hadoopSecurityManagerClass.getName() + e.getCause();
+      log.error(errMsg);
+      throw new RuntimeException(errMsg, e);
     } catch (Exception e) {
-      throw new RuntimeException(e.getCause());
+      throw new RuntimeException(e);
     }
 
     return hadoopSecurityManager;
@@ -192,7 +194,7 @@ public class HadoopJobUtils {
 
         // if the folder is there, add them to the jar list
         for (File jar : jars) {
-          resolvedJarSpec.append(jar.toString() + ",");
+          resolvedJarSpec.append(jar.toString()).append(",");
         }
       } else { // no need for resolution
         resolvedJarSpec.append(s).append(",");
@@ -307,7 +309,7 @@ public class HadoopJobUtils {
 
     if (matchingFiles == null) {
       throw new IllegalStateException(
-              "the ls command in ResolveExecutionJarName threw an IOException");
+              "the File[] matchingFiles variable is null.  This means an IOException occured while doing listFiles.  Please check disk availability and retry again");
     }
 
     return matchingFiles;
@@ -400,24 +402,24 @@ public class HadoopJobUtils {
    * </pre>
    * 
    * @param applicationId
+   * @throws IOException
+   * @throws YarnException
    */
-  public static void killJobOnCluster(String applicationId, Logger log) {
-    try {
-      YarnConfiguration yarnConf = new YarnConfiguration();
-      YarnClient yarnClient = YarnClient.createYarnClient();
-      yarnClient.init(yarnConf);
-      yarnClient.start();
+  public static void killJobOnCluster(String applicationId, Logger log) throws YarnException,
+          IOException {
 
-      String[] split = applicationId.split("_");
-      ApplicationId aid = ApplicationId.newInstance(Long.parseLong(split[1]),
-              Integer.parseInt(split[2]));
+    YarnConfiguration yarnConf = new YarnConfiguration();
+    YarnClient yarnClient = YarnClient.createYarnClient();
+    yarnClient.init(yarnConf);
+    yarnClient.start();
 
-      log.info("start klling application: " + aid);
-      yarnClient.killApplication(aid);
-      log.info("successfully killed application: " + aid);
-    } catch (Exception e) {
-      log.error("Failure while try to kill the hadoop job.  Will skip and continue", e);
-    }
+    String[] split = applicationId.split("_");
+    ApplicationId aid = ApplicationId.newInstance(Long.parseLong(split[1]),
+            Integer.parseInt(split[2]));
+
+    log.info("start klling application: " + aid);
+    yarnClient.killApplication(aid);
+    log.info("successfully killed application: " + aid);
   }
 
   /**

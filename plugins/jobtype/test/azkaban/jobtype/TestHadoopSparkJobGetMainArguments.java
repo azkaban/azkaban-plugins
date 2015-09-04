@@ -30,8 +30,6 @@ public class TestHadoopSparkJobGetMainArguments {
 
   String delim = SparkJobArg.delimiter;
 
-  
-
   @Before
   public void beforeMethod() throws IOException {
     if (workingDirFile.exists())
@@ -96,6 +94,15 @@ public class TestHadoopSparkJobGetMainArguments {
 
     Assert.assertTrue(retval.contains(delim
             + "/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar"));
+  }
+
+  @Test
+  public void testNoClass() {
+    jobProps.removeLocal(SparkJobArg.CLASS.azPropName);
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertFalse(retval.contains(delim + SparkJobArg.CLASS.sparkParamName + delim));
   }
 
   @Test
@@ -400,8 +407,8 @@ public class TestHadoopSparkJobGetMainArguments {
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
-    Assert.assertTrue(retval.contains(delim + SparkJobArg.PRINCIPAL.sparkParamName + delim + "NEW_PRINCIPAL"
-            + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.PRINCIPAL.sparkParamName + delim
+            + "NEW_PRINCIPAL" + delim));
   }
 
   @Test
@@ -411,7 +418,8 @@ public class TestHadoopSparkJobGetMainArguments {
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
-    Assert.assertTrue(retval.contains(delim + SparkJobArg.KEYTAB.sparkParamName + delim + "NEW_KEYTAB" + delim));
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.KEYTAB.sparkParamName + delim
+            + "NEW_KEYTAB" + delim));
   }
 
   /*
