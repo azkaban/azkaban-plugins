@@ -83,7 +83,11 @@ public class TestHadoopSparkJobGetMainArguments {
     // last one, no delimiter at back
     Assert.assertTrue(retval.contains(delim
             + "/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar"));
-
+    
+    // test flag values such as verbose do not come in by default
+    Assert.assertFalse(retval.contains("--verbose"));
+    Assert.assertFalse(retval.contains("--help"));    
+    Assert.assertFalse(retval.contains("--version"));
   }
 
   @Test
@@ -320,17 +324,22 @@ public class TestHadoopSparkJobGetMainArguments {
   }
 
   @Test
-  public void testSparkFlag() {
-    jobProps.put(SparkJobArg.SPARK_FLAG_PREFIX.azPropName + "help", "doesn't matter 1");
-    jobProps.put(SparkJobArg.SPARK_FLAG_PREFIX.azPropName + "verbose", "doesn't matter 2");
-    jobProps.put(SparkJobArg.SPARK_FLAG_PREFIX.azPropName + "version", "doesn't matter 3");
+  public void testSparkFlagOn() {
+    jobProps.put(SparkJobArg.SPARK_FLAG_PREFIX.azPropName + "verbose", "true");
 
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
-    Assert.assertTrue(retval.contains("--help"));
     Assert.assertTrue(retval.contains("--verbose"));
-    Assert.assertTrue(retval.contains("--version"));
-    Assert.assertFalse(retval.contains("doesn't matter"));
+    Assert.assertFalse(retval.contains("true"));
+  }
+  
+  @Test
+  public void testSparkFlagOffIfValueIsNotTrue() {
+    jobProps.put(SparkJobArg.SPARK_FLAG_PREFIX.azPropName + "verbose", "I am a value, and I do not .equals true");
+
+    String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
+
+    Assert.assertFalse(retval.contains("--verbose"));    
   }
 
   /*

@@ -251,7 +251,8 @@ public class HadoopSparkJob extends JavaProcessJob {
   private static void sparkFlagPrefixHelper(Props jobProps, List<String> argList) {
     for (Entry<String, String> entry : jobProps.getMapByPrefix(
             SparkJobArg.SPARK_FLAG_PREFIX.azPropName).entrySet()) {
-      argList.add(SparkJobArg.SPARK_FLAG_PREFIX.sparkParamName + entry.getKey());
+      if ("true".equals(entry.getValue()))
+        argList.add(SparkJobArg.SPARK_FLAG_PREFIX.sparkParamName + entry.getKey());
     }
   }
 
