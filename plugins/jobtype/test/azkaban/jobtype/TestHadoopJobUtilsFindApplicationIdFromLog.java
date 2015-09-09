@@ -43,7 +43,7 @@ public class TestHadoopJobUtilsFindApplicationIdFromLog {
   }
 
   @Test
-  public void testOneApplicatinId() throws IOException {
+  public void testOneApplicationId() throws IOException {
     bw.write("28-08-2015 14:05:32 PDT spark INFO - 15/08/28 21:05:32 INFO spark.SecurityManager: SecurityManager: authentication enabled; ui acls enabled; users with view permissions: Set(*); users with modify permissions: Set(azkaban, jyu)\n");
     bw.write("28-08-2015 14:05:32 PDT spark INFO - 15/08/28 21:05:32 INFO yarn.Client: Submitting application 3099 to ResourceManager\n");
     bw.write("28-08-2015 14:05:33 PDT spark INFO - 15/08/28 21:05:33 INFO impl.YarnClientImpl: Submitted application application_1440264346270_3099\n");
