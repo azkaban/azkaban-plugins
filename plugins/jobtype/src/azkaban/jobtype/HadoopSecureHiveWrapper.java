@@ -22,9 +22,7 @@ import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEAUXJARS;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORECONNECTURLKEY;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
@@ -41,12 +39,9 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
 import org.apache.log4j.Logger;
 
-import azkaban.jobExecutor.ProcessJob;
 import azkaban.jobtype.hiveutils.HiveQueryExecutionException;
-import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 
 public class HadoopSecureHiveWrapper {
@@ -63,11 +58,8 @@ public class HadoopSecureHiveWrapper {
   private static String hiveScript;
 
   public static void main(final String[] args) throws Exception {
-
-    String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
-    Properties props = new Properties();
-    props.load(new BufferedReader(new FileReader(propsFile)));
-
+    
+    Properties props = HadoopSecureWrapperUtils.loadAzkabanProps();
     HadoopConfigurationInjector.injectResources(new Props(null, props));
 
     hiveScript = props.getProperty("hive.script");
@@ -77,39 +69,11 @@ public class HadoopSecureHiveWrapper {
     UserGroupInformation.setConfiguration(conf);
     securityEnabled = UserGroupInformation.isSecurityEnabled();
 
-    if (shouldProxy(props)) {
+    if (HadoopSecureWrapperUtils.shouldProxy(props)) {
       UserGroupInformation proxyUser = null;
       String userToProxy = props.getProperty("user.to.proxy");
       if (securityEnabled) {
-        String filelocation = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
-        if (filelocation == null) {
-          throw new RuntimeException("hadoop token information not set.");
-        }
-        if (!new File(filelocation).exists()) {
-          throw new RuntimeException("hadoop token file doesn't exist.");
-        }
-
-        logger.info("Found token file " + filelocation);
-
-        logger.info("Setting "
-            + HadoopSecurityManager.MAPREDUCE_JOB_CREDENTIALS_BINARY + " to "
-            + filelocation);
-        System.setProperty(
-            HadoopSecurityManager.MAPREDUCE_JOB_CREDENTIALS_BINARY,
-            filelocation);
-
-        UserGroupInformation loginUser = null;
-
-        loginUser = UserGroupInformation.getLoginUser();
-        logger.info("Current logged in user is " + loginUser.getUserName());
-
-        logger.info("Creating proxy user.");
-        proxyUser =
-            UserGroupInformation.createProxyUser(userToProxy, loginUser);
-
-        for (Token<?> token : loginUser.getTokens()) {
-          proxyUser.addToken(token);
-        }
+        proxyUser = HadoopSecureWrapperUtils.createSecurityEnabledProxyUser(userToProxy, logger);
       } else {
         proxyUser = UserGroupInformation.createRemoteUser(userToProxy);
       }
@@ -214,13 +178,6 @@ public class HadoopSecureHiveWrapper {
       logger.warn("Got exception " + returnCode + " from line: " + hiveScript);
       throw new HiveQueryExecutionException(returnCode, hiveScript);
     }
-  }
-
-  public static boolean shouldProxy(Properties props) {
-    String shouldProxy =
-        props.getProperty(HadoopSecurityManager.ENABLE_PROXYING);
-
-    return shouldProxy != null && shouldProxy.equals("true");
   }
 
   /**
