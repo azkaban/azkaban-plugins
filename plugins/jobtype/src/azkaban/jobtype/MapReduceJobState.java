@@ -51,22 +51,11 @@ public class MapReduceJobState {
   public MapReduceJobState() {
   }
 
-  public MapReduceJobState(
-      String jobId,
-      String jobName,
-      String trackingURL,
-      String failureInfo,
-      boolean isComplete,
-      boolean isSuccessful,
-      float mapProgress,
-      float reduceProgress,
-      long jobStartTime,
-      long jobLastUpdateTime,
-      int totalMappers,
-      int finishedMappersCount,
-      int totalReducers,
-      int finishedReducersCount,
-      Counters counters) {
+  public MapReduceJobState(String jobId, String jobName, String trackingURL,
+      String failureInfo, boolean isComplete, boolean isSuccessful,
+      float mapProgress, float reduceProgress, long jobStartTime,
+      long jobLastUpdateTime, int totalMappers, int finishedMappersCount,
+      int totalReducers, int finishedReducersCount, Counters counters) {
     this.jobId = jobId;
     this.jobName = jobName;
     this.trackingURL = trackingURL;
@@ -269,7 +258,9 @@ public class MapReduceJobState {
     jsonObj.put("finishedReducersCount", String.valueOf(finishedReducersCount));
 
     jsonObj.put("counters", StatsUtils.countersToJson(counters));
-    jsonObj.put("countersString", counters.makeEscapedCompactString());
+    String countersString =
+        (counters != null) ? counters.makeEscapedCompactString() : "";
+    jsonObj.put("countersString", countersString);
     return jsonObj;
   }
 

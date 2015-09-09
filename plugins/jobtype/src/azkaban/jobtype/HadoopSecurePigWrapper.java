@@ -21,18 +21,24 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.security.PrivilegedExceptionAction;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.pig.PigRunner;
+import org.apache.pig.tools.pigstats.JobStats;
 import org.apache.pig.tools.pigstats.PigStats;
+import org.apache.pig.tools.pigstats.PigStats.JobGraph;
 
 import azkaban.jobExecutor.ProcessJob;
 import azkaban.utils.Props;
 
 public class HadoopSecurePigWrapper {
+
+  private static final String PIG_DUMP_HADOOP_COUNTER_PROPERTY = "pig.dump.hadoopCounter";
 
   private static File pigLogFile;
 
@@ -90,6 +96,8 @@ public class HadoopSecurePigWrapper {
       stats = PigRunner.run(args, null);
     }
 
+    dumpHadoopCounters(stats);
+
     if (stats.isSuccessful()) {
       return;
     }
@@ -113,6 +121,47 @@ public class HadoopSecurePigWrapper {
     System.exit(1);
     // ////////////////////
     throw new RuntimeException("Pig job failed.");
+  }
+
+  /**
+   * Dump Hadoop counters for each of the M/R jobs in the given PigStats.
+   * 
+   * @param pigStats
+   */
+  private static void dumpHadoopCounters(PigStats pigStats) {
+    try {
+      if (props.getBoolean(PIG_DUMP_HADOOP_COUNTER_PROPERTY, false)) {
+        if (pigStats != null) {
+          JobGraph jGraph = pigStats.getJobGraph();
+          Iterator<JobStats> iter = jGraph.iterator();
+          while (iter.hasNext()) {
+            JobStats jobStats = iter.next();
+            System.out.println("\n === Counters for job: "
+                + jobStats.getJobId() + " ===");
+            Counters counters = jobStats.getHadoopCounters();
+            if (counters != null) {
+              for (Counters.Group group : counters) {
+                System.out.println(" Counter Group: " + group.getDisplayName()
+                    + " (" + group.getName() + ")");
+                System.out.println("  number of counters in this group: "
+                    + group.size());
+                for (Counters.Counter counter : group) {
+                  System.out.println("  - " + counter.getDisplayName() + ": "
+                      + counter.getCounter());
+                }
+              }
+            } else {
+              System.out.println("There are no counters");
+            }
+          }
+        } else {
+          System.out.println("pigStats is null, can't dump Hadoop counters");
+        }
+      }
+    } catch (Exception e) {
+      System.out.println("Unexpected error: " + e.getMessage());
+      e.printStackTrace(System.out);
+    }
   }
 
   private static void handleError(File pigLog) throws Exception {
