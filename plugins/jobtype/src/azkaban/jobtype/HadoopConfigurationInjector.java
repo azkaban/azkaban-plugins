@@ -78,7 +78,9 @@ public class HadoopConfigurationInjector {
       for (Map.Entry<String, String> entry : confProperties.entrySet()) {
         String confKey = entry.getKey().replace(INJECT_PREFIX, "");
         String confVal = entry.getValue();
-        conf.set(confKey, confVal);
+        if (confVal != null) {
+          conf.set(confKey, confVal);
+        }
       }
 
       // Now write out the configuration file to inject.
