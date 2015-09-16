@@ -196,13 +196,13 @@ public class HadoopSparkJob extends JavaProcessJob {
     // special case handling for DRIVER_JAVA_OPTIONS
     argList.add(SparkJobArg.DRIVER_JAVA_OPTIONS.sparkParamName);
     StringBuilder driverJavaOptions = new StringBuilder();
-    String[] requiredJavaOpts = { WORKFLOW_LINK, JOB_LINK, EXECUTION_LINK, ATTEMPT_LINK };
-    driverJavaOptions.append(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps,
-            requiredJavaOpts[0]));
-    for (int i = 1; i < requiredJavaOpts.length; i++) {
-      driverJavaOptions.append(" "
-              + HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, requiredJavaOpts[i]));
-    }
+//    String[] requiredJavaOpts = { WORKFLOW_LINK, JOB_LINK, EXECUTION_LINK, ATTEMPT_LINK };
+//    driverJavaOptions.append(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps,
+//            requiredJavaOpts[0]));
+//    for (int i = 1; i < requiredJavaOpts.length; i++) {
+//      driverJavaOptions.append(" "
+//              + HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, requiredJavaOpts[i]));
+//    }
     if (jobProps.containsKey(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName)) {
       driverJavaOptions
               .append(" " + jobProps.getString(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName));
