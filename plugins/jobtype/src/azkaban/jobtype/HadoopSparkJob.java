@@ -54,11 +54,11 @@ import azkaban.utils.StringUtils;
  * 
  * @see azkaban.jobtype.HadoopSecureSparkWrapper
  */
-public class HadoopSparkJob extends JavaProcessJob {
+public class HadoopSparkJob extends JavaProcessJob
+{
 
   // Azkaban/Java params
-  private static final String HADOOP_SECURE_SPARK_WRAPPER = HadoopSecureSparkWrapper.class
-          .getName();
+  private static final String HADOOP_SECURE_SPARK_WRAPPER = HadoopSecureSparkWrapper.class.getName();
 
   // Spark params
 
@@ -73,7 +73,8 @@ public class HadoopSparkJob extends JavaProcessJob {
 
   private HadoopSecurityManager hadoopSecurityManager;
 
-  public HadoopSparkJob(String jobid, Props sysProps, Props jobProps, Logger log) {
+  public HadoopSparkJob(String jobid, Props sysProps, Props jobProps, Logger log)
+  {
     super(jobid, sysProps, jobProps, log);
 
     getJobProps().put(CommonJobProperties.JOB_ID, jobid);
@@ -82,22 +83,28 @@ public class HadoopSparkJob extends JavaProcessJob {
     getJobProps().put(ENABLE_PROXYING, Boolean.toString(shouldProxy));
     obtainTokens = getSysProps().getBoolean(OBTAIN_BINARY_TOKEN, false);
 
-    if (shouldProxy) {
+    if (shouldProxy)
+    {
       getLog().info("Initiating hadoop security manager.");
-      try {
+      try
+      {
         hadoopSecurityManager = HadoopJobUtils.loadHadoopSecurityManager(getSysProps(), log);
-      } catch (RuntimeException e) {
+      }
+      catch (RuntimeException e)
+      {
         throw new RuntimeException("Failed to get hadoop security manager!" + e);
       }
     }
   }
 
   @Override
-  public void run() throws Exception {
+  public void run() throws Exception
+  {
     HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(), getWorkingDirectory());
 
     File tokenFile = null;
-    if (shouldProxy && obtainTokens) {
+    if (shouldProxy && obtainTokens)
+    {
       userToProxy = getJobProps().getString(USER_TO_PROXY);
       getLog().info("Need to proxy. Getting tokens.");
       // get tokens in to a file, and put the location in props
@@ -108,16 +115,23 @@ public class HadoopSparkJob extends JavaProcessJob {
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION, tokenFile.getAbsolutePath());
     }
 
-    try {
+    try
+    {
       super.run();
-    } catch (Throwable t) {
+    }
+    catch (Throwable t)
+    {
       t.printStackTrace();
       getLog().error("caught error running the job");
       throw new Exception(t);
-    } finally {
-      if (tokenFile != null) {
+    }
+    finally
+    {
+      if (tokenFile != null)
+      {
         HadoopJobUtils.cancelHadoopTokens(hadoopSecurityManager, userToProxy, tokenFile, getLog());
-        if (tokenFile.exists()) {
+        if (tokenFile.exists())
+        {
           tokenFile.delete();
         }
       }
@@ -125,55 +139,65 @@ public class HadoopSparkJob extends JavaProcessJob {
   }
 
   @Override
-  protected String getJavaClass() {
+  protected String getJavaClass()
+  {
     return HADOOP_SECURE_SPARK_WRAPPER;
   }
 
   @Override
-  protected String getJVMArguments() {
+  protected String getJVMArguments()
+  {
     String args = super.getJVMArguments();
 
-    String typeUserGlobalJVMArgs = getJobProps().getString(HadoopJobUtils.JOBTYPE_GLOBAL_JVM_ARGS,
-            null);
-    if (typeUserGlobalJVMArgs != null) {
+    String typeUserGlobalJVMArgs = getJobProps().getString(HadoopJobUtils.JOBTYPE_GLOBAL_JVM_ARGS, null);
+    if (typeUserGlobalJVMArgs != null)
+    {
       args += " " + typeUserGlobalJVMArgs;
     }
-    String typeSysGlobalJVMArgs = getSysProps().getString(HadoopJobUtils.JOBTYPE_GLOBAL_JVM_ARGS,
-            null);
-    if (typeSysGlobalJVMArgs != null) {
+    String typeSysGlobalJVMArgs = getSysProps().getString(HadoopJobUtils.JOBTYPE_GLOBAL_JVM_ARGS, null);
+    if (typeSysGlobalJVMArgs != null)
+    {
       args += " " + typeSysGlobalJVMArgs;
     }
     String typeUserJVMArgs = getJobProps().getString(HadoopJobUtils.JOBTYPE_JVM_ARGS, null);
-    if (typeUserJVMArgs != null) {
+    if (typeUserJVMArgs != null)
+    {
       args += " " + typeUserJVMArgs;
     }
     String typeSysJVMArgs = getSysProps().getString(HadoopJobUtils.JOBTYPE_JVM_ARGS, null);
-    if (typeSysJVMArgs != null) {
+    if (typeSysJVMArgs != null)
+    {
       args += " " + typeSysJVMArgs;
     }
 
     String typeUserJVMArgs2 = getJobProps().getString(HadoopJobUtils.JVM_ARGS, null);
-    if (typeUserJVMArgs != null) {
+    if (typeUserJVMArgs != null)
+    {
       args += " " + typeUserJVMArgs2;
     }
     String typeSysJVMArgs2 = getSysProps().getString(HadoopJobUtils.JVM_ARGS, null);
-    if (typeSysJVMArgs != null) {
+    if (typeSysJVMArgs != null)
+    {
       args += " " + typeSysJVMArgs2;
     }
 
-    if (shouldProxy) {
+    if (shouldProxy)
+    {
       info("Setting up secure proxy info for child process");
       String secure;
-      secure = " -D" + HadoopSecurityManager.USER_TO_PROXY + "="
+      secure =
+          " -D" + HadoopSecurityManager.USER_TO_PROXY + "="
               + getJobProps().getString(HadoopSecurityManager.USER_TO_PROXY);
-      String extraToken = getSysProps().getString(HadoopSecurityManager.OBTAIN_BINARY_TOKEN,
-              "false");
-      if (extraToken != null) {
+      String extraToken = getSysProps().getString(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, "false");
+      if (extraToken != null)
+      {
         secure += " -D" + HadoopSecurityManager.OBTAIN_BINARY_TOKEN + "=" + extraToken;
       }
       info("Secure settings = " + secure);
       args += secure;
-    } else {
+    }
+    else
+    {
       info("Not setting up secure proxy info for child process");
     }
 
@@ -181,11 +205,13 @@ public class HadoopSparkJob extends JavaProcessJob {
   }
 
   @Override
-  protected String getMainArguments() {
+  protected String getMainArguments()
+  {
     return testableGetMainArguments(jobProps, getWorkingDirectory(), getLog());
   }
 
-  static String testableGetMainArguments(Props jobProps, String workingDir, Logger log) {
+  static String testableGetMainArguments(Props jobProps, String workingDir, Logger log)
+  {
 
     // if we ever need to recreate a failure scenario in the test case
     log.debug(jobProps);
@@ -196,95 +222,125 @@ public class HadoopSparkJob extends JavaProcessJob {
     // special case handling for DRIVER_JAVA_OPTIONS
     argList.add(SparkJobArg.DRIVER_JAVA_OPTIONS.sparkParamName);
     StringBuilder driverJavaOptions = new StringBuilder();
-//    String[] requiredJavaOpts = { WORKFLOW_LINK, JOB_LINK, EXECUTION_LINK, ATTEMPT_LINK };
-//    driverJavaOptions.append(HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps,
-//            requiredJavaOpts[0]));
-//    for (int i = 1; i < requiredJavaOpts.length; i++) {
-//      driverJavaOptions.append(" "
-//              + HadoopJobUtils.javaOptStringFromAzkabanProps(jobProps, requiredJavaOpts[i]));
-//    }
-    if (jobProps.containsKey(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName)) {
-      driverJavaOptions
-              .append(" " + jobProps.getString(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName));
+    // note the default java opts are communicated through the hadoop conf and added in the
+    // HadoopSecureSparkWrapper
+    if (jobProps.containsKey(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName))
+    {
+      driverJavaOptions.append(" " + jobProps.getString(SparkJobArg.DRIVER_JAVA_OPTIONS.azPropName));
     }
     argList.add(driverJavaOptions.toString());
 
-    for (SparkJobArg sparkJobArg : SparkJobArg.values()) {
-      if (!sparkJobArg.needSpecialTreatment) {
+    // Note that execution_jar and params must appear in order, and as the last 2 params
+    // Because of the position they are specified in the SparkJobArg class, this should not be an
+    // issue
+    for (SparkJobArg sparkJobArg : SparkJobArg.values())
+    {
+      if (!sparkJobArg.needSpecialTreatment)
+      {
         handleStandardArgument(jobProps, argList, sparkJobArg);
-      } else if (sparkJobArg.equals(SparkJobArg.SPARK_JARS)) {
+      }
+      else if (sparkJobArg.equals(SparkJobArg.SPARK_JARS))
+      {
         sparkJarsHelper(jobProps, workingDir, log, argList);
-      } else if (sparkJobArg.equals(SparkJobArg.SPARK_CONF_PREFIX)) {
+      }
+      else if (sparkJobArg.equals(SparkJobArg.SPARK_CONF_PREFIX))
+      {
         sparkConfPrefixHelper(jobProps, argList);
-      } else if (sparkJobArg.equals(SparkJobArg.DRIVER_JAVA_OPTIONS)) {
+      }
+      else if (sparkJobArg.equals(SparkJobArg.DRIVER_JAVA_OPTIONS))
+      {
         // do nothing because already handled above
-      } else if (sparkJobArg.equals(SparkJobArg.SPARK_FLAG_PREFIX)) {
+      }
+      else if (sparkJobArg.equals(SparkJobArg.SPARK_FLAG_PREFIX))
+      {
         sparkFlagPrefixHelper(jobProps, argList);
-      } else if (sparkJobArg.equals(SparkJobArg.EXECUTION_JAR)) {
+      }
+      else if (sparkJobArg.equals(SparkJobArg.EXECUTION_JAR))
+      {
         executionJarHelper(jobProps, workingDir, log, argList);
-      } else if (sparkJobArg.equals(SparkJobArg.PARAMS)) {
+      }
+      else if (sparkJobArg.equals(SparkJobArg.PARAMS))
+      {
         paramsHelper(jobProps, argList);
       }
     }
     return StringUtils.join((Collection<String>) argList, SparkJobArg.delimiter);
   }
 
-  private static void paramsHelper(Props jobProps, List<String> argList) {
-    if (jobProps.containsKey(SparkJobArg.PARAMS.azPropName)) {
+  private static void paramsHelper(Props jobProps, List<String> argList)
+  {
+    if (jobProps.containsKey(SparkJobArg.PARAMS.azPropName))
+    {
       String params = jobProps.getString(SparkJobArg.PARAMS.azPropName);
       String[] paramsList = params.split(" ");
-      for (String s : paramsList) {
+      for (String s : paramsList)
+      {
         argList.add(s);
       }
     }
   }
 
-  private static void executionJarHelper(Props jobProps, String workingDir, Logger log,
-          List<String> argList) {
-    if (jobProps.containsKey(SparkJobArg.EXECUTION_JAR.azPropName)) {
-      String executionJarName = HadoopJobUtils.resolveExecutionJarName(workingDir,
-              jobProps.getString(SparkJobArg.EXECUTION_JAR.azPropName), log);
+  private static void executionJarHelper(Props jobProps, String workingDir, Logger log, List<String> argList)
+  {
+    if (jobProps.containsKey(SparkJobArg.EXECUTION_JAR.azPropName))
+    {
+      String executionJarName =
+          HadoopJobUtils.resolveExecutionJarName(workingDir,
+                                                 jobProps.getString(SparkJobArg.EXECUTION_JAR.azPropName),
+                                                 log);
       argList.add(executionJarName);
     }
   }
 
-  private static void sparkFlagPrefixHelper(Props jobProps, List<String> argList) {
-    for (Entry<String, String> entry : jobProps.getMapByPrefix(
-            SparkJobArg.SPARK_FLAG_PREFIX.azPropName).entrySet()) {
+  private static void sparkFlagPrefixHelper(Props jobProps, List<String> argList)
+  {
+    for (Entry<String, String> entry : jobProps.getMapByPrefix(SparkJobArg.SPARK_FLAG_PREFIX.azPropName).entrySet())
+    {
       if ("true".equalsIgnoreCase(entry.getValue()))
         argList.add(SparkJobArg.SPARK_FLAG_PREFIX.sparkParamName + entry.getKey());
     }
   }
 
-  private static void sparkJarsHelper(Props jobProps, String workingDir, Logger log,
-          List<String> argList) {
-    String jarList = HadoopJobUtils.resolveWildCardForJarSpec(workingDir, jobProps.getString(
-            SparkJobArg.SPARK_JARS.azPropName, SparkJobArg.SPARK_JARS.defaultValue), log);
-    if (jarList.length() > 0) {
+  private static void sparkJarsHelper(Props jobProps, String workingDir, Logger log, List<String> argList)
+  {
+    String jarList =
+        HadoopJobUtils.resolveWildCardForJarSpec(workingDir,
+                                                 jobProps.getString(SparkJobArg.SPARK_JARS.azPropName,
+                                                                    SparkJobArg.SPARK_JARS.defaultValue),
+                                                 log);
+    if (jarList.length() > 0)
+    {
       argList.add(SparkJobArg.SPARK_JARS.sparkParamName);
       argList.add(jarList);
     }
   }
 
-  private static void sparkConfPrefixHelper(Props jobProps, List<String> argList) {
-    for (Entry<String, String> entry : jobProps.getMapByPrefix(
-            SparkJobArg.SPARK_CONF_PREFIX.azPropName).entrySet()) {
+  private static void sparkConfPrefixHelper(Props jobProps, List<String> argList)
+  {
+    for (Entry<String, String> entry : jobProps.getMapByPrefix(SparkJobArg.SPARK_CONF_PREFIX.azPropName).entrySet())
+    {
       argList.add(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName);
       String sparkConfKeyVal = String.format("%s=%s", entry.getKey(), entry.getValue());
       argList.add(sparkConfKeyVal);
     }
   }
 
-  private static void handleStandardArgument(Props jobProps, List<String> argList,
-          SparkJobArg sparkJobArg) {
-    if (jobProps.containsKey(sparkJobArg.azPropName)) {
+  private static void handleStandardArgument(Props jobProps, List<String> argList, SparkJobArg sparkJobArg)
+  {
+    if (jobProps.containsKey(sparkJobArg.azPropName))
+    {
       argList.add(sparkJobArg.sparkParamName);
       argList.add(jobProps.getString(sparkJobArg.azPropName));
-    } else {
+    }
+    else
+    {
       String defaultValue = sparkJobArg.defaultValue;
-      if (defaultValue.length() == 0) {
+      if (defaultValue.length() == 0)
+      {
         // do nothing
-      } else {
+      }
+      else
+      {
         argList.add(sparkJobArg.sparkParamName);
         argList.add(sparkJobArg.defaultValue);
       }
@@ -292,7 +348,8 @@ public class HadoopSparkJob extends JavaProcessJob {
   }
 
   @Override
-  protected List<String> getClassPaths() {
+  protected List<String> getClassPaths()
+  {
 
     List<String> classPath = super.getClassPaths();
 
@@ -302,26 +359,32 @@ public class HadoopSparkJob extends JavaProcessJob {
 
     classPath.add(HadoopConfigurationInjector.getPath(getJobProps(), getWorkingDirectory()));
     List<String> typeClassPath = getSysProps().getStringList("jobtype.classpath", null, ",");
-    if (typeClassPath != null) {
+    if (typeClassPath != null)
+    {
       // fill in this when load this jobtype
       String pluginDir = getSysProps().get("plugin.dir");
-      for (String jar : typeClassPath) {
+      for (String jar : typeClassPath)
+      {
         File jarFile = new File(jar);
-        if (!jarFile.isAbsolute()) {
+        if (!jarFile.isAbsolute())
+        {
           jarFile = new File(pluginDir + File.separatorChar + jar);
         }
 
-        if (!classPath.contains(jarFile.getAbsoluteFile())) {
+        if (!classPath.contains(jarFile.getAbsoluteFile()))
+        {
           classPath.add(jarFile.getAbsolutePath());
         }
       }
     }
 
-    List<String> typeGlobalClassPath = getSysProps().getStringList("jobtype.global.classpath",
-            null, ",");
-    if (typeGlobalClassPath != null) {
-      for (String jar : typeGlobalClassPath) {
-        if (!classPath.contains(jar)) {
+    List<String> typeGlobalClassPath = getSysProps().getStringList("jobtype.global.classpath", null, ",");
+    if (typeGlobalClassPath != null)
+    {
+      for (String jar : typeGlobalClassPath)
+      {
+        if (!classPath.contains(jar))
+        {
           classPath.add(jar);
         }
       }
@@ -330,20 +393,24 @@ public class HadoopSparkJob extends JavaProcessJob {
     return classPath;
   }
 
-  private static String getSourcePathFromClass(Class<?> containedClass) {
-    File file = new File(containedClass.getProtectionDomain().getCodeSource().getLocation()
-            .getPath());
+  private static String getSourcePathFromClass(Class<?> containedClass)
+  {
+    File file = new File(containedClass.getProtectionDomain().getCodeSource().getLocation().getPath());
 
-    if (!file.isDirectory() && file.getName().endsWith(".class")) {
+    if (!file.isDirectory() && file.getName().endsWith(".class"))
+    {
       String name = containedClass.getName();
       StringTokenizer tokenizer = new StringTokenizer(name, ".");
-      while (tokenizer.hasMoreTokens()) {
+      while (tokenizer.hasMoreTokens())
+      {
         tokenizer.nextElement();
         file = file.getParentFile();
       }
 
       return file.getPath();
-    } else {
+    }
+    else
+    {
       return containedClass.getProtectionDomain().getCodeSource().getLocation().getPath();
     }
   }
@@ -353,19 +420,22 @@ public class HadoopSparkJob extends JavaProcessJob {
    * Hadoop
    */
   @Override
-  public void cancel() throws InterruptedException {
+  public void cancel() throws InterruptedException
+  {
     super.cancel();
 
     info("Cancel called.  Killing the Spark job on the cluster");
 
     String azExecId = jobProps.getString("azkaban.flow.execid");
-    String logFilePath = String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
-            getId());
+    String logFilePath = String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId, getId());
     info("log file path is: " + logFilePath);
 
-    try {
+    try
+    {
       HadoopJobUtils.killAllSpawnedHadoopJobs(logFilePath, getLog());
-    } catch (Throwable t) {
+    }
+    catch (Throwable t)
+    {
       warn("something happened while trying to kill all spawned jobs", t);
     }
   }

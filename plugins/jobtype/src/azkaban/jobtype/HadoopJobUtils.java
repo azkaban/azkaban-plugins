@@ -274,7 +274,7 @@ public class HadoopJobUtils {
     }
 
     String resolvedJarName = potentialExecutionJarList[0].toString();
-    log.debug("Resolving execution jar name: resolvedJarName: " + resolvedJarName);
+    log.info("Resolving execution jar name: resolvedJarName: " + resolvedJarName);
     return resolvedJarName;
   }
 

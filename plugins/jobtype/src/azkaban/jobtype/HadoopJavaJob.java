@@ -220,4 +220,29 @@ public class HadoopJavaJob extends JavaProcessJob {
         + _progressMethod + '\'' + ", _javaObject=" + _javaObject + ", props="
         + getJobProps() + '}';
   }
+  
+  /**
+   * This cancel method, in addition to the default canceling behavior, also kills the MR jobs launched by this job
+   * on Hadoop
+   */
+  @Override
+  public void cancel() throws InterruptedException
+  {
+    super.cancel();
+
+    info("Cancel called.  Killing the launched MR jobs on the cluster");
+
+    String azExecId = jobProps.getString("azkaban.flow.execid");
+    String logFilePath = String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId, getId());
+    info("log file path is: " + logFilePath);
+
+    try
+    {
+      HadoopJobUtils.killAllSpawnedHadoopJobs(logFilePath, getLog());
+    }
+    catch (Throwable t)
+    {
+      warn("something happened while trying to kill all spawned jobs", t);
+    }
+  }
 }
