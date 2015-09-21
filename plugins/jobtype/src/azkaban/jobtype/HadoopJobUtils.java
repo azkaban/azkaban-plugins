@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -437,6 +438,26 @@ public class HadoopJobUtils {
     String value = props.get(key);
     if (value == null) {
       throw new RuntimeException(String.format("Cannot find property [%s], in azkaban props: [%s]",
+              key, value));
+    }
+    return String.format("-D%s=%s", key, value);
+  }
+  
+  /**
+   * <pre>
+   * constructions a javaOpts string based on the Props, and the key given, will return 
+   *  String.format("-D%s=%s", key, value);
+   * </pre>
+   * 
+   * @param conf
+   * @param key
+   * @return will return String.format("-D%s=%s", key, value). Throws RuntimeException if props not
+   *         present
+   */
+  public static String javaOptStringFromHadoopConfiguration(Configuration conf, String key) {
+    String value = conf.get(key);
+    if (value == null) {
+      throw new RuntimeException(String.format("Cannot find property [%s], in Hadoop configuration: [%s]",
               key, value));
     }
     return String.format("-D%s=%s", key, value);

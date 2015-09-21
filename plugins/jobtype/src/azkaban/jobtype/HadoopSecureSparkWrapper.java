@@ -27,6 +27,11 @@ import org.apache.log4j.Logger;
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 
+import static azkaban.flow.CommonJobProperties.ATTEMPT_LINK;
+import static azkaban.flow.CommonJobProperties.EXECUTION_LINK;
+import static azkaban.flow.CommonJobProperties.JOB_LINK;
+import static azkaban.flow.CommonJobProperties.WORKFLOW_LINK;
+
 /**
  * <pre>
  * A Spark wrapper (more specifically a spark-submit wrapper) that works with Azkaban.
@@ -70,14 +75,14 @@ public class HadoopSecureSparkWrapper {
       proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
         @Override
         public Void run() throws Exception {
-          runSpark(args);
+          runSpark(args, conf);
           return null;
         }
       });
 
     } else {
       logger.info("Not proxying to execute job. ");
-      runSpark(args);
+      runSpark(args, conf);
     }
   }
 
@@ -86,7 +91,7 @@ public class HadoopSecureSparkWrapper {
    * 
    * @param args
    */
-  private static void runSpark(String[] args) {
+  private static void runSpark(String[] args, Configuration conf) {
 
     if (args.length == 0) {
       throw new RuntimeException("SparkSubmit cannot run with zero args");
@@ -102,6 +107,15 @@ public class HadoopSecureSparkWrapper {
 
     final String[] newArgs = concat.toString().split(SparkJobArg.delimiter);
     logger.info("newArgs: " + Arrays.toString(newArgs));
+    
+    StringBuilder driverJavaOptions = new StringBuilder(newArgs[1]);    
+    String[] requiredJavaOpts = { WORKFLOW_LINK, JOB_LINK, EXECUTION_LINK, ATTEMPT_LINK };
+    for (int i = 0; i < requiredJavaOpts.length; i++) {
+    	  driverJavaOptions.append(" ").append(HadoopJobUtils.javaOptStringFromHadoopConfiguration(conf,
+    	            requiredJavaOpts[i]));
+    }
+    newArgs[1] = driverJavaOptions.toString();
+    logger.info("newArgs2: " + Arrays.toString(newArgs));
 
     org.apache.spark.deploy.SparkSubmit$.MODULE$.main(newArgs);
   }
