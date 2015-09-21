@@ -24,12 +24,15 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.PrivilegedExceptionAction;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
 import org.apache.hadoop.yarn.client.api.YarnClient;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -274,7 +277,7 @@ public class HadoopJobUtils {
     }
 
     String resolvedJarName = potentialExecutionJarList[0].toString();
-    log.debug("Resolving execution jar name: resolvedJarName: " + resolvedJarName);
+    log.info("Resolving execution jar name: resolvedJarName: " + resolvedJarName);
     return resolvedJarName;
   }
 
@@ -316,6 +319,41 @@ public class HadoopJobUtils {
     return matchingFiles;
   }
 
+/**
+ * This method is a decorator around the KillAllSpawnedHadoopJobs method.
+ * This method takes additional parameters to determine whether KillAllSpawnedHadoopJobs needs to be executed 
+ * using doAs as a different user
+ * 
+ * @param logFilePath Azkaban log file path
+ * @param jobProps Azkaban job props
+ * @param tokenFile Pass in the tokenFile if value is known.  It is ok to skip if the token file is in the environmental variable
+ * @param log a usable logger
+ */
+  public static void proxyUserKillAllSpawnedHadoopJobs(final String logFilePath, Props jobProps, File tokenFile, final Logger log) {
+    Properties properties = new Properties();
+    properties.putAll(jobProps.getFlattened());
+
+    try {
+      if (HadoopSecureWrapperUtils.shouldProxy(properties)) {
+        UserGroupInformation proxyUser =
+            HadoopSecureWrapperUtils.setupProxyUser(properties,
+                tokenFile.getAbsolutePath(), log);
+        proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
+          @Override
+          public Void run() throws Exception {
+            HadoopJobUtils.killAllSpawnedHadoopJobs(logFilePath, log);
+            return null;
+          }
+        });
+      } else {
+        HadoopJobUtils.killAllSpawnedHadoopJobs(logFilePath, log);
+      }
+    } catch (Throwable t) {
+      log.warn("something happened while trying to kill all spawned jobs", t);
+    }
+  }
+  
+  
   /**
    * Pass in a log file, this method will find all the hadoop jobs it has launched, and kills it
    * 
@@ -381,7 +419,7 @@ public class HadoopJobUtils {
         }
       }
     } catch (IOException e) {
-      log.error("Error while trying to find applicationId for Spark log", e);
+      log.error("Error while trying to find applicationId for log", e);
     } finally {
       try {
         if (br != null)
