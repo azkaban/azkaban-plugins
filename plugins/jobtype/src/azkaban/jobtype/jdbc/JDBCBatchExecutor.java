@@ -42,6 +42,9 @@ public class JDBCBatchExecutor {
             if (p.getProperty("BackupServerNode") != null) {
                 JDBCConnProps.put("BackupServerNode", p.getProperty("BackupServerNode"));
             }
+            if (p.getProperty("ConnectionLoadBalance") != null) {
+                JDBCConnProps.put("ConnectionLoadBalance", p.getProperty("ConnectionLoadBalance"));
+            }
 
             this.connection =DriverManager.getConnection(jdbcUrl,JDBCConnProps);
 
