@@ -164,7 +164,6 @@ public class HadoopJavaJob extends JavaProcessJob {
     HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(),
         getWorkingDirectory());
 
-    tokenFile = null;
     if (shouldProxy && obtainTokens) {
       userToProxy = getJobProps().getString("user.to.proxy");
       getLog().info("Need to proxy. Getting tokens.");
@@ -248,26 +247,6 @@ public class HadoopJavaJob extends JavaProcessJob {
             getId());
     info("log file path is: " + logFilePath);
 
-    Properties properties = new Properties();
-    properties.putAll(jobProps.getFlattened());
-
-    try {
-      if (HadoopSecureWrapperUtils.shouldProxy(properties)) {
-        UserGroupInformation proxyUser =
-            HadoopSecureWrapperUtils.setupProxyUser(properties,
-                tokenFile.getAbsolutePath(), getLog());
-        proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
-          @Override
-          public Void run() throws Exception {
-            HadoopJobUtils.killAllSpawnedHadoopJobs(logFilePath, getLog());
-            return null;
-          }
-        });
-      } else {
-        HadoopJobUtils.killAllSpawnedHadoopJobs(logFilePath, getLog());
-      }
-    } catch (Throwable t) {
-      warn("something happened while trying to kill all spawned jobs", t);
-    }
+    HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps, tokenFile, getLog());
   }
 }
