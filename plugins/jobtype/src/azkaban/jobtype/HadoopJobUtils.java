@@ -381,7 +381,7 @@ public class HadoopJobUtils {
         }
       }
     } catch (IOException e) {
-      log.error("Error while trying to find applicationId for Spark log", e);
+      log.error("Error while trying to find applicationId for log", e);
     } finally {
       try {
         if (br != null)

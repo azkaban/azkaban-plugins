@@ -25,6 +25,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.log4j.Logger;
@@ -52,10 +53,14 @@ public class HadoopSecureWrapperUtils {
    *         the logged in user's tokens
    * @throws IOException
    */
-  public static UserGroupInformation createSecurityEnabledProxyUser(String userToProxy, Logger log)
-          throws IOException {
+  private static UserGroupInformation createSecurityEnabledProxyUser(String userToProxy,String tokenFile, Logger log
+          ) throws IOException {
 
-    String filelocation = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
+    String filelocation = null;
+    if (tokenFile != null)
+      filelocation = tokenFile;
+    else
+      filelocation = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
     if (filelocation == null) {
       throw new RuntimeException("hadoop token information not set.");
     }
@@ -78,6 +83,67 @@ public class HadoopSecureWrapperUtils {
       proxyUser.addToken(token);
     }
     return proxyUser;
+  }
+
+  /**
+   * Sets up the UserGroupInformation proxyUser object so that calling code can do doAs returns null
+   * if the jobProps does not call for a proxyUser
+   * 
+   * @param jobPropsIn
+   * @param tokenFile
+   *          pass tokenFile if known. Pass null if the tokenFile is in the environmental variable
+   *          already.
+   * @param log
+   * @return returns null if no need to run as proxyUser, otherwise returns valid proxyUser that can
+   *         doAs
+   */
+  public static UserGroupInformation setupProxyUser(Properties jobProps,
+      String tokenFile, Logger log) {
+    UserGroupInformation proxyUser = null;
+
+    if (!HadoopSecureWrapperUtils.shouldProxy(jobProps)) {
+      log.info("submitting job as original submitter, not proxying");
+      return proxyUser;
+    }
+
+    // set up hadoop related configurations
+    final Configuration conf = new Configuration();
+    UserGroupInformation.setConfiguration(conf);
+    boolean securityEnabled = UserGroupInformation.isSecurityEnabled();
+
+    // setting up proxy user if required
+    try {
+      String userToProxy = null;
+      userToProxy = jobProps.getProperty(HadoopSecurityManager.USER_TO_PROXY);
+      if (securityEnabled) {
+        proxyUser =
+            HadoopSecureWrapperUtils.createSecurityEnabledProxyUser(
+                userToProxy, tokenFile, log);
+        log.info("security enabled, proxying as user " + userToProxy);
+      } else {
+        proxyUser = UserGroupInformation.createRemoteUser(userToProxy);
+        log.info("security not enabled, proxying as user " + userToProxy);
+      }
+    } catch (IOException e) {
+      log.error("HadoopSecureWrapperUtils.setupProxyUser threw an IOException",
+          e);
+    }
+
+    return proxyUser;
+  }
+  
+  /**
+   * Sets up the UserGroupInformation proxyUser object so that calling code can do doAs returns null
+   * if the jobProps does not call for a proxyUser
+   * 
+   * @param jobPropsIn   
+   * @param log
+   * @return returns null if no need to run as proxyUser, otherwise returns valid proxyUser that can
+   *         doAs
+   */
+  public static UserGroupInformation setupProxyUser(Properties jobProps,
+      Logger log) {
+    return setupProxyUser(jobProps, null, log);
   }
 
   /**

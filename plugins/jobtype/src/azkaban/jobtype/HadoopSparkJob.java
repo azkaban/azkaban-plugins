@@ -29,14 +29,17 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 import java.util.Map.Entry;
 import java.util.StringTokenizer;
 
 import javolution.testing.AssertionException;
 
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
 import azkaban.flow.CommonJobProperties;
@@ -70,6 +73,8 @@ public class HadoopSparkJob extends JavaProcessJob
   private boolean shouldProxy = false;
 
   private boolean obtainTokens = false;
+  
+  private File tokenFile = null;
 
   private HadoopSecurityManager hadoopSecurityManager;
 
@@ -102,7 +107,7 @@ public class HadoopSparkJob extends JavaProcessJob
   {
     HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(), getWorkingDirectory());
 
-    File tokenFile = null;
+    tokenFile = null;
     if (shouldProxy && obtainTokens)
     {
       userToProxy = getJobProps().getString(USER_TO_PROXY);
@@ -427,15 +432,30 @@ public class HadoopSparkJob extends JavaProcessJob
     info("Cancel called.  Killing the Spark job on the cluster");
 
     String azExecId = jobProps.getString("azkaban.flow.execid");
-    String logFilePath = String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId, getId());
+    final String logFilePath =
+        String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
+            getId());
     info("log file path is: " + logFilePath);
 
-    try
-    {
-      HadoopJobUtils.killAllSpawnedHadoopJobs(logFilePath, getLog());
-    }
-    catch (Throwable t)
-    {
+    Properties properties = new Properties();
+    properties.putAll(jobProps.getFlattened());
+
+    try {
+      if (HadoopSecureWrapperUtils.shouldProxy(properties)) {
+        UserGroupInformation proxyUser =
+            HadoopSecureWrapperUtils.setupProxyUser(properties,
+                tokenFile.getAbsolutePath(), getLog());
+        proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
+          @Override
+          public Void run() throws Exception {
+            HadoopJobUtils.killAllSpawnedHadoopJobs(logFilePath, getLog());
+            return null;
+          }
+        });
+      } else {
+        HadoopJobUtils.killAllSpawnedHadoopJobs(logFilePath, getLog());
+      }
+    } catch (Throwable t) {
       warn("something happened while trying to kill all spawned jobs", t);
     }
   }
