@@ -27,7 +27,6 @@ import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.security.token.Token;
 import org.apache.log4j.Logger;
 import org.apache.pig.PigRunner;
 import org.apache.pig.tools.pigstats.JobStats;
@@ -35,7 +34,6 @@ import org.apache.pig.tools.pigstats.PigStats;
 import org.apache.pig.tools.pigstats.PigStats.JobGraph;
 
 import azkaban.jobExecutor.ProcessJob;
-import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 
 public class HadoopSecurePigWrapper {
@@ -54,38 +52,6 @@ public class HadoopSecurePigWrapper {
     logger = Logger.getRootLogger();
   }
 
-  private static UserGroupInformation getSecureProxyUser(String userToProxy)
-      throws Exception {
-    String filelocation =
-        System.getenv(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION);
-    if (filelocation == null) {
-      throw new RuntimeException("hadoop token information not set.");
-    }
-    if (!new File(filelocation).exists()) {
-      throw new RuntimeException("hadoop token file doesn't exist.");
-    }
-
-    logger.info("Found token file " + filelocation);
-    logger.info("Setting "
-        + HadoopSecurityManager.MAPREDUCE_JOB_CREDENTIALS_BINARY + " to "
-        + filelocation);
-
-    System.setProperty(HadoopSecurityManager.MAPREDUCE_JOB_CREDENTIALS_BINARY,
-        filelocation);
-    UserGroupInformation loginUser = null;
-    loginUser = UserGroupInformation.getLoginUser();
-
-    logger.info("Current logged in user is " + loginUser.getUserName());
-    logger.info("Creating proxy user.");
-
-    UserGroupInformation proxyUser =
-        UserGroupInformation.createProxyUser(userToProxy, loginUser);
-    for (Token<?> token : loginUser.getTokens()) {
-      proxyUser.addToken(token);
-    }
-    return proxyUser;
-  }
-
   public static void main(final String[] args) throws Exception {
     String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
     props = new Props(null, new File(propsFile));
@@ -97,7 +63,7 @@ public class HadoopSecurePigWrapper {
     UserGroupInformation.setConfiguration(conf);
     securityEnabled = UserGroupInformation.isSecurityEnabled();
     pigLogFile = new File(System.getenv("PIG_LOG_FILE"));
-    if (!shouldProxy(props)) {
+    if (!HadoopSecureWrapperUtils.shouldProxy(props.toProperties())) {
       logger.info("Not proxying.");
       runPigJob(args);
       return;
@@ -106,7 +72,7 @@ public class HadoopSecurePigWrapper {
     UserGroupInformation proxyUser = null;
     String userToProxy = props.getString("user.to.proxy");
     if (securityEnabled) {
-      proxyUser = getSecureProxyUser(userToProxy);
+      proxyUser = HadoopSecureWrapperUtils.createSecurityEnabledProxyUser(userToProxy, logger);
     } else {
       proxyUser = UserGroupInformation.createRemoteUser(userToProxy);
     }
@@ -213,10 +179,5 @@ public class HadoopSecurePigWrapper {
     } catch (FileNotFoundException e) {
       System.err.println("pig log file: " + pigLog + "  not found.");
     }
-  }
-
-  public static boolean shouldProxy(Props props) {
-    String shouldProxy = props.getString(HadoopSecurityManager.ENABLE_PROXYING);
-    return shouldProxy != null && shouldProxy.equals("true");
   }
 }

@@ -8,8 +8,11 @@
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
+	<property name="dist.classes.test.dir" value="${dist.dir}/testclasses" />
 	<property name="dist.packages.dir" value="${dist.dir}/packages" />
+	<property name="test.report.dir" value="${dist.dir}/report" />
 	<property name="java.src.dir" value="${basedir}/src" />
+	<property name="java.src.test.dir" value="${basedir}/test" />
 	<property name="azkaban-jobtype-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
 	<property name="jobtypes.dir" value="${basedir}/jobtypes" />
 	<property name="javatype.dir" value="${basedir}/jobtypes/java" />
@@ -44,6 +47,7 @@
 		<delete dir="${dist.jar.dir}" />
 		<delete dir="${dist.classes.dir}" />
 		<delete dir="${dist.packages.dir}" />
+		<delete dir="${test.report.dir}" />
 		<delete>
 			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
 			</fileset>
@@ -78,9 +82,33 @@
 			<exclude name="**/examples/**"/>
 			<classpath refid="main.classpath" />
 		</javac>
+
+
+        <delete dir="${dist.classes.test.dir}" />
+        <mkdir dir="${dist.classes.test.dir}" /> 
+        <javac fork="true" destdir="${dist.classes.test.dir}"
+            target="1.6" debug="true" deprecation="false" failonerror="true">
+            <src path="${java.src.test.dir}" />
+			<classpath refid="main.classpath" />
+        </javac>
+
 	</target>
+
+    <target name="junit" depends="build" description="running test cases">
+        <junit printsummary="yes">
+            <classpath>
+                <path refid="main.classpath" />
+                <pathelement path="${dist.classes.dir}" />
+                <pathelement path="${dist.classes.test.dir}" /> 
+            </classpath>
+
+            <batchtest fork="yes">
+                <fileset dir="${dist.classes.test.dir}" includes="**/*Test*.class" />
+            </batchtest>
+        </junit>
+    </target>
 	
-	<target name="jars" depends="build" description="Compile main source tree java files">
+	<target name="jars" depends="junit" description="Compile main source tree java files">
 
 		<mkdir dir="${dist.jar.dir}" />
 		<jar destfile="${azkaban-jobtype-jar}">
