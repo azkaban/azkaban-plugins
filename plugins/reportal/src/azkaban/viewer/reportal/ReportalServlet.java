@@ -629,9 +629,11 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("title", reportal.title);
     page.add("description", reportal.description);
 
-    if (reportal.variables.size() > 0) {
-      page.add("variableNumber", reportal.variables.size());
-      page.add("variables", reportal.variables);
+    List<Variable> runtimeVariables =
+      ReportalUtil.getRunTimeVariables(reportal.variables);
+    if (runtimeVariables.size() > 0) {
+      page.add("variableNumber", runtimeVariables.size());
+      page.add("variables", runtimeVariables);
     }
 
     page.render();
@@ -865,10 +867,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     report.variables = variableList;
 
     for (int i = 0; i < variables; i++) {
-      Variable variable = new Variable();
-
-      variable.title = getParam(req, "variable" + i + "title");
-      variable.name = getParam(req, "variable" + i + "name");
+      Variable variable =
+        new Variable(getParam(req, "variable" + i + "title"), getParam(req,
+          "variable" + i + "name"));
 
       if (variable.title.isEmpty() || variable.name.isEmpty()) {
         errors.add("Variable title and name cannot be empty.");
@@ -1139,7 +1140,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     ExecutionOptions options = exflow.getExecutionOptions();
 
     int i = 0;
-    for (Variable variable : report.variables) {
+    for (Variable variable : ReportalUtil.getRunTimeVariables(report.variables)) {
       options.getFlowParameters().put(REPORTAL_VARIABLE_PREFIX + i + ".from",
           variable.name);
       options.getFlowParameters().put(REPORTAL_VARIABLE_PREFIX + i + ".to",
