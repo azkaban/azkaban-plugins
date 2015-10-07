@@ -69,7 +69,7 @@ public class HadoopJavaJob extends JavaProcessJob {
       getLog().info("Initiating hadoop security manager.");
       try {
         hadoopSecurityManager = HadoopJobUtils.loadHadoopSecurityManager(getSysProps(), log);
-        
+
       } catch (RuntimeException e) {
         e.printStackTrace();
         throw new RuntimeException("Failed to get hadoop security manager!"
@@ -121,8 +121,27 @@ public class HadoopJavaJob extends JavaProcessJob {
     classPath.add(HadoopConfigurationInjector.getPath(getJobProps(),
         getWorkingDirectory()));
 
-    List<String> typeClassPath =
-        getSysProps().getStringList("jobtype.classpath", null, ",");
+    // merging classpaths from plugin.properties
+    mergeClassPaths(classPath,
+      getJobProps().getStringList("jobtype.classpath", null, ","));
+    // merging classpaths from private.properties
+    mergeClassPaths(classPath,
+      getSysProps().getStringList("jobtype.classpath", null, ","));
+
+    List<String> typeGlobalClassPath =
+        getSysProps().getStringList("jobtype.global.classpath", null, ",");
+    if (typeGlobalClassPath != null) {
+      for (String jar : typeGlobalClassPath) {
+        if (!classPath.contains(jar)) {
+          classPath.add(jar);
+        }
+      }
+    }
+
+    return classPath;
+  }
+
+  private void mergeClassPaths(List<String> classPath, List<String> typeClassPath) {
     if (typeClassPath != null) {
       // fill in this when load this jobtype
       String pluginDir = getSysProps().get("plugin.dir");
@@ -137,18 +156,6 @@ public class HadoopJavaJob extends JavaProcessJob {
         }
       }
     }
-
-    List<String> typeGlobalClassPath =
-        getSysProps().getStringList("jobtype.global.classpath", null, ",");
-    if (typeGlobalClassPath != null) {
-      for (String jar : typeGlobalClassPath) {
-        if (!classPath.contains(jar)) {
-          classPath.add(jar);
-        }
-      }
-    }
-
-    return classPath;
   }
 
   @Override
@@ -206,7 +213,7 @@ public class HadoopJavaJob extends JavaProcessJob {
       return containedClass.getProtectionDomain().getCodeSource().getLocation()
           .getPath();
     }
-  } 
+  }
 
   @Override
   protected String getJavaClass() {
