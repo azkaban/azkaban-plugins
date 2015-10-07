@@ -271,8 +271,8 @@ public class Reportal {
 
       // Populate the job file
       ReportalTypeManager.createJobAndFiles(this, jobFile, jobName,
-        query.title, query.type, query.script, dependentJob, reportalUser,
-        extraProps);
+          query.title, query.type, query.script, dependentJob, reportalUser,
+          extraProps);
 
       // For dependency of next query
       dependentJob = jobName;
