@@ -53,6 +53,11 @@ import azkaban.viewer.reportal.ReportalTypeManager;
 
 public class Reportal {
   public static final String REPORTAL_CONFIG_PREFIX = "reportal.config.";
+  public static final String REPORTAL_CONFIG_PREFIX_REGEX =
+    "^reportal[.]config[.].+";
+  public static final String REPORTAL_CONFIG_PREFIX_NEGATION_REGEX =
+    "(?!(^reportal[.]config[.])).+";
+
   public static final String ACCESS_LIST_SPLIT_REGEX =
       "\\s*,\\s*|\\s*;\\s*|\\s+";
 
@@ -266,8 +271,8 @@ public class Reportal {
 
       // Populate the job file
       ReportalTypeManager.createJobAndFiles(this, jobFile, jobName,
-        query.title, query.type, query.script, dependentJob, reportalUser,
-        extraProps);
+          query.title, query.type, query.script, dependentJob, reportalUser,
+          extraProps);
 
       // For dependency of next query
       dependentJob = jobName;

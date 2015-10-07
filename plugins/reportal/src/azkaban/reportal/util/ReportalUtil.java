@@ -73,14 +73,14 @@ public class ReportalUtil {
   public static List<Variable> getRunTimeVariables(
     Collection<Variable> variables) {
     List<Variable> runtimeVariables =
-      ReportalUtil.getVariablesByRegex(variables, "(?!(^"
-        + Reportal.REPORTAL_CONFIG_PREFIX + ")).+");
+      ReportalUtil.getVariablesByRegex(variables,
+        Reportal.REPORTAL_CONFIG_PREFIX_NEGATION_REGEX);
 
     return runtimeVariables;
   }
 
   /**
-   * Shortlist variables which match a given regex. Returns empty props, if no
+   * Shortlist variables which match a given regex. Returns empty empty list, if no
    * eligible variable is found
    *
    * @param variables
@@ -90,7 +90,7 @@ public class ReportalUtil {
   public static List<Variable> getVariablesByRegex(
     Collection<Variable> variables, String regex) {
     List<Variable> shortlistedVariables = new ArrayList<Variable>();
-    if (variables != null || regex == null) {
+    if (variables != null && regex != null) {
       for (Variable var : variables) {
         if (var.getTitle().matches(regex)) {
           shortlistedVariables.add(var);
@@ -101,7 +101,7 @@ public class ReportalUtil {
   }
 
   /**
-   * Shortlist variables which match a given prefix. Returns empty props, if no
+   * Shortlist variables which match a given prefix. Returns empty map, if no
    * eligible variable is found.
    *
    * @param variables
@@ -113,8 +113,9 @@ public class ReportalUtil {
   public static Map<String, String> getVariableMapByPrefix(
     Collection<Variable> variables, String prefix) {
     Map<String, String> shortlistMap = new HashMap<String, String>();
-    if (prefix != null) {
-      for (Variable var : getVariablesByRegex(variables, "^" + prefix + ".+")) {
+    if (variables!=null && prefix != null) {
+      for (Variable var : getVariablesByRegex(variables,
+        Reportal.REPORTAL_CONFIG_PREFIX_REGEX)) {
         shortlistMap
           .put(var.getTitle().replaceFirst(prefix, ""), var.getName());
       }
