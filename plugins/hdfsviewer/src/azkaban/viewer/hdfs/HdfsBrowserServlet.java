@@ -284,8 +284,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
         return;
       }
     } catch (IOException ioe) {
-      logger.error("Got exception while checking for existence of path '" + path
-          + "'", ioe);
+      logger.error("Got exception while checking for existence of path '"
+          + path + "'", ioe);
       errorPage(user, req, resp, session, path.toUri().getPath()
           + " Encountered error while trying to detect if path '" + path
           + "' exists. Reason: " + ioe.getMessage());
@@ -346,17 +346,18 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 
   private void displayFilePage(FileSystem fs, String user,
       HttpServletRequest req, HttpServletResponse resp, Session session,
-      Path path) throws IOException {
+      Path path) {
 
     Page page =
         newPage(req, resp, session, "azkaban/viewer/hdfs/velocity/hdfs-file.vm");
-    page.add("allowproxy", allowGroupProxy);
-    page.add("viewerPath", viewerPath);
-    page.add("viewerName", viewerName);
 
     List<Path> paths = new ArrayList<Path>();
     List<String> segments = new ArrayList<String>();
     getPathSegments(path, paths, segments);
+
+    page.add("allowproxy", allowGroupProxy);
+    page.add("viewerPath", viewerPath);
+    page.add("viewerName", viewerName);
 
     page.add("paths", paths);
     page.add("segments", segments);
@@ -364,39 +365,38 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
     page.add("path", path.toString());
     page.add("homedir", getHomeDir(fs));
 
-    boolean hasSchema = false;
-    int viewerId = -1;
-    for (int i = 0; i < viewers.size(); ++i) {
-      HdfsFileViewer viewer = viewers.get(i);
-      Set<Capability> capabilities = EnumSet.noneOf(Capability.class);
-      try {
-        capabilities = viewer.getCapabilities(fs, path);
-      } catch (AccessControlException e) {
-        page.add("error_message", "Permission denied (" + viewer.getName()
-            + "): " + e.getMessage());
-        page.add("no_fs", "true");
-        page.render();
-        return;
-      }
-      if (capabilities.contains(Capability.READ)) {
-        if (capabilities.contains(Capability.SCHEMA)) {
-          hasSchema = true;
-        }
-        viewerId = i;
-        break;
-      }
-    }
-
-    page.add("viewerId", viewerId);
-    page.add("hasSchema", hasSchema);
+    // disable fs rendering as default.
+    // value will be flipped to false in case everything went out smoothly.
+    // Note : we are capturing the generic exception as we want to render the
+    // error gracefully to user in
+    // any cases error happens.
+    page.add("no_fs", "true");
 
     try {
+      boolean hasSchema = false;
+      int viewerId = -1;
+      for (int i = 0; i < viewers.size(); ++i) {
+        HdfsFileViewer viewer = viewers.get(i);
+        Set<Capability> capabilities = EnumSet.noneOf(Capability.class);
+        capabilities = viewer.getCapabilities(fs, path);
+        if (capabilities.contains(Capability.READ)) {
+          if (capabilities.contains(Capability.SCHEMA)) {
+            hasSchema = true;
+          }
+          viewerId = i;
+          break;
+        }
+      }
+
+      page.add("viewerId", viewerId);
+      page.add("hasSchema", hasSchema);
+      page.add("no_fs", "false");
+
       FileStatus status = fs.getFileStatus(path);
       page.add("status", status);
-    } catch (AccessControlException e) {
-      page.add("error_message", "Permission denied: " + e.getMessage());
-    } catch (IOException e) {
-      page.add("error_message", "Error: " + e.getMessage());
+
+    } catch (Exception ex) {
+      page.add("error_message", "Error: " + ex.getMessage());
     }
     page.render();
   }
