@@ -124,7 +124,7 @@ public class HadoopPigJob extends JavaProcessJob {
       t.printStackTrace();
       getLog().error("caught error running the job", t);
       throw new Exception(t);
-    } finally {      
+    } finally {
       if (tokenFile != null) {
         HadoopJobUtils.cancelHadoopTokens(hadoopSecurityManager, userToProxy,
             tokenFile, getLog());
@@ -376,12 +376,13 @@ public class HadoopPigJob extends JavaProcessJob {
 
     info("Cancel called.  Killing the Pig launched MR jobs on the cluster");
 
-    String azExecId = jobProps.getString("azkaban.flow.execid");
+    String azExecId = jobProps.getString(CommonJobProperties.EXEC_ID);
     final String logFilePath =
         String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
             getId());
     info("log file path is: " + logFilePath);
 
-    HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps, tokenFile, getLog());
+    HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps,
+        tokenFile, getLog());
   }
 }

@@ -16,6 +16,8 @@
 
 package azkaban.jobtype;
 
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -57,8 +59,9 @@ public class HadoopSecurePigWrapper {
     HadoopConfigurationInjector.injectResources(props);
 
     if (HadoopSecureWrapperUtils.shouldProxy(jobProps)) {
+      String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
       UserGroupInformation proxyUser =
-          HadoopSecureWrapperUtils.setupProxyUser(jobProps, logger);
+          HadoopSecureWrapperUtils.setupProxyUser(jobProps, tokenFile, logger);
       proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
         @Override
         public Void run() throws Exception {

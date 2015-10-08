@@ -241,7 +241,7 @@ public class HadoopJavaJob extends JavaProcessJob {
 
     info("Cancel called.  Killing the launched MR jobs on the cluster");
 
-    String azExecId = jobProps.getString("azkaban.flow.execid");
+    String azExecId = jobProps.getString(CommonJobProperties.EXEC_ID);
     final String logFilePath =
         String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
             getId());

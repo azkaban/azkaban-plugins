@@ -53,17 +53,9 @@ public class HadoopSecureWrapperUtils {
    *         the logged in user's tokens
    * @throws IOException
    */
-  private static UserGroupInformation createSecurityEnabledProxyUser(String userToProxy,String tokenFile, Logger log
-          ) throws IOException {
-
-    String filelocation = null;
-    if (tokenFile != null)
-      filelocation = tokenFile;
-    else
-      filelocation = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
-    if (filelocation == null) {
-      throw new RuntimeException("hadoop token information not set.");
-    }
+  private static UserGroupInformation createSecurityEnabledProxyUser(String userToProxy, String filelocation, Logger log
+          ) throws IOException {    
+    
     if (!new File(filelocation).exists()) {
       throw new RuntimeException("hadoop token file doesn't exist.");
     }
@@ -132,21 +124,7 @@ public class HadoopSecureWrapperUtils {
     return proxyUser;
   }
   
-  /**
-   * Sets up the UserGroupInformation proxyUser object so that calling code can do doAs returns null
-   * if the jobProps does not call for a proxyUser
-   * 
-   * @param jobPropsIn   
-   * @param log
-   * @return returns null if no need to run as proxyUser, otherwise returns valid proxyUser that can
-   *         doAs
-   */
-  public static UserGroupInformation setupProxyUser(Properties jobProps,
-      Logger log) {
-    return setupProxyUser(jobProps, null, log);
-  }
-
-  /**
+   /**
    * Loading the properties file, which is a combination of the jobProps file and sysProps file
    * 
    * @return a Property file, which is the combination of the jobProps file and sysProps file

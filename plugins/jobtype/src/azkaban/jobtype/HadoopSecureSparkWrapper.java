@@ -30,6 +30,7 @@ import static azkaban.flow.CommonJobProperties.ATTEMPT_LINK;
 import static azkaban.flow.CommonJobProperties.EXECUTION_LINK;
 import static azkaban.flow.CommonJobProperties.JOB_LINK;
 import static azkaban.flow.CommonJobProperties.WORKFLOW_LINK;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 /**
  * <pre>
@@ -55,8 +56,9 @@ public class HadoopSecureSparkWrapper {
     HadoopConfigurationInjector.injectResources(new Props(null, jobProps));     
 
     if (HadoopSecureWrapperUtils.shouldProxy(jobProps)) {
+      String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
       UserGroupInformation proxyUser =
-          HadoopSecureWrapperUtils.setupProxyUser(jobProps, logger);
+          HadoopSecureWrapperUtils.setupProxyUser(jobProps, tokenFile, logger);
       proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
         @Override
         public Void run() throws Exception {
