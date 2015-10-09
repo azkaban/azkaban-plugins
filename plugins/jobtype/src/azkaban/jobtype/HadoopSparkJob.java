@@ -116,6 +116,8 @@ public class HadoopSparkJob extends JavaProcessJob {
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION,
           tokenFile.getAbsolutePath());
     }
+    
+    getJobProps().put("env.SPARK_HOME", "/export/apps/spark/latest");
 
     try {
       super.run();
@@ -283,8 +285,7 @@ public class HadoopSparkJob extends JavaProcessJob {
       Logger log, List<String> argList) {
     String jarList =
         HadoopJobUtils.resolveWildCardForJarSpec(workingDir, jobProps
-            .getString(SparkJobArg.SPARK_JARS.azPropName,
-                SparkJobArg.SPARK_JARS.defaultValue), log);
+            .getString(SparkJobArg.SPARK_JARS.azPropName, ""), log);
     if (jarList.length() > 0) {
       argList.add(SparkJobArg.SPARK_JARS.sparkParamName);
       argList.add(jarList);
@@ -306,14 +307,6 @@ public class HadoopSparkJob extends JavaProcessJob {
     if (jobProps.containsKey(sparkJobArg.azPropName)) {
       argList.add(sparkJobArg.sparkParamName);
       argList.add(jobProps.getString(sparkJobArg.azPropName));
-    } else {
-      String defaultValue = sparkJobArg.defaultValue;
-      if (defaultValue.length() == 0) {
-        // do nothing
-      } else {
-        argList.add(sparkJobArg.sparkParamName);
-        argList.add(sparkJobArg.defaultValue);
-      }
     }
   }
 
@@ -388,7 +381,7 @@ public class HadoopSparkJob extends JavaProcessJob {
 
     info("Cancel called.  Killing the Spark job on the cluster");
 
-    String azExecId = jobProps.getString("azkaban.flow.execid");
+    String azExecId = jobProps.getString(CommonJobProperties.EXEC_ID);
     final String logFilePath =
         String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
             getId());

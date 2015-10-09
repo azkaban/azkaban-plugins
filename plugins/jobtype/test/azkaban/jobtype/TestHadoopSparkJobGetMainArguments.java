@@ -55,32 +55,12 @@ public class TestHadoopSparkJobGetMainArguments {
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
     // the first one, so no delimiter at front
-    Assert.assertTrue(retval.contains(SparkJobArg.DRIVER_JAVA_OPTIONS.sparkParamName + delim));
-    Assert.assertTrue(retval
-            .contains(delim
-                    + "-Dazkaban.link.workflow.url=http://azkaban.link.workflow.url -Dazkaban.link.job.url=http://azkaban.link.job.url -Dazkaban.link.execution.url=http://azkaban.link.execution.url -Dazkaban.link.attempt.url=http://azkaban.link.attempt.url"
-                    + delim));
-    Assert.assertTrue(retval.contains(delim + SparkJobArg.MASTER.sparkParamName + delim
-            + "yarn-cluster" + delim));
-    Assert.assertTrue(retval
-            .contains(delim
-                    + SparkJobArg.SPARK_JARS.sparkParamName
-                    + delim
-                    + "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar"
-                    + delim));
-    Assert.assertTrue(retval.contains(delim + SparkJobArg.CLASS.sparkParamName + delim
+    // due to new communication mechanism between HAdoopSparkJob and HadoopSparkSecureWrapper,
+    // these Azkaban variables are sent through the configuration file and not through the command line
+    Assert.assertTrue(retval.contains(SparkJobArg.DRIVER_JAVA_OPTIONS.sparkParamName + delim + "" +  delim));    
+     Assert.assertTrue(retval.contains(delim + SparkJobArg.CLASS.sparkParamName + delim
             + "hadoop.spark.job.test.ExecutionClass" + delim));
-    Assert.assertTrue(retval.contains(delim + SparkJobArg.NUM_EXECUTORS.sparkParamName + delim
-            + "2" + delim));
-    Assert.assertTrue(retval.contains(delim + SparkJobArg.EXECUTOR_CORES.sparkParamName + delim
-            + "1" + delim));
-    Assert.assertTrue(retval.contains(delim + SparkJobArg.QUEUE.sparkParamName + delim + "marathon"
-            + delim));
-    Assert.assertTrue(retval.contains(delim + SparkJobArg.DRIVER_MEMORY.sparkParamName + delim
-            + "512M" + delim));
-    Assert.assertTrue(retval.contains(delim + SparkJobArg.EXECUTOR_MEMORY.sparkParamName + delim
-            + "1g" + delim));
-    // last one, no delimiter at back
+      // last one, no delimiter at back
     Assert.assertTrue(retval.contains(delim
             + "/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar"));
     
@@ -273,7 +253,7 @@ public class TestHadoopSparkJobGetMainArguments {
 
     // only on the ending side has the delimiter
     Assert.assertTrue(retval
-            .contains(" -Dazkaban.link.attempt.url=http://azkaban.link.attempt.url -Dabc=def -Dfgh=ijk"
+            .contains(" -Dabc=def -Dfgh=ijk"
                     + delim));
   }
 
