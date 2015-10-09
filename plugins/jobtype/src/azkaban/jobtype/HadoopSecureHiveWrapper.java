@@ -31,7 +31,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.cli.CliDriver;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.cli.OptionsProcessor;
@@ -51,35 +50,22 @@ public class HadoopSecureHiveWrapper {
   private static final String SINGLE_QUOTE_STRING = Character
       .toString(SINGLE_QUOTE);
 
-  private static boolean securityEnabled;
   private static final Logger logger = Logger.getRootLogger();
 
   private static CliSessionState ss;
   private static String hiveScript;
 
   public static void main(final String[] args) throws Exception {
-    
-    Properties props = HadoopSecureWrapperUtils.loadAzkabanProps();
-    HadoopConfigurationInjector.injectResources(new Props(null, props));
 
-    hiveScript = props.getProperty("hive.script");
+    Properties jobProps = HadoopSecureWrapperUtils.loadAzkabanProps();
+    HadoopConfigurationInjector.injectResources(new Props(null, jobProps));
 
-    final Configuration conf = new Configuration();
+    hiveScript = jobProps.getProperty("hive.script");
 
-    UserGroupInformation.setConfiguration(conf);
-    securityEnabled = UserGroupInformation.isSecurityEnabled();
-
-    if (HadoopSecureWrapperUtils.shouldProxy(props)) {
-      UserGroupInformation proxyUser = null;
-      String userToProxy = props.getProperty("user.to.proxy");
-      if (securityEnabled) {
-        proxyUser = HadoopSecureWrapperUtils.createSecurityEnabledProxyUser(userToProxy, logger);
-      } else {
-        proxyUser = UserGroupInformation.createRemoteUser(userToProxy);
-      }
-
-      logger.info("Proxied as user " + userToProxy);
-
+    if (HadoopSecureWrapperUtils.shouldProxy(jobProps)) {
+      String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
+      UserGroupInformation proxyUser =
+          HadoopSecureWrapperUtils.setupProxyUser(jobProps, tokenFile, logger);
       proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
         @Override
         public Void run() throws Exception {
@@ -87,9 +73,7 @@ public class HadoopSecureHiveWrapper {
           return null;
         }
       });
-
     } else {
-      logger.info("Not proxying. ");
       runHive(args);
     }
   }

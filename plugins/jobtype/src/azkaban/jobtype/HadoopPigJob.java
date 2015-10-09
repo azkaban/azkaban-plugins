@@ -20,12 +20,15 @@ import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_
 
 import java.io.File;
 import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 import org.apache.pig.PigRunner;
 
@@ -49,7 +52,8 @@ public class HadoopPigJob extends JavaProcessJob {
   public static final String PIG_SCRIPT = "pig.script";
   public static final String UDF_IMPORT = "udf.import.list";
   public static final String PIG_ADDITIONAL_JARS = "pig.additional.jars";
-  public static final String DEFAULT_PIG_ADDITIONAL_JARS = "default.pig.additional.jars";
+  public static final String DEFAULT_PIG_ADDITIONAL_JARS =
+      "default.pig.additional.jars";
   public static final String PIG_PARAM_PREFIX = "param.";
   public static final String PIG_PARAM_FILES = "paramfile";
   public static final String HADOOP_UGI = "hadoop.job.ugi";
@@ -61,6 +65,7 @@ public class HadoopPigJob extends JavaProcessJob {
   private String userToProxy = null;
   private boolean shouldProxy = false;
   private boolean obtainTokens = false;
+  File tokenFile = null;
 
   private final boolean userPigJar;
 
@@ -75,15 +80,20 @@ public class HadoopPigJob extends JavaProcessJob {
     HADOOP_SECURE_PIG_WRAPPER = HadoopSecurePigWrapper.class.getName();
 
     getJobProps().put(CommonJobProperties.JOB_ID, jobid);
-    shouldProxy = getSysProps().getBoolean(HadoopSecurityManager.ENABLE_PROXYING, false);
-    getJobProps().put(HadoopSecurityManager.ENABLE_PROXYING, Boolean.toString(shouldProxy));
-    obtainTokens = getSysProps().getBoolean(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, false);
+    shouldProxy =
+        getSysProps().getBoolean(HadoopSecurityManager.ENABLE_PROXYING, false);
+    getJobProps().put(HadoopSecurityManager.ENABLE_PROXYING,
+        Boolean.toString(shouldProxy));
+    obtainTokens =
+        getSysProps().getBoolean(HadoopSecurityManager.OBTAIN_BINARY_TOKEN,
+            false);
     userPigJar = getJobProps().getBoolean("use.user.pig.jar", false);
 
     if (shouldProxy) {
       getLog().info("Initiating hadoop security manager.");
       try {
-        hadoopSecurityManager = HadoopJobUtils.loadHadoopSecurityManager(getSysProps(), log);                
+        hadoopSecurityManager =
+            HadoopJobUtils.loadHadoopSecurityManager(getSysProps(), log);
       } catch (RuntimeException e) {
         throw new RuntimeException("Failed to get hadoop security manager!" + e);
       }
@@ -95,7 +105,6 @@ public class HadoopPigJob extends JavaProcessJob {
     HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(),
         getWorkingDirectory());
 
-    File tokenFile = null;
     if (shouldProxy && obtainTokens) {
       userToProxy = getJobProps().getString("user.to.proxy");
       getLog().info("Need to proxy. Getting tokens.");
@@ -103,7 +112,9 @@ public class HadoopPigJob extends JavaProcessJob {
       Props props = new Props();
       props.putAll(getJobProps());
       props.putAll(getSysProps());
-      tokenFile = HadoopJobUtils.getHadoopTokens(hadoopSecurityManager, props, getLog());
+      tokenFile =
+          HadoopJobUtils
+              .getHadoopTokens(hadoopSecurityManager, props, getLog());
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION,
           tokenFile.getAbsolutePath());
     }
@@ -115,13 +126,14 @@ public class HadoopPigJob extends JavaProcessJob {
       throw new Exception(t);
     } finally {
       if (tokenFile != null) {
-        HadoopJobUtils.cancelHadoopTokens(hadoopSecurityManager, userToProxy, tokenFile, getLog());        
+        HadoopJobUtils.cancelHadoopTokens(hadoopSecurityManager, userToProxy,
+            tokenFile, getLog());
         if (tokenFile.exists()) {
           tokenFile.delete();
         }
       }
     }
-  } 
+  }
 
   @Override
   protected String getJavaClass() {
@@ -228,7 +240,8 @@ public class HadoopPigJob extends JavaProcessJob {
     classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
     classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 
-    classPath.add(HadoopConfigurationInjector.getPath(getJobProps(), getWorkingDirectory()));
+    classPath.add(HadoopConfigurationInjector.getPath(getJobProps(),
+        getWorkingDirectory()));
 
     // assuming pig 0.8 and up
     if (!userPigJar) {
@@ -236,9 +249,11 @@ public class HadoopPigJob extends JavaProcessJob {
     }
 
     // merging classpaths from plugin.properties
-    mergeClassPaths(classPath, getJobProps().getStringList("jobtype.classpath", null, ","));
+    mergeClassPaths(classPath,
+        getJobProps().getStringList("jobtype.classpath", null, ","));
     // merging classpaths from private.properties
-    mergeClassPaths(classPath, getSysProps().getStringList("jobtype.classpath", null, ","));
+    mergeClassPaths(classPath,
+        getSysProps().getStringList("jobtype.classpath", null, ","));
 
     List<String> typeGlobalClassPath =
         getSysProps().getStringList("jobtype.global.classpath", null, ",");
@@ -253,7 +268,8 @@ public class HadoopPigJob extends JavaProcessJob {
     return classPath;
   }
 
-  private void mergeClassPaths(List<String> classPath, List<String> typeClassPath) {
+  private void mergeClassPaths(List<String> classPath,
+      List<String> typeClassPath) {
     if (typeClassPath != null) {
       // fill in this when load this jobtype
       String pluginDir = getSysProps().get("plugin.dir");
@@ -300,10 +316,12 @@ public class HadoopPigJob extends JavaProcessJob {
     return additionalJars;
   }
 
-  /** Merging all additional jars first from user specified/plugin.properties
+  /**
+   * Merging all additional jars first from user specified/plugin.properties
    * then private.properties for additionalJarProperty property
    */
-  private void mergeAdditionalJars(List<String> additionalJars, String additionalJarProperty) {
+  private void mergeAdditionalJars(List<String> additionalJars,
+      String additionalJarProperty) {
     List<String> jobJars =
         getJobProps().getStringList(additionalJarProperty, null, ",");
     List<String> typeJars =
@@ -347,5 +365,24 @@ public class HadoopPigJob extends JavaProcessJob {
           .getPath();
     }
   }
-}
 
+  /**
+   * This cancel method, in addition to the default canceling behavior, also
+   * kills the MR jobs launched by Pig on Hadoop
+   */
+  @Override
+  public void cancel() throws InterruptedException {
+    super.cancel();
+
+    info("Cancel called.  Killing the Pig launched MR jobs on the cluster");
+
+    String azExecId = jobProps.getString(CommonJobProperties.EXEC_ID);
+    final String logFilePath =
+        String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
+            getId());
+    info("log file path is: " + logFilePath);
+
+    HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps,
+        tokenFile, getLog());
+  }
+}
