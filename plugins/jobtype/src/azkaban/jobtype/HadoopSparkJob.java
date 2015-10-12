@@ -115,9 +115,7 @@ public class HadoopSparkJob extends JavaProcessJob {
               .getHadoopTokens(hadoopSecurityManager, props, getLog());
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION,
           tokenFile.getAbsolutePath());
-    }
-    
-    getJobProps().put("env.SPARK_HOME", "/export/apps/spark/latest");
+    }  
 
     try {
       super.run();
