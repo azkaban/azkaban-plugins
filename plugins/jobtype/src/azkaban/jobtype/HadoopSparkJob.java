@@ -116,8 +116,6 @@ public class HadoopSparkJob extends JavaProcessJob {
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION,
           tokenFile.getAbsolutePath());
     }
-    
-    getJobProps().put("env.SPARK_HOME", "/export/apps/spark/latest");
 
     try {
       super.run();
@@ -283,9 +281,11 @@ public class HadoopSparkJob extends JavaProcessJob {
 
   private static void sparkJarsHelper(Props jobProps, String workingDir,
       Logger log, List<String> argList) {
+    String propSparkJars =
+        jobProps.getString(SparkJobArg.SPARK_JARS.azPropName, "");
     String jarList =
-        HadoopJobUtils.resolveWildCardForJarSpec(workingDir, jobProps
-            .getString(SparkJobArg.SPARK_JARS.azPropName, ""), log);
+        HadoopJobUtils
+            .resolveWildCardForJarSpec(workingDir, propSparkJars, log);
     if (jarList.length() > 0) {
       argList.add(SparkJobArg.SPARK_JARS.sparkParamName);
       argList.add(jarList);
