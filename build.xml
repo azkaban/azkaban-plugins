@@ -18,6 +18,12 @@
 		<pathelement path="${dist.classes.dir}" />
 	</path>
 
+	<!-- create dist folder if it doesn't exist-->
+	<available file="${dist.dir}" type="dir" property="dist.present"/>
+	<target name="createDist" description="Create dist dir if it doesn't exist" unless="dist.present" >
+		<mkdir dir="${dist.dir}" />
+	</target>
+
 	<!-- set the build number based on environment variable, otherwise blank -->
 	<property environment="env" description="System environment variables (including those set by Hudson)" />
 
@@ -70,7 +76,7 @@ ${current.time}
 </echo>
 	</target>
 	
-	<target name="package-dep" depends="clean,repo.file" description="Create azkaban jar">
+	<target name="package-dep" depends="createDist,clean,repo.file" description="Create azkaban jar">
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/hadoopsecuritymanager" includes="build.xml" />
@@ -105,7 +111,7 @@ ${current.time}
 		</subant>
 	</target>
 	
-	<target name="package-dep-yarn" depends="clean,repo.file" description="Create azkaban jar">
+	<target name="package-dep-yarn" depends="createDist,clean,repo.file" description="Create azkaban jar">
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/hadoopsecuritymanager-yarn" includes="build.xml" />

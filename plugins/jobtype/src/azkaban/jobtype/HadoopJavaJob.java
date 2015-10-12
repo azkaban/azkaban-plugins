@@ -78,7 +78,6 @@ public class HadoopJavaJob extends JavaProcessJob {
       try {
         hadoopSecurityManager =
             HadoopJobUtils.loadHadoopSecurityManager(getSysProps(), log);
-
       } catch (RuntimeException e) {
         e.printStackTrace();
         throw new RuntimeException("Failed to get hadoop security manager!"
