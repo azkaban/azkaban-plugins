@@ -3,7 +3,7 @@ package azkaban.jobtype;
 public enum SparkJobArg {
 
   // standard spark submit arguments, ordered in the spark-submit --help order
-  MASTER("master", "yarn-cluster", false), // just to trick the eclipse formatter
+  MASTER("master", false), // just to trick the eclipse formatter
   DEPLOY_MODE("deploy-mode", false), //
   CLASS("class", false), //
   NAME("name", false), //

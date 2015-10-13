@@ -58,7 +58,7 @@ public class TestHadoopSparkJobGetMainArguments {
     // due to new communication mechanism between HAdoopSparkJob and HadoopSparkSecureWrapper,
     // these Azkaban variables are sent through the configuration file and not through the command line
     Assert.assertTrue(retval.contains(SparkJobArg.DRIVER_JAVA_OPTIONS.sparkParamName + delim + "" +  delim));    
-     Assert.assertTrue(retval.contains(delim + SparkJobArg.CLASS.sparkParamName + delim
+    Assert.assertTrue(retval.contains(delim + SparkJobArg.CLASS.sparkParamName + delim
             + "hadoop.spark.job.test.ExecutionClass" + delim));
       // last one, no delimiter at back
     Assert.assertTrue(retval.contains(delim
@@ -252,9 +252,7 @@ public class TestHadoopSparkJobGetMainArguments {
     String retval = HadoopSparkJob.testableGetMainArguments(jobProps, workingDirString, logger);
 
     // only on the ending side has the delimiter
-    Assert.assertTrue(retval
-            .contains(" -Dabc=def -Dfgh=ijk"
-                    + delim));
+    Assert.assertTrue(retval.contains(" -Dabc=def -Dfgh=ijk" + delim));
   }
 
   @Test
