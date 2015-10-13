@@ -65,16 +65,16 @@ public class TestHadoopJobUtilsExecutionJar {
   }
 
 
-//  @Test
-//  public void testOneLibFolderExpansion() throws IOException {
-//    System.out.println("testOneLibFolderExpansion");
-//    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
-//
-//    System.out.println(retval);
-//    Assert.assertEquals(
-//            retval,
-//            "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
-//  }
+  @Test
+  public void testOneLibFolderExpansion() throws IOException {
+    System.out.println("testOneLibFolderExpansion");
+    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
+
+    System.out.println(retval);
+    Assert.assertEquals(
+            retval,
+            "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
+  }
 //
 //  @Test
 //  public void testTwoLibFolderExpansion() throws IOException {
