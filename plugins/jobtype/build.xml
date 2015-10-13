@@ -95,7 +95,7 @@
 	</target>
 
     <target name="junit" depends="build" description="running test cases">
-        <junit haltonfailure="no" failureproperty="test.failed" printsummary="withOutAndErr" filtertrace="off" showoutput="true">
+        <junit haltonfailure="yes" failureproperty="test.failed" printsummary="withOutAndErr" filtertrace="off" showoutput="true">
             <classpath>
                 <path refid="main.classpath" />
                 <pathelement path="${dist.classes.dir}" />

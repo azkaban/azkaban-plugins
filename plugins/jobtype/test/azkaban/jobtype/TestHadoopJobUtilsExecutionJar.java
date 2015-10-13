@@ -61,7 +61,7 @@ public class TestHadoopJobUtilsExecutionJar {
     String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
 
     System.out.println(retval);
-    Assert.assertEquals(retval, "haha");
+    Assert.assertEquals(retval, "");
   }
 
 
