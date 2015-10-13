@@ -41,44 +41,37 @@ public class TestHadoopJobUtilsExecutionJar {
 
   }
 
-//  // nothing should happen
-//  @Test
-//  public void testNoLibFolder() throws IOException {
-//    System.out.println("testNoLibFolder");
-//    FileUtils.deleteDirectory(libFolderFile);
-//    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
-//
-//    System.out.println(retval);
-//    Assert.assertEquals(retval, "");
-//  }
-//  
-//  // nothing should happen
-//  @Test
-//  public void testLibFolderHasNothingInIt() throws IOException {
-//    System.out.println("testLibFolderHasNothingInIt");
-//    FileUtils.deleteDirectory(libFolderFile);
-//    libFolderFile.mkdirs();
-//    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
-//
-//    System.out.println(retval);
-//    Assert.assertEquals(retval, "");
-//  }
-//
-//
-//  @Test
-//  public void testOneLibFolderExpansion() throws IOException {
-//    System.out.println("testOneLibFolderExpansion");
-//    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
-//
-//    System.out.println(retval);
-//    Assert.assertEquals(
-//            retval,
-//            "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
-//  }
+  // nothing should happen
+  @Test
+  public void testNoLibFolder() throws IOException {
+    FileUtils.deleteDirectory(libFolderFile);
+    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
+
+    Assert.assertEquals(retval, "");
+  }
+  
+  // nothing should happen
+  @Test
+  public void testLibFolderHasNothingInIt() throws IOException {
+    FileUtils.deleteDirectory(libFolderFile);
+    libFolderFile.mkdirs();
+    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
+
+    Assert.assertEquals(retval, "");
+  }
+
 
   @Test
-  public void testTwoLibFolderExpansion() throws IOException {
-    System.out.println("testTwoLibFolderExpansion");
+  public void testOneLibFolderExpansion() throws IOException {
+    String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
+
+    Assert.assertEquals(
+            retval,
+            "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
+  }
+
+  @Test
+  public void testTwoLibFolderExpansionAllFilesResolved() throws IOException {
     File lib2FolderFile = new File(workingDirFile, "lib2");
     lib2FolderFile.mkdirs();
     File lib2test1Jar = new File(lib2FolderFile, "test1.jar");
@@ -88,9 +81,27 @@ public class TestHadoopJobUtilsExecutionJar {
     String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*,./lib2/*",
             logger);
 
-    System.out.println(retval);
-    Assert.assertEquals(
-            retval,
-            "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar,/tmp/TestHadoopSpark/./lib2/test1.jar,/tmp/TestHadoopSpark/./lib2/test2.jar");
+    Assert.assertTrue(retval.contains("/tmp/TestHadoopSpark/./lib/library.jar"));
+    Assert.assertTrue(retval.contains("/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar"));
+    Assert.assertTrue(retval.contains("/tmp/TestHadoopSpark/./lib2/test1.jar"));
+    Assert.assertTrue(retval.contains("/tmp/TestHadoopSpark/./lib2/test2.jar"));
+  }
+    
+    @Test
+    public void testTwoLibFolderExpansionExpandsInOrder() throws IOException {
+      
+      executionJarFile.delete();
+      
+      File lib2FolderFile = new File(workingDirFile, "lib2");
+      lib2FolderFile.mkdirs();
+      File lib2test1Jar = new File(lib2FolderFile, "test1.jar");
+      lib2test1Jar.createNewFile();   
+      
+      String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*,./lib2/*",
+              logger);
+
+      Assert.assertEquals(
+              retval,
+              "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib2/test1.jar");
   }
 }
