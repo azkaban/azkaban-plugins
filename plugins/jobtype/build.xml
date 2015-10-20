@@ -95,7 +95,7 @@
 	</target>
 
     <target name="junit" depends="build" description="running test cases">
-        <junit printsummary="yes">
+        <junit haltonfailure="no" failureproperty="test.failed" printsummary="yes">
             <classpath>
                 <path refid="main.classpath" />
                 <pathelement path="${dist.classes.dir}" />
@@ -106,6 +106,7 @@
                 <fileset dir="${dist.classes.test.dir}" includes="**/*Test*.class" />
             </batchtest>
         </junit>
+        <fail message="Test failure detected, check test results." if="test.failed" />
     </target>
 	
 	<target name="jars" depends="junit" description="Compile main source tree java files">
