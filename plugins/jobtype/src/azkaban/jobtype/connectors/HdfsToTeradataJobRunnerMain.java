@@ -1,0 +1,115 @@
+/*
+ * Copyright 2015 LinkedIn Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package azkaban.jobtype.connectors;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
+import java.util.Properties;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+
+import azkaban.jobExecutor.ProcessJob;
+import azkaban.jobtype.*;
+import azkaban.security.commons.HadoopSecurityManager;
+import azkaban.utils.Props;
+
+import com.teradata.hadoop.tool.TeradataExportTool;
+
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
+public class HdfsToTeradataJobRunnerMain {
+  private static final Logger logger = Logger.getLogger(HdfsToTeradataJobRunnerMain.class);
+
+  private static final int DEFAULT_NO_MAPPERS = 8;
+
+  private final Properties _jobProps;
+  private final TdchParameters _params;
+
+  public HdfsToTeradataJobRunnerMain() throws FileNotFoundException, IOException {
+    _jobProps = HadoopSecureWrapperUtils.loadAzkabanProps();
+    _jobProps.put(HadoopSecurityManager.ENABLE_PROXYING, "true"); //Always headless account
+
+    Props props = new Props(null, _jobProps);
+    HadoopConfigurationInjector.injectResources(props);
+    UserGroupInformation.setConfiguration(new Configuration());
+
+    _params = TdchParameters.builder()
+                            .mrParams(TdchConstants.MAP_REDUCE_PARAMS)
+                            .libJars(props.getString(TdchConstants.LIB_JARS_KEY))
+                            .tdJdbcClassName(TdchConstants.TERADATA_JDBCDRIVER_CLASSNAME)
+                            .teradataHostname(props.getString(TdchConstants.TD_HOSTNAME_KEY))
+                            .fileFormat(TdchConstants.HDFS_FILE_FORMAT)
+                            .jobType(TdchConstants.TDCH_JOB_TYPE)
+                            .userName(props.getString(HadoopSecurityManager.USER_TO_PROXY))
+                            .tdPassword(String.format(TdchConstants.TD_WALLET_FORMAT, props.getString(HadoopSecurityManager.USER_TO_PROXY)))
+                            .avroSchemaPath(props.getString(TdchConstants.AVRO_SCHEMA_PATH_KEY))
+                            .sourceHdfsPath(props.getString(TdchConstants.SOURCE_HDFS_PATH_KEY))
+                            .targetTdTableName(props.getString(TdchConstants.TARGET_TD_TABLE_NAME_KEY))
+                            .tdInsertMethod(_jobProps.getProperty(TdchConstants.TD_INSERT_METHOD_KEY))
+                            .numMapper(DEFAULT_NO_MAPPERS)
+                            .build();
+  }
+
+  public void run() throws IOException, InterruptedException {
+    String jobName = System.getenv(ProcessJob.JOB_NAME_ENV);
+    logger.info("Running job " + jobName);
+
+    String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
+
+    UserGroupInformation proxyUser =
+        HadoopSecureWrapperUtils.setupProxyUser(_jobProps, tokenFile, logger);
+
+    proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
+      @Override
+      public Void run() throws Exception {
+        copyHdfsToTd();
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Calling TDCH to move data from HDFS to Teradata
+   *
+   * @param args
+   */
+  private void copyHdfsToTd() {
+    Logger rootLogger = Logger.getRootLogger();
+    rootLogger.removeAllAppenders();
+    ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%p %m\n"));
+    appender.activateOptions();
+    rootLogger.addAppender(appender);
+
+    logger.info("Executing " + HdfsToTeradataJobRunnerMain.class.getSimpleName() + " with params: "+ _params);
+    TeradataExportTool.main(_params.toTdchParams());
+  }
+
+  /**
+   * Entry point of job process.
+   *
+   * @param args
+   * @throws Exception
+   */
+  public static void main(final String[] args) throws Exception {
+    new HdfsToTeradataJobRunnerMain().run();
+  }
+}
