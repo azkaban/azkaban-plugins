@@ -33,8 +33,6 @@ public class TeradataToHdfsJob extends HadoopJavaJob {
                            Logger log) {
     super(jobid, sysProps, jobProps, log);
     jobProps.put(TdchConstants.LIB_JARS_KEY, sysProps.get(TdchConstants.LIB_JARS_KEY));
-
-    log.info("getCwd(): " + getCwd());
     TeraDataWalletInitializer.initialize(new File(getCwd()), new File(sysProps.get(TdchConstants.TD_WALLET_JAR)));
   }
 

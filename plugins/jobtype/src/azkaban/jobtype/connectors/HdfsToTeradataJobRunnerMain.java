@@ -29,6 +29,7 @@ import org.apache.log4j.PatternLayout;
 
 import azkaban.jobExecutor.ProcessJob;
 import azkaban.jobtype.*;
+import azkaban.jobtype.javautils.JobUtils;
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 
@@ -37,20 +38,21 @@ import com.teradata.hadoop.tool.TeradataExportTool;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 public class HdfsToTeradataJobRunnerMain {
-  private static final Logger logger = Logger.getLogger(HdfsToTeradataJobRunnerMain.class);
-
   private static final int DEFAULT_NO_MAPPERS = 8;
 
   private final Properties _jobProps;
   private final TdchParameters _params;
+  private final Logger _logger;
 
   public HdfsToTeradataJobRunnerMain() throws FileNotFoundException, IOException {
+    _logger = JobUtils.initJobLogger();
     _jobProps = HadoopSecureWrapperUtils.loadAzkabanProps();
     _jobProps.put(HadoopSecurityManager.ENABLE_PROXYING, "true"); //Always headless account
 
     Props props = new Props(null, _jobProps);
     HadoopConfigurationInjector.injectResources(props);
     UserGroupInformation.setConfiguration(new Configuration());
+    props.getString(HadoopSecurityManager.USER_TO_PROXY); //Check required field.
 
     _params = TdchParameters.builder()
                             .mrParams(TdchConstants.MAP_REDUCE_PARAMS)
@@ -59,8 +61,8 @@ public class HdfsToTeradataJobRunnerMain {
                             .teradataHostname(props.getString(TdchConstants.TD_HOSTNAME_KEY))
                             .fileFormat(TdchConstants.HDFS_FILE_FORMAT)
                             .jobType(TdchConstants.TDCH_JOB_TYPE)
-                            .userName(props.getString(HadoopSecurityManager.USER_TO_PROXY))
-                            .tdPassword(String.format(TdchConstants.TD_WALLET_FORMAT, props.getString(HadoopSecurityManager.USER_TO_PROXY)))
+                            .userName(props.getString(TdchConstants.TD_USERID_KEY))
+                            .tdPassword(String.format(TdchConstants.TD_WALLET_FORMAT, props.getString(TdchConstants.TD_USERID_KEY)))
                             .avroSchemaPath(props.getString(TdchConstants.AVRO_SCHEMA_PATH_KEY))
                             .sourceHdfsPath(props.getString(TdchConstants.SOURCE_HDFS_PATH_KEY))
                             .targetTdTableName(props.getString(TdchConstants.TARGET_TD_TABLE_NAME_KEY))
@@ -71,12 +73,12 @@ public class HdfsToTeradataJobRunnerMain {
 
   public void run() throws IOException, InterruptedException {
     String jobName = System.getenv(ProcessJob.JOB_NAME_ENV);
-    logger.info("Running job " + jobName);
+    _logger.info("Running job " + jobName);
 
     String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
 
     UserGroupInformation proxyUser =
-        HadoopSecureWrapperUtils.setupProxyUser(_jobProps, tokenFile, logger);
+        HadoopSecureWrapperUtils.setupProxyUser(_jobProps, tokenFile, _logger);
 
     proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
       @Override
@@ -93,13 +95,7 @@ public class HdfsToTeradataJobRunnerMain {
    * @param args
    */
   private void copyHdfsToTd() {
-    Logger rootLogger = Logger.getRootLogger();
-    rootLogger.removeAllAppenders();
-    ConsoleAppender appender = new ConsoleAppender(new PatternLayout("%p %m\n"));
-    appender.activateOptions();
-    rootLogger.addAppender(appender);
-
-    logger.info("Executing " + HdfsToTeradataJobRunnerMain.class.getSimpleName() + " with params: "+ _params);
+    _logger.info("Executing " + HdfsToTeradataJobRunnerMain.class.getSimpleName() + " with params: "+ _params);
     TeradataExportTool.main(_params.toTdchParams());
   }
 

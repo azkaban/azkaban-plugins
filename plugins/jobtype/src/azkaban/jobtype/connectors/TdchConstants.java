@@ -12,6 +12,7 @@ public interface TdchConstants {
   public static final String TD_WALLET_JAR = "jobtype.tdwallet.jar";
   public static final String LIB_JARS_KEY = "libjars";
   public static final String TD_HOSTNAME_KEY = "td.hostname";
+  public static final String TD_USERID_KEY = "td.userid";
   public static final String AVRO_SCHEMA_PATH_KEY = "avro.schema.path";
   public static final String TD_INSERT_METHOD_KEY = "tdch.insert.method";
   public static final String SOURCE_HDFS_PATH_KEY = "source.hdfs.path";
