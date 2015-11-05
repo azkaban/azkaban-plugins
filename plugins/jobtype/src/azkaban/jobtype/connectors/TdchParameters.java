@@ -19,10 +19,11 @@ public class TdchParameters {
   private final String _tdJdbcClassName;
   private final String _tdUrl;
   private final String _fileFormat;
+  private final Optional<String> _fieldSeparator;
   private final String _jobType;
   private final String _userName;
   private final String _tdPassword;
-  private final String _avroSchemaPath;
+  private final Optional<String> _avroSchemaPath;
   private final String _numMappers;
 
   private final TdchType _tdchType;
@@ -47,10 +48,12 @@ public class TdchParameters {
     this._tdJdbcClassName = builder._tdJdbcClassName;
     this._tdUrl = builder._teradataUrl;
     this._fileFormat = builder._fileFormat;
+    this._fieldSeparator = Optional.fromNullable(builder._fieldSeparator);
+
     this._jobType = builder._jobType;
     this._userName = builder._userName;
     this._tdPassword = builder._tdPassword;
-    this._avroSchemaPath = builder._avroSchemaPath;
+    this._avroSchemaPath = Optional.fromNullable(builder._avroSchemaPath);
     this._numMappers = Integer.toString(builder._numMappers);
     this._tdchType = builder._tdchType;
 
@@ -75,6 +78,7 @@ public class TdchParameters {
     private String _tdJdbcClassName;
     private String _teradataUrl;
     private String _fileFormat;
+    private String _fieldSeparator;
     private String _jobType;
     private String _userName;
     private String _tdPassword;
@@ -119,6 +123,11 @@ public class TdchParameters {
 
     public Builder fileFormat(String fileFormat) {
       this._fileFormat = fileFormat;
+      return this;
+    }
+
+    public Builder fieldSeparator(String fieldSeparator) {
+      this._fieldSeparator = fieldSeparator;
       return this;
     }
 
@@ -193,8 +202,16 @@ public class TdchParameters {
       ValidationUtils.validateNotEmpty(_jobType, "jobType");
       ValidationUtils.validateNotEmpty(_userName, "userName");
       ValidationUtils.validateNotEmpty(_teradataUrl, "teradataUrl");
-      ValidationUtils.validateNotEmpty(_avroSchemaPath, "avroSchemaPath");
 
+      if(StringUtils.isEmpty(_fileFormat)) {
+        _fileFormat = TdchConstants.AVRO_FILE_FORMAT;
+      } else {
+        ValidationUtils.validateNotEmpty(_fileFormat, "fileFormat");
+      }
+
+      if(TdchConstants.AVRO_FILE_FORMAT.equals(_fileFormat)) {
+        ValidationUtils.validateNotEmpty(_avroSchemaPath, "avroSchemaPath");
+      }
 
       if(_numMappers <= 0) {
         throw new IllegalArgumentException("Number of mappers needs to be defined and has to be greater than 0.");
@@ -257,9 +274,17 @@ public class TdchParameters {
                .add("-password")
                .add(_tdPassword)
                .add("-nummappers")
-               .add(_numMappers)
-               .add("-avroschemafile")
-               .add(_avroSchemaPath);
+               .add(_numMappers);
+
+    if(_avroSchemaPath.isPresent()) {
+      listBuilder.add("-avroschemafile")
+                 .add(_avroSchemaPath.get());
+    }
+
+    if(_fieldSeparator.isPresent()) {
+      listBuilder.add("-separator")
+                 .add(_fieldSeparator.get());
+    }
 
 
     if(TdchType.HDFS_TO_TERADATA.equals(_tdchType)) {
@@ -306,13 +331,14 @@ public class TdchParameters {
   @Override
   public String toString() {
     return "TdchParameters [_mrParams=" + _mrParams + ", _libJars=" + _libJars + ", _tdJdbcClassName="
-        + _tdJdbcClassName + ", _tdUrl=" + _tdUrl + ", _fileFormat=" + _fileFormat + ", _jobType=" + _jobType
-        + ", _userName=" + _userName + ", _tdPassword=" + getMaskedPassword() + ", _avroSchemaPath=" + _avroSchemaPath
-        + ", _numMappers=" + _numMappers + ", _tdchType=" + _tdchType + ", _sourceHdfsPath=" + _sourceHdfsPath
-        + ", _targetTdTableName=" + _targetTdTableName + ", _tdInsertMethod=" + _tdInsertMethod + ", _sourceQuery="
-        + _sourceQuery + ", _sourceTdTableName=" + _sourceTdTableName + ", _targetHdfsPath=" + _targetHdfsPath
-        + ", _tdRetrieveMethod=" + _tdRetrieveMethod + "]";
+        + _tdJdbcClassName + ", _tdUrl=" + _tdUrl + ", _fileFormat=" + _fileFormat + ", _fieldSeparator="
+        + _fieldSeparator + ", _jobType=" + _jobType + ", _userName=" + _userName + ", _tdPassword=" + getMaskedPassword()
+        + ", _avroSchemaPath=" + _avroSchemaPath + ", _numMappers=" + _numMappers + ", _tdchType=" + _tdchType
+        + ", _sourceHdfsPath=" + _sourceHdfsPath + ", _targetTdTableName=" + _targetTdTableName + ", _tdInsertMethod="
+        + _tdInsertMethod + ", _sourceQuery=" + _sourceQuery + ", _sourceTdTableName=" + _sourceTdTableName
+        + ", _tdRetrieveMethod=" + _tdRetrieveMethod + ", _targetHdfsPath=" + _targetHdfsPath + "]";
   }
+
   private String getMaskedPassword() {
     StringBuilder maskedPassword = new StringBuilder(_tdPassword.length());
     for (int i = 0; i < _tdPassword.length(); i++) {
