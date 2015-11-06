@@ -57,6 +57,10 @@ public class HadoopSecurePigWrapper {
     Properties jobProps = HadoopSecureWrapperUtils.loadAzkabanProps();
     props = new Props(null, jobProps);
     HadoopConfigurationInjector.injectResources(props);
+    
+    // special feature of secure pig wrapper: we will append the pig error file
+    // onto system out
+    pigLogFile = new File(System.getenv("PIG_LOG_FILE"));
 
     if (HadoopSecureWrapperUtils.shouldProxy(jobProps)) {
       String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
