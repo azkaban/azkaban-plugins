@@ -128,6 +128,11 @@ public class ReportalMailCreator implements MailCreator {
   private boolean createMessage(Project project, ExecutableFlow flow,
       EmailMessage message, String urlPrefix, boolean printData)
       throws Exception {
+
+    // set mail content type to be "multipart/mixed" as we are customizing the main content.
+    // failed to to this may result in trouble accessing attachment when mail is viewed from IOS mail app.
+    message.enableAttachementEmbedment(false);
+
     message.println("<html>");
     message.println("<head></head>");
     message

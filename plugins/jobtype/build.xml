@@ -75,7 +75,7 @@
 		</copy-->
 		
 		<javac fork="true" destdir="${dist.classes.dir}"
-			target="1.6" debug="true" deprecation="false" failonerror="true">
+			target="1.8" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
 			<src path="${hadoopsecuritymanager-common.java.src.dir}" />
 
@@ -87,7 +87,7 @@
         <delete dir="${dist.classes.test.dir}" />
         <mkdir dir="${dist.classes.test.dir}" /> 
         <javac fork="true" destdir="${dist.classes.test.dir}"
-            target="1.6" debug="true" deprecation="false" failonerror="true">
+            target="1.8" debug="true" deprecation="false" failonerror="true">
             <src path="${java.src.test.dir}" />
 			<classpath refid="main.classpath" />
         </javac>

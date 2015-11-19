@@ -81,7 +81,7 @@
 		</copy>
 
 		<javac fork="true" destdir="${dist.classes.dir}"
-			target="1.6" debug="true" deprecation="false" failonerror="true">
+			target="1.8" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
 			<classpath refid="main.classpath" />
 		</javac>
@@ -100,7 +100,7 @@
 		</copy>
 
 		<javac fork="true" destdir="${dist.tests.dir}"
-	      target="1.6" debug="true" deprecation="false" failonerror="true">
+	      target="1.8" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.unit.dir}" />
 			<classpath refid="main.classpath" />
 		</javac>
