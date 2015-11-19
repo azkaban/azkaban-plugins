@@ -16,12 +16,15 @@
 
 package azkaban.jobtype;
 
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.security.PrivilegedExceptionAction;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
@@ -42,8 +45,6 @@ public class HadoopSecurePigWrapper {
 
   private static File pigLogFile;
 
-  private static boolean securityEnabled;
-
   private static Props props;
 
   private static final Logger logger;
@@ -53,38 +54,28 @@ public class HadoopSecurePigWrapper {
   }
 
   public static void main(final String[] args) throws Exception {
-    String propsFile = System.getenv(ProcessJob.JOB_PROP_ENV);
-    props = new Props(null, new File(propsFile));
-
+    Properties jobProps = HadoopSecureWrapperUtils.loadAzkabanProps();
+    props = new Props(null, jobProps);
     HadoopConfigurationInjector.injectResources(props);
-
-    final Configuration conf = new Configuration();
-
-    UserGroupInformation.setConfiguration(conf);
-    securityEnabled = UserGroupInformation.isSecurityEnabled();
+    
+    // special feature of secure pig wrapper: we will append the pig error file
+    // onto system out
     pigLogFile = new File(System.getenv("PIG_LOG_FILE"));
-    if (!HadoopSecureWrapperUtils.shouldProxy(props.toProperties())) {
-      logger.info("Not proxying.");
-      runPigJob(args);
-      return;
-    }
 
-    UserGroupInformation proxyUser = null;
-    String userToProxy = props.getString("user.to.proxy");
-    if (securityEnabled) {
-      proxyUser = HadoopSecureWrapperUtils.createSecurityEnabledProxyUser(userToProxy, logger);
+    if (HadoopSecureWrapperUtils.shouldProxy(jobProps)) {
+      String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
+      UserGroupInformation proxyUser =
+          HadoopSecureWrapperUtils.setupProxyUser(jobProps, tokenFile, logger);
+      proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
+        @Override
+        public Void run() throws Exception {
+          runPigJob(args);
+          return null;
+        }
+      });
     } else {
-      proxyUser = UserGroupInformation.createRemoteUser(userToProxy);
+      runPigJob(args);
     }
-
-    logger.info("Proxied as user " + userToProxy);
-    proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
-      @Override
-      public Void run() throws Exception {
-        runPigJob(args);
-        return null;
-      }
-    });
   }
 
   @SuppressWarnings("deprecation")
