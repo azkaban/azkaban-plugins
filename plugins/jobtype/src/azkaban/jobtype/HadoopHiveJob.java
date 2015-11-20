@@ -22,12 +22,15 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
 import azkaban.flow.CommonJobProperties;
@@ -48,6 +51,7 @@ public class HadoopHiveJob extends JavaProcessJob {
   private String userToProxy = null;
   private boolean shouldProxy = false;
   private boolean obtainTokens = false;
+  private File tokenFile = null;
 
   private HadoopSecurityManager hadoopSecurityManager;
 
@@ -80,7 +84,6 @@ public class HadoopHiveJob extends JavaProcessJob {
     HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(),
         getWorkingDirectory());
 
-    File tokenFile = null;
     if (shouldProxy && obtainTokens) {
       userToProxy = getJobProps().getString("user.to.proxy");
       getLog().info("Need to proxy. Getting tokens.");
@@ -266,5 +269,24 @@ public class HadoopHiveJob extends JavaProcessJob {
       return containedClass.getProtectionDomain().getCodeSource().getLocation()
           .getPath();
     }
+  }
+  
+  /**
+   * This cancel method, in addition to the default canceling behavior, also kills the MR jobs launched by Hive
+   * on Hadoop
+   */
+  @Override
+  public void cancel() throws InterruptedException {
+    super.cancel();
+
+    info("Cancel called.  Killing the Hive launched MR jobs on the cluster");
+
+    String azExecId = jobProps.getString(CommonJobProperties.EXEC_ID);
+    final String logFilePath =
+        String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
+            getId());
+    info("log file path is: " + logFilePath);
+
+    HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps, tokenFile, getLog());
   }
 }

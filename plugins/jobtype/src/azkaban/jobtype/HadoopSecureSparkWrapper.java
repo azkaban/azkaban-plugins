@@ -26,11 +26,11 @@ import org.apache.log4j.Logger;
 
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
-
 import static azkaban.flow.CommonJobProperties.ATTEMPT_LINK;
 import static azkaban.flow.CommonJobProperties.EXECUTION_LINK;
 import static azkaban.flow.CommonJobProperties.JOB_LINK;
 import static azkaban.flow.CommonJobProperties.WORKFLOW_LINK;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 /**
  * <pre>
@@ -41,8 +41,6 @@ import static azkaban.flow.CommonJobProperties.WORKFLOW_LINK;
  * @see azkaban.jobtype.HadoopSecureSparkWrapper
  */
 public class HadoopSecureSparkWrapper {
-
-  private static boolean securityEnabled;
 
   private static final Logger logger = Logger.getRootLogger();
 
@@ -55,35 +53,22 @@ public class HadoopSecureSparkWrapper {
   public static void main(final String[] args) throws Exception {
 
     Properties jobProps = HadoopSecureWrapperUtils.loadAzkabanProps();
-    HadoopConfigurationInjector.injectResources(new Props(null, jobProps));
-
-    // set up hadoop related configurations
-    final Configuration conf = new Configuration();
-    UserGroupInformation.setConfiguration(conf);
-    securityEnabled = UserGroupInformation.isSecurityEnabled();
+    HadoopConfigurationInjector.injectResources(new Props(null, jobProps));     
 
     if (HadoopSecureWrapperUtils.shouldProxy(jobProps)) {
-      UserGroupInformation proxyUser = null;
-      String userToProxy = jobProps.getProperty(HadoopSecurityManager.USER_TO_PROXY);
-      if (securityEnabled) {
-        proxyUser = HadoopSecureWrapperUtils.createSecurityEnabledProxyUser(userToProxy, logger);
-      } else {
-        proxyUser = UserGroupInformation.createRemoteUser(userToProxy);
-      }
-      logger.info("Proxying to execute job.  Proxied as user " + userToProxy);
-
+      String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
+      UserGroupInformation proxyUser =
+          HadoopSecureWrapperUtils.setupProxyUser(jobProps, tokenFile, logger);
       proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
         @Override
         public Void run() throws Exception {
-          runSpark(args, conf);
+          runSpark(args, new Configuration());
           return null;
         }
       });
-
     } else {
-      logger.info("Not proxying to execute job. ");
-      runSpark(args, conf);
-    }
+      runSpark(args, new Configuration());
+    }   
   }
 
   /**

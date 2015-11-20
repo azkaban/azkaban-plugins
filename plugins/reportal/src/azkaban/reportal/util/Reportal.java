@@ -46,11 +46,18 @@ import azkaban.scheduler.ScheduleManagerException;
 import azkaban.user.Permission;
 import azkaban.user.Permission.Type;
 import azkaban.user.User;
+import azkaban.utils.Props;
 import azkaban.utils.Utils;
 import azkaban.viewer.reportal.ReportalMailCreator;
 import azkaban.viewer.reportal.ReportalTypeManager;
 
 public class Reportal {
+  public static final String REPORTAL_CONFIG_PREFIX = "reportal.config.";
+  public static final String REPORTAL_CONFIG_PREFIX_REGEX =
+    "^reportal[.]config[.].+";
+  public static final String REPORTAL_CONFIG_PREFIX_NEGATION_REGEX =
+    "(?!(^reportal[.]config[.])).+";
+
   public static final String ACCESS_LIST_SPLIT_REGEX =
       "\\s*,\\s*|\\s*;\\s*|\\s+";
 
@@ -250,6 +257,8 @@ public class Reportal {
     // Create all job files
     String dependentJob = null;
     List<String> jobs = new ArrayList<String>();
+    Map<String, String> extraProps =
+      ReportalUtil.getVariableMapByPrefix(variables, REPORTAL_CONFIG_PREFIX);
     for (Query query : queries) {
       // Create .job file
       File jobFile =
@@ -263,7 +272,7 @@ public class Reportal {
       // Populate the job file
       ReportalTypeManager.createJobAndFiles(this, jobFile, jobName,
           query.title, query.type, query.script, dependentJob, reportalUser,
-          null);
+          extraProps);
 
       // For dependency of next query
       dependentJob = jobName;
@@ -400,12 +409,12 @@ public class Reportal {
     reportal.variables = new ArrayList<Variable>();
 
     for (int i = 0; i < variables; i++) {
-      Variable variable = new Variable();
-      reportal.variables.add(variable);
-      variable.title =
+      String title =
           stringGetter.get(project.getMetadata().get("variable" + i + "title"));
-      variable.name =
+      String name =
           stringGetter.get(project.getMetadata().get("variable" + i + "name"));
+      Variable variable = new Variable(title, name);
+      reportal.variables.add(variable);
     }
 
     reportal.project = project;
@@ -459,6 +468,13 @@ public class Reportal {
   public static class Variable {
     public String title;
     public String name;
+
+    public Variable() {}
+
+    public Variable(String title, String name) {
+      this.title = title;
+      this.name = name;
+    }
 
     public String getTitle() {
       return title;

@@ -19,10 +19,13 @@ package azkaban.jobtype;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 import java.io.File;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
 import azkaban.flow.CommonJobProperties;
@@ -51,6 +54,7 @@ public class HadoopJavaJob extends JavaProcessJob {
   private boolean shouldProxy = false;
   private boolean obtainTokens = false;
   private boolean noUserClasspath = false;
+  private File tokenFile = null;
 
   private HadoopSecurityManager hadoopSecurityManager;
 
@@ -59,17 +63,21 @@ public class HadoopJavaJob extends JavaProcessJob {
     super(jobid, sysProps, jobProps, log);
 
     getJobProps().put(CommonJobProperties.JOB_ID, jobid);
-    shouldProxy = getSysProps().getBoolean(HadoopSecurityManager.ENABLE_PROXYING, false);
-    getJobProps().put(HadoopSecurityManager.ENABLE_PROXYING, Boolean.toString(shouldProxy));
-    obtainTokens = getSysProps().getBoolean(HadoopSecurityManager.OBTAIN_BINARY_TOKEN, false);
+    shouldProxy =
+        getSysProps().getBoolean(HadoopSecurityManager.ENABLE_PROXYING, false);
+    getJobProps().put(HadoopSecurityManager.ENABLE_PROXYING,
+        Boolean.toString(shouldProxy));
+    obtainTokens =
+        getSysProps().getBoolean(HadoopSecurityManager.OBTAIN_BINARY_TOKEN,
+            false);
     noUserClasspath =
         getSysProps().getBoolean("azkaban.no.user.classpath", false);
 
     if (shouldProxy) {
       getLog().info("Initiating hadoop security manager.");
       try {
-        hadoopSecurityManager = HadoopJobUtils.loadHadoopSecurityManager(getSysProps(), log);
-        
+        hadoopSecurityManager =
+            HadoopJobUtils.loadHadoopSecurityManager(getSysProps(), log);
       } catch (RuntimeException e) {
         e.printStackTrace();
         throw new RuntimeException("Failed to get hadoop security manager!"
@@ -77,7 +85,6 @@ public class HadoopJavaJob extends JavaProcessJob {
       }
     }
   }
-
 
   @Override
   protected String getJVMArguments() {
@@ -121,22 +128,12 @@ public class HadoopJavaJob extends JavaProcessJob {
     classPath.add(HadoopConfigurationInjector.getPath(getJobProps(),
         getWorkingDirectory()));
 
-    List<String> typeClassPath =
-        getSysProps().getStringList("jobtype.classpath", null, ",");
-    if (typeClassPath != null) {
-      // fill in this when load this jobtype
-      String pluginDir = getSysProps().get("plugin.dir");
-      for (String jar : typeClassPath) {
-        File jarFile = new File(jar);
-        if (!jarFile.isAbsolute()) {
-          jarFile = new File(pluginDir + File.separatorChar + jar);
-        }
-
-        if (!classPath.contains(jarFile.getAbsoluteFile())) {
-          classPath.add(jarFile.getAbsolutePath());
-        }
-      }
-    }
+    // merging classpaths from plugin.properties
+    mergeClassPaths(classPath,
+      getJobProps().getStringList("jobtype.classpath", null, ","));
+    // merging classpaths from private.properties
+    mergeClassPaths(classPath,
+      getSysProps().getStringList("jobtype.classpath", null, ","));
 
     List<String> typeGlobalClassPath =
         getSysProps().getStringList("jobtype.global.classpath", null, ",");
@@ -151,12 +148,28 @@ public class HadoopJavaJob extends JavaProcessJob {
     return classPath;
   }
 
+  private void mergeClassPaths(List<String> classPath, List<String> typeClassPath) {
+    if (typeClassPath != null) {
+      // fill in this when load this jobtype
+      String pluginDir = getSysProps().get("plugin.dir");
+      for (String jar : typeClassPath) {
+        File jarFile = new File(jar);
+        if (!jarFile.isAbsolute()) {
+          jarFile = new File(pluginDir + File.separatorChar + jar);
+        }
+
+        if (!classPath.contains(jarFile.getAbsoluteFile())) {
+          classPath.add(jarFile.getAbsolutePath());
+        }
+      }
+    }
+  }
+
   @Override
   public void run() throws Exception {
     HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(),
         getWorkingDirectory());
 
-    File tokenFile = null;
     if (shouldProxy && obtainTokens) {
       userToProxy = getJobProps().getString("user.to.proxy");
       getLog().info("Need to proxy. Getting tokens.");
@@ -164,7 +177,9 @@ public class HadoopJavaJob extends JavaProcessJob {
       props.putAll(getJobProps());
       props.putAll(getSysProps());
 
-      tokenFile = HadoopJobUtils.getHadoopTokens(hadoopSecurityManager, props, getLog());
+      tokenFile =
+          HadoopJobUtils
+              .getHadoopTokens(hadoopSecurityManager, props, getLog());
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION,
           tokenFile.getAbsolutePath());
     }
@@ -176,7 +191,8 @@ public class HadoopJavaJob extends JavaProcessJob {
     } finally {
       if (tokenFile != null) {
         try {
-          HadoopJobUtils.cancelHadoopTokens(hadoopSecurityManager, userToProxy, tokenFile, getLog());
+          HadoopJobUtils.cancelHadoopTokens(hadoopSecurityManager, userToProxy,
+              tokenFile, getLog());
         } catch (Throwable t) {
           t.printStackTrace();
           getLog().error("Failed to cancel tokens.");
@@ -206,7 +222,7 @@ public class HadoopJavaJob extends JavaProcessJob {
       return containedClass.getProtectionDomain().getCodeSource().getLocation()
           .getPath();
     }
-  } 
+  }
 
   @Override
   protected String getJavaClass() {
@@ -219,5 +235,24 @@ public class HadoopJavaJob extends JavaProcessJob {
         + ", _cancelMethod='" + _cancelMethod + '\'' + ", _progressMethod='"
         + _progressMethod + '\'' + ", _javaObject=" + _javaObject + ", props="
         + getJobProps() + '}';
+  }
+
+  /**
+   * This cancel method, in addition to the default canceling behavior, also
+   * kills the MR jobs launched by this job on Hadoop
+   */
+  @Override
+  public void cancel() throws InterruptedException {
+    super.cancel();
+
+    info("Cancel called.  Killing the launched MR jobs on the cluster");
+
+    String azExecId = jobProps.getString(CommonJobProperties.EXEC_ID);
+    final String logFilePath =
+        String.format("%s/_job.%s.%s.log", getWorkingDirectory(), azExecId,
+            getId());
+    info("log file path is: " + logFilePath);
+
+    HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps, tokenFile, getLog());
   }
 }

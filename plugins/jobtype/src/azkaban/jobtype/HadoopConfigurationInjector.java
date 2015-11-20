@@ -128,7 +128,8 @@ public class HadoopConfigurationInjector {
         CommonJobProperties.OUT_NODES,
         CommonJobProperties.IN_NODES,
         CommonJobProperties.PROJECT_LAST_CHANGED_DATE,
-        CommonJobProperties.PROJECT_LAST_CHANGED_BY
+        CommonJobProperties.PROJECT_LAST_CHANGED_BY,
+        CommonJobProperties.SUBMIT_USER
     };
 
     for(String propertyName : propsToInject) {

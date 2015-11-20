@@ -18,6 +18,7 @@ package azkaban.test.reportal.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,9 +29,135 @@ import azkaban.flow.Edge;
 import azkaban.flow.Flow;
 import azkaban.flow.Node;
 import azkaban.project.Project;
+import azkaban.reportal.util.Reportal.Variable;
 import azkaban.reportal.util.ReportalUtil;
 
 public class ReportalUtilTest {
+
+  @Test
+  public void testGetVariableMapByPrefixNullVariables() {
+    Map<String, String> prefixMap =
+      ReportalUtil.getVariableMapByPrefix(null, "dummyPrefix");
+    Assert.assertTrue(
+      "shortlistedVariables was not empty but was expected to be.",
+      prefixMap.isEmpty());
+  }
+
+  @Test
+  public void testGetVariableMapByPrefixNullPrefix() {
+    List<Variable> variables = getVariablesForTest();
+    Map<String, String> prefixMap =
+      ReportalUtil.getVariableMapByPrefix(variables, null);
+    Assert.assertTrue(
+      "shortlistedVariables was not empty but was expected to be.",
+      prefixMap.isEmpty());
+  }
+
+  @Test
+  public void testGetVariableMapByPrefixNoMatch() {
+    List<Variable> variables = getVariablesForTest();
+    Map<String, String> prefixMap =
+      ReportalUtil.getVariableMapByPrefix(variables, "dummyPrefix");
+    Assert.assertTrue(
+      "shortlistedVariables was not empty but was expected to be.",
+      prefixMap.isEmpty());
+  }
+
+  @Test
+  public void testGetVariableMapByPrefixMatch() {
+    List<Variable> variables = getVariablesForTest();
+    variables.add(new Variable("dummyPrefix.title", "dummyName1"));
+    variables.add(new Variable("mydummyPrefix.title", "dummyName2"));
+
+    Map<String, String> prefixMap =
+      ReportalUtil.getVariableMapByPrefix(variables, "dummyPrefix");
+
+    Assert.assertEquals(1, prefixMap.size());
+    Assert.assertEquals(prefixMap.get("title"), "dummyName1");
+  }
+
+  @Test
+  public void testGetVariablesByRegexNullVariables() {
+    List<Variable> shortlistedVariables =
+      ReportalUtil.getVariablesByRegex(null, "dummyPrefix");
+    Assert.assertTrue(
+      "shortlistedVariables was not empty but was expected to be.",
+      shortlistedVariables.isEmpty());
+  }
+
+  @Test
+  public void testGetVariablesByRegexNullPrefix() {
+    List<Variable> variables = getVariablesForTest();
+    List<Variable> shortlistedVariables =
+      ReportalUtil.getVariablesByRegex(variables, null);
+    Assert.assertTrue(
+      "shortlistedVariables was not empty but was expected to be.",
+      shortlistedVariables.isEmpty());
+  }
+
+  @Test
+  public void testGetVariablesByRegexNoMatch() {
+    List<Variable> variables = getVariablesForTest();
+    List<Variable> shortlistedVariables =
+      ReportalUtil.getVariablesByRegex(variables, "dummyPrefix");
+    Assert.assertTrue(
+      "shortlistedVariables was not empty but was expected to be.",
+      shortlistedVariables.isEmpty());
+  }
+
+  @Test
+  public void testGetVariablesByRegexMatch() {
+    List<Variable> variables = getVariablesForTest();
+    variables.add(new Variable("dummyPrefix.title", "dummyName1"));
+    variables.add(new Variable("mydummyPrefix.title", "dummyName2"));
+
+    List<Variable> shortlistedVariables =
+      ReportalUtil.getVariablesByRegex(variables, "^dummyPrefix");
+
+    Assert.assertEquals(1, shortlistedVariables.size());
+    Assert.assertEquals(shortlistedVariables.get(0).getName(), "dummyName1");
+  }
+
+  @Test
+  public void testGetRunTimeNullVariables() {
+    List<Variable> shortlistedVariables =
+      ReportalUtil.getRunTimeVariables(null);
+    Assert.assertTrue("RunTimeVariables was not empty but was expected to be.",
+      shortlistedVariables.isEmpty());
+  }
+
+  @Test
+  public void testGetRunTimeVariablesNoMatch() {
+    List<Variable> variables = new ArrayList<Variable>();
+    List<Variable> shortlistedVariables =
+      ReportalUtil.getRunTimeVariables(variables);
+    Assert.assertTrue("RunTimeVariables was not empty but was expected to be.",
+      shortlistedVariables.isEmpty());
+  }
+
+  @Test
+  public void testGetRunTimeVariables() {
+    List<Variable> variables = getVariablesForTest();
+    variables.add(new Variable("reportal.config.title", "dummyName1"));
+
+    List<Variable> shortlistedVariables =
+      ReportalUtil.getRunTimeVariables(variables);
+
+    Assert.assertEquals(3, shortlistedVariables.size());
+    for (int index = 0; index < variables.size(); ++index) {
+      Assert
+        .assertEquals(variables.get(index), shortlistedVariables.get(index));
+    }
+  }
+
+  /* Dummy data for test cases */
+  private List<Variable> getVariablesForTest() {
+    List<Variable> variables = new ArrayList<Variable>();
+    variables.add(new Variable("title1", "name1"));
+    variables.add(new Variable("title2", "name2"));
+    variables.add(new Variable("title3", "name3"));
+    return variables;
+  }
 
   @Test
   public void testSortExecutableNodesNullFlow() {
