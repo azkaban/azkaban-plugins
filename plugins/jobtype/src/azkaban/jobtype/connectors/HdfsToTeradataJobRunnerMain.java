@@ -23,11 +23,8 @@ import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-
-import azkaban.jobExecutor.ProcessJob;
+import azkaban.jobExecutor.AbstractProcessJob;
 import azkaban.jobtype.*;
 import azkaban.jobtype.javautils.JobUtils;
 import azkaban.security.commons.HadoopSecurityManager;
@@ -47,7 +44,6 @@ public class HdfsToTeradataJobRunnerMain {
   public HdfsToTeradataJobRunnerMain() throws FileNotFoundException, IOException {
     _logger = JobUtils.initJobLogger();
     _jobProps = HadoopSecureWrapperUtils.loadAzkabanProps();
-    _jobProps.put(HadoopSecurityManager.ENABLE_PROXYING, "true"); //Always headless account
 
     Props props = new Props(null, _jobProps);
     HadoopConfigurationInjector.injectResources(props);
@@ -73,21 +69,25 @@ public class HdfsToTeradataJobRunnerMain {
   }
 
   public void run() throws IOException, InterruptedException {
-    String jobName = System.getenv(ProcessJob.JOB_NAME_ENV);
+    String jobName = System.getenv(AbstractProcessJob.JOB_NAME_ENV);
     _logger.info("Running job " + jobName);
 
-    String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
+    if (HadoopSecureWrapperUtils.shouldProxy(_jobProps)) {
+      String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
 
-    UserGroupInformation proxyUser =
-        HadoopSecureWrapperUtils.setupProxyUser(_jobProps, tokenFile, _logger);
+      UserGroupInformation proxyUser =
+          HadoopSecureWrapperUtils.setupProxyUser(_jobProps, tokenFile, _logger);
 
-    proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
-      @Override
-      public Void run() throws Exception {
-        copyHdfsToTd();
-        return null;
-      }
-    });
+      proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
+        @Override
+        public Void run() throws Exception {
+          copyHdfsToTd();
+          return null;
+        }
+      });
+    } else {
+      copyHdfsToTd();
+    }
   }
 
   /**

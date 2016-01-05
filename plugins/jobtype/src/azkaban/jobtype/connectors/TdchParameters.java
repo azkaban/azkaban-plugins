@@ -11,7 +11,8 @@ import azkaban.jobtype.javautils.ValidationUtils;
 
 public class TdchParameters {
   private final static String TERADATA_JDBC_URL_PREFIX = "jdbc:teradata://";
-  private final static String TERADATA_JDBC_URL_SUFFIX = "/CHARSET=UTF16";
+  private final static String TERADATA_JDBC_URL_CHARSET_KEY = "/CHARSET=";
+  private final static String DEFAULT_CHARSET = "UTF8";
   private static final String DEFAULT_RETRIEVE_METHOD = "split.by.amp";
 
   private final String _mrParams;
@@ -46,7 +47,7 @@ public class TdchParameters {
     this._mrParams = builder._mrParams;
     this._libJars = builder._libJars;
     this._tdJdbcClassName = builder._tdJdbcClassName;
-    this._tdUrl = builder._teradataUrl;
+    this._tdUrl = builder._tdUrl;
     this._fileFormat = builder._fileFormat;
     this._fieldSeparator = Optional.fromNullable(builder._fieldSeparator);
 
@@ -76,7 +77,9 @@ public class TdchParameters {
     private String _mrParams;
     private String _libJars;
     private String _tdJdbcClassName;
-    private String _teradataUrl;
+    private String _tdHostName;
+    private String _tdCharSet;
+    private String _tdUrl;
     private String _fileFormat;
     private String _fieldSeparator;
     private String _jobType;
@@ -112,12 +115,12 @@ public class TdchParameters {
     }
 
     public Builder teradataHostname(String hostname) {
-      this._teradataUrl = TERADATA_JDBC_URL_PREFIX + hostname + TERADATA_JDBC_URL_SUFFIX;
+      this._tdHostName = hostname;
       return this;
     }
 
-    public Builder teradataUrl(String teradataUrl) {
-      this._teradataUrl = teradataUrl;
+    public Builder teradataCharset(String charSet) {
+      this._tdCharSet = charSet;
       return this;
     }
 
@@ -201,7 +204,7 @@ public class TdchParameters {
       ValidationUtils.validateNotEmpty(_tdPassword, "tdPassword");
       ValidationUtils.validateNotEmpty(_jobType, "jobType");
       ValidationUtils.validateNotEmpty(_userName, "userName");
-      ValidationUtils.validateNotEmpty(_teradataUrl, "teradataUrl");
+      ValidationUtils.validateNotEmpty(_tdHostName, "teradata host name");
 
       if(StringUtils.isEmpty(_fileFormat)) {
         _fileFormat = TdchConstants.AVRO_FILE_FORMAT;
@@ -217,9 +220,8 @@ public class TdchParameters {
         throw new IllegalArgumentException("Number of mappers needs to be defined and has to be greater than 0.");
       }
 
-      if(!_teradataUrl.startsWith(TERADATA_JDBC_URL_PREFIX)) {
-        throw new IllegalArgumentException("Incorrect Teradata JDBC URL. " + _teradataUrl);
-      }
+      String charSet = StringUtils.isEmpty(_tdCharSet) ? DEFAULT_CHARSET : _tdCharSet;
+      _tdUrl = TERADATA_JDBC_URL_PREFIX + _tdHostName + TERADATA_JDBC_URL_CHARSET_KEY + charSet;
 
       boolean isHdfsToTd = !StringUtils.isEmpty(_sourceHdfsPath) && !StringUtils.isEmpty(_targetTdTableName);
       boolean isTdToHdfs = !(StringUtils.isEmpty(_sourceTdTableName) && StringUtils.isEmpty(_sourceQuery))

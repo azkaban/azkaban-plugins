@@ -22,6 +22,8 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
@@ -45,7 +47,6 @@ public class TeradataToHdfsJobRunnerMain {
   public TeradataToHdfsJobRunnerMain() throws FileNotFoundException, IOException {
     _logger = JobUtils.initJobLogger();
     _jobProps = HadoopSecureWrapperUtils.loadAzkabanProps();
-    _jobProps.put(HadoopSecurityManager.ENABLE_PROXYING, "true"); //Always headless account
 
     Props props = new Props(null, _jobProps);
     HadoopConfigurationInjector.injectResources(props);
@@ -75,20 +76,31 @@ public class TeradataToHdfsJobRunnerMain {
     String jobName = System.getenv(AbstractProcessJob.JOB_NAME_ENV);
     _logger.info("Running job " + jobName);
 
-    String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
-    UserGroupInformation proxyUser =
-        HadoopSecureWrapperUtils.setupProxyUser(_jobProps, tokenFile, _logger);
+    if (HadoopSecureWrapperUtils.shouldProxy(_jobProps)) {
+      String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
+      UserGroupInformation proxyUser =
+          HadoopSecureWrapperUtils.setupProxyUser(_jobProps, tokenFile, _logger);
 
-    proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
-      @Override
-      public Void run() throws Exception {
-        runCopyTdToHdfs();
-        return null;
-      }
-    });
+      proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
+        @Override
+        public Void run() throws Exception {
+          runCopyTdToHdfs();
+          return null;
+        }
+      });
+    } else {
+      runCopyTdToHdfs();
+    }
   }
 
-  private void runCopyTdToHdfs() {
+  private void runCopyTdToHdfs() throws IOException {
+    if (Boolean.valueOf(_jobProps.getProperty("force.output.overwrite", "false").trim())) {
+      Path path = new Path(_jobProps.getProperty(TdchConstants.TARGET_HDFS_PATH_KEY));
+      _logger.info("Deleting output directory " + path.toUri());
+      JobConf conf = new JobConf();
+      path.getFileSystem(conf).delete(path, true);
+    }
+
     _logger.info("Executing " + TeradataToHdfsJobRunnerMain.class.getSimpleName() + " with " + _params);
     TeradataImportTool.main(_params.toTdchParams());
   }
