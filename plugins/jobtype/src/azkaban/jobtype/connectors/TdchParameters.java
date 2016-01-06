@@ -1,15 +1,20 @@
 package azkaban.jobtype.connectors;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
+import azkaban.jobtype.javautils.FileUtils;
 import azkaban.jobtype.javautils.ValidationUtils;
 
 public class TdchParameters {
+  private final static Logger _logger = Logger.getLogger(TdchParameters.class);
   private final static String TERADATA_JDBC_URL_PREFIX = "jdbc:teradata://";
   private final static String TERADATA_JDBC_URL_CHARSET_KEY = "/CHARSET=";
   private final static String DEFAULT_CHARSET = "UTF8";
@@ -43,6 +48,7 @@ public class TdchParameters {
   public static Builder builder() {
     return new Builder();
   }
+
   private TdchParameters(Builder builder) {
     this._mrParams = builder._mrParams;
     this._libJars = builder._libJars;
@@ -105,7 +111,8 @@ public class TdchParameters {
     }
 
     public Builder libJars(String libJars) {
-      this._libJars = libJars;
+      Collection<String> filePaths = FileUtils.listFiles(libJars, TdchConstants.LIB_JAR_DELIMITER);
+      this._libJars = Joiner.on(TdchConstants.LIB_JAR_DELIMITER).skipNulls().join(filePaths);
       return this;
     }
 
@@ -330,22 +337,37 @@ public class TdchParameters {
     return params;
   }
 
-  @Override
-  public String toString() {
-    return "TdchParameters [_mrParams=" + _mrParams + ", _libJars=" + _libJars + ", _tdJdbcClassName="
-        + _tdJdbcClassName + ", _tdUrl=" + _tdUrl + ", _fileFormat=" + _fileFormat + ", _fieldSeparator="
-        + _fieldSeparator + ", _jobType=" + _jobType + ", _userName=" + _userName + ", _tdPassword=" + getMaskedPassword()
-        + ", _avroSchemaPath=" + _avroSchemaPath + ", _numMappers=" + _numMappers + ", _tdchType=" + _tdchType
-        + ", _sourceHdfsPath=" + _sourceHdfsPath + ", _targetTdTableName=" + _targetTdTableName + ", _tdInsertMethod="
-        + _tdInsertMethod + ", _sourceQuery=" + _sourceQuery + ", _sourceTdTableName=" + _sourceTdTableName
-        + ", _tdRetrieveMethod=" + _tdRetrieveMethod + ", _targetHdfsPath=" + _targetHdfsPath + "]";
-  }
-
   private String getMaskedPassword() {
     StringBuilder maskedPassword = new StringBuilder(_tdPassword.length());
     for (int i = 0; i < _tdPassword.length(); i++) {
       maskedPassword.append("*");
     }
     return maskedPassword.toString();
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("TdchParameters [_mrParams=").append(_mrParams)
+            .append(", _libJars=").append(_libJars)
+            .append(", _tdJdbcClassName=").append(_tdJdbcClassName)
+            .append(", _tdUrl=").append(_tdUrl)
+            .append(", _fileFormat=").append(_fileFormat)
+            .append(", _fieldSeparator=").append(_fieldSeparator)
+            .append(", _jobType=").append(_jobType)
+            .append(", _userName=").append(_userName)
+            .append(", _tdPassword=").append(getMaskedPassword())
+            .append(", _avroSchemaPath=").append(_avroSchemaPath)
+            .append(", _numMappers=").append(_numMappers)
+            .append(", _tdchType=").append(_tdchType)
+            .append(", _sourceHdfsPath=").append(_sourceHdfsPath)
+            .append(", _targetTdTableName=").append(_targetTdTableName)
+            .append(", _tdInsertMethod=").append(_tdInsertMethod)
+            .append(", _sourceQuery=").append(_sourceQuery)
+            .append(", _sourceTdTableName=").append(_sourceTdTableName)
+            .append(", _tdRetrieveMethod=").append(_tdRetrieveMethod)
+            .append(", _targetHdfsPath=").append(_targetHdfsPath)
+            .append("]");
+    return builder.toString();
   }
 }

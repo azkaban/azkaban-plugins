@@ -51,10 +51,9 @@ public class TeradataToHdfsJobRunnerMain {
     Props props = new Props(null, _jobProps);
     HadoopConfigurationInjector.injectResources(props);
     UserGroupInformation.setConfiguration(new Configuration());
-    props.getString(HadoopSecurityManager.USER_TO_PROXY); //Check required field.
 
     _params = TdchParameters.builder()
-                            .mrParams(TdchConstants.MAP_REDUCE_PARAMS)
+                            .mrParams(_jobProps.getProperty(TdchConstants.HADOOP_CONFIG_KEY))
                             .libJars(props.getString(TdchConstants.LIB_JARS_KEY))
                             .tdJdbcClassName(TdchConstants.TERADATA_JDBCDRIVER_CLASSNAME)
                             .teradataHostname(props.getString(TdchConstants.TD_HOSTNAME_KEY))
@@ -101,7 +100,7 @@ public class TeradataToHdfsJobRunnerMain {
       path.getFileSystem(conf).delete(path, true);
     }
 
-    _logger.info("Executing " + TeradataToHdfsJobRunnerMain.class.getSimpleName() + " with " + _params);
+    _logger.info(String.format("Executing %s with params: %s", TeradataToHdfsJobRunnerMain.class.getSimpleName(), _params));
     TeradataImportTool.main(_params.toTdchParams());
   }
 

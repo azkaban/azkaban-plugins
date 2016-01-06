@@ -48,10 +48,9 @@ public class HdfsToTeradataJobRunnerMain {
     Props props = new Props(null, _jobProps);
     HadoopConfigurationInjector.injectResources(props);
     UserGroupInformation.setConfiguration(new Configuration());
-    props.getString(HadoopSecurityManager.USER_TO_PROXY); //Check required field.
 
     _params = TdchParameters.builder()
-                            .mrParams(TdchConstants.MAP_REDUCE_PARAMS)
+                            .mrParams(_jobProps.getProperty(TdchConstants.HADOOP_CONFIG_KEY))
                             .libJars(props.getString(TdchConstants.LIB_JARS_KEY))
                             .tdJdbcClassName(TdchConstants.TERADATA_JDBCDRIVER_CLASSNAME)
                             .teradataHostname(props.getString(TdchConstants.TD_HOSTNAME_KEY))
@@ -96,7 +95,7 @@ public class HdfsToTeradataJobRunnerMain {
    * @param args
    */
   private void copyHdfsToTd() {
-    _logger.info("Executing " + HdfsToTeradataJobRunnerMain.class.getSimpleName() + " with params: "+ _params);
+    _logger.info(String.format("Executing %s with params: %s", HdfsToTeradataJobRunnerMain.class.getSimpleName(), _params));
     TeradataExportTool.main(_params.toTdchParams());
   }
 

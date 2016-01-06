@@ -26,6 +26,9 @@ import com.google.common.collect.ImmutableList;
 import azkaban.jobtype.*;
 import azkaban.utils.Props;
 
+/**
+ * Entry point for TeradataToHdfs Job that prepares/forks new JVM for the job.
+ */
 public class TeradataToHdfsJob extends HadoopJavaJob {
   public TeradataToHdfsJob(String jobid,
                            Props sysProps,
@@ -33,6 +36,7 @@ public class TeradataToHdfsJob extends HadoopJavaJob {
                            Logger log) {
     super(jobid, sysProps, jobProps, log);
     jobProps.put(TdchConstants.LIB_JARS_KEY, sysProps.get(TdchConstants.LIB_JARS_KEY));
+    //Initialize TDWallet if it hasn't on current JVM.
     TeraDataWalletInitializer.initialize(new File(getCwd()), new File(sysProps.get(TdchConstants.TD_WALLET_JAR)));
   }
 
@@ -41,6 +45,11 @@ public class TeradataToHdfsJob extends HadoopJavaJob {
     return TeradataToHdfsJobRunnerMain.class.getName();
   }
 
+  /**
+   * In addition to superclass's classpath, it adds jars from TDWallet unjarred folder.
+   * {@inheritDoc}
+   * @see azkaban.jobtype.HadoopJavaJob#getClassPaths()
+   */
   @Override
   protected List<String> getClassPaths() {
     return ImmutableList.<String>builder()
