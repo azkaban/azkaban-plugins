@@ -32,7 +32,7 @@ public class TeraDataWalletInitializer {
    * to delete the directory when JVM shuts down.
    * @param tdchJarFile TDCH jar file.
    */
-  public static void initialize(File cwd, File tdchJarFile) {
+  public static void initialize(File tmpDir, File tdchJarFile) {
     synchronized (TeraDataWalletInitializer.class) {
       if (tdchJarExtractedDir != null) {
         return;
@@ -46,7 +46,7 @@ public class TeraDataWalletInitializer {
       }
       try {
         //Extract TDCH jar.
-          File unJarDir = createUnjarDir(new File(cwd.getAbsolutePath() + File.separator + UNJAR_DIR_NAME));
+          File unJarDir = createUnjarDir(new File(tmpDir.getAbsolutePath() + File.separator + UNJAR_DIR_NAME));
           JarFile jar = new JarFile(tdchJarFile);
           Enumeration<JarEntry> enumEntries = jar.entries();
 
@@ -64,6 +64,7 @@ public class TeraDataWalletInitializer {
             close(os);
             close(is);
           }
+          jar.close();
           tdchJarExtractedDir = unJarDir;
       } catch (IOException e) {
         throw new RuntimeException("Failed while extracting TDCH jar file.", e);

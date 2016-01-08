@@ -37,7 +37,8 @@ public class TeradataToHdfsJob extends HadoopJavaJob {
     super(jobid, sysProps, jobProps, log);
     jobProps.put(TdchConstants.LIB_JARS_KEY, sysProps.get(TdchConstants.LIB_JARS_KEY));
     //Initialize TDWallet if it hasn't on current JVM.
-    TeraDataWalletInitializer.initialize(new File(getCwd()), new File(sysProps.get(TdchConstants.TD_WALLET_JAR)));
+    File tempDir = new File(sysProps.getString("azkaban.temp.dir", "temp"));
+    TeraDataWalletInitializer.initialize(tempDir, new File(sysProps.get(TdchConstants.TD_WALLET_JAR)));
   }
 
   @Override

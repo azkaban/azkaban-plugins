@@ -27,7 +27,6 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
-import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 import azkaban.jobExecutor.AbstractProcessJob;
 import azkaban.jobtype.*;
