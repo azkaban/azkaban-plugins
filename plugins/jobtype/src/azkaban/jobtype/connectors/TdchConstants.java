@@ -12,7 +12,10 @@ public interface TdchConstants {
   public static final String LIB_JARS_KEY = "libjars";
   public static final String TD_HOSTNAME_KEY = "td.hostname";
   public static final String TD_USERID_KEY = "td.userid";
+  public static final String TD_CREDENTIAL_NAME = "td.credentialName";
   public static final String AVRO_SCHEMA_PATH_KEY = "avro.schema.path";
+  public static final String AVRO_SCHEMA_INLINE_KEY = "avro.schema.inline";
+
   public static final String TD_INSERT_METHOD_KEY = "tdch.insert.method";
   public static final String SOURCE_HDFS_PATH_KEY = "source.hdfs.path";
   public static final String TARGET_TD_TABLE_NAME_KEY = "target.td.tablename";

@@ -27,7 +27,6 @@ import org.apache.log4j.Logger;
 import azkaban.jobExecutor.AbstractProcessJob;
 import azkaban.jobtype.*;
 import azkaban.jobtype.javautils.JobUtils;
-import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 
 import com.teradata.hadoop.tool.TeradataExportTool;
@@ -58,8 +57,9 @@ public class HdfsToTeradataJobRunnerMain {
                             .fieldSeparator(_jobProps.getProperty(TdchConstants.HDFS_FIELD_SEPARATOR_KEY))
                             .jobType(TdchConstants.TDCH_JOB_TYPE)
                             .userName(props.getString(TdchConstants.TD_USERID_KEY))
-                            .tdPassword(String.format(TdchConstants.TD_WALLET_FORMAT, props.getString(TdchConstants.TD_USERID_KEY)))
+                            .credentialName(String.format(TdchConstants.TD_WALLET_FORMAT, props.getString(TdchConstants.TD_CREDENTIAL_NAME)))
                             .avroSchemaPath(_jobProps.getProperty(TdchConstants.AVRO_SCHEMA_PATH_KEY))
+                            .avroSchemaInline(_jobProps.getProperty(TdchConstants.AVRO_SCHEMA_INLINE_KEY))
                             .sourceHdfsPath(props.getString(TdchConstants.SOURCE_HDFS_PATH_KEY))
                             .targetTdTableName(props.getString(TdchConstants.TARGET_TD_TABLE_NAME_KEY))
                             .tdInsertMethod(_jobProps.getProperty(TdchConstants.TD_INSERT_METHOD_KEY))
