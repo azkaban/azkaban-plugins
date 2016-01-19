@@ -365,13 +365,6 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
     page.add("path", path.toString());
     page.add("homedir", getHomeDir(fs));
 
-    // disable fs rendering as default.
-    // value will be flipped to false in case everything went out smoothly.
-    // Note : we are capturing the generic exception as we want to render the
-    // error gracefully to user in
-    // any cases error happens.
-    page.add("no_fs", "true");
-
     try {
       boolean hasSchema = false;
       int viewerId = -1;
@@ -387,15 +380,14 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
           break;
         }
       }
-
       page.add("viewerId", viewerId);
       page.add("hasSchema", hasSchema);
-      page.add("no_fs", "false");
 
       FileStatus status = fs.getFileStatus(path);
       page.add("status", status);
 
     } catch (Exception ex) {
+      page.add("no_fs", "true");
       page.add("error_message", "Error: " + ex.getMessage());
     }
     page.render();
