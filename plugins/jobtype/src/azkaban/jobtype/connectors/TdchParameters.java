@@ -28,8 +28,9 @@ public class TdchParameters {
   private final Optional<String> _fieldSeparator;
   private final String _jobType;
   private final String _userName;
-  private final String _tdPassword;
+  private final String _credentialName;
   private final Optional<String> _avroSchemaPath;
+  private final Optional<String> _avroSchemaInline;
   private final String _numMappers;
 
   private final TdchType _tdchType;
@@ -59,14 +60,17 @@ public class TdchParameters {
 
     this._jobType = builder._jobType;
     this._userName = builder._userName;
-    this._tdPassword = builder._tdPassword;
+    this._credentialName = builder._credentialName;
+
     this._avroSchemaPath = Optional.fromNullable(builder._avroSchemaPath);
+    this._avroSchemaInline = Optional.fromNullable(builder._avroSchemaInline);
+
     this._numMappers = Integer.toString(builder._numMappers);
     this._tdchType = builder._tdchType;
 
     this._sourceHdfsPath = builder._sourceHdfsPath;
     this._targetTdTableName = builder._targetTdTableName;
-    this._tdInsertMethod = Optional.fromNullable(builder._tdInsertMethod);
+    this._tdInsertMethod = Optional.fromNullable(builder._tdInsertMethod);  //Default by TDCH is batch.insert
 
     this._sourceQuery = Optional.fromNullable(builder._sourceQuery);
     this._sourceTdTableName = Optional.fromNullable(builder._sourceTdTableName);
@@ -90,8 +94,9 @@ public class TdchParameters {
     private String _fieldSeparator;
     private String _jobType;
     private String _userName;
-    private String _tdPassword;
+    private String _credentialName;
     private String _avroSchemaPath;
+    private String _avroSchemaInline;
     private int _numMappers;
 
     private TdchType _tdchType;
@@ -156,13 +161,18 @@ public class TdchParameters {
       return this;
     }
 
-    public Builder tdPassword(String tdPassword) {
-      this._tdPassword = tdPassword;
+    public Builder credentialName(String credentialName) {
+      this._credentialName = credentialName;
       return this;
     }
 
     public Builder avroSchemaPath(String avroSchemaPath) {
       this._avroSchemaPath = avroSchemaPath;
+      return this;
+    }
+
+    public Builder avroSchemaInline(String avroSchemaInline) {
+      this._avroSchemaInline = avroSchemaInline;
       return this;
     }
 
@@ -208,9 +218,9 @@ public class TdchParameters {
 
     private void validate() {
       ValidationUtils.validateNotEmpty(_tdJdbcClassName, "tdJdbcClassName");
-      ValidationUtils.validateNotEmpty(_tdPassword, "tdPassword");
       ValidationUtils.validateNotEmpty(_jobType, "jobType");
       ValidationUtils.validateNotEmpty(_userName, "userName");
+      ValidationUtils.validateNotEmpty(_credentialName, "credentialName");
       ValidationUtils.validateNotEmpty(_tdHostName, "teradata host name");
 
       if(StringUtils.isEmpty(_fileFormat)) {
@@ -220,7 +230,16 @@ public class TdchParameters {
       }
 
       if(TdchConstants.AVRO_FILE_FORMAT.equals(_fileFormat)) {
-        ValidationUtils.validateNotEmpty(_avroSchemaPath, "avroSchemaPath");
+        //Validate the existence of avro schema, but confirm only one of them exist.
+        if(StringUtils.isEmpty(_avroSchemaPath) && StringUtils.isEmpty(_avroSchemaInline)) {
+          throw new IllegalArgumentException("Either " + TdchConstants.AVRO_SCHEMA_PATH_KEY + " or "
+                                             + TdchConstants.AVRO_SCHEMA_INLINE_KEY + " should be provided");
+        }
+
+        if(!StringUtils.isEmpty(_avroSchemaPath) && !StringUtils.isEmpty(_avroSchemaInline)) {
+          throw new IllegalArgumentException("Only one of " + TdchConstants.AVRO_SCHEMA_PATH_KEY + " and "
+                                             + TdchConstants.AVRO_SCHEMA_INLINE_KEY + " should be provided");
+        }
       }
 
       if(_numMappers <= 0) {
@@ -281,13 +300,18 @@ public class TdchParameters {
                .add("-username")
                .add(_userName)
                .add("-password")
-               .add(_tdPassword)
+               .add(_credentialName)
                .add("-nummappers")
                .add(_numMappers);
 
     if(_avroSchemaPath.isPresent()) {
       listBuilder.add("-avroschemafile")
                  .add(_avroSchemaPath.get());
+    }
+
+    if(_avroSchemaInline.isPresent()) {
+      listBuilder.add("-avroschema")
+                 .add(_avroSchemaInline.get());
     }
 
     if(_fieldSeparator.isPresent()) {
@@ -338,8 +362,8 @@ public class TdchParameters {
   }
 
   private String getMaskedPassword() {
-    StringBuilder maskedPassword = new StringBuilder(_tdPassword.length());
-    for (int i = 0; i < _tdPassword.length(); i++) {
+    StringBuilder maskedPassword = new StringBuilder(_credentialName.length());
+    for (int i = 0; i < _credentialName.length(); i++) {
       maskedPassword.append("*");
     }
     return maskedPassword.toString();
@@ -356,8 +380,9 @@ public class TdchParameters {
             .append(", _fieldSeparator=").append(_fieldSeparator)
             .append(", _jobType=").append(_jobType)
             .append(", _userName=").append(_userName)
-            .append(", _tdPassword=").append(getMaskedPassword())
+            .append(", _credentialName=").append(getMaskedPassword())
             .append(", _avroSchemaPath=").append(_avroSchemaPath)
+            .append(", _avroSchemaInline=").append(_avroSchemaInline)
             .append(", _numMappers=").append(_numMappers)
             .append(", _tdchType=").append(_tdchType)
             .append(", _sourceHdfsPath=").append(_sourceHdfsPath)
