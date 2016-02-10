@@ -143,6 +143,7 @@
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hive" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hdfsToTeradata" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/teradataToHdfs" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/gobblin" />
 
 		<!-- Copy hadoopsecuritymanager-->
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/java" />
@@ -155,6 +156,7 @@
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hdfsToTeradata" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/teradataToHdfs" />
+                <copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/gobblin" />
 
 		<!-- Copy hadoopsecuritymanager-yarn file -->
 		<copy file="${hadoopsecuritymanagerjar-yarn}" todir="${dist.packages.dir}" />

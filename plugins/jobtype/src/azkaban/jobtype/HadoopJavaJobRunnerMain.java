@@ -39,6 +39,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Layout;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
@@ -96,6 +97,7 @@ public class HadoopJavaJobRunnerMain {
       ConsoleAppender appender = new ConsoleAppender(DEFAULT_LAYOUT);
       appender.activateOptions();
       _logger.addAppender(appender);
+      _logger.setLevel(Level.INFO); //Explicitly setting level to INFO
 
       Properties props = new Properties();
       props.load(new BufferedReader(new FileReader(propsFile)));
