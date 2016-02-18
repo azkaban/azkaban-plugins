@@ -27,6 +27,15 @@ import com.google.common.collect.Maps;
 public enum GobblinPresets {
   MYSQL_TO_HDFS("mysqlToHdfs");
 
+  private static final Map<String, GobblinPresets> NAME_TO_PRESET;
+  static {
+    Map<String, GobblinPresets> tmp = Maps.newHashMap();
+    for (GobblinPresets preset : GobblinPresets.values()) {
+      tmp.put(preset.name, preset);
+    }
+    NAME_TO_PRESET = ImmutableMap.copyOf(tmp);
+  }
+
   private final String name;
 
   private GobblinPresets(String name) {
@@ -39,14 +48,5 @@ public enum GobblinPresets {
       throw new IllegalArgumentException(name + " is unrecognized. Known presets: " + NAME_TO_PRESET.keySet());
     }
     return preset;
-  }
-
-  private static final Map<String, GobblinPresets> NAME_TO_PRESET;
-  static {
-    Map<String, GobblinPresets> tmp = Maps.newHashMap();
-    for (GobblinPresets preset : GobblinPresets.values()) {
-      tmp.put(preset.name, preset);
-    }
-    NAME_TO_PRESET = ImmutableMap.copyOf(tmp);
   }
 }

@@ -39,6 +39,7 @@ import azkaban.utils.Props;
  */
 public class GobblinHadoopJob extends HadoopJavaJob {
   private static final String GOBBLIN_PRESET_COMMON_PROPERTIES_FILE_NAME = "common.properties";
+  private static final String GOBBLIN_QUERY_KEY = "source.querybased.query";
   private static Map<GobblinPresets, Properties> gobblinPresets;
 
   public GobblinHadoopJob(String jobid, Props sysProps, Props jobProps, Logger log) {
@@ -141,17 +142,27 @@ public class GobblinHadoopJob extends HadoopJavaJob {
   /**
    * Transform property to make it work for Gobblin.
    *
-   * e.g: Gobblin fails when there's semicolon in SQL query as it just appends " and 1=1;" into the query
-   * and makes the syntax incorrect. As having semicolon is a correct syntax, Azkaban will remove it for user
-   * to make it work with Gobblin.
+   * e.g: Gobblin fails when there's semicolon in SQL query as it just appends " and 1=1;" into the query,
+   * making the syntax incorrect and fails. As having semicolon is a correct syntax, instead of expecting user to remove it,
+   * Azkaban will remove it for user to make it work with Gobblin.
    */
   private void transformProperties() {
     //Gobblin does not accept the SQL query ends with semi-colon
-    String query = jobProps.getString("source.querybased.query", null);
+    String query = jobProps.getString(GOBBLIN_QUERY_KEY, null);
+    if(query == null) {
+      return;
+    }
+
+    query = query.trim();
     int idx = -1;
-    if (query != null && (idx = query.indexOf(';')) >= 0) {
+    if ((idx = query.indexOf(';')) >= 0) {
+      if(idx < query.length() - 1) {
+        //Query string has been already trimmed and if index is not end of the query String,
+        //it means there's more than one statement.
+        throw new IllegalArgumentException(GOBBLIN_QUERY_KEY + " should consist of one SELECT statement. " + query);
+      }
       query = query.substring(0, idx);
-      jobProps.put("source.querybased.query", query);
+      jobProps.put(GOBBLIN_QUERY_KEY, query);
     }
   }
 
