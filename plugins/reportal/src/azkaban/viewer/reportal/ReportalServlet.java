@@ -834,7 +834,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
       if (report.accessOwner == null || report.accessOwner.isEmpty()) {
         report.accessOwner = user.getUserId();
       } else {
-        String[] splittedOwners = report.accessOwner.split(Reportal.ACCESS_LIST_SPLIT_REGEX);
+        String[] splittedOwners = report.accessOwner.toLowerCase().split(Reportal.ACCESS_LIST_SPLIT_REGEX);
         if (!Arrays.asList(splittedOwners).contains(user.getUserId())) {
           report.accessOwner = String.format("%s,%s", user.getUserId(),
                   StringUtils.join(splittedOwners, ','));
