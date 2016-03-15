@@ -154,7 +154,7 @@ $(document).ready(function () {
           reportalsCopy[i].shown = false;
         }
       }
-      else if(inputOwner.checked && reportalsCopy[i].user.toLowerCase().indexOf(inputOwnerText.val().toLowerCase()) != 0) {
+      else if(inputOwner.checked && reportalsCopy[i].user.toLowerCase().indexOf(inputOwnerText.val().toLowerCase()) == -1) {
         reportalsCopy[i].shown = false;
       }
     };
