@@ -830,15 +830,16 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("accessExecutor", report.accessExecutor);
     
     // Adding report creator as explicit owner, if not present already
-    if (!isEdit) {
-      if (report.accessOwner == null || report.accessOwner.isEmpty()) {
-        report.accessOwner = user.getUserId();
+    if (report.accessOwner == null || report.accessOwner.isEmpty()) {
+      report.accessOwner = user.getUserId();
+    } else {
+      String[] splittedOwners = report.accessOwner.toLowerCase()
+              .split(Reportal.ACCESS_LIST_SPLIT_REGEX);
+      if (!Arrays.asList(splittedOwners).contains(user.getUserId())) {
+        report.accessOwner = String.format("%s,%s", user.getUserId(),
+                StringUtils.join(splittedOwners, ','));
       } else {
-        String[] splittedOwners = report.accessOwner.toLowerCase().split(Reportal.ACCESS_LIST_SPLIT_REGEX);
-        if (!Arrays.asList(splittedOwners).contains(user.getUserId())) {
-          report.accessOwner = String.format("%s,%s", user.getUserId(),
-                  StringUtils.join(splittedOwners, ','));
-        }
+        report.accessOwner = StringUtils.join(splittedOwners, ',');
       }
     }
     
