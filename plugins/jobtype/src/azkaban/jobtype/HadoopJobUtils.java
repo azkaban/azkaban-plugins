@@ -74,7 +74,7 @@ public class HadoopJobUtils {
 
   // the regex to look for while looking for application id's in the hadoop log
   public static final Pattern APPLICATION_ID_PATTERN = Pattern
-          .compile(".* (application_\\d+_\\d+).*");
+          .compile("^(application_\\d+_\\d+).*");
 
   // Azkaban built in property name
   public static final String JOBTYPE_GLOBAL_JVM_ARGS = "jobtype.global.jvm.args";
@@ -414,14 +414,19 @@ public class HadoopJobUtils {
 
     try {
       br = new BufferedReader(new FileReader(logFile));
-      String input;
+      String line;
 
       // finds all the application IDs
-      while ((input = br.readLine()) != null) {
-        Matcher m = APPLICATION_ID_PATTERN.matcher(input);
-        if (m.find()) {
-          String appId = m.group(1);
-          applicationIds.add(appId);
+      while ((line = br.readLine()) != null) {
+        String [] inputs = line.split("\\s");
+        if (inputs != null) {
+          for (String input : inputs) {
+            Matcher m = APPLICATION_ID_PATTERN.matcher(input);
+            if (m.find()) {
+              String appId = m.group(1);
+              applicationIds.add(appId);
+            }
+          }
         }
       }
     } catch (IOException e) {
