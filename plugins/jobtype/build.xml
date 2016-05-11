@@ -36,7 +36,7 @@
 
 		<pathelement path="${dist.classes.dir}" />
 	</path>
-	
+
 	<!-- set the build number based on environment variable, otherwise blank -->
 	<property environment="env" description="System environment variables (including those set by Hudson)" />
 
@@ -73,7 +73,7 @@
 				<exclude name="**/*.java" />
 			</fileset>
 		</copy-->
-		
+
 		<javac fork="true" destdir="${dist.classes.dir}"
 			target="1.8" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
@@ -85,7 +85,7 @@
 
 
         <delete dir="${dist.classes.test.dir}" />
-        <mkdir dir="${dist.classes.test.dir}" /> 
+        <mkdir dir="${dist.classes.test.dir}" />
         <javac fork="true" destdir="${dist.classes.test.dir}"
             target="1.8" debug="true" deprecation="false" failonerror="true">
             <src path="${java.src.test.dir}" />
@@ -99,7 +99,7 @@
             <classpath>
                 <path refid="main.classpath" />
                 <pathelement path="${dist.classes.dir}" />
-                <pathelement path="${dist.classes.test.dir}" /> 
+                <pathelement path="${dist.classes.test.dir}" />
             </classpath>
 
             <batchtest fork="yes">
@@ -108,7 +108,7 @@
         </junit>
         <fail message="Test failure detected, check test results." if="test.failed" />
     </target>
-	
+
 	<target name="jars" depends="junit" description="Compile main source tree java files">
 
 		<mkdir dir="${dist.jar.dir}" />
@@ -131,7 +131,7 @@
 
 		<!-- Copy build version file -->
 		<copy file="${version.file}" todir="${dist.packages.dir}" />
-		
+
 		<!-- Copy jobtype jar-->
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/java" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hadoopJava" />
@@ -141,6 +141,9 @@
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.11.0" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/pig-0.12.0" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hive" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hdfsToTeradata" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/teradataToHdfs" />
+		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/gobblin" />
 
 		<!-- Copy hadoopsecuritymanager-->
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/java" />
@@ -151,10 +154,13 @@
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.11.0" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/pig-0.12.0" />
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hive" />
-		
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/hdfsToTeradata" />
+		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/teradataToHdfs" />
+                <copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/gobblin" />
+
 		<!-- Copy hadoopsecuritymanager-yarn file -->
 		<copy file="${hadoopsecuritymanagerjar-yarn}" todir="${dist.packages.dir}" />
-		
+
 		<!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
 			<tarfileset dir="${dist.packages.dir}" prefix="${name}-${version}" filemode="755" />

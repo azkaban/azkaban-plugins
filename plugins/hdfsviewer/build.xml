@@ -4,6 +4,7 @@
 	<property file="build.properties" />
 	<property name="base.dir" value="${basedir}/../.." />
 	<property name="dist.dir" value="${base.dir}/dist/hdfsviewer" />
+	<property name="dist.log.dir" value="${dist.dir}/log" />
 	<property name="dist.conf.dir" value="${dist.dir}/conf" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.tests.dir" value="${dist.dir}/tests" />
@@ -73,6 +74,9 @@
 		<delete dir="${dist.classes.dir}" />
 		<mkdir dir="${dist.classes.dir}" />
 
+		<delete dir="${dist.log.dir}" />
+		<mkdir dir="${dist.log.dir}" />
+
 		<!-- copy non-java files to classes dir to load from classpath -->
 		<copy todir="${dist.classes.dir}">
 			<fileset dir="${java.src.dir}">
@@ -92,7 +96,7 @@
 	<target name="test" depends="build" description="Run junit tests">
 		<delete dir="${dist.tests.dir}" />
 		<mkdir dir="${dist.tests.dir}" />
-
+		
 		<copy todir="${dist.tests.dir}">
 			<fileset dir="${java.unit.dir}">
 				<exclude name="**/*.java" />
@@ -105,7 +109,8 @@
 			<classpath refid="main.classpath" />
 		</javac>
 
-		<junit printsummary="yes" haltonfailure="yes">
+		<junit printsummary="yes" haltonfailure="yes" fork="yes">
+			<jvmarg value="-Dlog4j.log.dir=${dist.log.dir}"/>
 			<classpath refid="main.classpath" />			<batchtest>				<fileset dir="${dist.tests.dir}">					<include name="**/*Test*" />				</fileset>			</batchtest>			<formatter type="brief" usefile="false"/>		</junit>
 	</target>
 

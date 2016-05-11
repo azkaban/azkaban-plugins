@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.apache.velocity.tools.generic.EscapeTool;
@@ -810,6 +811,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
         getParam(req, "schedule-interval-quantity");
     report.scheduleInterval = getParam(req, "schedule-interval");
     report.renderResultsAsHtml = hasParam(req, "render-results-as-html");
+    
     page.add("schedule", report.schedule);
     page.add("scheduleHour", report.scheduleHour);
     page.add("scheduleMinute", report.scheduleMinute);
@@ -826,6 +828,21 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     report.accessOwner = getParam(req, "access-owner");
     page.add("accessViewer", report.accessViewer);
     page.add("accessExecutor", report.accessExecutor);
+    
+    // Adding report creator as explicit owner, if not present already
+    if (report.accessOwner == null || report.accessOwner.isEmpty()) {
+      report.accessOwner = user.getUserId();
+    } else {
+      String[] splittedOwners = report.accessOwner.toLowerCase()
+              .split(Reportal.ACCESS_LIST_SPLIT_REGEX);
+      if (!Arrays.asList(splittedOwners).contains(user.getUserId())) {
+        report.accessOwner = String.format("%s,%s", user.getUserId(),
+                StringUtils.join(splittedOwners, ','));
+      } else {
+        report.accessOwner = StringUtils.join(splittedOwners, ',');
+      }
+    }
+    
     page.add("accessOwner", report.accessOwner);
 
     report.notifications = getParam(req, "notifications");
@@ -838,7 +855,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     List<Query> queryList = new ArrayList<Query>(numQueries);
     page.add("queries", queryList);
     report.queries = queryList;
-
+    
     List<String> errors = new ArrayList<String>();
     for (int i = 0; i < numQueries; i++) {
       Query query = new Query();

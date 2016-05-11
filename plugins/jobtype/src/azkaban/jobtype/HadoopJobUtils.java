@@ -25,7 +25,10 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.PrivilegedExceptionAction;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -63,12 +66,15 @@ import azkaban.utils.Props;
  */
 
 public class HadoopJobUtils {
+  public static String MATCH_ALL_REGEX = ".*";
 
+  public static String MATCH_NONE_REGEX = ".^";
+  
   public static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM = "hadoop.security.manager.class";
 
   // the regex to look for while looking for application id's in the hadoop log
   public static final Pattern APPLICATION_ID_PATTERN = Pattern
-          .compile(".* (application_\\d+_\\d+).*");
+          .compile("^(application_\\d+_\\d+).*");
 
   // Azkaban built in property name
   public static final String JOBTYPE_GLOBAL_JVM_ARGS = "jobtype.global.jvm.args";
@@ -408,14 +414,19 @@ public class HadoopJobUtils {
 
     try {
       br = new BufferedReader(new FileReader(logFile));
-      String input;
+      String line;
 
       // finds all the application IDs
-      while ((input = br.readLine()) != null) {
-        Matcher m = APPLICATION_ID_PATTERN.matcher(input);
-        if (m.find()) {
-          String appId = m.group(1);
-          applicationIds.add(appId);
+      while ((line = br.readLine()) != null) {
+        String [] inputs = line.split("\\s");
+        if (inputs != null) {
+          for (String input : inputs) {
+            Matcher m = APPLICATION_ID_PATTERN.matcher(input);
+            if (m.find()) {
+              String appId = m.group(1);
+              applicationIds.add(appId);
+            }
+          }
         }
       }
     } catch (IOException e) {
@@ -481,6 +492,36 @@ public class HadoopJobUtils {
     return String.format("-D%s=%s", key, value);
   }
   
+  /**
+   * Filter a collection of String commands to match a whitelist regex and not match a blacklist
+   * regex.
+   * 
+   * @param commands
+   *          Collection of commands to be filtered
+   * @param whitelistRegex
+   *          whitelist regex to work as inclusion criteria
+   * @param blacklistRegex
+   *          blacklist regex to work as exclusion criteria
+   * @param log
+   *          logger to report violation
+   * @return filtered list of matching. Empty list if no command match all the criteria.
+   */
+  public static List<String> filterCommands(Collection<String> commands, String whitelistRegex,
+          String blacklistRegex, Logger log) {
+    List<String> filteredCommands = new LinkedList<String>();
+    Pattern whitelistPattern = Pattern.compile(whitelistRegex);
+    Pattern blacklistPattern = Pattern.compile(blacklistRegex);
+    for (String command : commands) {
+      if (whitelistPattern.matcher(command).matches()
+              && !blacklistPattern.matcher(command).matches()) {
+        filteredCommands.add(command);
+      } else {
+        log.warn(String.format("Removing restricted command: %s", command));
+      }
+    }
+    return filteredCommands;
+  }
+
   /**
    * <pre>
    * constructions a javaOpts string based on the Props, and the key given, will return 

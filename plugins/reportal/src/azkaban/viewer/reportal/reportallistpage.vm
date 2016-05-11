@@ -39,7 +39,7 @@
             "title" : "$title",
             "time" : $project.createTimestamp,
             "timeText" : "$utils.formatDateTime($project.createTimestamp)",
-            "user" : "$project.getMetadata().get("reportal-user")",
+            "user" : "$project.getMetadata().get("accessOwner")",
             "scheduled" : $ReportalHelper.isScheduledProject($project),
             "scheduledRepeating" : $ReportalHelper.isScheduledRepeatingProject($project),
             "bookmark" : $ReportalHelper.isBookmarkProject($project, $user),

@@ -2,6 +2,9 @@ package azkaban.jobtype;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
@@ -49,7 +52,7 @@ public class TestHadoopJobUtilsExecutionJar {
 
     Assert.assertEquals(retval, "");
   }
-  
+
   // nothing should happen
   @Test
   public void testLibFolderHasNothingInIt() throws IOException {
@@ -64,10 +67,17 @@ public class TestHadoopJobUtilsExecutionJar {
   @Test
   public void testOneLibFolderExpansion() throws IOException {
     String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*", logger);
+    Set<String> retvalSet = new HashSet<String>(Arrays.asList(retval.split(",")));
 
-    Assert.assertEquals(
-            retval,
-            "/tmp/TestHadoopSpark/./lib/library.jar,/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
+    Set<String> expected = new HashSet<String>();
+    expected.add("/tmp/TestHadoopSpark/./lib/library.jar");
+    expected.add("/tmp/TestHadoopSpark/./lib/hadoop-spark-job-test-execution-x.y.z-a.b.c.jar");
+
+    Assert.assertTrue("Expected size is different from retrieval size. Expected: " + expected + " , Actual: " + retvalSet,
+                      expected.size() == retvalSet.size());
+    expected.removeAll(retvalSet);
+    Assert.assertTrue("Expected values are not equal to Actual values. Expected: " + expected + " , Actual: " + retvalSet,
+                      expected.isEmpty() );
   }
 
   @Test
@@ -86,17 +96,17 @@ public class TestHadoopJobUtilsExecutionJar {
     Assert.assertTrue(retval.contains("/tmp/TestHadoopSpark/./lib2/test1.jar"));
     Assert.assertTrue(retval.contains("/tmp/TestHadoopSpark/./lib2/test2.jar"));
   }
-    
+
     @Test
     public void testTwoLibFolderExpansionExpandsInOrder() throws IOException {
-      
+
       executionJarFile.delete();
-      
+
       File lib2FolderFile = new File(workingDirFile, "lib2");
       lib2FolderFile.mkdirs();
       File lib2test1Jar = new File(lib2FolderFile, "test1.jar");
-      lib2test1Jar.createNewFile();   
-      
+      lib2test1Jar.createNewFile();
+
       String retval = HadoopJobUtils.resolveWildCardForJarSpec(workingDirString, "./lib/*,./lib2/*",
               logger);
 
