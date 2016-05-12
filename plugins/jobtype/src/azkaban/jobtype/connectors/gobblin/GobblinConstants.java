@@ -23,4 +23,6 @@ public interface GobblinConstants {
   public static final String GOBBLIN_PRESET_KEY = "gobblin.config_preset"; //Name of Gobblin preset
   public static final String GOBBLIN_WORK_DIRECTORY_KEY = "gobblin.work_dir"; //Gobblin needs working directory. This will be a HDFS directory.
   public static final String GOBBLIN_PROPERTIES_HELPER_ENABLED_KEY = "gobblin.properties_helper_enabled"; //Validates Gobblin job properties if enabled.
+  public static final String GOBBLIN_HDFS_JOB_JARS_KEY = "job.hdfs.jars";
+  public static final String GOBBLIN_JOB_JARS_KEY = "job.jars";
 }
