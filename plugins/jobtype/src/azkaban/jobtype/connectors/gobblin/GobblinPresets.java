@@ -25,7 +25,8 @@ import com.google.common.collect.Maps;
  * Using GobblinPresets, user can reduce number of input parameters which consequently increase usability.
  */
 public enum GobblinPresets {
-  MYSQL_TO_HDFS("mysqlToHdfs");
+  MYSQL_TO_HDFS("mysqlToHdfs"),
+  HDFS_TO_MYSQL("hdfsToMysql");
 
   private static final Map<String, GobblinPresets> NAME_TO_PRESET;
   static {

@@ -22,13 +22,12 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-
 import org.apache.log4j.Logger;
 
 import com.google.common.collect.Maps;
-
 import azkaban.flow.CommonJobProperties;
 import azkaban.jobtype.HadoopJavaJob;
+import azkaban.jobtype.connectors.gobblin.helper.HdfsToMySqlValidator;
 import azkaban.jobtype.connectors.gobblin.helper.IPropertiesValidator;
 import azkaban.jobtype.connectors.gobblin.helper.MySqlToHdfsValidator;
 import azkaban.utils.Props;
@@ -42,6 +41,7 @@ public class GobblinHadoopJob extends HadoopJavaJob {
   private static final String GOBBLIN_QUERY_KEY = "source.querybased.query";
   private static Map<GobblinPresets, Properties> gobblinPresets;
 
+
   public GobblinHadoopJob(String jobid, Props sysProps, Props jobProps, Logger log) {
     super(jobid, sysProps, jobProps, log);
     initializePresets();
@@ -49,11 +49,18 @@ public class GobblinHadoopJob extends HadoopJavaJob {
     jobProps.put(HadoopJavaJob.JOB_CLASS, "gobblin.azkaban.AzkabanJobLauncher");
     jobProps.put("job.name", jobProps.get(CommonJobProperties.JOB_ID));
     jobProps.put("launcher.type", "MAPREDUCE"); //Azkaban only supports MR mode
-    jobProps.put("job.jars", sysProps.get("jobtype.classpath")); //This will be utilized by Gobblin and put jars into distributed cache
     jobProps.put("fs.uri", sysProps.get("fs.uri")); //Azkaban should only support HDFS
+
+    //If gobblin jars are in HDFS pass HDFS path to Gobblin, otherwise pass local file system path.
+    if (sysProps.containsKey(GobblinConstants.GOBBLIN_HDFS_JOB_JARS_KEY)) {
+      jobProps.put(GobblinConstants.GOBBLIN_HDFS_JOB_JARS_KEY, sysProps.getString(GobblinConstants.GOBBLIN_HDFS_JOB_JARS_KEY));
+    } else {
+      jobProps.put(GobblinConstants.GOBBLIN_JOB_JARS_KEY, sysProps.get("jobtype.classpath"));
+    }
 
     loadPreset();
     transformProperties();
+    getLog().info("Job properties for Gobblin: " + jobProps);
   }
 
   /**
@@ -124,7 +131,7 @@ public class GobblinHadoopJob extends HadoopJavaJob {
     Map<String, String> skipped = Maps.newHashMap();
     for (String key : presetProperties.stringPropertyNames()) {
       if (jobProps.containsKey(key)) {
-        skipped.put(key, jobProps.get(key));
+        skipped.put(key, presetProperties.getProperty(key));
         continue;
       }
       jobProps.put(key, presetProperties.getProperty(key));
@@ -177,6 +184,8 @@ public class GobblinHadoopJob extends HadoopJavaJob {
     switch (preset) {
       case MYSQL_TO_HDFS:
         return new MySqlToHdfsValidator();
+      case HDFS_TO_MYSQL:
+        return new HdfsToMySqlValidator();
       default:
         throw new UnsupportedOperationException("Preset " + preset + " is not supported");
     }
