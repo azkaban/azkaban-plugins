@@ -47,6 +47,16 @@ public abstract class HadoopSecurityManager {
   }
 
   /**
+   * Function to let let the SecurityManager update jobProps. Default
+   * implementation will not modify the jobProps, overwrite if needed.
+   * */
+  public void updateJobProps(Props jobProps, Props sysProps, Logger logger) {
+    logger
+        .info("updateJobProps: the HadoopSecurityManager doesn't have an overwrite of updateJobProps"
+            + " therefore jobProps are left untouched.");
+  }
+
+  /**
    * Create a proxied user based on the explicit user name, taking other
    * parameters necessary from properties file.
    */
