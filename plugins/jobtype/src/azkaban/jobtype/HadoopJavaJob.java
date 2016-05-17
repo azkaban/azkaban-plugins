@@ -31,7 +31,6 @@ import org.apache.log4j.Logger;
 import azkaban.flow.CommonJobProperties;
 import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.security.commons.HadoopSecurityManager;
-import azkaban.jobtype.hiveutils.*;
 import azkaban.utils.Props;
 
 public class HadoopJavaJob extends JavaProcessJob {

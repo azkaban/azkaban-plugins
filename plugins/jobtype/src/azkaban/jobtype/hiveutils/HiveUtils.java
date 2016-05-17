@@ -27,8 +27,8 @@ import org.apache.log4j.Logger;
  * instances of the provided interfaces from these methods.
  */
 public class HiveUtils {
-  private final static Logger LOG = Logger
-      .getLogger("com.linkedin.hive.HiveUtils");
+  private final static Logger LOG =
+      Logger.getLogger("com.linkedin.hive.HiveUtils");
 
   private HiveUtils() {
   }
