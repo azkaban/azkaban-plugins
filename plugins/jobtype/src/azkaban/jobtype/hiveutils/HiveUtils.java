@@ -18,23 +18,17 @@ package azkaban.jobtype.hiveutils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.hadoop.hive.cli.CliDriver;
 import org.apache.log4j.Logger;
-
-import azkaban.utils.Props;
-
 
 /**
  * Grab bag of utilities for working with Hive. End users should obtain
  * instances of the provided interfaces from these methods.
  */
 public class HiveUtils {
-  private final static Logger LOG = Logger.getLogger("com.linkedin.hive.HiveUtils");
+  private final static Logger LOG = Logger
+      .getLogger("com.linkedin.hive.HiveUtils");
 
   private HiveUtils() {
   }
@@ -42,7 +36,8 @@ public class HiveUtils {
   public static HiveQueryExecutor getHiveQueryExecutor() {
     HiveQueryExecutorModule hqem = new HiveQueryExecutorModule();
     try {
-      return new RealHiveQueryExecutor(hqem.provideHiveConf(), hqem.provideCliSessionState(), new CliDriver());
+      return new RealHiveQueryExecutor(hqem.provideHiveConf(),
+          hqem.provideCliSessionState(), new CliDriver());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
