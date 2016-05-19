@@ -619,10 +619,6 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
     logger.info(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname + ": "
         + hiveConf.get(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname));
 
-    logger
-        .info("Token signature Overwrite: " + tokenSignatureOverwrite == null ? ""
-            : tokenSignatureOverwrite);
-
     HiveMetaStoreClient hiveClient = new HiveMetaStoreClient(hiveConf);
     String hcatTokenStr =
         hiveClient.getDelegationToken(userToProxy, UserGroupInformation
@@ -637,6 +633,9 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
         && tokenSignatureOverwrite.trim().length() > 0) {
       hcatToken.setService(new Text(tokenSignatureOverwrite.trim()
           .toLowerCase()));
+
+      logger.info(HIVE_TOKEN_SIGNATURE_KEY + ":"
+          + (tokenSignatureOverwrite == null ? "" : tokenSignatureOverwrite));
     }
 
     logger.info("Created hive metastore token: " + hcatTokenStr);
@@ -734,16 +733,13 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
             // goes thru.
             String thriftUrl = extraHcatMapping.get(normalizedHcatLocStr);
             if (thriftUrl == null) {
-              // extract all the support values.
-              String supportedHcatLocAliases =
-                  extraHcatMapping.keySet().toString();
               // short cut if the alias user specified is not found.
               throw new HadoopSecurityManagerException(
                   "failed to lookup hcat location for '"
                       + normalizedHcatLocStr
                       + "', the alias is not found in the system supported mapping list."
                       + "All the supported aliases are :"
-                      + supportedHcatLocAliases);
+                      + extraHcatMapping.keySet().toString());
             }
 
             // we are in the game, go and fetch the token for user.
