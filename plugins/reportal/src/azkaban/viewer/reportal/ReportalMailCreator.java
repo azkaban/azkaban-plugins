@@ -58,6 +58,7 @@ public class ReportalMailCreator implements MailCreator {
   public static File reportalMailTempDirectory;
   public static final String REPORTAL_MAIL_CREATOR = "ReportalMailCreator";
   public static final int NUM_PREVIEW_ROWS = 50;
+  public static final long MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024L;
 
   static {
     DefaultMailCreator.registerCreator(REPORTAL_MAIL_CREATOR,
@@ -197,6 +198,7 @@ public class ReportalMailCreator implements MailCreator {
       message.println("</table>");
     }
 
+    long totalFileSize = 0;
     if (printData) {
       String locationFull =
           (outputLocation + "/" + flow.getExecutionId()).replace("//", "/");
@@ -325,7 +327,15 @@ public class ReportalMailCreator implements MailCreator {
         } finally {
           IOUtils.closeQuietly(csvInputStream);
         }
-        message.addAttachment(file, tempOutputFile);
+        totalFileSize += tempOutputFile.length();
+      }
+
+      if (totalFileSize < MAX_ATTACHMENT_SIZE) {
+        for (i = 0; i < fileList.length; i++) {
+            String file = fileList[i];
+            File tempOutputFile = new File(tempFolder, file);
+            message.addAttachment(file, tempOutputFile);
+        }
       }
 
       // Don't send an email if there are no results, unless this is an
@@ -339,7 +349,12 @@ public class ReportalMailCreator implements MailCreator {
       }
     }
 
-    message.println("</div>").println("</body>").println("</html>");
+    message.println("</div>");
+    if (totalFileSize >= MAX_ATTACHMENT_SIZE){
+      message.println("<tr>Note: Output size >= " + MAX_ATTACHMENT_SIZE/1024/1024 + "MB, " +
+                  "thus not attached in this message. Please use the link on top to download your reports</tr>");
+    }
+    message.println("</body>").println("</html>");
 
     return true;
   }
