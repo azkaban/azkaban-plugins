@@ -353,7 +353,7 @@ public class ReportalMailCreator implements MailCreator {
     message.println("</div>");
     if (totalFileSize >= MAX_ATTACHMENT_SIZE){
       message.println("<tr>Note: Output size >= " + MAX_ATTACHMENT_SIZE/1024/1024 + "MB, " +
-                  "thus not attached in this message. Please use the link on top to download your reports' output</tr>");
+                  "thus not attached in this message. Please use the link on top to download your report's output</tr>");
     }
     message.println("</body>").println("</html>");
 
