@@ -58,6 +58,7 @@ public class ReportalMailCreator implements MailCreator {
   public static File reportalMailTempDirectory;
   public static final String REPORTAL_MAIL_CREATOR = "ReportalMailCreator";
   public static final int NUM_PREVIEW_ROWS = 50;
+  //Attachment that equal or larger than 10MB will be skipped in the email
   public static final long MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024L;
 
   static {
@@ -352,7 +353,7 @@ public class ReportalMailCreator implements MailCreator {
     message.println("</div>");
     if (totalFileSize >= MAX_ATTACHMENT_SIZE){
       message.println("<tr>Note: Output size >= " + MAX_ATTACHMENT_SIZE/1024/1024 + "MB, " +
-                  "thus not attached in this message. Please use the link on top to download your reports</tr>");
+                  "thus not attached in this message. Please use the link on top to download your reports' output</tr>");
     }
     message.println("</body>").println("</html>");
 
