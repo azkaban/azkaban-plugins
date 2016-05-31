@@ -26,7 +26,10 @@ import java.net.URLClassLoader;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -36,6 +39,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.mapred.JobClient;
@@ -61,6 +65,7 @@ import org.apache.hadoop.yarn.ipc.YarnRPC;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
 import org.apache.log4j.Logger;
+import org.apache.thrift.TException;
 
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.security.commons.HadoopSecurityManagerException;
@@ -84,6 +89,21 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
   public static final String HADOOP_YARN_RM = "yarn.resourcemanager.address";
 
   private static final String OTHER_NAMENODES_TO_GET_TOKEN = "other_namenodes";
+
+  /**
+   * the settings to be defined by user indicating if there are hcat locations
+   * other than the default one the system should pre-fetch hcat token from.
+   * Note: Multiple thrift uris are supported, use comma to separate the values,
+   * values are case insensitive.
+   * */
+  private static final String EXTRA_HCAT_LOCATION = "other_hcat_location";
+
+  /**
+   * the key that will be used to set proper signature for each of the hcat
+   * token when multiple hcat tokens are required to be fetched.
+   * */
+  public static final String HIVE_TOKEN_SIGNATURE_KEY =
+      "hive.metastore.token.signature";
 
   public static final Text DEFAULT_RENEWER = new Text("azkaban mr tokens");
 
@@ -215,7 +235,7 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
   /**
    * Create a proxied user based on the explicit user name, taking other
    * parameters necessary from properties file.
-   * 
+   *
    * @throws IOException
    */
   @Override
@@ -531,6 +551,61 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 
   }
 
+  /**
+   * function to fetch hcat token as per the specified hive configuration and
+   * then store the token in to the credential store specified .
+   *
+   * @param userToProxy String value indicating the name of the user the token
+   *          will be fetched for.
+   * @param hiveConf the configuration based off which the hive client will be
+   *          initialized.
+   * @param logger the logger instance which writes the logging content to the
+   *          job logs.
+   *
+   * @throws IOException
+   * @throws TException
+   * @throws MetaException
+   *
+   * */
+  private Token<DelegationTokenIdentifier> fetchHcatToken(String userToProxy,
+      HiveConf hiveConf, String tokenSignatureOverwrite, final Logger logger)
+      throws IOException, MetaException, TException {
+
+    logger.info(HiveConf.ConfVars.METASTOREURIS.varname + ": "
+        + hiveConf.get(HiveConf.ConfVars.METASTOREURIS.varname));
+
+    logger.info(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname + ": "
+        + hiveConf.get(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname));
+
+    logger.info(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname + ": "
+        + hiveConf.get(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname));
+
+    HiveMetaStoreClient hiveClient = new HiveMetaStoreClient(hiveConf);
+    String hcatTokenStr =
+        hiveClient.getDelegationToken(userToProxy, UserGroupInformation
+            .getLoginUser().getShortUserName());
+    Token<DelegationTokenIdentifier> hcatToken =
+        new Token<DelegationTokenIdentifier>();
+    hcatToken.decodeFromUrlString(hcatTokenStr);
+
+    // overwrite the value of the service property of the token if the signature
+    // override is specified.
+    if (tokenSignatureOverwrite != null
+        && tokenSignatureOverwrite.trim().length() > 0) {
+      hcatToken.setService(new Text(tokenSignatureOverwrite.trim()
+          .toLowerCase()));
+
+      logger.info(HIVE_TOKEN_SIGNATURE_KEY + ":"
+          + (tokenSignatureOverwrite == null ? "" : tokenSignatureOverwrite));
+    }
+
+    logger.info("Created hive metastore token: " + hcatTokenStr);
+    logger.info("Token kind: " + hcatToken.getKind());
+    logger.info("Token id: " + hcatToken.getIdentifier());
+    logger.info("Token service: " + hcatToken.getService());
+    return hcatToken;
+  }
+
   /*
    * Gets hadoop tokens for a user to run mapred/hive jobs on a secured cluster
    */
@@ -547,44 +622,42 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
 
     if (props.getBoolean(OBTAIN_HCAT_TOKEN, false)) {
       try {
-        logger.info("Pre-fetching Hive MetaStore token from hive");
+
+        // first we fetch and save the default hcat token.
+        logger.info("Pre-fetching default Hive MetaStore token from hive");
 
         HiveConf hiveConf = new HiveConf();
-
-        logger.info(HiveConf.ConfVars.METASTOREURIS.varname + ": "
-            + hiveConf.get(HiveConf.ConfVars.METASTOREURIS.varname));
-
-        logger
-            .info(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname
-                + ": "
-                + hiveConf
-                    .get(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname));
-
-        logger.info(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname
-            + ": "
-            + hiveConf
-                .get(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname));
-
-        HiveMetaStoreClient hiveClient = new HiveMetaStoreClient(hiveConf);
-        String hcatTokenStr =
-            hiveClient.getDelegationToken(userToProxy, UserGroupInformation
-                .getLoginUser().getShortUserName());
         Token<DelegationTokenIdentifier> hcatToken =
-            new Token<DelegationTokenIdentifier>();
-        hcatToken.decodeFromUrlString(hcatTokenStr);
-        logger.info("Created hive metastore token: " + hcatTokenStr);
-        logger.info("Token kind: " + hcatToken.getKind());
-        logger.info("Token id: " + hcatToken.getIdentifier());
-        logger.info("Token service: " + hcatToken.getService());
+            fetchHcatToken(userToProxy, hiveConf, null, logger);
+
         cred.addToken(hcatToken.getService(), hcatToken);
-      } catch (Exception e) {
-        logger.error(
-            "Failed to get hive metastore token." + e.getMessage()
-                + e.getCause(), e);
+
+        // check and see if user specified the extra hcat locations we need to
+        // look at and fetch token.
+        final List<String> extraHcatLocations =
+            props.getStringList(EXTRA_HCAT_LOCATION);
+        if (Collections.EMPTY_LIST != extraHcatLocations) {
+          logger.info("Need to pre-fetch extra metaStore tokens from hive.");
+
+          // start to process the user inputs.
+          for (String thriftUrl : extraHcatLocations) {
+            logger.info("Pre-fetching metaStore token from : " + thriftUrl);
+
+            hiveConf = new HiveConf();
+            hiveConf.set(HiveConf.ConfVars.METASTOREURIS.varname, thriftUrl);
+            hcatToken =
+                fetchHcatToken(userToProxy, hiveConf, thriftUrl, logger);
+            cred.addToken(hcatToken.getService(), hcatToken);
+          }
+
+        }
+
       } catch (Throwable t) {
-        logger.error(
+        String message =
             "Failed to get hive metastore token." + t.getMessage()
-                + t.getCause(), t);
+                + t.getCause();
+        logger.error(message, t);
+        throw new HadoopSecurityManagerException(message);
       }
     }
 

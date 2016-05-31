@@ -130,10 +130,10 @@ public class HadoopJavaJob extends JavaProcessJob {
 
     // merging classpaths from plugin.properties
     mergeClassPaths(classPath,
-      getJobProps().getStringList("jobtype.classpath", null, ","));
+        getJobProps().getStringList("jobtype.classpath", null, ","));
     // merging classpaths from private.properties
     mergeClassPaths(classPath,
-      getSysProps().getStringList("jobtype.classpath", null, ","));
+        getSysProps().getStringList("jobtype.classpath", null, ","));
 
     List<String> typeGlobalClassPath =
         getSysProps().getStringList("jobtype.global.classpath", null, ",");
@@ -148,7 +148,8 @@ public class HadoopJavaJob extends JavaProcessJob {
     return classPath;
   }
 
-  private void mergeClassPaths(List<String> classPath, List<String> typeClassPath) {
+  private void mergeClassPaths(List<String> classPath,
+      List<String> typeClassPath) {
     if (typeClassPath != null) {
       // fill in this when load this jobtype
       String pluginDir = getSysProps().get("plugin.dir");
@@ -253,6 +254,7 @@ public class HadoopJavaJob extends JavaProcessJob {
             getId());
     info("log file path is: " + logFilePath);
 
-    HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps, tokenFile, getLog());
+    HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps,
+        tokenFile, getLog());
   }
 }
