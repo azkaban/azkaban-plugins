@@ -1,4 +1,4 @@
-package azkaban.jobtype.connectors;
+package azkaban.jobtype.connectors.teradata;
 
 import java.io.BufferedOutputStream;
 import java.io.Closeable;

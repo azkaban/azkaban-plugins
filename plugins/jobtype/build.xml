@@ -21,6 +21,8 @@
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-${version}.jar"/>
 	<property name="hadoopsecuritymanagerjar-yarn" value="${base.dir}/dist/hadoopsecuritymanager-yarn/jars/azkaban-hadoopsecuritymanageryarn-${version}.jar"/>
 	<property name="hadoopsecuritymanager-common.java.src.dir" value="${base.dir}/plugins/hadoopsecuritymanager-common/src" />
+	<property name="crypto.jar.dir" value="${base.dir}/dist/crypto" />
+	<property name="crypto.jar" value="${base.dir}/dist/crypto/jars/azkaban-crypto-${version}.jar" />
 
 	<property name="version.file" value="${base.dir}/dist/package.version" />
 	<property environment="env" />
@@ -31,7 +33,11 @@
 		</fileset>
 
 		<fileset dir="${ext.lib.dir}">
-            <include name="*.jar" />
+                        <include name="*.jar" />
+		</fileset>
+
+		<fileset dir="${crypto.jar.dir}">
+                        <include name="**/*.jar" />
 		</fileset>
 
 		<pathelement path="${dist.classes.dir}" />
@@ -143,7 +149,7 @@
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hive" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hdfsToTeradata" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/teradataToHdfs" />
-		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/gobblin" />
+                <copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/gobblin" />
 
 		<!-- Copy hadoopsecuritymanager-->
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/java" />
@@ -160,6 +166,14 @@
 
 		<!-- Copy hadoopsecuritymanager-yarn file -->
 		<copy file="${hadoopsecuritymanagerjar-yarn}" todir="${dist.packages.dir}" />
+
+		<!-- Copy crypto jar file -->
+		<copy todir="${dist.packages.dir}/hdfsToTeradata/lib" flatten="true" >
+			<fileset dir="${crypto.jar.dir}" excludes="**/log4j*.jar,**/commons-cli*.jar" includes="**/*.jar" />
+		</copy>
+		<copy todir="${dist.packages.dir}/teradataToHdfs/lib" flatten="true" >
+		  <fileset dir="${crypto.jar.dir}" excludes="**/log4j*.jar,**/commons-cli*.jar" includes="**/*.jar" />
+		</copy>
 
 		<!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">

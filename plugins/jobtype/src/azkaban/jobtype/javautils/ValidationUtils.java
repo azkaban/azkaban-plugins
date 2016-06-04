@@ -62,4 +62,27 @@ public class ValidationUtils {
       props.getString(key);
     }
   }
+
+  public static void validateAtleastOneNotEmpty(Props props, String... keys) {
+    boolean exist = false;
+    for(String key : keys) {
+      Object val = props.get(key);
+      exist |= val != null;
+    }
+    if(!exist) {
+      throw new IllegalArgumentException("At least one of these keys should exist " + Arrays.toString(keys));
+    }
+  }
+
+  public static void validateSomeValuesNotEmpty(int notEmptyVals, String... vals) {
+    int count = 0;
+    for(String val : vals) {
+      if(!StringUtils.isEmpty(val)) {
+        count++;
+      }
+    }
+    if (count != notEmptyVals) {
+      throw new IllegalArgumentException("Number of not empty vals " + count + " is not desired number " + notEmptyVals);
+    }
+  }
 }
