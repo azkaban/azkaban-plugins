@@ -1,3 +1,14 @@
+/*
+ * Copyright (C) 2016 LinkedIn Corp. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed
+ * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied.
+ */
 package azkaban.crypto;
 
 import java.security.Provider;
@@ -6,6 +17,7 @@ import org.apache.log4j.Logger;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jasypt.encryption.pbe.PBEStringEncryptor;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -26,9 +38,7 @@ public class CryptoV1_1 implements ICrypto {
   @Override
   public String encrypt(String plaintext, String passphrase, Version cryptoVersion) {
     Preconditions.checkArgument(Version.V1_1.equals(cryptoVersion));
-    Preconditions.checkNotNull(plaintext);
-    Preconditions.checkNotNull(passphrase);
-
+    
     String cipheredText = newEncryptor(passphrase).encrypt(plaintext);
     ObjectNode node = MAPPER.createObjectNode();
     node.put(CIPHERED_TEXT_KEY, cipheredText);
@@ -39,9 +49,6 @@ public class CryptoV1_1 implements ICrypto {
 
   @Override
   public String decrypt(String cipheredText, String passphrase) {
-    Preconditions.checkNotNull(cipheredText);
-    Preconditions.checkNotNull(passphrase);
-
     try {
       String jsonStr = ICrypto.decode(cipheredText);
       JsonNode json = MAPPER.readTree(jsonStr);

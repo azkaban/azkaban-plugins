@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 LinkedIn Corp.
+ * Copyright 2015-2016 LinkedIn Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -134,6 +134,9 @@ public class HdfsToTeradataJobRunnerMain {
     }
   }
 
+  /**
+   * If user provided password, it performs pre-processing such as drop error table, and truncate target table, if requested by user.
+   */
   private void preprocess() {
     if (!_params.getPassword().isPresent()) {
       _logger.warn("Preprocess (drop error table, replace target table) is not supported if " + TdchConstants.TD_ENCRYPTED_CREDENTIAL_KEY + " is not provided.");

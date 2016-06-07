@@ -1,3 +1,14 @@
+/*
+ * Copyright (C) 2016 LinkedIn Corp. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed
+ * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied.
+ */
 package azkaban.crypto;
 
 import org.apache.log4j.Logger;
@@ -23,8 +34,6 @@ public class CryptoV1 implements ICrypto {
   @Override
   public String encrypt(String plaintext, String passphrase, Version cryptoVersion) {
     Preconditions.checkArgument(Version.V1_0.equals(cryptoVersion));
-    Preconditions.checkNotNull(plaintext);
-    Preconditions.checkNotNull(passphrase);
 
     String cipheredText = newEncryptor(passphrase).encrypt(plaintext);
     ObjectNode node = MAPPER.createObjectNode();
@@ -36,9 +45,6 @@ public class CryptoV1 implements ICrypto {
 
   @Override
   public String decrypt(String cipheredText, String passphrase) {
-    Preconditions.checkNotNull(cipheredText);
-    Preconditions.checkNotNull(passphrase);
-
     try {
       JsonNode json = MAPPER.readTree(ICrypto.decode(cipheredText));
       return newEncryptor(passphrase).decrypt(json.get(CIPHERED_TEXT_KEY).asText());
