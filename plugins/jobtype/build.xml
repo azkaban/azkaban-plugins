@@ -6,6 +6,7 @@
 	<property name="dist.dir" value="${base.dir}/dist/jobtype" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
+	<property name="test.lib.dir" value="${base.dir}/test_lib" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.classes.test.dir" value="${dist.dir}/testclasses" />
@@ -41,6 +42,12 @@
 		</fileset>
 
 		<pathelement path="${dist.classes.dir}" />
+	</path>
+
+	<path id="test.classpath">
+		<fileset dir="${test.lib.dir}">
+                        <include name="*.jar" />
+		</fileset>
 	</path>
 
 	<!-- set the build number based on environment variable, otherwise blank -->
@@ -96,6 +103,7 @@
             target="1.8" debug="true" deprecation="false" failonerror="true">
             <src path="${java.src.test.dir}" />
 			<classpath refid="main.classpath" />
+			<classpath refid="test.classpath" />
         </javac>
 
 	</target>
@@ -104,6 +112,7 @@
         <junit haltonfailure="no" failureproperty="test.failed" printsummary="yes">
             <classpath>
                 <path refid="main.classpath" />
+                <path refid="test.classpath" />
                 <pathelement path="${dist.classes.dir}" />
                 <pathelement path="${dist.classes.test.dir}" />
             </classpath>

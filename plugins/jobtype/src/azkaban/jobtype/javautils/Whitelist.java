@@ -90,7 +90,10 @@ public class Whitelist {
 
       Set<String> result = Sets.newHashSet();
       try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(path)))) {
-        result.add(br.readLine());
+        String s = null;
+        while (!StringUtils.isEmpty((s = br.readLine()))) {
+          result.add(s);
+        }
       }
       return result;
     } catch (IOException e) {

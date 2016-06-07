@@ -58,8 +58,14 @@ public class HdfsToTeradataJobRunnerMain {
     this(HadoopSecureWrapperUtils.loadAzkabanProps());
   }
 
+  private HdfsToTeradataJobRunnerMain(Properties jobProps) throws FileNotFoundException, IOException {
+    this(jobProps,
+         new Whitelist(new Props(null, jobProps), FileSystem.get(new Configuration())),
+         new Decryptions());
+  }
+
   @VisibleForTesting
-  HdfsToTeradataJobRunnerMain(Properties jobProps) throws FileNotFoundException, IOException {
+  HdfsToTeradataJobRunnerMain(Properties jobProps, Whitelist whitelist, Decryptions decryptions) throws FileNotFoundException, IOException {
     _logger = JobUtils.initJobLogger();
     _jobProps = jobProps;
 
@@ -70,7 +76,7 @@ public class HdfsToTeradataJobRunnerMain {
     UserGroupInformation.setConfiguration(conf);
 
     if (props.containsKey(Whitelist.WHITE_LIST_FILE_PATH_KEY)) {
-      new Whitelist(props, FileSystem.get(conf)).validateWhitelisted(props);
+      whitelist.validateWhitelisted(props);
     }
 
     String encryptedCredential = _jobProps.getProperty(TdchConstants.TD_ENCRYPTED_CREDENTIAL_KEY);
@@ -78,7 +84,7 @@ public class HdfsToTeradataJobRunnerMain {
     String password = null;
 
     if(encryptedCredential != null && cryptoKeyPath != null) {
-      password = decryptPassword(encryptedCredential, cryptoKeyPath);
+      password = decryptions.decrypt(encryptedCredential, cryptoKeyPath, FileSystem.get(new Configuration()));
     }
 
     _params = TdchParameters.builder()
@@ -104,10 +110,6 @@ public class HdfsToTeradataJobRunnerMain {
                             .build();
   }
 
-  @VisibleForTesting
-  String decryptPassword(String encryptedCredential, String cryptoKeyPath) throws IOException {
-    return Decryptions.decrypt(encryptedCredential, cryptoKeyPath, FileSystem.get(new Configuration()));
-  }
 
   public void run() throws IOException, InterruptedException {
     String jobName = System.getenv(AbstractProcessJob.JOB_NAME_ENV);
@@ -139,7 +141,7 @@ public class HdfsToTeradataJobRunnerMain {
     }
 
     try (Connection conn = newConnection()) {
-      JdbcCommands command = new TeradataCommands(conn);
+      JdbcCommands command = newTeradataCommands(conn);
 
       boolean isDropErrTable = Boolean.valueOf(_jobProps.getProperty(TdchConstants.DROP_ERROR_TABLE_KEY, Boolean.FALSE.toString()));
       if(isDropErrTable) {
@@ -187,8 +189,8 @@ public class HdfsToTeradataJobRunnerMain {
   }
 
   @VisibleForTesting
-  TdchParameters getParams() {
-    return _params;
+  JdbcCommands newTeradataCommands(Connection conn) {
+    return new TeradataCommands(conn);
   }
 
   /**
@@ -196,7 +198,8 @@ public class HdfsToTeradataJobRunnerMain {
    *
    * @param args
    */
-  private void copyHdfsToTd() {
+  @VisibleForTesting
+  void copyHdfsToTd() {
     _logger.info(String.format("Executing %s with params: %s", HdfsToTeradataJobRunnerMain.class.getSimpleName(), _params));
     TeradataExportTool.main(_params.toTdchParams());
   }

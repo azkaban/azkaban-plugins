@@ -59,7 +59,7 @@ public class TeradataToHdfsJobRunnerMain {
     String cryptoKeyPath = _jobProps.getProperty(TdchConstants.TD_CRYPTO_KEY_PATH_KEY);
     String password = null;
     if(encryptedCredential != null && cryptoKeyPath != null) {
-      password = Decryptions.decrypt(encryptedCredential, cryptoKeyPath, FileSystem.get(new Configuration()));
+      password = new Decryptions().decrypt(encryptedCredential, cryptoKeyPath, FileSystem.get(new Configuration()));
     }
 
     _params = TdchParameters.builder()

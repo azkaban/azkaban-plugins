@@ -15,7 +15,7 @@ public class Decryptions {
                                                                                  FsAction.NONE,
                                                                                  FsAction.NONE);
 
-  public static String decrypt(String cipheredText, String passphrasePath, FileSystem fs) throws IOException {
+  public String decrypt(String cipheredText, String passphrasePath, FileSystem fs) throws IOException {
     Preconditions.checkNotNull(cipheredText);
     Preconditions.checkNotNull(passphrasePath);
 
