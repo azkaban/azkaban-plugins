@@ -100,7 +100,15 @@
 		</tar>
 	</target>
 
-	<target name="package" depends="package-crypto" description="Create all packages">
+    <target name="script-test" description="Test Crypto scripts">
+        <echo message="Testing encrypt.sh" />
+        <exec executable="${dist.packages.dir}/scripts/encrypt.sh" dir="${dist.packages.dir}/scripts" failonerror="true">
+            <arg value="test_passphrase"/>
+            <arg value="test_plaintext"/>
+        </exec>
+    </target>
+
+	<target name="package" depends="package-crypto,script-test" description="Create all packages">
 	</target>
 
 </project>
