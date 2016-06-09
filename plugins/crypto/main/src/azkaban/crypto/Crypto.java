@@ -40,11 +40,12 @@ public class Crypto implements ICrypto {
 
   @Override
   public String encrypt(String plaintext, String passphrase, Version cryptoVersion) {
-    Preconditions.checkNotNull(cryptoVersion);
+    Preconditions.checkNotNull(cryptoVersion, "Crypto version is required.");
     Preconditions.checkArgument(!StringUtils.isEmpty(plaintext), "plaintext should not be empty");
     Preconditions.checkArgument(!StringUtils.isEmpty(passphrase), "passphrase should not be empty");
 
     ICrypto crypto = cryptos.get(cryptoVersion);
+    Preconditions.checkNotNull(crypto, cryptoVersion + " is not supported.");
     return crypto.encrypt(plaintext, passphrase, cryptoVersion);
   }
 
@@ -54,7 +55,7 @@ public class Crypto implements ICrypto {
     Preconditions.checkArgument(!StringUtils.isEmpty(passphrase), "passphrase should not be empty");
 
     try {
-      String jsonStr = ICrypto.decode(cipheredText);
+      String jsonStr = decode(cipheredText);
       JsonNode json = MAPPER.readTree(jsonStr);
       String ver = json.get(ICrypto.VERSION_IDENTIFIER).asText();
 

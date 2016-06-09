@@ -40,13 +40,13 @@ public class CryptoV1 implements ICrypto {
     node.put(CIPHERED_TEXT_KEY, cipheredText);
     node.put(ICrypto.VERSION_IDENTIFIER, Version.V1_0.versionStr());
 
-    return ICrypto.encode(node.toString());
+    return Crypto.encode(node.toString());
   }
 
   @Override
   public String decrypt(String cipheredText, String passphrase) {
     try {
-      JsonNode json = MAPPER.readTree(ICrypto.decode(cipheredText));
+      JsonNode json = MAPPER.readTree(Crypto.decode(cipheredText));
       return newEncryptor(passphrase).decrypt(json.get(CIPHERED_TEXT_KEY).asText());
     } catch (Exception e) {
       throw new RuntimeException(e);

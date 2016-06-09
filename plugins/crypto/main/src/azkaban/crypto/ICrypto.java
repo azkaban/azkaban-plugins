@@ -11,8 +11,6 @@
  */
 package azkaban.crypto;
 
-import java.util.Base64;
-
 /**
  * Encrypts plain text and decrypts ciphered text.
  */
@@ -36,12 +34,4 @@ public interface ICrypto {
    * @return plain text String
    */
   public String decrypt (String cipheredText, String passphrase);
-
-  public static String encode(String s) {
-    return new String(Base64.getEncoder().encode(s.getBytes()));
-  }
-
-  public static String decode(String s) {
-    return new String(Base64.getDecoder().decode(s));
-  }
 }

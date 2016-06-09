@@ -38,19 +38,19 @@ public class CryptoV1_1 implements ICrypto {
   @Override
   public String encrypt(String plaintext, String passphrase, Version cryptoVersion) {
     Preconditions.checkArgument(Version.V1_1.equals(cryptoVersion));
-    
+
     String cipheredText = newEncryptor(passphrase).encrypt(plaintext);
     ObjectNode node = MAPPER.createObjectNode();
     node.put(CIPHERED_TEXT_KEY, cipheredText);
     node.put(ICrypto.VERSION_IDENTIFIER, Version.V1_1.versionStr());
 
-    return ICrypto.encode(node.toString());
+    return Crypto.encode(node.toString());
   }
 
   @Override
   public String decrypt(String cipheredText, String passphrase) {
     try {
-      String jsonStr = ICrypto.decode(cipheredText);
+      String jsonStr = Crypto.decode(cipheredText);
       JsonNode json = MAPPER.readTree(jsonStr);
       return newEncryptor(passphrase).decrypt(json.get(CIPHERED_TEXT_KEY).asText());
     } catch (Exception e) {
