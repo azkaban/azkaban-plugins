@@ -1,15 +1,36 @@
-package azkaban.jobtype.connectors;
+/*
+ * Copyright (C) 2015-2016 LinkedIn Corp. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+ * this file except in compliance with the License. You may obtain a copy of the
+ * License at  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed
+ * under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+ * CONDITIONS OF ANY KIND, either express or implied.
+ */
+package azkaban.jobtype.connectors.teradata;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigRenderOptions;
 
+import azkaban.jobtype.connectors.jdbc.TeradataCommands;
 import azkaban.jobtype.javautils.FileUtils;
 import azkaban.jobtype.javautils.ValidationUtils;
 
@@ -19,6 +40,7 @@ public class TdchParameters {
   private final static String TERADATA_JDBC_URL_CHARSET_KEY = "/CHARSET=";
   private final static String DEFAULT_CHARSET = "UTF8";
   private static final String DEFAULT_RETRIEVE_METHOD = "split.by.amp";
+  private static final int ERROR_TABLE_NAME_LENGTH_LIMIT = 24;
 
   private final String _mrParams;
   private final String _libJars;
@@ -28,16 +50,22 @@ public class TdchParameters {
   private final Optional<String> _fieldSeparator;
   private final String _jobType;
   private final String _userName;
-  private final String _credentialName;
+  private final Optional<String> _credentialName;
+  private final Optional<String> _password;
   private final Optional<String> _avroSchemaPath;
   private final Optional<String> _avroSchemaInline;
   private final String _numMappers;
+  private final Optional<Config> _otherProperties;
 
   private final TdchType _tdchType;
 
   //From HDFS to Teradata
   private final String _sourceHdfsPath;
   private final String _targetTdTableName;
+  private final Optional<String> _targetTdDatabaseName;
+
+  private final Optional<String> _tdErrorDatabase;
+  private final Optional<String> _tdErrorTableName;
   private final Optional<String> _tdInsertMethod;
 
   //From Teradata to HDFS
@@ -60,16 +88,21 @@ public class TdchParameters {
 
     this._jobType = builder._jobType;
     this._userName = builder._userName;
-    this._credentialName = builder._credentialName;
+    this._credentialName = Optional.fromNullable(builder._credentialName);
+    this._password = Optional.fromNullable(builder._password);
 
     this._avroSchemaPath = Optional.fromNullable(builder._avroSchemaPath);
     this._avroSchemaInline = Optional.fromNullable(builder._avroSchemaInline);
 
     this._numMappers = Integer.toString(builder._numMappers);
+    this._otherProperties = Optional.fromNullable(builder._otherProperties);
     this._tdchType = builder._tdchType;
 
     this._sourceHdfsPath = builder._sourceHdfsPath;
     this._targetTdTableName = builder._targetTdTableName;
+    this._targetTdDatabaseName = Optional.fromNullable(builder._targetTdDatabaseName);
+    this._tdErrorDatabase = Optional.fromNullable(builder._tdErrorDatabase);
+    this._tdErrorTableName = Optional.fromNullable(builder._tdErrorTableName);
     this._tdInsertMethod = Optional.fromNullable(builder._tdInsertMethod);  //Default by TDCH is batch.insert
 
     this._sourceQuery = Optional.fromNullable(builder._sourceQuery);
@@ -95,14 +128,19 @@ public class TdchParameters {
     private String _jobType;
     private String _userName;
     private String _credentialName;
+    private String _password;
     private String _avroSchemaPath;
     private String _avroSchemaInline;
     private int _numMappers;
+    private Config _otherProperties;
 
     private TdchType _tdchType;
 
     private String _sourceHdfsPath;
+    private String _targetTdDatabaseName;
     private String _targetTdTableName;
+    private String _tdErrorDatabase;
+    private String _tdErrorTableName;
     private String _tdInsertMethod;
 
     private String _sourceQuery;
@@ -161,8 +199,14 @@ public class TdchParameters {
       return this;
     }
 
+    @Deprecated
     public Builder credentialName(String credentialName) {
       this._credentialName = credentialName;
+      return this;
+    }
+
+    public Builder password(String password) {
+      this._password = password;
       return this;
     }
 
@@ -181,13 +225,39 @@ public class TdchParameters {
       return this;
     }
 
+    /**
+     * Takes HOCON notation: https://github.com/typesafehub/config/blob/master/HOCON.md
+     *
+     * @param hoconInput
+     * @return
+     */
+    public Builder otherProperties(String hoconInput) {
+      if (StringUtils.isEmpty(hoconInput)) {
+        return this;
+      }
+      this._otherProperties = ConfigFactory.parseString(hoconInput);
+      return this;
+    }
+
     public Builder sourceHdfsPath(String sourceHdfsPath) {
       this._sourceHdfsPath = sourceHdfsPath;
       return this;
     }
 
     public Builder targetTdTableName(String targetTdTableName) {
-      this._targetTdTableName = targetTdTableName;
+      DatabaseTable dbTbl = new DatabaseTable(targetTdTableName);
+      this._targetTdTableName = dbTbl.table;
+      this._targetTdDatabaseName = dbTbl.database.orNull();
+      return this;
+    }
+
+    public Builder errorTdDatabase(String tdErrorDatabase) {
+      this._tdErrorDatabase = tdErrorDatabase;
+      return this;
+    }
+
+    public Builder errorTdTableName(String errorTdTableName) {
+      this._tdErrorTableName = errorTdTableName;
       return this;
     }
 
@@ -213,15 +283,41 @@ public class TdchParameters {
 
     public TdchParameters build() {
       validate();
+      if (TdchType.HDFS_TO_TERADATA.equals(_tdchType)) {
+        assignErrorTbl();
+      }
       return new TdchParameters(this);
+    }
+
+    private void assignErrorTbl() {
+      if (!StringUtils.isEmpty(_tdErrorTableName)) {
+        return;
+      }
+
+      if (_targetTdTableName.length() <= ERROR_TABLE_NAME_LENGTH_LIMIT) {
+        _tdErrorTableName = _targetTdTableName; //TDCH will add suffix into it.
+      } else {
+        _logger.info("Error table will be randomly decided by Teradata because " + TdchConstants.DROP_ERROR_TABLE_KEY
+            + " is not defined and " + TdchConstants.TARGET_TD_TABLE_NAME_KEY + " is longer than "
+            + ERROR_TABLE_NAME_LENGTH_LIMIT
+            + " so that it cannot be used as a prefix of the error table. Please specify "
+            + TdchConstants.ERROR_TABLE_KEY);
+      }
     }
 
     private void validate() {
       ValidationUtils.validateNotEmpty(_tdJdbcClassName, "tdJdbcClassName");
       ValidationUtils.validateNotEmpty(_jobType, "jobType");
       ValidationUtils.validateNotEmpty(_userName, "userName");
-      ValidationUtils.validateNotEmpty(_credentialName, "credentialName");
       ValidationUtils.validateNotEmpty(_tdHostName, "teradata host name");
+
+      if (!StringUtils.isEmpty(_credentialName) && !StringUtils.isEmpty(_password)) {
+        throw new IllegalArgumentException("Please use either credential name or password, not all of them.");
+      }
+
+      if (StringUtils.isEmpty(_credentialName) && StringUtils.isEmpty(_password)) {
+        throw new IllegalArgumentException("Password is required.");
+      }
 
       if(StringUtils.isEmpty(_fileFormat)) {
         _fileFormat = TdchConstants.AVRO_FILE_FORMAT;
@@ -277,6 +373,13 @@ public class TdchParameters {
       } else {
         _tdchType = TdchType.TERADATA_TO_HDFS;
       }
+
+      if (!StringUtils.isEmpty(_tdErrorTableName)) {
+        Preconditions.checkArgument(!new DatabaseTable(_tdErrorTableName).database.isPresent(),
+                                    "Error table name cannot have database prefix. Use " + TdchConstants.ERROR_DB_KEY);
+        Preconditions.checkArgument(_tdErrorTableName.length() <= ERROR_TABLE_NAME_LENGTH_LIMIT,
+            "Error table name cannot exceed " + ERROR_TABLE_NAME_LENGTH_LIMIT + " chracters.");
+      }
     }
   }
 
@@ -285,75 +388,10 @@ public class TdchParameters {
     if(!StringUtils.isEmpty(_mrParams)) {
       listBuilder.add(_mrParams);
     }
-    if(!StringUtils.isEmpty(_libJars)) {
-      listBuilder.add("-libjars").add(_libJars);
-    }
 
-    listBuilder.add("-url")
-               .add(_tdUrl)
-               .add("-classname")
-               .add(_tdJdbcClassName)
-               .add("-fileformat")
-               .add(_fileFormat)
-               .add("-jobtype")
-               .add(_jobType)
-               .add("-username")
-               .add(_userName)
-               .add("-password")
-               .add(_credentialName)
-               .add("-nummappers")
-               .add(_numMappers);
-
-    if(_avroSchemaPath.isPresent()) {
-      listBuilder.add("-avroschemafile")
-                 .add(_avroSchemaPath.get());
-    }
-
-    if(_avroSchemaInline.isPresent()) {
-      listBuilder.add("-avroschema")
-                 .add(_avroSchemaInline.get());
-    }
-
-    if(_fieldSeparator.isPresent()) {
-      listBuilder.add("-separator")
-                 .add(_fieldSeparator.get());
-    }
-
-
-    if(TdchType.HDFS_TO_TERADATA.equals(_tdchType)) {
-      listBuilder.add("-sourcepaths")
-                 .add(_sourceHdfsPath)
-                 .add("-targettable")
-                 .add(_targetTdTableName);
-
-      if(_tdInsertMethod.isPresent()) {
-        listBuilder.add("-method")
-                   .add(_tdInsertMethod.get());
-      }
-    } else if (TdchType.TERADATA_TO_HDFS.equals(_tdchType)){
-      listBuilder.add("-targetpaths")
-                 .add(_targetHdfsPath);
-
-      if(_sourceTdTableName.isPresent()) {
-        listBuilder.add("-sourcetable")
-                   .add(_sourceTdTableName.get());
-
-        if (_tdRetrieveMethod.isPresent()) {
-          listBuilder.add("-method")
-                     .add(_tdRetrieveMethod.get());
-        } else {
-          listBuilder.add("-method")
-                     .add(DEFAULT_RETRIEVE_METHOD);
-        }
-
-      } else if (_sourceQuery.isPresent()) {
-        listBuilder.add("-sourcequery")
-                   .add(_sourceQuery.get());
-      } else {
-        throw new IllegalArgumentException("No source defined."); //This should not happen as it shouldn't have been instantiated by builder.
-      }
-    } else {
-      throw new UnsupportedOperationException("Unsupported TDCH type: " + _tdchType);
+    Map<String, String> keyValParams = buildKeyValParams();
+    for(Map.Entry<String, String> entry : keyValParams.entrySet()) {
+      listBuilder.add(entry.getKey()).add(entry.getValue());
     }
 
     List<String> paramList = listBuilder.build();
@@ -361,12 +399,148 @@ public class TdchParameters {
     return params;
   }
 
-  private String getMaskedPassword() {
-    StringBuilder maskedPassword = new StringBuilder(_credentialName.length());
-    for (int i = 0; i < _credentialName.length(); i++) {
-      maskedPassword.append("*");
+  private Map<String, String> buildKeyValParams() {
+    Map<String, String> map = new LinkedHashMap<>();
+
+    if(!StringUtils.isEmpty(_libJars)) {
+      map.put("-libjars", _libJars);
     }
-    return maskedPassword.toString();
+
+    map.put("-url", _tdUrl);
+    map.put("-classname", _tdJdbcClassName);
+    map.put("-fileformat", _fileFormat);
+    map.put("-jobtype", _jobType);
+    map.put("-username", _userName);
+    map.put("-nummappers", _numMappers);
+
+    if(_password.isPresent()) {
+      map.put("-password", _password.get());
+    } else {
+      _logger.warn(TdchConstants.TD_CREDENTIAL_NAME_KEY + " is deprecated. Please use " + TdchConstants.TD_ENCRYPTED_CREDENTIAL_KEY);
+      map.put("-password", String.format(TdchConstants.TD_WALLET_FORMAT, _credentialName.get()));
+    }
+
+    if(_avroSchemaPath.isPresent()) {
+      map.put("-avroschemafile", _avroSchemaPath.get());
+    }
+
+    if(_avroSchemaInline.isPresent()) {
+      map.put("-avroschema", _avroSchemaInline.get());
+    }
+
+    if(_fieldSeparator.isPresent()) {
+      map.put("-separator", _fieldSeparator.get());
+    }
+
+    if(TdchType.HDFS_TO_TERADATA.equals(_tdchType)) {
+      map.put("-sourcepaths", _sourceHdfsPath);
+
+      if(_targetTdDatabaseName.isPresent()) {
+        map.put("-targettable", String.format(TeradataCommands.DATABASE_TABLE_FORMAT,
+                                              _targetTdDatabaseName.get(), _targetTdTableName));
+      } else {
+        map.put("-targettable", _targetTdTableName);
+      }
+
+      if(_tdErrorDatabase.isPresent()) {
+        map.put("-errortabledatabase", _tdErrorDatabase.get());
+      }
+
+      if(_tdErrorTableName.isPresent()) {
+        map.put("-errortablename", _tdErrorTableName.get());
+      }
+
+      if(_tdInsertMethod.isPresent()) {
+        map.put("-method", _tdInsertMethod.get());
+      }
+    } else if (TdchType.TERADATA_TO_HDFS.equals(_tdchType)){
+      map.put("-targetpaths",_targetHdfsPath);
+
+      if(_sourceTdTableName.isPresent()) {
+        map.put("-sourcetable", _sourceTdTableName.get());
+
+        if (_tdRetrieveMethod.isPresent()) {
+          map.put("-method", _tdRetrieveMethod.get());
+        } else {
+          map.put("-method", DEFAULT_RETRIEVE_METHOD);
+        }
+
+      } else if (_sourceQuery.isPresent()) {
+        map.put("-sourcequery", _sourceQuery.get());
+      } else {
+        throw new IllegalArgumentException("No source defined."); //This should not happen as it shouldn't have been instantiated by builder.
+      }
+    } else {
+      throw new UnsupportedOperationException("Unsupported TDCH type: " + _tdchType);
+    }
+
+    if(_otherProperties.isPresent()) {
+      try {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode json = mapper.readTree(_otherProperties.get().root().render(ConfigRenderOptions.concise()));
+
+        Iterator<Map.Entry<String, JsonNode>> it = json.fields();
+        while (it.hasNext()) {
+          Map.Entry<String, JsonNode> entry = it.next();
+          String key = "-" + entry.getKey();
+          if (map.containsKey(key)) {
+            _logger.warn("Duplicate entry detected on key: " + entry.getKey()
+                         + " . Skipping value from duplicate: " + entry.getValue().asText()
+                         + " . Proceed with existing value: " + map.get(key));
+            continue;
+          }
+          map.put(key, entry.getValue().asText());
+        }
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return map;
+  }
+
+  private String getMaskedVal(Optional<String> val) {
+    if(!val.isPresent()) {
+      return null;
+    }
+
+    StringBuilder maskedVal = new StringBuilder(val.get().length());
+    for (int i = 0; i < val.get().length(); i++) {
+      maskedVal.append("*");
+    }
+    return maskedVal.toString();
+  }
+
+  public String getTdJdbcClassName() {
+    return _tdJdbcClassName;
+  }
+
+  public String getTdUrl() {
+    return _tdUrl;
+  }
+
+  public String getUserName() {
+    return _userName;
+  }
+
+  public Optional<String> getPassword() {
+    return _password;
+  }
+
+
+  public Optional<String> getTargetTdDatabase() {
+    return _targetTdDatabaseName;
+  }
+
+  public String getTargetTdTableName() {
+    return _targetTdTableName;
+  }
+
+  public Optional<String> getTdErrorTableName() {
+    return _tdErrorTableName;
+  }
+
+  public Optional<String> getTdErrorDatabase() {
+    return _tdErrorDatabase;
   }
 
   @Override
@@ -380,19 +554,54 @@ public class TdchParameters {
             .append(", _fieldSeparator=").append(_fieldSeparator)
             .append(", _jobType=").append(_jobType)
             .append(", _userName=").append(_userName)
-            .append(", _credentialName=").append(getMaskedPassword())
+            .append(", _credentialName=").append(getMaskedVal(_credentialName))
+            .append(", _password=").append(getMaskedVal(_password))
             .append(", _avroSchemaPath=").append(_avroSchemaPath)
             .append(", _avroSchemaInline=").append(_avroSchemaInline)
             .append(", _numMappers=").append(_numMappers)
             .append(", _tdchType=").append(_tdchType)
             .append(", _sourceHdfsPath=").append(_sourceHdfsPath)
+            .append(", _targetTdDatabaseName=").append(_targetTdDatabaseName)
             .append(", _targetTdTableName=").append(_targetTdTableName)
+            .append(", _tdErrorDatabase=").append(_tdErrorDatabase)
+            .append(", _tdErrorTableName=").append(_tdErrorTableName)
             .append(", _tdInsertMethod=").append(_tdInsertMethod)
             .append(", _sourceQuery=").append(_sourceQuery)
             .append(", _sourceTdTableName=").append(_sourceTdTableName)
             .append(", _tdRetrieveMethod=").append(_tdRetrieveMethod)
             .append(", _targetHdfsPath=").append(_targetHdfsPath)
+            .append(", _otherProperties").append(_otherProperties)
             .append("]");
     return builder.toString();
+  }
+
+  static class DatabaseTable {
+    private final Optional<String> database;
+    private final String table;
+
+    public DatabaseTable(String dbTblStr) {
+      int idx = dbTblStr.indexOf(".");
+      if (idx < 0) {
+        this.table = dbTblStr;
+        this.database = Optional.absent();
+        return;
+      }
+
+      this.database = Optional.of(dbTblStr.substring(0, idx));
+      this.table = dbTblStr.substring(idx + 1);
+    }
+
+    Optional<String> getDatabase() {
+      return database;
+    }
+
+    String getTable() {
+      return table;
+    }
+
+    @Override
+    public String toString() {
+      return "DatabaseTable [database=" + database + ", table=" + table + "]";
+    }
   }
 }

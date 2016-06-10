@@ -6,6 +6,7 @@
 	<property name="dist.dir" value="${base.dir}/dist/jobtype" />
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
+	<property name="test.lib.dir" value="${base.dir}/test_lib" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.classes.test.dir" value="${dist.dir}/testclasses" />
@@ -21,6 +22,8 @@
 	<property name="hadoopsecuritymanagerjar" value="${base.dir}/dist/hadoopsecuritymanager/jars/azkaban-hadoopsecuritymanager-${version}.jar"/>
 	<property name="hadoopsecuritymanagerjar-yarn" value="${base.dir}/dist/hadoopsecuritymanager-yarn/jars/azkaban-hadoopsecuritymanageryarn-${version}.jar"/>
 	<property name="hadoopsecuritymanager-common.java.src.dir" value="${base.dir}/plugins/hadoopsecuritymanager-common/src" />
+	<property name="crypto.jar.dir" value="${base.dir}/dist/crypto" />
+	<property name="crypto.jar" value="${base.dir}/dist/crypto/jars/azkaban-crypto-${version}.jar" />
 
 	<property name="version.file" value="${base.dir}/dist/package.version" />
 	<property environment="env" />
@@ -31,10 +34,20 @@
 		</fileset>
 
 		<fileset dir="${ext.lib.dir}">
-            <include name="*.jar" />
+                        <include name="*.jar" />
+		</fileset>
+
+		<fileset dir="${crypto.jar.dir}">
+                        <include name="**/*.jar" />
 		</fileset>
 
 		<pathelement path="${dist.classes.dir}" />
+	</path>
+
+	<path id="test.classpath">
+		<fileset dir="${test.lib.dir}">
+                        <include name="*.jar" />
+		</fileset>
 	</path>
 
 	<!-- set the build number based on environment variable, otherwise blank -->
@@ -90,6 +103,7 @@
             target="1.8" debug="true" deprecation="false" failonerror="true">
             <src path="${java.src.test.dir}" />
 			<classpath refid="main.classpath" />
+			<classpath refid="test.classpath" />
         </javac>
 
 	</target>
@@ -98,6 +112,7 @@
         <junit haltonfailure="no" failureproperty="test.failed" printsummary="yes">
             <classpath>
                 <path refid="main.classpath" />
+                <path refid="test.classpath" />
                 <pathelement path="${dist.classes.dir}" />
                 <pathelement path="${dist.classes.test.dir}" />
             </classpath>
@@ -143,7 +158,7 @@
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hive" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hdfsToTeradata" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/teradataToHdfs" />
-		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/gobblin" />
+                <copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/gobblin" />
 
 		<!-- Copy hadoopsecuritymanager-->
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/java" />
@@ -160,6 +175,14 @@
 
 		<!-- Copy hadoopsecuritymanager-yarn file -->
 		<copy file="${hadoopsecuritymanagerjar-yarn}" todir="${dist.packages.dir}" />
+
+		<!-- Copy crypto jar file -->
+		<copy todir="${dist.packages.dir}/hdfsToTeradata/lib" flatten="true" >
+			<fileset dir="${crypto.jar.dir}" excludes="**/log4j*.jar,**/commons-cli*.jar" includes="**/*.jar" />
+		</copy>
+		<copy todir="${dist.packages.dir}/teradataToHdfs/lib" flatten="true" >
+		  <fileset dir="${crypto.jar.dir}" excludes="**/log4j*.jar,**/commons-cli*.jar" includes="**/*.jar" />
+		</copy>
 
 		<!-- Tarball it -->
 		<tar destfile="${dist.packages.dir}/${name}-${version}.tar.gz" compression="gzip" longfile="gnu">
