@@ -58,6 +58,8 @@ public class ReportalMailCreator implements MailCreator {
   public static File reportalMailTempDirectory;
   public static final String REPORTAL_MAIL_CREATOR = "ReportalMailCreator";
   public static final int NUM_PREVIEW_ROWS = 50;
+  //Attachment that equal or larger than 10MB will be skipped in the email
+  public static final long MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024L;
 
   static {
     DefaultMailCreator.registerCreator(REPORTAL_MAIL_CREATOR,
@@ -197,6 +199,7 @@ public class ReportalMailCreator implements MailCreator {
       message.println("</table>");
     }
 
+    long totalFileSize = 0;
     if (printData) {
       String locationFull =
           (outputLocation + "/" + flow.getExecutionId()).replace("//", "/");
@@ -325,7 +328,15 @@ public class ReportalMailCreator implements MailCreator {
         } finally {
           IOUtils.closeQuietly(csvInputStream);
         }
-        message.addAttachment(file, tempOutputFile);
+        totalFileSize += tempOutputFile.length();
+      }
+
+      if (totalFileSize < MAX_ATTACHMENT_SIZE) {
+        for (i = 0; i < fileList.length; i++) {
+            String file = fileList[i];
+            File tempOutputFile = new File(tempFolder, file);
+            message.addAttachment(file, tempOutputFile);
+        }
       }
 
       // Don't send an email if there are no results, unless this is an
@@ -339,7 +350,13 @@ public class ReportalMailCreator implements MailCreator {
       }
     }
 
-    message.println("</div>").println("</body>").println("</html>");
+    message.println("</div>");
+    if (totalFileSize >= MAX_ATTACHMENT_SIZE){
+      message.println("<tr>The total size of the reports (" + totalFileSize/1024/1024 + "MB) is bigger than the allowed maximum size of " +
+              MAX_ATTACHMENT_SIZE/1024/1024 + "MB. " +
+                  "It is too big to be attached in this message. Please use the link above titled Result Data to download the reports</tr>");
+    }
+    message.println("</body>").println("</html>");
 
     return true;
   }
