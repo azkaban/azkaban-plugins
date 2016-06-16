@@ -883,6 +883,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("variables", variableList);
     report.variables = variableList;
 
+    String proxyUser = null;
+
     for (int i = 0; i < variables; i++) {
       Variable variable =
         new Variable(getParam(req, "variable" + i + "title"), getParam(req,
@@ -890,6 +892,10 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
 
       if (variable.title.isEmpty() || variable.name.isEmpty()) {
         errors.add("Variable title and name cannot be empty.");
+      }
+
+      if (variable.title.equals("reportal.config.reportal.execution.user")) {
+        proxyUser = variable.name;
       }
 
       variableList.add(variable);
@@ -950,6 +956,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
           }
         }
       }
+    }
+
+    // Validate proxy user
+    if (proxyUser != null) {
+      if (!userManager.validateProxyUser(proxyUser,user)){
+        errors.add("User " + user.getUserId() + " has no permission to add " + proxyUser + " as proxy user.");
+      }
+      proxyUser = null;
     }
 
     // Validate email addresses
