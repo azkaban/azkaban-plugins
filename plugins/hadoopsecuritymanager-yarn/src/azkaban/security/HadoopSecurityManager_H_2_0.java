@@ -229,6 +229,10 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
         }
       }
     }
+
+    logger.debug("Relogging in from keytab if necessary.");
+    hsmInstance.reloginFromKeytab();
+
     return hsmInstance;
   }
 
