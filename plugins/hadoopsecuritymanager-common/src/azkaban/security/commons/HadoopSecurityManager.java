@@ -49,7 +49,7 @@ public abstract class HadoopSecurityManager {
 
   public void reloginFromKeytab() throws IOException {
     UserGroupInformation ugi = UserGroupInformation.getLoginUser();
-    if (ugi.isFromKeytab()){
+    if (ugi.isFromKeytab()) {
       ugi.checkTGTAndReloginFromKeytab();
     }
   }
