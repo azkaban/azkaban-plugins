@@ -17,6 +17,7 @@
 package azkaban.security.commons;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -44,6 +45,10 @@ public abstract class HadoopSecurityManager {
   public boolean isHadoopSecurityEnabled()
       throws HadoopSecurityManagerException {
     return false;
+  }
+
+  public void reloginFromKeytab() throws IOException {
+    UserGroupInformation.getLoginUser().reloginFromKeytab();
   }
 
   /**
