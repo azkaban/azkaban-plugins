@@ -224,19 +224,21 @@ public class HadoopJobUtils {
 
   /**
    * <pre>
-   * This method looks for the proper user execution jar.  
-   * The user input is expected in the following 2 formats:
+   * Spark-submit accepts a execution jar or a python file.
+   * This method looks for the proper user execution jar or a python file.
+   * The user input is expected in the following 3 formats:
    *   1. ./lib/abc
    *   2. ./lib/abc.jar
+   *   3. ./lib/abc.py
    * 
-   * This method will use prefix matching to find any jar that is the form of abc*.jar,
+   * This method will use prefix matching to find any jar/py that is the form of abc*.(jar|py),
    * so that users can bump jar versions without doing modifications to their Hadoop DSL.
    * 
    * This method will throw an Exception if more than one jar that matches the prefix is found
    * 
    * @param workingDirectory
    * @param userSpecifiedJarName
-   * @return the resolved actual jar file name to execute
+   * @return the resolved actual jar/py file name to execute
    */
   public static String resolveExecutionJarName(String workingDirectory,
           String userSpecifiedJarName, Logger log) {
@@ -249,8 +251,11 @@ public class HadoopJobUtils {
     }
 
     // in case user decides to specify with abc.jar, instead of only abc
-    if (userSpecifiedJarName.endsWith(".jar"))
+    if (userSpecifiedJarName.endsWith(".jar")) {
       userSpecifiedJarName = userSpecifiedJarName.replace(".jar", "");
+    } else if (userSpecifiedJarName.endsWith(".py")) {
+      userSpecifiedJarName = userSpecifiedJarName.replace(".py", "");
+    }
 
     // can't use java 1.7 stuff, reverting to a slightly ugly implementation
     String userSpecifiedJarPath = String.format("%s/%s", workingDirectory, userSpecifiedJarName);
@@ -266,7 +271,7 @@ public class HadoopJobUtils {
 
     File[] potentialExecutionJarList;
     try {
-      potentialExecutionJarList = getFilesInFolderByRegex(new File(dirName), jarPrefix + ".*jar");
+      potentialExecutionJarList = getFilesInFolderByRegex(new File(dirName), jarPrefix + ".*(jar|py)");
     } catch (FileNotFoundException e) {
       throw new IllegalStateException(
               "execution jar is suppose to be in this folder, but the folder doesn't exist: "
@@ -275,15 +280,15 @@ public class HadoopJobUtils {
 
     if (potentialExecutionJarList.length == 0) {
       throw new IllegalStateException("unable to find execution jar for Spark at path: "
-              + userSpecifiedJarPath + "*.jar");
+              + userSpecifiedJarPath + "*.(jar|py)");
     } else if (potentialExecutionJarList.length > 1) {
       throw new IllegalStateException(
               "I find more than one matching instance of the execution jar at the path, don't know which one to use: "
-                      + userSpecifiedJarPath + "*.jar");
+                      + userSpecifiedJarPath + "*.(jar|py)");
     }
 
     String resolvedJarName = potentialExecutionJarList[0].toString();
-    log.info("Resolving execution jar name: resolvedJarName: " + resolvedJarName);
+    log.info("Resolving execution jar/py name: resolvedJarName: " + resolvedJarName);
     return resolvedJarName;
   }
 

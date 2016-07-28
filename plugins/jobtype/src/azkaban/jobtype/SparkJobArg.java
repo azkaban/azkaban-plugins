@@ -34,6 +34,7 @@ public enum SparkJobArg {
   // Not SparkSubmit arguments: only exists in azkaban
   EXECUTION_JAR("execution-jar", null, true), //
   PARAMS("params", null, true), //
+  SPARK_VERSION("spark-version", null, true),
   ;
 
   public static final String delimiter = "\u001A";

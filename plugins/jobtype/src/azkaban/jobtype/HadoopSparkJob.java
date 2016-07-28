@@ -53,6 +53,7 @@ import azkaban.utils.StringUtils;
  * The Azkaban adaptor for running a Spark Submit job.
  * Use this in conjunction with  {@link azkaban.jobtype.HadoopSecureSparkWrapper}
  *
+ * 
  * </pre>
  * 
  * @see azkaban.jobtype.HadoopSecureSparkWrapper
@@ -64,8 +65,14 @@ public class HadoopSparkJob extends JavaProcessJob {
       HadoopSecureSparkWrapper.class.getName();
 
   // Spark params
-
   public static final String DRIVER_JAVA_OPTIONS = "driver-java-options";
+
+  // SPARK_HOME ENV VAR
+  public static final String SPARK_HOME_ENV_VAR = "SPARK_HOME";
+  // SPARK JOBTYPE SYSTEM PROPERTY spark.dynamic.res.alloc.enabled
+  public static final String SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY = "spark.dynamic.res.alloc.enabled";
+  // SPARK JOBTYPE ENV VAR if spark.dynamic.res.alloc.enabled is set to true
+  public static final String SPARK_DYNAMIC_RES_ENV_VAR = "SPARK_DYNAMIC_RES_ENABLED";
 
   // security variables
   private String userToProxy = null;
@@ -115,6 +122,10 @@ public class HadoopSparkJob extends JavaProcessJob {
               .getHadoopTokens(hadoopSecurityManager, props, getLog());
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION,
           tokenFile.getAbsolutePath());
+    }
+
+    if (getSysProps().getBoolean(SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY, Boolean.FALSE)) {
+      getJobProps().put("env." + SPARK_DYNAMIC_RES_ENV_VAR, Boolean.TRUE.toString());
     }
 
     try {
@@ -194,7 +205,6 @@ public class HadoopSparkJob extends JavaProcessJob {
     } else {
       info("Not setting up secure proxy info for child process");
     }
-
     return args;
   }
 
@@ -244,6 +254,8 @@ public class HadoopSparkJob extends JavaProcessJob {
         executionJarHelper(jobProps, workingDir, log, argList);
       } else if (sparkJobArg.equals(SparkJobArg.PARAMS)) {
         paramsHelper(jobProps, argList);
+      } else if (sparkJobArg.equals(SparkJobArg.SPARK_VERSION)) {
+        // do nothing since this arg is handled in getClassPaths()
       }
     }
     return StringUtils
@@ -313,6 +325,7 @@ public class HadoopSparkJob extends JavaProcessJob {
   @Override
   protected List<String> getClassPaths() {
 
+    String pluginDir = getSysProps().get("plugin.dir");
     List<String> classPath = super.getClassPaths();
 
     classPath.add(getSourcePathFromClass(Props.class));
@@ -321,25 +334,31 @@ public class HadoopSparkJob extends JavaProcessJob {
 
     classPath.add(HadoopConfigurationInjector.getPath(getJobProps(),
         getWorkingDirectory()));
+
     List<String> typeClassPath =
         getSysProps().getStringList("jobtype.classpath", null, ",");
+    info("Adding jobtype.classpath: " + typeClassPath);
     if (typeClassPath != null) {
       // fill in this when load this jobtype
-      String pluginDir = getSysProps().get("plugin.dir");
       for (String jar : typeClassPath) {
         File jarFile = new File(jar);
         if (!jarFile.isAbsolute()) {
           jarFile = new File(pluginDir + File.separatorChar + jar);
         }
-
         if (!classPath.contains(jarFile.getAbsoluteFile())) {
           classPath.add(jarFile.getAbsolutePath());
         }
       }
     }
 
+    String sparkHome = getSparkHome();
+
+    classPath.add(sparkHome + "/conf");
+    classPath.add(sparkHome + "/lib/*");
+
     List<String> typeGlobalClassPath =
         getSysProps().getStringList("jobtype.global.classpath", null, ",");
+    info("Adding jobtype.global.classpath: " + typeGlobalClassPath);
     if (typeGlobalClassPath != null) {
       for (String jar : typeGlobalClassPath) {
         if (!classPath.contains(jar)) {
@@ -348,7 +367,26 @@ public class HadoopSparkJob extends JavaProcessJob {
       }
     }
 
+    info("Final classpath: " + classPath);
     return classPath;
+  }
+
+  private String getSparkHome() {
+    String sparkHome = null;
+    String jobSparkVer = getJobProps().get(SparkJobArg.SPARK_VERSION.azPropName);
+    if (jobSparkVer != null) {
+      sparkHome = getSysProps().get("spark." + jobSparkVer + ".home");
+      if (sparkHome != null) {
+        info("Using job specific spark: " + sparkHome);
+        getJobProps().put("env." + SPARK_HOME_ENV_VAR, sparkHome);
+      }
+    } 
+
+    if (sparkHome == null) {
+      sparkHome = getSysProps().get("spark.home");
+      info("Using system default spark: " + sparkHome);
+    }
+    return sparkHome;
   }
 
   private static String getSourcePathFromClass(Class<?> containedClass) {
