@@ -20,11 +20,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Properties;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import azkaban.utils.Props;
@@ -34,6 +37,7 @@ import azkaban.crypto.Decryptions;
 import azkaban.jobtype.javautils.JobUtils;
 import azkaban.jobtype.javautils.Whitelist;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.teradata.hadoop.tool.TeradataImportTool;
 
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
@@ -44,8 +48,24 @@ public class TeradataToHdfsJobRunnerMain {
   private final Logger _logger;
 
   public TeradataToHdfsJobRunnerMain() throws FileNotFoundException, IOException {
+    this(HadoopSecureWrapperUtils.loadAzkabanProps());
+  }
+
+  private TeradataToHdfsJobRunnerMain(Properties jobProps) throws FileNotFoundException, IOException {
+    this(jobProps, new Decryptions());
+  }
+
+  @VisibleForTesting
+  TeradataToHdfsJobRunnerMain(Properties jobProps, Decryptions decryptions) throws FileNotFoundException, IOException {
     _logger = JobUtils.initJobLogger();
-    _jobProps = HadoopSecureWrapperUtils.loadAzkabanProps();
+    _logger.info("Job properties: " + jobProps);
+
+    _jobProps = jobProps;
+
+    String logLevel = jobProps.getProperty(TdchConstants.TDCH_LOG_LEVEL);
+    if(!StringUtils.isEmpty(logLevel)) {
+      _logger.setLevel(Level.toLevel(logLevel));
+    }
 
     Props props = new Props(null, _jobProps);
     HadoopConfigurationInjector.injectResources(props);
@@ -63,13 +83,13 @@ public class TeradataToHdfsJobRunnerMain {
     }
 
     _params = TdchParameters.builder()
-                            .mrParams(_jobProps.getProperty(TdchConstants.HADOOP_CONFIG_KEY))
+                            .mrParams(props.getMapByPrefix(TdchConstants.HADOOP_CONFIG_PREFIX_KEY).values())
                             .libJars(props.getString(TdchConstants.LIB_JARS_KEY))
                             .tdJdbcClassName(TdchConstants.TERADATA_JDBCDRIVER_CLASSNAME)
                             .teradataHostname(props.getString(TdchConstants.TD_HOSTNAME_KEY))
                             .fileFormat(_jobProps.getProperty(TdchConstants.HDFS_FILE_FORMAT_KEY))
                             .fieldSeparator(_jobProps.getProperty(TdchConstants.HDFS_FIELD_SEPARATOR_KEY))
-                            .jobType(TdchConstants.TDCH_JOB_TYPE)
+                            .jobType(props.getString(TdchConstants.TDCH_JOB_TYPE, TdchConstants.DEFAULT_TDCH_JOB_TYPE))
                             .userName(props.getString(TdchConstants.TD_USERID_KEY))
                             .credentialName(_jobProps.getProperty(TdchConstants.TD_CREDENTIAL_NAME_KEY))
                             .password(password)
