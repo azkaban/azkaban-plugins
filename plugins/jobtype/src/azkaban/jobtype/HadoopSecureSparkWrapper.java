@@ -181,7 +181,7 @@ public class HadoopSecureSparkWrapper {
               || argArray[i+1].startsWith(SPARK_CONF_DYNAMIC_ALLOC_ENABLED)) // spark.dynamicAllocation.enabled
         )) {
 
-          logger.info("Spark cluster enforces dynamic resource allocation. Ignore user param: " 
+          logger.info("Azbakan enforces dynamic resource allocation. Ignore user param: "
             + argArray[i] + " " + argArray[i+1]);
           argArray[i] = null;
           argArray[++i] = null;
@@ -191,14 +191,15 @@ public class HadoopSecureSparkWrapper {
   }
 
   private static void handleNodeLabeling(String[] argArray) {
-    // Check if yarn cluster node labeling is enabled
-    // We detect the cluster settings to automatically enforce node labeling by ignoring
-    // user queue params.
-    // This is an automatic policy, rather than a configurable policy like dynamic allocation.
+    // HadoopSparkJob will set env var on this process if we enable node labeling policy for spark jobtype.
+    // We also detect the yarn cluster settings has enable node labeling
+    // We enforce node labeling policy by ignoring user queue params.
     Configuration conf = new Configuration();
-    boolean nodeLabelingEnabled = conf.getBoolean(YARN_CONF_NODE_LABELING_ENABLED, false);
+    boolean nodeLabelingYarn = conf.getBoolean(YARN_CONF_NODE_LABELING_ENABLED, false);
+    String nodeLabelingProp = System.getenv(HadoopSparkJob.SPARK_NODE_LABELING_ENV_VAR);
+    boolean nodeLabelingPolicy = nodeLabelingProp != null && nodeLabelingProp.equals(Boolean.TRUE.toString());
 
-    if (nodeLabelingEnabled) {
+    if (nodeLabelingYarn && nodeLabelingPolicy) {
       for (int i = 0; i < argArray.length; i++) {
         if (argArray[i] == null) continue;
         // If yarn cluster enables node labeling, applications should be submitted to a default
@@ -209,7 +210,7 @@ public class HadoopSecureSparkWrapper {
              argArray[i+1].startsWith(SPARK_CONF_QUEUE))
             || (argArray[i].equals(SparkJobArg.QUEUE.sparkParamName))) {
 
-          logger.info("Yarn cluster enforces node labeling. Ignore user param: "
+          logger.info("Azbakan enforces node labeling. Ignore user param: "
             + argArray[i] + " " + argArray[i+1]);
           argArray[i] = null;
           argArray[++i] = null;

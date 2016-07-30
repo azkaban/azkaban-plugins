@@ -53,6 +53,36 @@ import azkaban.utils.StringUtils;
  * The Azkaban adaptor for running a Spark Submit job.
  * Use this in conjunction with  {@link azkaban.jobtype.HadoopSecureSparkWrapper}
  *
+ * This class is used by azkaban executor to build the classpath, main args, env and jvm props
+ * for HadoopSecureSparkWrapper. Executor will then launch the job process and run 
+ * HadoopSecureSparkWrapper. HadoopSecureSparkWrapper will be the Spark client wrapper
+ * that uses the main args to launch spark-submit.
+ *
+ * Expect the following jobtype property:
+ * 
+ * spark.home (client default SPARK_HOME if user doesn't give a spark.version)
+ *             Conf will be either SPARK_CONF_DIR(we do not override it) or {spark.home}/conf
+ *
+ * spark.1.6.0.home (spark.{version}.home is REQUIRED for the {version} that we want to support.
+ *                  e.g. user can use spark 1.6.0 by setting spark.home=1.6.0 in their job property.
+ *                  This class will then look for plugin property spark.1.6.0.home to get the proper spark
+ *                  bin/conf to launch the client)
+ *
+ * spark.1.6.0.conf (OPTIONAL. spark.{version}.conf is the conf used for the {version}. 
+ *                  If not specified, the conf of this {version} will be spark.{version}.home/conf
+ *
+ * spark.dynamic.res.alloc.enabled (set to true if we want to enforce dynamic resource allocation policy.
+ *                  If set to true, our client wrapper will ignore user specified num-executor,
+ *                  also make sure user does not overrides dynamic allocation related conf. If this
+ *                  If it is enabled, we suggest the spark cluster should set up dynamic allocation
+ *                  properly and set related conf in spark-default.conf)
+ *
+ * spark.node.labeling.enabled (set to true if we want to enforce node labeling policy.
+ *                  If set to true, our client wrapper will ignore user specified queue. If this
+ *                  is enabled, we suggest to enable node labeling in yarn cluster, and also set
+ *                  queue param in spark-default.conf. Does not support launching spark job to any queue
+ *                  at this time for this feature)
+ *
  * 
  * </pre>
  * 
@@ -67,12 +97,18 @@ public class HadoopSparkJob extends JavaProcessJob {
   // Spark params
   public static final String DRIVER_JAVA_OPTIONS = "driver-java-options";
 
-  // SPARK_HOME ENV VAR
+  // SPARK_HOME ENV VAR for HadoopSecureSparkWrapper(Spark Client)
   public static final String SPARK_HOME_ENV_VAR = "SPARK_HOME";
-  // SPARK JOBTYPE SYSTEM PROPERTY spark.dynamic.res.alloc.enabled
+  // SPARK_CONF_DIR ENV VAR for HadoopSecureSparkWrapper(Spark Client)
+  public static final String SPARK_CONF_DIR_ENV_VAR = "SPARK_CONF_DIR";
+  // SPARK JOBTYPE PROPERTY spark.dynamic.res.alloc.enabled
   public static final String SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY = "spark.dynamic.res.alloc.enabled";
-  // SPARK JOBTYPE ENV VAR if spark.dynamic.res.alloc.enabled is set to true
+  // HadoopSecureSparkWrapper ENV VAR if spark.dynamic.res.alloc.enabled is set to true
   public static final String SPARK_DYNAMIC_RES_ENV_VAR = "SPARK_DYNAMIC_RES_ENABLED";
+  // SPARK JOBTYPE PROPERTY spark.node.labeling.enabled
+  public static final String SPARK_NODE_LABELING_JOBTYPE_PROPERTY = "spark.node.labeling.enabled";
+  // HadoopSecureSparkWrapper ENV VAR if spark.node.labeling.enabled is set to true
+  public static final String SPARK_NODE_LABELING_ENV_VAR = "SPARK_NODE_LABELING_ENABLED";
 
   // security variables
   private String userToProxy = null;
@@ -124,8 +160,15 @@ public class HadoopSparkJob extends JavaProcessJob {
           tokenFile.getAbsolutePath());
     }
 
+    // If we enable dynamic resource allocation or node labeling in jobtype property,
+    // then set proper env var for client wrapper(HadoopSecureSparkWrapper) to modify spark job conf
+    // before calling spark-submit to enforce every spark job uses dynamic allocation or node labeling
     if (getSysProps().getBoolean(SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY, Boolean.FALSE)) {
       getJobProps().put("env." + SPARK_DYNAMIC_RES_ENV_VAR, Boolean.TRUE.toString());
+    }
+    
+    if (getSysProps().getBoolean(SPARK_NODE_LABELING_JOBTYPE_PROPERTY, Boolean.FALSE)) {
+      getJobProps().put("env." + SPARK_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
     }
 
     try {
@@ -210,6 +253,8 @@ public class HadoopSparkJob extends JavaProcessJob {
 
   @Override
   protected String getMainArguments() {
+    // Build the main() arguments for HadoopSecureSparkWrapper, which are then
+    // passed to spark-submit
     return testableGetMainArguments(jobProps, getWorkingDirectory(), getLog());
   }
 
@@ -255,7 +300,8 @@ public class HadoopSparkJob extends JavaProcessJob {
       } else if (sparkJobArg.equals(SparkJobArg.PARAMS)) {
         paramsHelper(jobProps, argList);
       } else if (sparkJobArg.equals(SparkJobArg.SPARK_VERSION)) {
-        // do nothing since this arg is handled in getClassPaths()
+        // do nothing since this arg is not a spark-submit argument
+        // it is only used in getClassPaths() below
       }
     }
     return StringUtils
@@ -324,7 +370,7 @@ public class HadoopSparkJob extends JavaProcessJob {
 
   @Override
   protected List<String> getClassPaths() {
-
+    // The classpath for the process that runs HadoopSecureSparkWrapper
     String pluginDir = getSysProps().get("plugin.dir");
     List<String> classPath = super.getClassPaths();
 
@@ -351,10 +397,11 @@ public class HadoopSparkJob extends JavaProcessJob {
       }
     }
 
-    String sparkHome = getSparkHome();
+    // Decide spark home/conf and append Spark classpath for the client.
+    String[] sparkHomeConf = getSparkHomeConf();
 
-    classPath.add(sparkHome + "/conf");
-    classPath.add(sparkHome + "/lib/*");
+    classPath.add(sparkHomeConf[0] + "/lib/*");
+    classPath.add(sparkHomeConf[1]);
 
     List<String> typeGlobalClassPath =
         getSysProps().getStringList("jobtype.global.classpath", null, ",");
@@ -371,22 +418,45 @@ public class HadoopSparkJob extends JavaProcessJob {
     return classPath;
   }
 
-  private String getSparkHome() {
+  private String[] getSparkHomeConf() {
     String sparkHome = null;
+    String sparkConf = null;
+    // If user has specified version in job property. e.g. spark.version=1.6.0
     String jobSparkVer = getJobProps().get(SparkJobArg.SPARK_VERSION.azPropName);
     if (jobSparkVer != null) {
+      // Spark jobtype supports this version through plugin's jobtype config
+      // e.g. spark.1.6.0.home=/path_to_spark/ in commonprivate.properties
       sparkHome = getSysProps().get("spark." + jobSparkVer + ".home");
       if (sparkHome != null) {
-        info("Using job specific spark: " + sparkHome);
+        sparkConf = getSysProps().get("spark." + jobSparkVer + ".conf");
+        if (sparkConf == null) {
+          sparkConf = sparkHome + "/conf";
+        }
+        info("Using job specific spark: " + sparkHome + " and conf: " + sparkConf);
+        // Override the SPARK_HOME SPARK_CONF_DIR env for HadoopSecureSparkWrapper process(spark client)
         getJobProps().put("env." + SPARK_HOME_ENV_VAR, sparkHome);
+        getJobProps().put("env." + SPARK_CONF_DIR_ENV_VAR, sparkConf);
       }
     } 
 
+    // User job doesn't give spark.version
     if (sparkHome == null) {
+      // Use default spark.home. Configured in the jobtype plugin's config
       sparkHome = getSysProps().get("spark.home");
-      info("Using system default spark: " + sparkHome);
+      if (sparkHome == null) {
+        // Use system default SPARK_HOME env
+        sparkHome = System.getenv(SPARK_HOME_ENV_VAR);
+      }
+      sparkConf = (System.getenv(SPARK_CONF_DIR_ENV_VAR) != null) ?
+        System.getenv(SPARK_CONF_DIR_ENV_VAR) : (sparkHome + "/conf");
+      info("Using system default spark: " + sparkHome + " and conf: " + sparkConf);
     }
-    return sparkHome;
+      
+    if (sparkHome == null) {
+        throw new RuntimeException("SPARK is not available on the azkaban machine.");
+    }
+    
+    return new String[]{sparkHome, sparkConf};
   }
 
   private static String getSourcePathFromClass(Class<?> containedClass) {
