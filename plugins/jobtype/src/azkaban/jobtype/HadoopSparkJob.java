@@ -71,17 +71,22 @@ import azkaban.utils.StringUtils;
  * spark.1.6.0.conf (OPTIONAL. spark.{version}.conf is the conf used for the {version}. 
  *                  If not specified, the conf of this {version} will be spark.{version}.home/conf
  *
- * spark.dynamic.res.alloc.enabled (set to true if we want to enforce dynamic resource allocation policy.
+ * spark.dynamic.res.alloc.enforced (set to true if we want to enforce dynamic resource allocation policy.
+ *                  Enabling dynamic allocation policy for spark job type is different from enabling dynamic 
+ *                  allocation feature for Spark. This config inside Spark job type is to enforce dynamic 
+ *                  allocation feature for all Spark applications submitted via Azkaban Spark job type.
  *                  If set to true, our client wrapper will ignore user specified num-executor,
- *                  also make sure user does not overrides dynamic allocation related conf. If this
+ *                  also make sure user does not overrides dynamic allocation related conf. 
  *                  If it is enabled, we suggest the spark cluster should set up dynamic allocation
  *                  properly and set related conf in spark-default.conf)
  *
- * spark.node.labeling.enabled (set to true if we want to enforce node labeling policy.
+ * spark.node.labeling.enforced (set to true if we want to enforce node labeling policy.
+  *                 Enabling node labeling policy for spark job type is different from enabling node 
+ *                  labeling feature in YARN. This config inside Spark job type is to enforce node 
+ *                  labeling is used for all Spark applications submitted via Azkaban Spark job type.
  *                  If set to true, our client wrapper will ignore user specified queue. If this
  *                  is enabled, we suggest to enable node labeling in yarn cluster, and also set
- *                  queue param in spark-default.conf. Does not support launching spark job to any queue
- *                  at this time for this feature)
+ *                  queue param in spark-default.conf)
  *
  * 
  * </pre>
@@ -94,21 +99,18 @@ public class HadoopSparkJob extends JavaProcessJob {
   private static final String HADOOP_SECURE_SPARK_WRAPPER =
       HadoopSecureSparkWrapper.class.getName();
 
-  // Spark params
-  public static final String DRIVER_JAVA_OPTIONS = "driver-java-options";
-
   // SPARK_HOME ENV VAR for HadoopSecureSparkWrapper(Spark Client)
   public static final String SPARK_HOME_ENV_VAR = "SPARK_HOME";
   // SPARK_CONF_DIR ENV VAR for HadoopSecureSparkWrapper(Spark Client)
   public static final String SPARK_CONF_DIR_ENV_VAR = "SPARK_CONF_DIR";
-  // SPARK JOBTYPE PROPERTY spark.dynamic.res.alloc.enabled
-  public static final String SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY = "spark.dynamic.res.alloc.enabled";
-  // HadoopSecureSparkWrapper ENV VAR if spark.dynamic.res.alloc.enabled is set to true
-  public static final String SPARK_DYNAMIC_RES_ENV_VAR = "SPARK_DYNAMIC_RES_ENABLED";
-  // SPARK JOBTYPE PROPERTY spark.node.labeling.enabled
-  public static final String SPARK_NODE_LABELING_JOBTYPE_PROPERTY = "spark.node.labeling.enabled";
-  // HadoopSecureSparkWrapper ENV VAR if spark.node.labeling.enabled is set to true
-  public static final String SPARK_NODE_LABELING_ENV_VAR = "SPARK_NODE_LABELING_ENABLED";
+  // SPARK JOBTYPE PROPERTY spark.dynamic.res.alloc.enforced
+  public static final String SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY = "spark.dynamic.res.alloc.enforced";
+  // HadoopSecureSparkWrapper ENV VAR if spark.dynamic.res.alloc.enforced is set to true
+  public static final String SPARK_DYNAMIC_RES_ENV_VAR = "SPARK_DYNAMIC_RES_ENFORCED";
+  // SPARK JOBTYPE PROPERTY spark.node.labeling.enforced
+  public static final String SPARK_NODE_LABELING_JOBTYPE_PROPERTY = "spark.node.labeling.enforced";
+  // HadoopSecureSparkWrapper ENV VAR if spark.node.labeling.enforced is set to true
+  public static final String SPARK_NODE_LABELING_ENV_VAR = "SPARK_NODE_LABELING_ENFORCED";
 
   // security variables
   private String userToProxy = null;
@@ -424,6 +426,7 @@ public class HadoopSparkJob extends JavaProcessJob {
     // If user has specified version in job property. e.g. spark.version=1.6.0
     String jobSparkVer = getJobProps().get(SparkJobArg.SPARK_VERSION.azPropName);
     if (jobSparkVer != null) {
+      info("This job set spark version: " + jobSparkVer);
       // Spark jobtype supports this version through plugin's jobtype config
       // e.g. spark.1.6.0.home=/path_to_spark/ in commonprivate.properties
       sparkHome = getSysProps().get("spark." + jobSparkVer + ".home");
@@ -436,6 +439,8 @@ public class HadoopSparkJob extends JavaProcessJob {
         // Override the SPARK_HOME SPARK_CONF_DIR env for HadoopSecureSparkWrapper process(spark client)
         getJobProps().put("env." + SPARK_HOME_ENV_VAR, sparkHome);
         getJobProps().put("env." + SPARK_CONF_DIR_ENV_VAR, sparkConf);
+      } else {
+        info("The spark version " + jobSparkVer +" is not supported. Using system default.");
       }
     } 
 
@@ -453,7 +458,16 @@ public class HadoopSparkJob extends JavaProcessJob {
     }
       
     if (sparkHome == null) {
-        throw new RuntimeException("SPARK is not available on the azkaban machine.");
+      throw new RuntimeException("SPARK is not available on the azkaban machine.");
+    } else {
+      File homeDir = new File(sparkHome);
+      if (!homeDir.exists()) {
+        throw new RuntimeException("SPARK home dir does not exist.");
+      }
+      File confDir = new File(sparkConf);
+      if (!confDir.exists()) {
+        error("SPARK conf dir does not exist. Will use SPARK_HOME/conf as default.");
+      }
     }
     
     return new String[]{sparkHome, sparkConf};

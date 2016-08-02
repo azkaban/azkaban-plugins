@@ -60,6 +60,7 @@ public class HadoopSecureSparkWrapper {
 
   //SPARK CONF PARAM
   private static final String SPARK_CONF_EXTRA_DRIVER_OPTIONS = "spark.driver.extraJavaOptions";
+  private static final String SPARK_CONF_NUM_EXECUTORS = "spark.executor.instances";
   private static final String SPARK_CONF_SHUFFLE_SERVICE_ENABLED = "spark.shuffle.service.enabled";
   private static final String SPARK_CONF_DYNAMIC_ALLOC_ENABLED = "spark.dynamicAllocation.enabled";
   private static final String SPARK_CONF_QUEUE = "spark.yarn.queue";
@@ -107,7 +108,7 @@ public class HadoopSecureSparkWrapper {
     }
 
     // Arg String passed to here are long strings delimited by SparkJobArg.delimiter
-    // munge everything together and repartition based by our ^Z character, instead of by the
+    // murge everything together and repartition based by our ^Z character, instead of by the
     // default "space" character
     StringBuilder concat = new StringBuilder();
     concat.append(args[0]);
@@ -162,9 +163,11 @@ public class HadoopSecureSparkWrapper {
   }
 
   private static void handleDynamicResourceAllocation(String[] argArray) {
-    // HadoopSparkJob will set env var on this process if we enable dynamic allocation policy for spark jobtype.
-    // This policy can be enabled in spark jobtype plugin's conf property.
-    // This policy is designed to enforce dynamic allocation.
+    // HadoopSparkJob will set env var on this process if we enforce dynamic allocation policy for spark jobtype.
+    // This policy can be enabled through spark jobtype plugin's conf property.
+    // Enabling dynamic allocation policy for azkaban spark jobtype is different from enabling dynamic allocation 
+    // feature for Spark. This config inside Spark jobtype is to enforce dynamic allocation feature is used for all 
+    // Spark applications submitted via Azkaban Spark job type.
     String dynamicAllocProp = System.getenv(HadoopSparkJob.SPARK_DYNAMIC_RES_ENV_VAR);
     boolean dynamicAllocEnabled = dynamicAllocProp != null && dynamicAllocProp.equals(Boolean.TRUE.toString());
     if (dynamicAllocEnabled) {
@@ -172,12 +175,13 @@ public class HadoopSecureSparkWrapper {
         if (argArray[i] == null) continue;
 
         // If user specifies num of executors, or if user tries to disable dynamic allocation for his application
-        // by setting some conf params to falase, we need to ignore these settings to enforce the application 
-        // uses dynamic allocation.
+        // by setting some conf params to false, we need to ignore these settings to enforce the application 
+        // uses dynamic allocation for spark
         if (argArray[i].equals(SparkJobArg.NUM_EXECUTORS.sparkParamName) // --num-executors
           || (
             argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) // --conf
-            && (argArray[i+1].startsWith(SPARK_CONF_SHUFFLE_SERVICE_ENABLED) // spark.shuffle.service.enabled=
+            && (argArray[i+1].startsWith(SPARK_CONF_NUM_EXECUTORS) // spark.executor.instances
+              || argArray[i+1].startsWith(SPARK_CONF_SHUFFLE_SERVICE_ENABLED) // spark.shuffle.service.enabled
               || argArray[i+1].startsWith(SPARK_CONF_DYNAMIC_ALLOC_ENABLED)) // spark.dynamicAllocation.enabled
         )) {
 
@@ -193,7 +197,9 @@ public class HadoopSecureSparkWrapper {
   private static void handleNodeLabeling(String[] argArray) {
     // HadoopSparkJob will set env var on this process if we enable node labeling policy for spark jobtype.
     // We also detect the yarn cluster settings has enable node labeling
-    // We enforce node labeling policy by ignoring user queue params.
+    // Enabling node labeling policy for spark job type is different from enabling node labeling 
+    // feature for Yarn. This config inside Spark job type is to enforce node labeling feature for all 
+    // Spark applications submitted via Azkaban Spark job type.
     Configuration conf = new Configuration();
     boolean nodeLabelingYarn = conf.getBoolean(YARN_CONF_NODE_LABELING_ENABLED, false);
     String nodeLabelingProp = System.getenv(HadoopSparkJob.SPARK_NODE_LABELING_ENV_VAR);
@@ -222,6 +228,6 @@ public class HadoopSecureSparkWrapper {
   private static String[] removeNullsFromArgArray(String[] argArray) {
     List<String> argList = new ArrayList(Arrays.asList(argArray));
     argList.removeAll(Collections.singleton(null));
-    return argList.toArray(new String[0]);
+    return argList.toArray(new String[argList.size()]);
   }
 }
