@@ -25,9 +25,11 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import azkaban.jobExecutor.AbstractProcessJob;
@@ -59,16 +61,19 @@ public class HdfsToTeradataJobRunnerMain {
   }
 
   private HdfsToTeradataJobRunnerMain(Properties jobProps) throws FileNotFoundException, IOException {
-    this(jobProps,
-         new Whitelist(new Props(null, jobProps), FileSystem.get(new Configuration())),
-         new Decryptions());
+    this(jobProps, new Decryptions());
   }
 
   @VisibleForTesting
-  HdfsToTeradataJobRunnerMain(Properties jobProps, Whitelist whitelist, Decryptions decryptions) throws FileNotFoundException, IOException {
+  HdfsToTeradataJobRunnerMain(Properties jobProps, Decryptions decryptions) throws FileNotFoundException, IOException {
     _logger = JobUtils.initJobLogger();
-    _jobProps = jobProps;
+    _logger.info("Job properties: " + jobProps);
 
+    String logLevel = jobProps.getProperty(TdchConstants.TDCH_LOG_LEVEL);
+    if(!StringUtils.isEmpty(logLevel)) {
+      _logger.setLevel(Level.toLevel(logLevel));
+    }
+    _jobProps = jobProps;
     Props props = new Props(null, _jobProps);
 
     HadoopConfigurationInjector.injectResources(props);
@@ -76,7 +81,7 @@ public class HdfsToTeradataJobRunnerMain {
     UserGroupInformation.setConfiguration(conf);
 
     if (props.containsKey(Whitelist.WHITE_LIST_FILE_PATH_KEY)) {
-      whitelist.validateWhitelisted(props);
+      new Whitelist(props, FileSystem.get(conf)).validateWhitelisted(props);
     }
 
     String encryptedCredential = _jobProps.getProperty(TdchConstants.TD_ENCRYPTED_CREDENTIAL_KEY);
@@ -88,28 +93,37 @@ public class HdfsToTeradataJobRunnerMain {
     }
 
     _params = TdchParameters.builder()
-                            .mrParams(_jobProps.getProperty(TdchConstants.HADOOP_CONFIG_KEY))
-                            .libJars(props.getString(TdchConstants.LIB_JARS_KEY))
+                            .mrParams(props.getMapByPrefix(TdchConstants.HADOOP_CONFIG_PREFIX_KEY).values())
+                            .libJars(createLibJarStr(props))
                             .tdJdbcClassName(TdchConstants.TERADATA_JDBCDRIVER_CLASSNAME)
                             .teradataHostname(props.getString(TdchConstants.TD_HOSTNAME_KEY))
                             .fileFormat(_jobProps.getProperty(TdchConstants.HDFS_FILE_FORMAT_KEY))
                             .fieldSeparator(_jobProps.getProperty(TdchConstants.HDFS_FIELD_SEPARATOR_KEY))
-                            .jobType(TdchConstants.TDCH_JOB_TYPE)
+                            .jobType(props.getString(TdchConstants.TDCH_JOB_TYPE, TdchConstants.DEFAULT_TDCH_JOB_TYPE))
                             .userName(props.getString(TdchConstants.TD_USERID_KEY))
                             .credentialName(_jobProps.getProperty(TdchConstants.TD_CREDENTIAL_NAME_KEY))
                             .password(password)
                             .avroSchemaPath(_jobProps.getProperty(TdchConstants.AVRO_SCHEMA_PATH_KEY))
                             .avroSchemaInline(_jobProps.getProperty(TdchConstants.AVRO_SCHEMA_INLINE_KEY))
-                            .sourceHdfsPath(props.getString(TdchConstants.SOURCE_HDFS_PATH_KEY))
+                            .sourceHdfsPath(_jobProps.getProperty(TdchConstants.SOURCE_HDFS_PATH_KEY))
                             .targetTdTableName(props.getString(TdchConstants.TARGET_TD_TABLE_NAME_KEY))
                             .errorTdDatabase(_jobProps.getProperty(TdchConstants.ERROR_DB_KEY))
                             .errorTdTableName(_jobProps.getProperty(TdchConstants.ERROR_TABLE_KEY))
                             .tdInsertMethod(_jobProps.getProperty(TdchConstants.TD_INSERT_METHOD_KEY))
-                            .numMapper(TdchConstants.DEFAULT_NO_MAPPERS)
+                            .numMapper(props.getInt(TdchConstants.TD_NUM_MAPPERS, TdchConstants.DEFAULT_NO_MAPPERS))
+                            .hiveSourceDatabase(_jobProps.getProperty(TdchConstants.SOURCE_HIVE_DATABASE_NAME_KEY))
+                            .hiveSourceTable(_jobProps.getProperty(TdchConstants.SOURCE_HIVE_TABLE_NAME_KEY))
+                            .hiveConfFile(_jobProps.getProperty(TdchConstants.TDCH_HIVE_CONF_KEY))
                             .otherProperties(_jobProps.getProperty(TdchConstants.TD_OTHER_PROPERTIES_HOCON_KEY))
                             .build();
   }
 
+  private String createLibJarStr(Props props) {
+    if (TdchConstants.TDCH_HIVE_JOB_TYPE.equals(props.getString(TdchConstants.TDCH_JOB_TYPE, TdchConstants.DEFAULT_TDCH_JOB_TYPE))) {
+      return props.getString(TdchConstants.LIB_JARS_HIVE_KEY);
+    }
+    return props.getString(TdchConstants.LIB_JARS_KEY);
+  }
 
   public void run() throws IOException, InterruptedException {
     String jobName = System.getenv(AbstractProcessJob.JOB_NAME_ENV);

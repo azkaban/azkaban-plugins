@@ -16,7 +16,10 @@
 
 package azkaban.jobtype.connectors.teradata;
 
+import static azkaban.jobtype.connectors.teradata.TdchConstants.*;
+
 import org.apache.log4j.Logger;
+
 import azkaban.utils.Props;
 
 /**
@@ -27,6 +30,7 @@ public class HdfsToTeradataJob extends TeradataJob {
 
   public HdfsToTeradataJob(String jobid, Props sysProps, Props jobProps, Logger log) {
     super(jobid, sysProps, jobProps, log);
+    getJobProps().put(LIB_JARS_HIVE_KEY, sysProps.get(LIB_JARS_HIVE_KEY));
   }
 
   @Override

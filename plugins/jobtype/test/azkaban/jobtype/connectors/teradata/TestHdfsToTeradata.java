@@ -28,12 +28,10 @@ import com.google.common.base.Optional;
 
 import azkaban.crypto.Decryptions;
 import azkaban.jobtype.connectors.jdbc.JdbcCommands;
-import azkaban.jobtype.javautils.Whitelist;
 
 public class TestHdfsToTeradata {
 
   private Properties properties;
-  private Whitelist whitelist;
   private Decryptions decryptions;
 
   @Before
@@ -47,7 +45,6 @@ public class TestHdfsToTeradata {
     properties.put(SOURCE_HDFS_PATH_KEY, "test");
     properties.put(LIB_JARS_KEY, "test");
 
-    whitelist = mock(Whitelist.class);
     decryptions = mock(Decryptions.class);
     when(decryptions.decrypt(any(), any(), any())).thenReturn("password");
   }
@@ -57,7 +54,7 @@ public class TestHdfsToTeradata {
     properties.put(TARGET_TD_TABLE_NAME_KEY, "db.target_table");
     properties.put(DROP_ERROR_TABLE_KEY, Boolean.toString(true));
 
-    HdfsToTeradataJobRunnerMain job = spy(new HdfsToTeradataJobRunnerMain(properties, whitelist, decryptions));
+    HdfsToTeradataJobRunnerMain job = spy(new HdfsToTeradataJobRunnerMain(properties, decryptions));
 
     Connection conn = mock(Connection.class);
     doReturn(conn).when(job).newConnection();
@@ -84,7 +81,7 @@ public class TestHdfsToTeradata {
     properties.put(TARGET_TD_TABLE_NAME_KEY, "db.target_table");
     properties.put(DROP_ERROR_TABLE_KEY, Boolean.toString(false));
 
-    HdfsToTeradataJobRunnerMain job = spy(new HdfsToTeradataJobRunnerMain(properties, whitelist, decryptions));
+    HdfsToTeradataJobRunnerMain job = spy(new HdfsToTeradataJobRunnerMain(properties, decryptions));
 
     Connection conn = mock(Connection.class);
     doReturn(conn).when(job).newConnection();
@@ -109,7 +106,7 @@ public class TestHdfsToTeradata {
     properties.put(TARGET_TD_TABLE_NAME_KEY, "db.target_table");
     properties.put(DROP_ERROR_TABLE_KEY, Boolean.toString(true));
 
-    HdfsToTeradataJobRunnerMain job = spy(new HdfsToTeradataJobRunnerMain(properties, whitelist, decryptions));
+    HdfsToTeradataJobRunnerMain job = spy(new HdfsToTeradataJobRunnerMain(properties, decryptions));
 
     Connection conn = mock(Connection.class);
     doReturn(conn).when(job).newConnection();
@@ -134,7 +131,7 @@ public class TestHdfsToTeradata {
     properties.put(TARGET_TD_TABLE_NAME_KEY, "db.target_table");
     properties.put(REPLACE_TARGET_TABLE_KEY, Boolean.toString(true));
 
-    HdfsToTeradataJobRunnerMain job = spy(new HdfsToTeradataJobRunnerMain(properties, whitelist, decryptions));
+    HdfsToTeradataJobRunnerMain job = spy(new HdfsToTeradataJobRunnerMain(properties, decryptions));
 
     Connection conn = mock(Connection.class);
     doReturn(conn).when(job).newConnection();

@@ -14,14 +14,19 @@ package azkaban.jobtype.connectors.teradata;
 public interface TdchConstants {
   public static final String TERADATA_JDBCDRIVER_CLASSNAME = "com.teradata.jdbc.TeraDriver";
   public static final String TD_WALLET_FORMAT = "$tdwallet(%s)";
-  public static final String TDCH_JOB_TYPE = "hdfs";
+  public static final String DEFAULT_TDCH_JOB_TYPE = "hdfs";
+  public static final String TDCH_HIVE_JOB_TYPE = "hive";
   public static final String AVRO_FILE_FORMAT = "avrofile";
   public static final String LIB_JAR_DELIMITER = ",";
   public static final int DEFAULT_NO_MAPPERS = 8;
 
   //Keys for the properties
+  public static final String TDCH_JOB_TYPE = "tdch.jobtype";
+  public static final String TDCH_LOG_LEVEL = "tdch.log.level";
+
   public static final String TD_WALLET_JAR = "jobtype.tdwallet.jar";
   public static final String LIB_JARS_KEY = "libjars";
+  public static final String LIB_JARS_HIVE_KEY = "libjars.hive";
   public static final String TD_HOSTNAME_KEY = "td.hostname";
   public static final String TD_USERID_KEY = "td.userid";
   @Deprecated
@@ -31,6 +36,7 @@ public interface TdchConstants {
   public static final String AVRO_SCHEMA_PATH_KEY = "avro.schema.path";
   public static final String AVRO_SCHEMA_INLINE_KEY = "avro.schema.inline";
 
+  public static final String TD_NUM_MAPPERS = "tdch.num.mappers";
   public static final String TD_INSERT_METHOD_KEY = "tdch.insert.method";
   public static final String SOURCE_HDFS_PATH_KEY = "source.hdfs.path";
   public static final String TARGET_TD_TABLE_NAME_KEY = "target.td.tablename";
@@ -42,6 +48,7 @@ public interface TdchConstants {
   public static final String HDFS_FILE_FORMAT_KEY = "hdfs.fileformat";
   public static final String HDFS_FIELD_SEPARATOR_KEY = "hdfs.separator";
   public static final String HADOOP_CONFIG_KEY = "hadoop.config";
+  public static final String HADOOP_CONFIG_PREFIX_KEY = "hadoop.config.";
 
   public static final String TD_RETRIEVE_METHOD_KEY = "tdch.retrieve.method";
   public static final String SOURCE_TD_TABLE_NAME_KEY = "source.td.tablename";
@@ -49,4 +56,8 @@ public interface TdchConstants {
   public static final String TARGET_HDFS_PATH_KEY = "target.hdfs.path";
   public static final String TD_OTHER_PROPERTIES_HOCON_KEY = "tdch.other.properties.hocon";
   public static final String JOB_OUTPUT_PROPERTIES_KEY = "output.property.keys";
+
+  public static final String SOURCE_HIVE_DATABASE_NAME_KEY = "source.hive.databasename";
+  public static final String SOURCE_HIVE_TABLE_NAME_KEY = "source.hive.tablename";
+  public static final String TDCH_HIVE_CONF_KEY = "tdch.hive.conf";
 }

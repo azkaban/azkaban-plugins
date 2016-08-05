@@ -42,7 +42,7 @@ public class TdchParameters {
   private static final String DEFAULT_RETRIEVE_METHOD = "split.by.amp";
   private static final int ERROR_TABLE_NAME_LENGTH_LIMIT = 24;
 
-  private final String _mrParams;
+  private final List<String> _mrParams;
   private final String _libJars;
   private final String _tdJdbcClassName;
   private final String _tdUrl;
@@ -63,6 +63,10 @@ public class TdchParameters {
   private final String _sourceHdfsPath;
   private final String _targetTdTableName;
   private final Optional<String> _targetTdDatabaseName;
+
+  private final String _hiveSourceDatabase;
+  private final String _hiveSourceTable;
+  private final Optional<String> _hiveConfFile;
 
   private final Optional<String> _tdErrorDatabase;
   private final Optional<String> _tdErrorTableName;
@@ -109,15 +113,20 @@ public class TdchParameters {
     this._sourceTdTableName = Optional.fromNullable(builder._sourceTdTableName);
     this._targetHdfsPath = builder._targetHdfsPath;
     this._tdRetrieveMethod = Optional.fromNullable(builder._tdRetrieveMethod);
+
+    this._hiveSourceDatabase = builder._hiveSourceDatabase;
+    this._hiveSourceTable = builder._hiveSourceTable;
+    this._hiveConfFile = Optional.fromNullable(builder._hiveconfFile);
   }
 
   private enum TdchType {
     HDFS_TO_TERADATA,
+    HIVE_TO_TERADATA,
     TERADATA_TO_HDFS
   }
 
   public static class Builder {
-    private String _mrParams;
+    private List<String> _mrParams;
     private String _libJars;
     private String _tdJdbcClassName;
     private String _tdHostName;
@@ -148,8 +157,12 @@ public class TdchParameters {
     private String _targetHdfsPath;
     private String _tdRetrieveMethod;
 
-    public Builder mrParams(String mrParams) {
-      this._mrParams = mrParams;
+    private String _hiveSourceDatabase;
+    private String _hiveSourceTable;
+    private String _hiveconfFile;
+
+    public Builder mrParams(Collection<String> mrParams) {
+      this._mrParams = ImmutableList.<String>builder().addAll(mrParams).build();
       return this;
     }
 
@@ -227,6 +240,11 @@ public class TdchParameters {
 
     /**
      * Takes HOCON notation: https://github.com/typesafehub/config/blob/master/HOCON.md
+     * To override TDCH parameter, add "key1=value1,key2=value2" at hoconInput where key should be the one
+     * supported by TDCH itself.
+     * To remove TDCH parameter, add key="" into hoconInput.
+     *
+     * Override and removal provides total control the final input parameter that TDCH receives.
      *
      * @param hoconInput
      * @return
@@ -281,14 +299,34 @@ public class TdchParameters {
       return this;
     }
 
+    public Builder hiveSourceDatabase(String hiveSourceDatabase) {
+      this._hiveSourceDatabase = hiveSourceDatabase;
+      return this;
+    }
+
+    public Builder hiveSourceTable(String hiveSourceTable) {
+      this._hiveSourceTable = hiveSourceTable;
+      return this;
+    }
+
+    public Builder hiveConfFile(String hiveConfFile) {
+      this._hiveconfFile = hiveConfFile;
+      return this;
+    }
+
     public TdchParameters build() {
       validate();
-      if (TdchType.HDFS_TO_TERADATA.equals(_tdchType)) {
+      if (TdchType.HDFS_TO_TERADATA.equals(_tdchType)
+          || TdchType.HIVE_TO_TERADATA.equals(_tdchType)) {
         assignErrorTbl();
       }
       return new TdchParameters(this);
     }
 
+    /**
+     * Unless error table name is specified, it will use target table name as prefix of error table where TDCH will add suffix into it.
+     * If target table name is too long, it will leave error table as blank so that TDCH will choose random error table name.
+     */
     private void assignErrorTbl() {
       if (!StringUtils.isEmpty(_tdErrorTableName)) {
         return;
@@ -345,6 +383,36 @@ public class TdchParameters {
       String charSet = StringUtils.isEmpty(_tdCharSet) ? DEFAULT_CHARSET : _tdCharSet;
       _tdUrl = TERADATA_JDBC_URL_PREFIX + _tdHostName + TERADATA_JDBC_URL_CHARSET_KEY + charSet;
 
+      validateJobtype();
+
+      if (!StringUtils.isEmpty(_tdErrorTableName)) {
+        Preconditions.checkArgument(!new DatabaseTable(_tdErrorTableName).database.isPresent(),
+                                    "Error table name cannot have database prefix. Use " + TdchConstants.ERROR_DB_KEY);
+        Preconditions.checkArgument(_tdErrorTableName.length() <= ERROR_TABLE_NAME_LENGTH_LIMIT,
+            "Error table name cannot exceed " + ERROR_TABLE_NAME_LENGTH_LIMIT + " chracters.");
+      }
+    }
+
+    private void validateJobtype() {
+      if ("hdfs".equals(_jobType)) {
+        validateHdfsJobtype();
+      } else if ("hive".equals(_jobType)) {
+        validateHiveJobtype();
+      } else {
+        throw new IllegalArgumentException("Job type " + _jobType + " is not supported");
+      }
+
+    }
+
+    private void validateHiveJobtype() {
+      ValidationUtils.validateNotEmpty(_targetTdTableName, "targetTdTableName");
+      ValidationUtils.validateNotEmpty(_hiveSourceDatabase, "hiveSourceDatabase");
+      ValidationUtils.validateNotEmpty(_hiveSourceTable, "hiveSourceTable");
+      Preconditions.checkArgument(StringUtils.isEmpty(_sourceHdfsPath), "sourceHdfsPath should be empty for hive job.");
+      _tdchType = TdchType.HIVE_TO_TERADATA;
+    }
+
+    private void validateHdfsJobtype() {
       boolean isHdfsToTd = !StringUtils.isEmpty(_sourceHdfsPath) && !StringUtils.isEmpty(_targetTdTableName);
       boolean isTdToHdfs = !(StringUtils.isEmpty(_sourceTdTableName) && StringUtils.isEmpty(_sourceQuery))
                            && !StringUtils.isEmpty(_targetHdfsPath);
@@ -373,20 +441,13 @@ public class TdchParameters {
       } else {
         _tdchType = TdchType.TERADATA_TO_HDFS;
       }
-
-      if (!StringUtils.isEmpty(_tdErrorTableName)) {
-        Preconditions.checkArgument(!new DatabaseTable(_tdErrorTableName).database.isPresent(),
-                                    "Error table name cannot have database prefix. Use " + TdchConstants.ERROR_DB_KEY);
-        Preconditions.checkArgument(_tdErrorTableName.length() <= ERROR_TABLE_NAME_LENGTH_LIMIT,
-            "Error table name cannot exceed " + ERROR_TABLE_NAME_LENGTH_LIMIT + " chracters.");
-      }
     }
   }
 
   public String[] toTdchParams() {
     ImmutableList.Builder<String> listBuilder = ImmutableList.builder();
-    if(!StringUtils.isEmpty(_mrParams)) {
-      listBuilder.add(_mrParams);
+    if(_mrParams != null && !_mrParams.isEmpty()) {
+      listBuilder.addAll(_mrParams);
     }
 
     Map<String, String> keyValParams = buildKeyValParams();
@@ -432,9 +493,7 @@ public class TdchParameters {
       map.put("-separator", _fieldSeparator.get());
     }
 
-    if(TdchType.HDFS_TO_TERADATA.equals(_tdchType)) {
-      map.put("-sourcepaths", _sourceHdfsPath);
-
+    if(TdchType.HDFS_TO_TERADATA.equals(_tdchType) || TdchType.HIVE_TO_TERADATA.equals(_tdchType)) {
       if(_targetTdDatabaseName.isPresent()) {
         map.put("-targettable", String.format(TeradataCommands.DATABASE_TABLE_FORMAT,
                                               _targetTdDatabaseName.get(), _targetTdTableName));
@@ -452,6 +511,16 @@ public class TdchParameters {
 
       if(_tdInsertMethod.isPresent()) {
         map.put("-method", _tdInsertMethod.get());
+      }
+
+      if (TdchType.HDFS_TO_TERADATA.equals(_tdchType)) {
+        map.put("-sourcepaths", _sourceHdfsPath);
+      } else {
+        map.put("-sourcedatabase", _hiveSourceDatabase);
+        map.put("-sourcetable", _hiveSourceTable);
+        if (_hiveConfFile.isPresent()) {
+          map.put("-hiveconf", _hiveConfFile.get());
+        }
       }
     } else if (TdchType.TERADATA_TO_HDFS.equals(_tdchType)){
       map.put("-targetpaths",_targetHdfsPath);
@@ -484,12 +553,14 @@ public class TdchParameters {
           Map.Entry<String, JsonNode> entry = it.next();
           String key = "-" + entry.getKey();
           if (map.containsKey(key)) {
-            _logger.warn("Duplicate entry detected on key: " + entry.getKey()
-                         + " . Skipping value from duplicate: " + entry.getValue().asText()
-                         + " . Proceed with existing value: " + map.get(key));
-            continue;
+            _logger.info("Duplicate entry detected on key: " + entry.getKey()
+                         + " . Overwriting value from " + map.get(key) + " to " + entry.getValue().asText());
           }
-          map.put(key, entry.getValue().asText());
+          if (StringUtils.isEmpty(entry.getValue().asText())) {
+            map.remove(key);
+          } else {
+            map.put(key, entry.getValue().asText());
+          }
         }
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -570,6 +641,9 @@ public class TdchParameters {
             .append(", _sourceTdTableName=").append(_sourceTdTableName)
             .append(", _tdRetrieveMethod=").append(_tdRetrieveMethod)
             .append(", _targetHdfsPath=").append(_targetHdfsPath)
+            .append(", _hiveSourceDatabase=").append(_hiveSourceDatabase)
+            .append(", _hiveSourceTable=").append(_hiveSourceTable)
+            .append(", _hiveConfFile=").append(_hiveConfFile)
             .append(", _otherProperties").append(_otherProperties)
             .append("]");
     return builder.toString();
