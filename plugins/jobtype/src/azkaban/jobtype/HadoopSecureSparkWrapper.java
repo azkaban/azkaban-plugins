@@ -148,7 +148,7 @@ public class HadoopSecureSparkWrapper {
     for (int i = 0; i < argArray.length; i++) {
       if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) 
         && argArray[i+1].startsWith(SPARK_CONF_EXTRA_DRIVER_OPTIONS)) {
-        driverJavaOptions.append(argArray[++i].substring(SPARK_CONF_EXTRA_DRIVER_OPTIONS.length() + 1));
+        driverJavaOptions.append(" ").append(argArray[++i].substring(SPARK_CONF_EXTRA_DRIVER_OPTIONS.length() + 1));
       }
     }
     
