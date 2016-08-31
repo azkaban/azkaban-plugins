@@ -119,6 +119,7 @@
                 <path refid="test.classpath" />
                 <pathelement path="${dist.classes.dir}" />
                 <pathelement path="${dist.classes.test.dir}" />
+                <pathelement path="${test.resource.dir}" />
             </classpath>
 
             <batchtest fork="yes">
