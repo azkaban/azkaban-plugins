@@ -7,6 +7,7 @@
 	<property name="lib.dir" value="${basedir}/lib" />
 	<property name="ext.lib.dir" value="${base.dir}/extlib" />
 	<property name="test.lib.dir" value="${base.dir}/test_lib" />
+	<property name="test.resource.dir" value="${base.dir}/test_resource" />
 	<property name="dist.jar.dir" value="${dist.dir}/jars" />
 	<property name="dist.classes.dir" value="${dist.dir}/classes" />
 	<property name="dist.classes.test.dir" value="${dist.dir}/testclasses" />
@@ -104,6 +105,9 @@
             <src path="${java.src.test.dir}" />
 			<classpath refid="main.classpath" />
 			<classpath refid="test.classpath" />
+      <classpath>
+        <pathelement path="${test.resource.dir}" />
+      </classpath>
         </javac>
 
 	</target>

@@ -5,6 +5,7 @@
 .idea/
 .project
 .settings
+.DS_Store
 /bin
 azkaban-hadoopsecuritymanager-*.jar
 azkaban-jobtype-*.jar

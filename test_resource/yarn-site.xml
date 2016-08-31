@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<configuration>
+  <property>
+    <name>yarn.node-labels.enabled</name>
+    <value>true</value>
+  </property>
+</configuration>
