@@ -32,6 +32,11 @@ public class TestHadoopSecureSparkWrapper {
 
   @Test
   public void testAutoLabeling() {
+    // When both spark.node.labeling.enforced and spark.auto.node.labeling are set to true,
+    // the job type plugin should ignore both the queue and label expression configurations
+    // passed by the user. In addition, when the user requested memory to vcore ratio exceeds
+    // the configured min ratio, the plugin should also add configurations to use the configured
+    // desired label.
     Map<String, String> envs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     envs.put(HadoopSparkJob.SPARK_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
     envs.put(HadoopSparkJob.SPARK_AUTO_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
@@ -59,6 +64,8 @@ public class TestHadoopSecureSparkWrapper {
 
   @Test
   public void testDisableAutoLabeling() {
+    // When spark.auto.node.labeling is set to false, the plugin should not modify
+    // the user provided label expressions.
     Map<String, String> envs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     envs.put(HadoopSparkJob.SPARK_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
     envs.put(HadoopSparkJob.SPARK_DESIRED_NODE_LABEL_ENV_VAR, "test2");
@@ -85,6 +92,8 @@ public class TestHadoopSecureSparkWrapper {
 
   @Test
   public void testLoadConfigFromPropertyFile() {
+    // Test when user do not provide the resource configuration, the one in the default
+    // config file is loaded and tested for whether ratio is exceeded.
     Map<String, String> envs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
     envs.put(HadoopSparkJob.SPARK_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
     envs.put(HadoopSparkJob.SPARK_AUTO_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
