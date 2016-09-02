@@ -631,9 +631,8 @@ public class HadoopSecurityManager_H_2_0 extends HadoopSecurityManager {
         logger.info("Pre-fetching default Hive MetaStore token from hive");
 
         HiveConf hiveConf = new HiveConf();
-        String metastoreUri = hiveConf.get(HiveConf.ConfVars.METASTOREURIS.varname);
         Token<DelegationTokenIdentifier> hcatToken =
-            fetchHcatToken(userToProxy, hiveConf, metastoreUri, logger);
+            fetchHcatToken(userToProxy, hiveConf, null, logger);
 
         cred.addToken(hcatToken.getService(), hcatToken);
 
