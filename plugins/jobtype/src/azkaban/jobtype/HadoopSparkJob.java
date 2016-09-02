@@ -130,10 +130,6 @@ public class HadoopSparkJob extends JavaProcessJob {
   // Env var to be passed to {@HadoopSecureSparkWrapper} for the value of minimum
   // mem/vcore ratio
   public static final String SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR = "SPARK_MIN_MEM_VCORE_RATIO";
-  // Jobtype property to define where default spark-defaults.conf file is
-  public static final String SPARK_PROEPRTY_FILE_PATH_JOBTYPE_PROPERTY = "spark.property.file";
-  // Env var to be passed to {@HadoopSecureSparkWrapper} for the path to spark-defaults.conf
-  public static final String SPARK_PROPERTY_FILE_PATH_ENV_VAR = "SPARK_PROERTY_FILE_PATH";
 
   // security variables
   private String userToProxy = null;
@@ -195,13 +191,6 @@ public class HadoopSparkJob extends JavaProcessJob {
     if (getSysProps().getBoolean(SPARK_NODE_LABELING_JOBTYPE_PROPERTY, Boolean.FALSE)) {
       getJobProps().put("env." + SPARK_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
     }
-
-    String sparkPropertyFile = getSysProps().get(SPARK_PROEPRTY_FILE_PATH_JOBTYPE_PROPERTY);
-    File propertyFile = new File(sparkPropertyFile);
-    if (sparkPropertyFile == null || !propertyFile.exists()) {
-      throw new RuntimeException(SPARK_PROEPRTY_FILE_PATH_JOBTYPE_PROPERTY + " must be configured.");
-    }
-    getJobProps().put("env." + SPARK_PROPERTY_FILE_PATH_ENV_VAR, sparkPropertyFile);
 
     if (getSysProps().getBoolean(SPARK_AUTO_NODE_LABELING_JOBTYPE_PROPERTY, Boolean.FALSE)) {
       String desiredNodeLabel = getSysProps().get(SPARK_DESIRED_NODE_LABEL_JOBTYPE_PROPERTY);
@@ -513,6 +502,12 @@ public class HadoopSparkJob extends JavaProcessJob {
       File confDir = new File(sparkConf);
       if (!confDir.exists()) {
         error("SPARK conf dir does not exist. Will use SPARK_HOME/conf as default.");
+        sparkConf = sparkHome + "/conf";
+      }
+      File defaultSparkConf = new File(sparkConf + "/spark-defaults.conf");
+      if (!defaultSparkConf.exists()) {
+        throw new RuntimeException("Default Spark config file spark-defaults.conf cannot"
+            + " be found at " + defaultSparkConf);
       }
     }
 

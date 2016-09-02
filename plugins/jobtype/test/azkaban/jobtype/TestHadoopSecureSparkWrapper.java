@@ -42,8 +42,6 @@ public class TestHadoopSecureSparkWrapper {
     envs.put(HadoopSparkJob.SPARK_AUTO_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
     envs.put(HadoopSparkJob.SPARK_DESIRED_NODE_LABEL_ENV_VAR, "test2");
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "3");
-    URL url = getClass().getClassLoader().getResource("spark-defaults.conf");
-    envs.put(HadoopSparkJob.SPARK_PROPERTY_FILE_PATH_ENV_VAR, url.getPath());
     setEnv(envs);
     Configuration.addDefaultResource("yarn-site.xml");
     String[] argArray = new String[] {
@@ -70,8 +68,6 @@ public class TestHadoopSecureSparkWrapper {
     envs.put(HadoopSparkJob.SPARK_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
     envs.put(HadoopSparkJob.SPARK_DESIRED_NODE_LABEL_ENV_VAR, "test2");
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "3");
-    URL url = getClass().getClassLoader().getResource("spark-defaults.conf");
-    envs.put(HadoopSparkJob.SPARK_PROPERTY_FILE_PATH_ENV_VAR, url.getPath());
     setEnv(envs);
     Configuration.addDefaultResource("yarn-site.xml");
     String[] argArray = new String[] {
@@ -99,8 +95,6 @@ public class TestHadoopSecureSparkWrapper {
     envs.put(HadoopSparkJob.SPARK_AUTO_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
     envs.put(HadoopSparkJob.SPARK_DESIRED_NODE_LABEL_ENV_VAR, "test2");
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "3");
-    URL url = getClass().getClassLoader().getResource("spark-defaults.conf");
-    envs.put(HadoopSparkJob.SPARK_PROPERTY_FILE_PATH_ENV_VAR, url.getPath());
     setEnv(envs);
     Configuration.addDefaultResource("yarn-site.xml");
     String[] argArray = new String[] {

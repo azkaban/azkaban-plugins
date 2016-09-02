@@ -213,7 +213,8 @@ public class HadoopSecureSparkWrapper {
     // feature for Yarn. This config inside Spark job type is to enforce node labeling feature for all
     // Spark applications submitted via Azkaban Spark job type.
     Configuration conf = new Configuration();
-    String sparkPropertyFile = System.getenv(HadoopSparkJob.SPARK_PROPERTY_FILE_PATH_ENV_VAR);
+    String sparkPropertyFile = HadoopSecureSparkWrapper.class.getClassLoader()
+        .getResource("spark-defaults.conf").getPath();
     boolean nodeLabelingYarn = conf.getBoolean(YARN_CONF_NODE_LABELING_ENABLED, false);
     String nodeLabelingProp = System.getenv(HadoopSparkJob.SPARK_NODE_LABELING_ENV_VAR);
     boolean nodeLabelingPolicy = nodeLabelingProp != null && nodeLabelingProp.equals(Boolean.TRUE.toString());
@@ -299,6 +300,24 @@ public class HadoopSecureSparkWrapper {
     return argArray;
   }
 
+  /**
+   * Caculate the memory to vcore ratio for the executors requested by the user. The logic is
+   * as follows:
+   * 1) Transforms requested memory String into a number representing amount of MBs requested.
+   * 2a) If memory overhead is not set by the user, use the default logic to calculate it,
+   * which is to add max(requestedMemInMB * 10%, 384) to the requested memory size.
+   * 2b) If memory overhead is set by the user, directly add it.
+   * 3) Use the logic inside YARN to round up the container size according to defined min
+   * allocation for memory size.
+   * 4) Transform the MB number to GB number and divided it by number of vCore to get the
+   * ratio
+   * @param mem requested executor memory size, of the format 2G or 1024M
+   * @param memOverhead user defined memory overhead
+   * @param vcore requesed executor vCore number
+   * @param sparkConf SparkConf object
+   * @param config Hadoop Configuration object
+   * @return the calculated ratio between allocated executor's memory and vcore resources.
+   */
   private static double calculateMemVcoreRatio(String mem, String memOverhead, String vcore,
       SparkConf sparkConf, Configuration config) {
     int memoryMb = (int) JavaUtils.byteStringAsMb(mem);
