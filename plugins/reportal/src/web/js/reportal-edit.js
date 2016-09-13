@@ -240,5 +240,5 @@ $(document).ready(function () {
   }
   addInitialVariables();
 
-  scheduleDate.datetimepicker({pickTime: false});
+  scheduleDate.datetimepicker({format: 'L'});
 });
