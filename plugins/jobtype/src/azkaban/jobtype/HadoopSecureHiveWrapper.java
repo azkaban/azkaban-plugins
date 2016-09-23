@@ -203,9 +203,9 @@ public class HadoopSecureHiveWrapper {
   /**
    * Extract hiveconf from command line arguments and populate them into
    * HiveConf
-   * 
+   *
    * An example: -hiveconf 'zipcode=10', -hiveconf hive.root.logger=INFO,console
-   * 
+   *
    * @param hiveConf
    * @param args
    */
@@ -233,27 +233,26 @@ public class HadoopSecureHiveWrapper {
     }
   }
 
-  private static Map<String, String> getHiveVarMap(String[] args) {
+  static Map<String, String> getHiveVarMap(String[] args) {
 
     if (args == null) {
       return Collections.emptyMap();
     }
 
     Map<String, String> hiveVarMap = new HashMap<String, String>();
-    int index = 0;
-    for (; index < args.length; index++) {
+    for (int index = 0; index < args.length; index++) {
       if ("-hivevar".equals(args[index])) {
         String hiveVarParam = stripSingleDoubleQuote(args[++index]);
-
-        String[] tokens = hiveVarParam.split("=");
-        if (tokens.length == 2) {
-          String name = tokens[0];
-          String value = tokens[1];
-          logger.info("Setting hivevar: " + name + "=" + value);
-          hiveVarMap.put(name, value);
-        } else {
+        // Separate the parameter string at its first occurence of "="
+        int gap = hiveVarParam.indexOf("=");
+        if (gap == -1) {
           logger.warn("Invalid hivevar: " + hiveVarParam);
+          continue;
         }
+        String name = hiveVarParam.substring(0, gap);
+        String value = hiveVarParam.substring(gap + 1);
+        logger.info("Setting hivevar: " + name + "=" + value);
+        hiveVarMap.put(name, value);
       }
     }
     return hiveVarMap;
@@ -261,7 +260,7 @@ public class HadoopSecureHiveWrapper {
 
   /**
    * Strip single quote or double quote at either end of the string
-   * 
+   *
    * @param input
    * @return string with w/o leading or trailing single or double quote
    */
