@@ -203,9 +203,9 @@ public class HadoopSecureHiveWrapper {
   /**
    * Extract hiveconf from command line arguments and populate them into
    * HiveConf
-   * 
+   *
    * An example: -hiveconf 'zipcode=10', -hiveconf hive.root.logger=INFO,console
-   * 
+   *
    * @param hiveConf
    * @param args
    */
@@ -233,7 +233,7 @@ public class HadoopSecureHiveWrapper {
     }
   }
 
-  private static Map<String, String> getHiveVarMap(String[] args) {
+  static Map<String, String> getHiveVarMap(String[] args) {
 
     if (args == null) {
       return Collections.emptyMap();
@@ -260,7 +260,7 @@ public class HadoopSecureHiveWrapper {
 
   /**
    * Strip single quote or double quote at either end of the string
-   * 
+   *
    * @param input
    * @return string with w/o leading or trailing single or double quote
    */
