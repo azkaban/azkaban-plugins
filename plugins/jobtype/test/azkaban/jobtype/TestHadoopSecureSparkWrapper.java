@@ -42,6 +42,7 @@ public class TestHadoopSecureSparkWrapper {
     envs.put(HadoopSparkJob.SPARK_AUTO_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
     envs.put(HadoopSparkJob.SPARK_DESIRED_NODE_LABEL_ENV_VAR, "test2");
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "3");
+    envs.put(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR, "8");
     setEnv(envs);
     Configuration.addDefaultResource("yarn-site.xml");
     String[] argArray = new String[] {
@@ -95,6 +96,7 @@ public class TestHadoopSecureSparkWrapper {
     envs.put(HadoopSparkJob.SPARK_AUTO_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
     envs.put(HadoopSparkJob.SPARK_DESIRED_NODE_LABEL_ENV_VAR, "test2");
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "3");
+    envs.put(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR, "6");
     setEnv(envs);
     Configuration.addDefaultResource("yarn-site.xml");
     String[] argArray = new String[] {
@@ -106,6 +108,35 @@ public class TestHadoopSecureSparkWrapper {
     argArray = HadoopSecureSparkWrapper.handleNodeLabeling(argArray);
     argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
     Assert.assertTrue(argArray.length == 2);
+    Assert.assertTrue(argArray[1].contains("test2"));
+  }
+
+  @Test
+  public void testAutoLabelingWithMemSizeExceedingLimit() {
+    // When user requested executor container memory size exceeds spark.min.memory-gb.size,
+    // even if the ratio is still below the threshold, the job should still be submitted
+    // with the desired node label expression.
+    Map<String, String> envs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    envs.put(HadoopSparkJob.SPARK_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
+    envs.put(HadoopSparkJob.SPARK_AUTO_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
+    envs.put(HadoopSparkJob.SPARK_DESIRED_NODE_LABEL_ENV_VAR, "test2");
+    envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "4");
+    envs.put(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR, "5");
+    setEnv(envs);
+    Configuration.addDefaultResource("yarn-site.xml");
+    String[] argArray = new String[] {
+        "--conf",
+        "spark.yarn.queue=test",
+        "--conf",
+        "spark.yarn.executor.nodeLabelExpression=test",
+        "--executor-cores",
+        "3",
+        "--executor-memory",
+        "7G"
+    };
+    argArray = HadoopSecureSparkWrapper.handleNodeLabeling(argArray);
+    argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
+    Assert.assertTrue(argArray.length == 6);
     Assert.assertTrue(argArray[1].contains("test2"));
   }
 

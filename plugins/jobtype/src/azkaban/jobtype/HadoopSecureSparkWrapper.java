@@ -222,6 +222,7 @@ public class HadoopSecureSparkWrapper {
     boolean autoNodeLabeling = autoNodeLabelProp != null && autoNodeLabelProp.equals(Boolean.TRUE.toString());
     String desiredNodeLabel = System.getenv(HadoopSparkJob.SPARK_DESIRED_NODE_LABEL_ENV_VAR);
     String minMemVcoreRatio = System.getenv(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR);
+    String minMemGBSize = System.getenv(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR);
     String executorMem = null;
     String executorVcore = null;
     String executorMemOverhead = null;
@@ -279,6 +280,7 @@ public class HadoopSecureSparkWrapper {
       // config based on user requested resources.
       if (autoNodeLabeling) {
         double minRatio = Double.parseDouble(minMemVcoreRatio);
+        double minMemSize = Double.parseDouble(minMemGBSize);
         if (executorVcore == null) {
           executorVcore = sparkConf.get(SPARK_EXECUTOR_CORES, SPARK_EXECUTOR_DEFAULT_CORES);
         }
@@ -288,8 +290,9 @@ public class HadoopSecureSparkWrapper {
         if (executorMemOverhead == null) {
           executorMemOverhead = sparkConf.get(SPARK_EXECUTOR_MEMORY_OVERHEAD, null);
         }
-        if (calculateMemVcoreRatio(executorMem, executorMemOverhead, executorVcore,
-            sparkConf, conf) > minRatio) {
+        double roundedMemoryGbSize = getRoundedMemoryGb(executorMem, executorMemOverhead, conf);
+        if (roundedMemoryGbSize / Integer.parseInt(executorVcore) >= minRatio ||
+            roundedMemoryGbSize >= minMemSize) {
           LinkedList<String> argList = new LinkedList<String>(Arrays.asList(argArray));
           argList.addFirst(SPARK_EXECUTOR_NODE_LABEL_EXP + "=" + desiredNodeLabel);
           argList.addFirst(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName);
@@ -301,25 +304,21 @@ public class HadoopSecureSparkWrapper {
   }
 
   /**
-   * Caculate the memory to vcore ratio for the executors requested by the user. The logic is
-   * as follows:
+   * Get the memory GB size of Spark executor containers. The logic is as follows:
    * 1) Transforms requested memory String into a number representing amount of MBs requested.
    * 2a) If memory overhead is not set by the user, use the default logic to calculate it,
    * which is to add max(requestedMemInMB * 10%, 384) to the requested memory size.
    * 2b) If memory overhead is set by the user, directly add it.
    * 3) Use the logic inside YARN to round up the container size according to defined min
    * allocation for memory size.
-   * 4) Transform the MB number to GB number and divided it by number of vCore to get the
-   * ratio
+   * 4) Return the memory GB size.
    * @param mem requested executor memory size, of the format 2G or 1024M
    * @param memOverhead user defined memory overhead
-   * @param vcore requesed executor vCore number
-   * @param sparkConf SparkConf object
    * @param config Hadoop Configuration object
-   * @return the calculated ratio between allocated executor's memory and vcore resources.
+   * @return the rounded executor memory GB size
    */
-  private static double calculateMemVcoreRatio(String mem, String memOverhead, String vcore,
-      SparkConf sparkConf, Configuration config) {
+  private static double getRoundedMemoryGb(String mem, String memOverhead,
+      Configuration config) {
     int memoryMb = (int) JavaUtils.byteStringAsMb(mem);
     if (memOverhead == null || !NumberUtils.isDigits(memOverhead)) {
       memoryMb += Math.max(memoryMb / 10, 384);
@@ -328,8 +327,7 @@ public class HadoopSecureSparkWrapper {
     }
     int increment = config.getInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB,
         YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB);
-    int roundedMemoryMb = (int) (Math.ceil(memoryMb * 1.0 / increment) * increment);
-    return roundedMemoryMb / 1024.0 / Integer.parseInt(vcore);
+    return Math.ceil(memoryMb * 1.0 / increment) * increment / 1024;
   }
 
   protected static String[] removeNullsFromArgArray(String[] argArray) {
