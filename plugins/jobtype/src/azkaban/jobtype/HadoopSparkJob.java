@@ -130,6 +130,12 @@ public class HadoopSparkJob extends JavaProcessJob {
   // Env var to be passed to {@HadoopSecureSparkWrapper} for the value of minimum
   // mem/vcore ratio
   public static final String SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR = "SPARK_MIN_MEM_VCORE_RATIO";
+  // Jobtype property to configure the minimum memory size (in GB) for a Spark application's
+  // executor to be submitted with the desired node label expression.
+  public static final String SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY = "spark.min.memory-gb.size";
+  // Env var to be passed to {@HadoopSecureSparkWrapper} for the value of minimum
+  // memory size in GB
+  public static final String SPARK_MIN_MEM_SIZE_ENV_VAR = "SPARK_MIN_MEM_GB_SIZE";
 
   // security variables
   private String userToProxy = null;
@@ -195,8 +201,11 @@ public class HadoopSparkJob extends JavaProcessJob {
     if (getSysProps().getBoolean(SPARK_AUTO_NODE_LABELING_JOBTYPE_PROPERTY, Boolean.FALSE)) {
       String desiredNodeLabel = getSysProps().get(SPARK_DESIRED_NODE_LABEL_JOBTYPE_PROPERTY);
       String minMemVcoreRatio = getSysProps().get(SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY);
-      if (desiredNodeLabel == null || minMemVcoreRatio == null) {
-        throw new RuntimeException(SPARK_DESIRED_NODE_LABEL_JOBTYPE_PROPERTY + " and " +
+      String minMemSize = getSysProps().get(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY);
+      if (desiredNodeLabel == null || minMemVcoreRatio == null
+          || minMemSize == null) {
+        throw new RuntimeException(SPARK_DESIRED_NODE_LABEL_JOBTYPE_PROPERTY  + ", " +
+            SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY + " and " +
             SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY + " must be configured when " +
             SPARK_AUTO_NODE_LABELING_JOBTYPE_PROPERTY + " is set to true.");
       }
@@ -204,9 +213,14 @@ public class HadoopSparkJob extends JavaProcessJob {
         throw new RuntimeException(SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY + " is configured as " +
             minMemVcoreRatio + ", but it must be a number.");
       }
+      if (!NumberUtils.isNumber(minMemSize)) {
+        throw new RuntimeException(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY + " is configured as " +
+            minMemSize + ", but it must be a number.");
+      }
       getJobProps().put("env." + SPARK_AUTO_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
       getJobProps().put("env." + SPARK_DESIRED_NODE_LABEL_ENV_VAR, desiredNodeLabel);
       getJobProps().put("env." + SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, minMemVcoreRatio);
+      getJobProps().put("env." + SPARK_MIN_MEM_SIZE_ENV_VAR, minMemSize);
     }
     try {
       super.run();
