@@ -22,16 +22,19 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.google.common.collect.Maps;
+import com.google.common.base.Predicate;
+
 import azkaban.flow.CommonJobProperties;
 import azkaban.jobtype.HadoopJavaJob;
 import azkaban.jobtype.connectors.gobblin.helper.HdfsToMySqlValidator;
 import azkaban.jobtype.connectors.gobblin.helper.IPropertiesValidator;
 import azkaban.jobtype.connectors.gobblin.helper.MySqlToHdfsValidator;
 import azkaban.utils.Props;
-
 
 /**
  * Integration Azkaban with Gobblin. It prepares job properties for Gobblin and utilizes HadoopJavaJob to kick off the job
@@ -60,7 +63,27 @@ public class GobblinHadoopJob extends HadoopJavaJob {
 
     loadPreset();
     transformProperties();
-    getLog().info("Job properties for Gobblin: " + jobProps);
+    printJobProperties(jobProps);
+  }
+
+  /**
+   * Print the job properties except property key contains "pass" and "word".
+   * @param jobProps
+   */
+  private void printJobProperties(Props jobProps) {
+    Predicate<String> keyPredicate = new Predicate<String>() {
+
+      @Override
+      public boolean apply(String key) {
+        if (StringUtils.isEmpty(key)) {
+          return true;
+        }
+        key = key.toLowerCase();
+        return !(key.contains("pass") && key.contains("word"));
+      }
+
+    };
+    getLog().info("Job properties for Gobblin: " + Maps.filterKeys(jobProps.getFlattened(), keyPredicate));
   }
 
   /**
