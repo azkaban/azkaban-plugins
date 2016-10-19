@@ -27,6 +27,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.google.common.collect.Maps;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 
 import azkaban.flow.CommonJobProperties;
@@ -63,14 +64,15 @@ public class GobblinHadoopJob extends HadoopJavaJob {
 
     loadPreset();
     transformProperties();
-    printJobProperties(jobProps);
+    getLog().info("Job properties for Gobblin: " + printableJobProperties(jobProps));
   }
 
   /**
    * Print the job properties except property key contains "pass" and "word".
    * @param jobProps
    */
-  private void printJobProperties(Props jobProps) {
+  @VisibleForTesting
+  Map<String, String> printableJobProperties(Props jobProps) {
     Predicate<String> keyPredicate = new Predicate<String>() {
 
       @Override
@@ -83,7 +85,7 @@ public class GobblinHadoopJob extends HadoopJavaJob {
       }
 
     };
-    getLog().info("Job properties for Gobblin: " + Maps.filterKeys(jobProps.getFlattened(), keyPredicate));
+    return Maps.filterKeys(jobProps.getFlattened(), keyPredicate);
   }
 
   /**
