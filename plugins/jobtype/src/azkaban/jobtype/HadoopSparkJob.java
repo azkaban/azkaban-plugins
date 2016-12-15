@@ -451,7 +451,7 @@ public class HadoopSparkJob extends JavaProcessJob {
     // Decide spark home/conf and append Spark classpath for the client.
     String[] sparkHomeConf = getSparkHomeConf();
 
-    classPath.add(sparkHomeConf[0] + "/lib/*");
+    classPath.add(sparkHomeConf[0] + "/*");
     classPath.add(sparkHomeConf[1]);
 
     List<String> typeGlobalClassPath =
@@ -525,7 +525,30 @@ public class HadoopSparkJob extends JavaProcessJob {
       }
     }
 
-    return new String[]{sparkHome, sparkConf};
+    return new String[]{getSparkLibDir(sparkHome), sparkConf};
+  }
+
+  /**
+   * Given the dir path of Spark Home, return the dir path of Spark lib.
+   * It is either sparkHome/lib or sparkHome/jars based on the version of
+   * Spark chosen by user.
+   * @param sparkHome dir path of Spark Home
+   * @return dir path of Spark lib
+   */
+  private String getSparkLibDir(String sparkHome) {
+    // sparkHome should have already been checked when this method is invoked
+    File homeDir = new File(sparkHome);
+    File libDir = new File(homeDir, "lib");
+    if (libDir.exists()) {
+      return libDir.getAbsolutePath();
+    } else {
+      libDir = new File(homeDir, "jars");
+      if (libDir.exists()) {
+        return libDir.getAbsolutePath();
+      } else {
+        throw new RuntimeException("SPARK lib dir does not exist.");
+      }
+    }
   }
 
   private static String getSourcePathFromClass(Class<?> containedClass) {
