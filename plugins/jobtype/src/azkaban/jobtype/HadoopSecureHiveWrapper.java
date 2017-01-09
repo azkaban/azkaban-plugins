@@ -157,22 +157,20 @@ public class HadoopSecureHiveWrapper {
       cli.setHiveVariables(getHiveVarMap(args));
     }
 
-	int returnCode = 0;
-	try {
-		returnCode = cli.processFile(hiveScript);
-	} catch (Exception ex) {
-		logger.error("Error processing file: ", ex);
+    int returnCode = 0;
+    try {
+        returnCode = cli.processFile(hiveScript);
+    } catch (Exception ex) {
+        logger.error("Error processing file: ", ex);
+    } finally {
+        logger.info("Closing session state.");
+        if (ss != null)
+            ss.close();
+    }
 
-	} finally {
-		logger.info("Closing session state.");
-
-		if (ss != null)
-			ss.close();
-	}
-
-	if (returnCode != 0) {
-		logger.warn("Got exception " + returnCode + " from line: " + hiveScript);
-		throw new HiveQueryExecutionException(returnCode, hiveScript);
+    if (returnCode != 0) {
+        logger.warn("Got exception " + returnCode + " from line: " + hiveScript);
+        throw new HiveQueryExecutionException(returnCode, hiveScript);
     }  
 	
   }
