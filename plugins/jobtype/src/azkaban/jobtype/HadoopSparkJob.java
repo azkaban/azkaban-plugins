@@ -77,10 +77,11 @@ import azkaban.utils.StringUtils;
  *                  Enabling dynamic allocation policy for spark job type is different from enabling dynamic
  *                  allocation feature for Spark. This config inside Spark job type is to enforce dynamic
  *                  allocation feature for all Spark applications submitted via Azkaban Spark job type.
- *                  If set to true, our client wrapper will ignore user specified num-executor,
- *                  also make sure user does not overrides dynamic allocation related conf.
- *                  If it is enabled, we suggest the spark cluster should set up dynamic allocation
- *                  properly and set related conf in spark-default.conf)
+ *                  If set to true, our client wrapper will make sure user does not overrides dynamic
+ *                  allocation related conf. It expects the presence of SPARK-13723 in the version of
+ *                  Spark deployed in the cluster, so user explicitly setting num-executors will not
+ *                  disable dynamic allocation. If this parameter is enabled, we suggest the spark cluster
+ *                  should set up dynamic allocation properly and set related conf in spark-default.conf)
  *
  * spark.node.labeling.enforced (set to true if we want to enforce node labeling policy.
   *                 Enabling node labeling policy for spark job type is different from enabling node
@@ -449,7 +450,7 @@ public class HadoopSparkJob extends JavaProcessJob {
     }
 
     // Decide spark home/conf and append Spark classpath for the client.
-    String[] sparkHomeConf = getSparkHomeConf();
+    String[] sparkHomeConf = getSparkLibConf();
 
     classPath.add(sparkHomeConf[0] + "/*");
     classPath.add(sparkHomeConf[1]);
@@ -469,7 +470,7 @@ public class HadoopSparkJob extends JavaProcessJob {
     return classPath;
   }
 
-  private String[] getSparkHomeConf() {
+  private String[] getSparkLibConf() {
     String sparkHome = null;
     String sparkConf = null;
     // If user has specified version in job property. e.g. spark.version=1.6.0
