@@ -186,16 +186,13 @@ public class HadoopSecureSparkWrapper {
       for (int i = 0; i < argArray.length; i++) {
         if (argArray[i] == null) continue;
 
-        // If user specifies num of executors, or if user tries to disable dynamic allocation for his application
+        // If user tries to disable dynamic allocation for his application
         // by setting some conf params to false, we need to ignore these settings to enforce the application
         // uses dynamic allocation for spark
-        if (argArray[i].equals(SparkJobArg.NUM_EXECUTORS.sparkParamName) // --num-executors
-          || (
-            argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) // --conf
-            && (argArray[i+1].startsWith(SPARK_CONF_NUM_EXECUTORS) // spark.executor.instances
-              || argArray[i+1].startsWith(SPARK_CONF_SHUFFLE_SERVICE_ENABLED) // spark.shuffle.service.enabled
+        if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) // --conf
+            && (argArray[i+1].startsWith(SPARK_CONF_SHUFFLE_SERVICE_ENABLED) // spark.shuffle.service.enabled
               || argArray[i+1].startsWith(SPARK_CONF_DYNAMIC_ALLOC_ENABLED)) // spark.dynamicAllocation.enabled
-        )) {
+        ) {
 
           logger.info("Azbakan enforces dynamic resource allocation. Ignore user param: "
             + argArray[i] + " " + argArray[i+1]);
