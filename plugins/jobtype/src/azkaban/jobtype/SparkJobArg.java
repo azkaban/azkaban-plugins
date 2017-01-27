@@ -8,6 +8,7 @@ public enum SparkJobArg {
   CLASS("class", false), //
   NAME("name", false), //
   SPARK_JARS("jars", true), //
+  SPARK_PACKAGES("packages", false),
   PACKAGES("packages", false), //
   REPOSITORIES("repositories", false), //
   PY_FILES("py-files", false), //
@@ -45,14 +46,14 @@ public enum SparkJobArg {
 
   SparkJobArg(String azPropName, String sparkParamName, boolean specialTreatment) {
     this.azPropName = azPropName;
-    this.sparkParamName = sparkParamName;    
+    this.sparkParamName = sparkParamName;
     this.needSpecialTreatment = specialTreatment;
   }
 
   final String azPropName;
 
-  final String sparkParamName;  
-  
+  final String sparkParamName;
+
   final boolean needSpecialTreatment;
 
 }
