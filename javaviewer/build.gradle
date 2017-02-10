@@ -1,0 +1,30 @@
+apply plugin:'distribution'
+dependencies{
+    compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
+    compile('azkaban:azkaban-web-server:3.0.0')
+    compile('azkaban:azkaban-common:3.0.0')
+    compile(project(':jobtype'))
+}
+
+distributions{
+
+    main{
+        baseName = 'javaview'
+        contents{
+            from("conf"){
+                into "conf"
+            }
+            from(configurations.runtime){
+                into 'lib'
+            }
+            from(jar){
+                into "lib"
+            }
+
+            from("web/"){
+                into "web"
+            }
+        }
+    }
+
+}

@@ -1,0 +1,9 @@
+dependencies{
+    compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
+    compile 'org.apache.pig:pig:0.11.0'
+    compile('azkaban:azkaban-web-server:3.0.0')
+    compile('azkaban:azkaban-common:3.0.0')
+    compile group: 'org.apache.velocity', name: 'velocity-tools', version: '2.0'
+    compile(project(':jobtype'))
+    compile(project(':hadoopsecuritymanager'))
+}

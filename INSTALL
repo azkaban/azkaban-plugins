@@ -35,29 +35,15 @@ One can have other settings that are not exposed to users in private.properties,
 
 
 *****************How to Install:*****************
+in advance you need mvn install local for azkaban-common(commpile('azkaban:azkaban-common:3.0.0')) and azkaba-web-server(compile('azkaban:azkaban-web-server:3.0.0')).
 
-The job types in this package can be installed as follows:
+then execute the following:
+#gradle distZip
 
-1. run ant in the azkaban-plugins directory, make sure you have installed the "dustjs-linkedin" module via "npm install -g less dustjs-linkedin"
+you will find jobtype/build/distributions/jobtype-3.0.0.zip
 
-2. compile hadoopsecuritymanager
-
-cd plugins/
-cd hadoopsecuritymanager/
-ant
-
-## this builds azkaban-hadoopsecuritymanager-0.10.jar
-
-3. build jobtype plugins, package with aforementioned directory structure
-
-cd plugins/
-cd jobtype/
-ant package
-
-## this builds a tar.gz file in ../../dist/jobtype/packages/azkaban-jobtype-0.10.tar.gz
-
-untar this tar file in your plugin directory, say myplugins/
-untar the package, change its name to your azkaban.jobtype.plugin.dir setting.
+unzip this zip file in your plugin directory, it say myplugins/
+unzip the package, change its name to your azkaban.jobtype.plugin.dir setting.
 You need to fill the variables in the .properties files with correct values, including the classpath to your hadoopsecuritymanager jar file.
 
 You need to restart azkaban-executor-server or start a new instance of executor-server to get the new types picked up.

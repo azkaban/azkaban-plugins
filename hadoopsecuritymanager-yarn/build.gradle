@@ -1,0 +1,20 @@
+sourceSets{
+    main{
+        java{
+            srcDirs= ['src']
+        }
+    }
+}
+
+dependencies{
+
+    compile(project(':hadoopsecuritymanager'))
+
+    compile('org.apache.hadoop:hadoop-common:2.7.2')
+    compile('org.apache.hadoop:hadoop-mapreduce-client-common:2.7.2')
+    compile('org.apache.hadoop:hadoop-mapreduce-client-core:2.7.2')
+    compile('org.apache.hadoop:hadoop-yarn-api:2.7.2')
+    compile('org.apache.hadoop:hadoop-yarn-common:2.7.2')
+
+    compile group: 'org.apache.hive', name: 'hive-metastore', version: '2.1.0'
+}

@@ -1,0 +1,41 @@
+apply plugin:'distribution'
+dependencies{
+
+    compile(project(':hadoopsecuritymanager'))
+
+    compile group: 'org.apache.avro', name: 'avro', version: '1.7.4'
+
+    compile group: 'org.mongodb', name: 'mongo-java-driver', version: '2.14.3'
+
+    compile group: 'org.apache.parquet', name: 'parquet-avro', version: '1.7.0'
+    compile group: 'org.apache.parquet', name: 'parquet-hadoop-bundle', version: '1.7.0'
+
+    compile group: 'org.xerial.snappy', name: 'snappy-java', version: '1.0.5'
+    compile group: 'voldemort', name: 'voldemort', version: '0.96'
+
+    compile group: 'org.apache.hive', name: 'hive-common', version: '0.12.0'
+    compile group: 'org.apache.hive', name: 'hive-exec', version: '0.12.0'
+    compile group: 'org.apache.hive', name: 'hive-cli', version: '0.12.0'
+
+
+    compile('azkaban:azkaban-web-server:3.0.0')
+}
+
+distributions{
+
+    main{
+        baseName = 'hdfsviewer'
+        contents{
+            from("conf"){
+                into "conf"
+            }
+            from(configurations.runtime){
+                into 'lib'
+            }
+            from(jar){
+                into "lib"
+            }
+        }
+    }
+
+}
