@@ -20,13 +20,8 @@ allprojects {
     apply plugin: 'eclipse'
     apply plugin: 'java'
     repositories {
-        maven {
-            url "http://maven.fraudmetrix.cn/nexus/content/groups/public/"
-        }
         mavenLocal()
         mavenCentral()
-
-
     }
     rootProject.version='3.0.0'
     version = rootProject.version
