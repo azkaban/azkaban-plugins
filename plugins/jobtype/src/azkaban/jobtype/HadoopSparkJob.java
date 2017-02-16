@@ -49,6 +49,8 @@ import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
+import org.apache.tools.ant.DirectoryScanner;
+
 
 /**
  * <pre>
@@ -478,8 +480,7 @@ public class HadoopSparkJob extends JavaProcessJob {
     if (jobSparkVer != null) {
       info("This job sets spark version: " + jobSparkVer);
       // Spark jobtype supports this version through plugin's jobtype config
-      // e.g. spark.1.6.0.home=/path_to_spark/ in commonprivate.properties
-      sparkHome = getSysProps().get("spark." + jobSparkVer + ".home");
+      sparkHome = getSparkHome(jobSparkVer);
       if (sparkHome != null) {
         sparkConf = getSysProps().get("spark." + jobSparkVer + ".conf");
         if (sparkConf == null) {
@@ -527,6 +528,39 @@ public class HadoopSparkJob extends JavaProcessJob {
     }
 
     return new String[]{getSparkLibDir(sparkHome), sparkConf};
+  }
+
+  /**
+   * This method is used to get spark home from plugin's jobtype config.
+   * If spark.{sparkVersion}.home is set in commonprivate.properties/private.properties, then that will be returned.
+   * If spark.{sparkVersion}.home is not set and spark.home.dir is set then it will retrieve Spark directory inside
+   * spark.home.dir, matching spark.home.prefix + sparkVersion pattern. Spark directory name can be with dot
+   * in version name or without it. For e.g. spark-bin-H2.6.0_2105 or spark-bin-H2.6.0_2.1.0.5
+   * @param sparkVersion
+   * @return
+   */
+  private String getSparkHome(String sparkVersion) {
+    String sparkHome = getSysProps().get("spark." + sparkVersion + ".home");
+    if (sparkHome == null) {
+      info("Couldn't find spark." + sparkVersion + ".home property.");
+      String sparkDir = getSysProps().get("spark.home.dir");
+      if (sparkDir != null) {
+        String sparkHomePrefix =
+            getSysProps().get("spark.home.prefix") != null ? getSysProps().get("spark.home.prefix") : "*";
+        info(" Looking for spark at  " + sparkDir + " directory with " + sparkHomePrefix + " prefix for " + sparkVersion
+            + " version.");
+        DirectoryScanner scanner = new DirectoryScanner();
+        scanner.setBasedir(sparkDir);
+        scanner.setIncludes(
+            new String[]{sparkHomePrefix + sparkVersion.replace(".", "") + "*", sparkHomePrefix + sparkVersion + "*"});
+        scanner.scan();
+        String[] directories = scanner.getIncludedDirectories();
+        if (directories != null && directories.length > 0) {
+          sparkHome = sparkDir + "/" + directories[directories.length - 1];
+        }
+      }
+    }
+    return sparkHome;
   }
 
   /**
