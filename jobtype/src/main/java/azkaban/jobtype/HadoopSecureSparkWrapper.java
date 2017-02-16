@@ -95,7 +95,7 @@ public class HadoopSecureSparkWrapper {
     if (HadoopSecureWrapperUtils.shouldProxy(jobProps)) {
       String tokenFile = System.getenv(HADOOP_TOKEN_FILE_LOCATION);
       UserGroupInformation proxyUser =
-              HadoopSecureWrapperUtils.setupProxyUser(jobProps, tokenFile, logger);
+          HadoopSecureWrapperUtils.setupProxyUser(jobProps, tokenFile, logger);
       proxyUser.doAs(new PrivilegedExceptionAction<Void>() {
         @Override
         public Void run() throws Exception {
@@ -159,7 +159,7 @@ public class HadoopSecureSparkWrapper {
     // So if user gives --conf spark.driver.extraJavaOptions=XX, we append the value in --driver-java-options
     for (int i = 0; i < argArray.length; i++) {
       if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName)
-              && argArray[i+1].startsWith(SPARK_CONF_EXTRA_DRIVER_OPTIONS)) {
+        && argArray[i+1].startsWith(SPARK_CONF_EXTRA_DRIVER_OPTIONS)) {
         driverJavaOptions.append(" ").append(argArray[++i].substring(SPARK_CONF_EXTRA_DRIVER_OPTIONS.length() + 1));
       }
     }
@@ -167,8 +167,8 @@ public class HadoopSecureSparkWrapper {
     // Append addtional driver java opts about azkaban context
     String[] requiredJavaOpts = { WORKFLOW_LINK, JOB_LINK, EXECUTION_LINK, ATTEMPT_LINK };
     for (int i = 0; i < requiredJavaOpts.length; i++) {
-      driverJavaOptions.append(" ").append(HadoopJobUtils.javaOptStringFromHadoopConfiguration(conf,
-              requiredJavaOpts[i]));
+        driverJavaOptions.append(" ").append(HadoopJobUtils.javaOptStringFromHadoopConfiguration(conf,
+                  requiredJavaOpts[i]));
     }
     // Update driver java opts
     argArray[1] = driverJavaOptions.toString();
@@ -190,12 +190,12 @@ public class HadoopSecureSparkWrapper {
         // by setting some conf params to false, we need to ignore these settings to enforce the application
         // uses dynamic allocation for spark
         if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) // --conf
-                && (argArray[i+1].startsWith(SPARK_CONF_SHUFFLE_SERVICE_ENABLED) // spark.shuffle.service.enabled
-                || argArray[i+1].startsWith(SPARK_CONF_DYNAMIC_ALLOC_ENABLED)) // spark.dynamicAllocation.enabled
-                ) {
+            && (argArray[i+1].startsWith(SPARK_CONF_SHUFFLE_SERVICE_ENABLED) // spark.shuffle.service.enabled
+              || argArray[i+1].startsWith(SPARK_CONF_DYNAMIC_ALLOC_ENABLED)) // spark.dynamicAllocation.enabled
+        ) {
 
           logger.info("Azbakan enforces dynamic resource allocation. Ignore user param: "
-                  + argArray[i] + " " + argArray[i+1]);
+            + argArray[i] + " " + argArray[i+1]);
           argArray[i] = null;
           argArray[++i] = null;
         }
@@ -211,7 +211,7 @@ public class HadoopSecureSparkWrapper {
     // Spark applications submitted via Azkaban Spark job type.
     Configuration conf = new Configuration();
     String sparkPropertyFile = HadoopSecureSparkWrapper.class.getClassLoader()
-            .getResource("spark-defaults.conf").getPath();
+        .getResource("spark-defaults.conf").getPath();
     boolean nodeLabelingYarn = conf.getBoolean(YARN_CONF_NODE_LABELING_ENABLED, false);
     String nodeLabelingProp = System.getenv(HadoopSparkJob.SPARK_NODE_LABELING_ENV_VAR);
     boolean nodeLabelingPolicy = nodeLabelingProp != null && nodeLabelingProp.equals(Boolean.TRUE.toString());
@@ -238,11 +238,11 @@ public class HadoopSecureSparkWrapper {
           // We should ignore user-specified queue param to enforece the node labeling
           // (--queue test or --conf spark.yarn.queue=test)
           if ((argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) &&
-                  argArray[i+1].startsWith(SPARK_CONF_QUEUE))
-                  || (argArray[i].equals(SparkJobArg.QUEUE.sparkParamName))) {
+               argArray[i+1].startsWith(SPARK_CONF_QUEUE))
+              || (argArray[i].equals(SparkJobArg.QUEUE.sparkParamName))) {
 
             logger.info("Azbakan enforces node labeling. Ignore user param: "
-                    + argArray[i] + " " + argArray[i+1]);
+              + argArray[i] + " " + argArray[i+1]);
             argArray[i] = null;
             argArray[++i] = null;
             continue;
@@ -253,9 +253,9 @@ public class HadoopSecureSparkWrapper {
             // set by the job type based on the mem-to-vcore resource ratio requested by
             // the user application.
             if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) &&
-                    argArray[i+1].startsWith(SPARK_EXECUTOR_NODE_LABEL_EXP)) {
+                argArray[i+1].startsWith(SPARK_EXECUTOR_NODE_LABEL_EXP)) {
               logger.info("Azbakan auto-sets node label expression. Ignore user param: "
-                      + argArray[i] + " " + argArray[i+1]);
+                + argArray[i] + " " + argArray[i+1]);
               argArray[i] = null;
               argArray[++i] = null;
               continue;
@@ -267,7 +267,7 @@ public class HadoopSecureSparkWrapper {
               executorMem = argArray[++i];
             }
             if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) &&
-                    argArray[i+1].startsWith(SPARK_EXECUTOR_MEMORY_OVERHEAD)) {
+                argArray[i+1].startsWith(SPARK_EXECUTOR_MEMORY_OVERHEAD)) {
               executorMemOverhead = argArray[i+1].split("=")[1].trim();
             }
           }
@@ -289,7 +289,7 @@ public class HadoopSecureSparkWrapper {
         }
         double roundedMemoryGbSize = getRoundedMemoryGb(executorMem, executorMemOverhead, conf);
         if (roundedMemoryGbSize / Integer.parseInt(executorVcore) >= minRatio ||
-                roundedMemoryGbSize >= minMemSize) {
+            roundedMemoryGbSize >= minMemSize) {
           LinkedList<String> argList = new LinkedList<String>(Arrays.asList(argArray));
           argList.addFirst(SPARK_EXECUTOR_NODE_LABEL_EXP + "=" + desiredNodeLabel);
           argList.addFirst(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName);
@@ -315,7 +315,7 @@ public class HadoopSecureSparkWrapper {
    * @return the rounded executor memory GB size
    */
   private static double getRoundedMemoryGb(String mem, String memOverhead,
-                                           Configuration config) {
+      Configuration config) {
     int memoryMb = (int) JavaUtils.byteStringAsMb(mem);
     if (memOverhead == null || !NumberUtils.isDigits(memOverhead)) {
       memoryMb += Math.max(memoryMb / 10, 384);
@@ -323,7 +323,7 @@ public class HadoopSecureSparkWrapper {
       memoryMb += Long.parseLong(memOverhead);
     }
     int increment = config.getInt(YarnConfiguration.RM_SCHEDULER_MINIMUM_ALLOCATION_MB,
-            YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB);
+        YarnConfiguration.DEFAULT_RM_SCHEDULER_MINIMUM_ALLOCATION_MB);
     return Math.ceil(memoryMb * 1.0 / increment) * increment / 1024;
   }
 
