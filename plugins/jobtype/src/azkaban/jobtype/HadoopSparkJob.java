@@ -25,6 +25,8 @@ import static azkaban.security.commons.HadoopSecurityManager.OBTAIN_BINARY_TOKEN
 import static azkaban.security.commons.HadoopSecurityManager.USER_TO_PROXY;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.Sets;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -35,6 +37,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import javolution.testing.AssertionException;
@@ -481,22 +484,16 @@ public class HadoopSparkJob extends JavaProcessJob {
       info("This job sets spark version: " + jobSparkVer);
       // Spark jobtype supports this version through plugin's jobtype config
       sparkHome = getSparkHome(jobSparkVer);
-      if (sparkHome != null) {
-        sparkConf = getSysProps().get("spark." + jobSparkVer + ".conf");
-        if (sparkConf == null) {
-          sparkConf = sparkHome + "/conf";
-        }
-        info("Using job specific spark: " + sparkHome + " and conf: " + sparkConf);
-        // Override the SPARK_HOME SPARK_CONF_DIR env for HadoopSecureSparkWrapper process(spark client)
-        getJobProps().put("env." + SPARK_HOME_ENV_VAR, sparkHome);
-        getJobProps().put("env." + SPARK_CONF_DIR_ENV_VAR, sparkConf);
-      } else {
-        info("The spark version " + jobSparkVer +" is not supported. Using system default.");
+      sparkConf = getSysProps().get("spark." + jobSparkVer + ".conf");
+      if (sparkConf == null) {
+        sparkConf = sparkHome + "/conf";
       }
-    }
-
-    // User job doesn't give spark.version
-    if (sparkHome == null) {
+      info("Using job specific spark: " + sparkHome + " and conf: " + sparkConf);
+      // Override the SPARK_HOME SPARK_CONF_DIR env for HadoopSecureSparkWrapper process(spark client)
+      getJobProps().put("env." + SPARK_HOME_ENV_VAR, sparkHome);
+      getJobProps().put("env." + SPARK_CONF_DIR_ENV_VAR, sparkConf);
+    } else {
+      // User job doesn't give spark.version
       // Use default spark.home. Configured in the jobtype plugin's config
       sparkHome = getSysProps().get("spark.home");
       if (sparkHome == null) {
@@ -535,7 +532,7 @@ public class HadoopSparkJob extends JavaProcessJob {
    * If spark.{sparkVersion}.home is set in commonprivate.properties/private.properties, then that will be returned.
    * If spark.{sparkVersion}.home is not set and spark.home.dir is set then it will retrieve Spark directory inside
    * spark.home.dir, matching spark.home.prefix + sparkVersion pattern. Spark directory name can be with dot
-   * in version name or without it. For e.g. spark-bin-H2.6.0_2105 or spark-bin-H2.6.0_2.1.0.5
+   * in version name or without it. For e.g. spark-xxx-2_2105 or spark-xxx-2_2.1.0.5
    * @param sparkVersion
    * @return
    */
@@ -544,19 +541,32 @@ public class HadoopSparkJob extends JavaProcessJob {
     if (sparkHome == null) {
       info("Couldn't find spark." + sparkVersion + ".home property.");
       String sparkDir = getSysProps().get("spark.home.dir");
-      if (sparkDir != null) {
-        String sparkHomePrefix =
-            getSysProps().get("spark.home.prefix") != null ? getSysProps().get("spark.home.prefix") : "*";
-        info(" Looking for spark at  " + sparkDir + " directory with " + sparkHomePrefix + " prefix for " + sparkVersion
-            + " version.");
-        DirectoryScanner scanner = new DirectoryScanner();
-        scanner.setBasedir(sparkDir);
-        scanner.setIncludes(
-            new String[]{sparkHomePrefix + sparkVersion.replace(".", "") + "*", sparkHomePrefix + sparkVersion + "*"});
+      String sparkHomePrefix =
+          getSysProps().get("spark.home.prefix") != null ? getSysProps().get("spark.home.prefix") : "*";
+      info(" Looking for spark at  " + sparkDir + " directory with " + sparkHomePrefix + " prefix for " + sparkVersion
+          + " version.");
+      DirectoryScanner scanner = new DirectoryScanner();
+      scanner.setBasedir(sparkDir);
+      scanner.setIncludes(
+          new String[]{sparkHomePrefix + sparkVersion.replace(".", "") + "*", sparkHomePrefix + sparkVersion + "*"});
+      scanner.scan();
+      String[] directories = scanner.getIncludedDirectories();
+      if (directories != null && directories.length > 0) {
+        sparkHome = sparkDir + "/" + directories[directories.length - 1];
+      } else {
+        scanner.setIncludes(new String[]{sparkHomePrefix + "*"});
         scanner.scan();
-        String[] directories = scanner.getIncludedDirectories();
-        if (directories != null && directories.length > 0) {
-          sparkHome = sparkDir + "/" + directories[directories.length - 1];
+        String[] availableDirectories = scanner.getIncludedDirectories();
+        if (availableDirectories != null && availableDirectories.length > 0) {
+          Set<String> availableVersions = Sets.newTreeSet();
+          for (String directory : availableDirectories) {
+            String version = directory.replace(sparkHomePrefix, "");
+            availableVersions.add(version.contains(".") ? version.substring(0, 5)
+                : Joiner.on(".").join(version.substring(0, 3).split("")));
+          }
+          throw new RuntimeException(
+              "SPARK version specified by User is not available. Available versions are : " + Joiner.on(",")
+                  .join(availableVersions));
         }
       }
     }
