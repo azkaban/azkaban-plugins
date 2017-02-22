@@ -13,3 +13,4 @@ azkaban-pigvisualizer-*.jar
 dist/
 out/
 .gradle/
+build/
