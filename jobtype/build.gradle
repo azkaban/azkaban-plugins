@@ -41,7 +41,7 @@ dependencies{
 
     compile group: 'com.beust', name: 'jcommander', version: '1.27'
 
-    compile('com.teradata.jdbc:terajdbc4:14.00.00.21')
+    compile files('lib/teradata-connector-1.4.2.jar')
 
 }
 distributions{

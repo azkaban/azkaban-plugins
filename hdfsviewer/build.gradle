@@ -18,7 +18,7 @@ dependencies{
     compile group: 'org.apache.hive', name: 'hive-cli', version: '0.12.0'
 
 
-    compile('azkaban:azkaban-web-server:3.0.0')
+    compile files('lib/azkaban-webserver-3.0.0.jar')
 }
 
 distributions{

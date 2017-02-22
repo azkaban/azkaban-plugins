@@ -1,8 +1,7 @@
 dependencies{
     compile group: 'javax.servlet', name: 'servlet-api', version: '2.5'
     compile 'org.apache.pig:pig:0.11.0'
-    compile('azkaban:azkaban-web-server:3.0.0')
-    compile('azkaban:azkaban-common:3.0.0')
+    compile files('lib/azkaban-webserver-3.0.0.jar')
     compile(project(':jobtype'))
 }
 apply plugin:'distribution'

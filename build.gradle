@@ -35,7 +35,7 @@ allprojects {
             compile('org.codehaus.jackson:jackson-core-asl:1.9.5')
             compile('org.codehaus.jackson:jackson-mapper-asl:1.9.5')
             compile('org.apache.hadoop:hadoop-common:2.7.2')
-            compile('azkaban:azkaban-common:3.0.0')
+            compile files('lib/azkaban-common-3.0.0.jar')
         }
     }
 }
