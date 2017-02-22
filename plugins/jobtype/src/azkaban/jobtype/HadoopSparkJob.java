@@ -66,12 +66,18 @@ import azkaban.utils.StringUtils;
  *             Conf will be either SPARK_CONF_DIR(we do not override it) or {spark.home}/conf
  *
  * spark.1.6.0.home (spark.{version}.home is REQUIRED for the {version} that we want to support.
- *                  e.g. user can use spark 1.6.0 by setting spark.home=1.6.0 in their job property.
+ *                  e.g. user can use spark 1.6.0 by setting spark.version=1.6.0 in their job property.
  *                  This class will then look for plugin property spark.1.6.0.home to get the proper spark
  *                  bin/conf to launch the client)
  *
  * spark.1.6.0.conf (OPTIONAL. spark.{version}.conf is the conf used for the {version}.
  *                  If not specified, the conf of this {version} will be spark.{version}.home/conf
+ *
+ * spark.home.dir To reduce dependency on azkban-jobtype plugin properties every time new spark binary is available,
+ *                this property needs to be set. It specifies path where spark binaries are kept.
+ *                If spark.{sparkVersion}.home is set in commonprivate.properties/private.properties,
+ *                then that will be returned. If spark.{sparkVersion}.home is not set and spark.home.dir is set then
+ *                it will retrieve Spark directory inside spark.home.dir, matching spark.home.prefix + sparkVersion pattern.
  *
  * spark.dynamic.res.alloc.enforced (set to true if we want to enforce dynamic resource allocation policy.
  *                  Enabling dynamic allocation policy for spark job type is different from enabling dynamic
@@ -192,7 +198,25 @@ public class HadoopSparkJob extends JavaProcessJob {
     // then set proper env var for client wrapper(HadoopSecureSparkWrapper) to modify spark job conf
     // before calling spark-submit to enforce every spark job uses dynamic allocation or node labeling
     if (getSysProps().getBoolean(SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY, Boolean.FALSE)) {
+      String minMemVcoreRatio = getSysProps().get(SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY);
+      String minMemSize = getSysProps().get(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY);
+      if (minMemVcoreRatio == null
+          || minMemSize == null) {
+        throw new RuntimeException(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY + " and " +
+            SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY + " must be configured when " +
+            SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY + " is set to true.");
+      }
+      if (!NumberUtils.isNumber(minMemVcoreRatio)) {
+        throw new RuntimeException(SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY + " is configured as " +
+            minMemVcoreRatio + ", but it must be a number.");
+      }
+      if (!NumberUtils.isNumber(minMemSize)) {
+        throw new RuntimeException(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY + " is configured as " +
+            minMemSize + ", but it must be a number.");
+      }
       getJobProps().put("env." + SPARK_DYNAMIC_RES_ENV_VAR, Boolean.TRUE.toString());
+      getJobProps().put("env." + SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, minMemVcoreRatio);
+      getJobProps().put("env." + SPARK_MIN_MEM_SIZE_ENV_VAR, minMemSize);
     }
 
     if (getSysProps().getBoolean(SPARK_NODE_LABELING_JOBTYPE_PROPERTY, Boolean.FALSE)) {
