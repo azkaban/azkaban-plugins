@@ -12,3 +12,5 @@ azkaban-jobtype-*.jar
 azkaban-pigvisualizer-*.jar
 dist/
 out/
+.gradle/
+build/

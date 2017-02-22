@@ -1,0 +1,10 @@
+include 'crypto',
+        'jobtype',
+        'hadoopsecuritymanager',
+        'hadoopsecuritymanager-common',
+        'hadoopsecuritymanager-yarn',
+        'hdfsviewer',
+        'javaviewer',
+        'jobsummary',
+        'pigvisualizer',
+        'reportal'
