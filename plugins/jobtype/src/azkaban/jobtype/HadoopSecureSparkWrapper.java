@@ -16,14 +16,16 @@
 
 package azkaban.jobtype;
 
+import azkaban.utils.Props;
+import com.google.common.collect.Maps;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -33,7 +35,6 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.network.util.JavaUtils;
 import org.apache.spark.util.Utils;
 
-import azkaban.utils.Props;
 import static azkaban.flow.CommonJobProperties.ATTEMPT_LINK;
 import static azkaban.flow.CommonJobProperties.EXECUTION_LINK;
 import static azkaban.flow.CommonJobProperties.JOB_LINK;
@@ -179,18 +180,21 @@ public class HadoopSecureSparkWrapper {
     boolean dynamicAllocEnabled = dynamicAllocProp != null && dynamicAllocProp.equals(Boolean.TRUE.toString());
     if (dynamicAllocEnabled) {
       for (int i = 0; i < argArray.length; i++) {
-        if (argArray[i] == null) continue;
+        if (argArray[i] == null) {
+          continue;
+        }
 
         // If user tries to disable dynamic allocation for his application
         // by setting some conf params to false, we need to ignore these settings to enforce the application
         // uses dynamic allocation for spark
         if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) // --conf
-            && (argArray[i+1].startsWith(SPARK_CONF_SHUFFLE_SERVICE_ENABLED) // spark.shuffle.service.enabled
-              || argArray[i+1].startsWith(SPARK_CONF_DYNAMIC_ALLOC_ENABLED)) // spark.dynamicAllocation.enabled
-        ) {
+            && (argArray[i + 1].startsWith(SPARK_CONF_SHUFFLE_SERVICE_ENABLED) // spark.shuffle.service.enabled
+            || argArray[i + 1].startsWith(SPARK_CONF_DYNAMIC_ALLOC_ENABLED)) // spark.dynamicAllocation.enabled
+            ) {
 
-          logger.info("Azbakan enforces dynamic resource allocation. Ignore user param: "
-            + argArray[i] + " " + argArray[i+1]);
+          logger.info(
+              "Azbakan enforces dynamic resource allocation. Ignore user param: " + argArray[i] + " " + argArray[i
+                  + 1]);
           argArray[i] = null;
           argArray[++i] = null;
         }
@@ -215,44 +219,21 @@ public class HadoopSecureSparkWrapper {
   protected static String[] handleQueueEnforcement(String[] argArray) {
     SparkConf sparkConf = getSparkProperties();
     Configuration conf = new Configuration();
-    String executorMem = null;
-    String executorVcore = null;
-    String executorMemOverhead = null;
-    int queueParameterIndex = -1;
-    for (int i = 0; i < argArray.length; ++i) {
-      if (argArray[i] != null) {
-        if (argArray[i].equals(SparkJobArg.EXECUTOR_CORES.sparkParamName)) {
-          executorVcore = argArray[++i];
-        }
-        if (argArray[i].equals(SparkJobArg.EXECUTOR_MEMORY.sparkParamName)) {
-          executorMem = argArray[++i];
-        }
-        if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) && argArray[i + 1]
-            .startsWith(SPARK_EXECUTOR_MEMORY_OVERHEAD)) {
-          executorMemOverhead = argArray[i + 1].split("=")[1].trim();
-        }
 
-        if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) && argArray[i + 1]
-            .startsWith(SPARK_CONF_QUEUE) || argArray[i].equals(SparkJobArg.QUEUE.sparkParamName)) {
-          queueParameterIndex = i;
-        }
-      }
-    }
-
+    int queueParameterIndex = getUserSpecifiedQueueParameterIndex(argArray);
     boolean requiredSparkDefaultQueue = false;
     if (sparkConf.getBoolean(SPARK_CONF_DYNAMIC_ALLOC_ENABLED, false)) {
-      if (isLargeContainerRequired(executorVcore, executorMem, executorMemOverhead, conf, sparkConf)) {
+      if (isLargeContainerRequired(argArray, conf, sparkConf)) {
         // Case A
         requiredSparkDefaultQueue = true;
-        logger.info(
-            "Spark application requires Large containers. Scheduling this application into default queue by a "
-                + "default conf(spark.yarn.queue) in spark-defaults.conf.");
+        logger.info("Spark application requires Large containers. Scheduling this application into default queue by a "
+            + "default conf(spark.yarn.queue) in spark-defaults.conf.");
       } else {
         // Case B
         logger.info(
             "Dynamic allocation is enabled for selected spark version and application requires small container. "
                 + "Hence, scheduling this application into Org specific queue");
-        if(queueParameterIndex == -1) {
+        if (queueParameterIndex == -1) {
           LinkedList<String> argList = new LinkedList(Arrays.asList(argArray));
           argList.addFirst(SPARK_CONF_QUEUE + "=" + DEFAULT_QUEUE);
           argList.addFirst(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName);
@@ -261,9 +242,8 @@ public class HadoopSecureSparkWrapper {
       }
     } else {
       // Case C
-      logger.info(
-          "Spark version, selected for this application, doesn't support dynamic allocation. Scheduling this "
-              + "application into default queue by a default conf(spark.yarn.queue) in spark-defaults.conf.");
+      logger.info("Spark version, selected for this application, doesn't support dynamic allocation. Scheduling this "
+          + "application into default queue by a default conf(spark.yarn.queue) in spark-defaults.conf.");
       requiredSparkDefaultQueue = true;
     }
 
@@ -283,15 +263,15 @@ public class HadoopSecureSparkWrapper {
    * Jobtype Plugin parameters: spark.min.mem.vore.ratio, spark.min.memory-gb.size
    * If rounded memory / spark.executor.cores >= spark.min.mem.vore.ratio or rounded memory >= spark.min.memory-gb.size
    * then large container is required to schedule this application.
-   * @param executorVcore
-   * @param executorMem
-   * @param executorMemOverhead
    * @param conf
    * @param sparkConf
    * @return
    */
-  private static boolean isLargeContainerRequired(String executorVcore, String executorMem, String executorMemOverhead,
-      Configuration conf, SparkConf sparkConf) {
+  private static boolean isLargeContainerRequired(String[] argArray, Configuration conf, SparkConf sparkConf) {
+    Map<String, String> executorParameters = getUserSpecifiedExecutorParameters(argArray);
+    String executorVcore = executorParameters.get(SPARK_EXECUTOR_CORES);
+    String executorMem = executorParameters.get(SPARK_EXECUTOR_MEMORY);
+    String executorMemOverhead = executorParameters.get(SPARK_EXECUTOR_MEMORY_OVERHEAD);
     if (executorVcore == null) {
       executorVcore = sparkConf.get(SPARK_EXECUTOR_CORES, SPARK_EXECUTOR_DEFAULT_CORES);
     }
@@ -307,7 +287,9 @@ public class HadoopSecureSparkWrapper {
     double minRatio = Double.parseDouble(System.getenv(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR));
     double minMemSize = Double.parseDouble(System.getenv(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR));
 
-    logger.info("RoundedMemoryGbSize: " + roundedMemoryGbSize + ", ExecutorVcore: " + executorVcore + ", MinRatio: " + minRatio + ", MinMemSize: " + minMemSize);
+    logger.info(
+        "RoundedMemoryGbSize: " + roundedMemoryGbSize + ", ExecutorVcore: " + executorVcore + ", MinRatio: " + minRatio
+            + ", MinMemSize: " + minMemSize);
     return roundedMemoryGbSize / (double) Integer.parseInt(executorVcore) >= minRatio
         || roundedMemoryGbSize >= minMemSize;
   }
@@ -325,62 +307,27 @@ public class HadoopSecureSparkWrapper {
     String autoNodeLabelProp = System.getenv(HadoopSparkJob.SPARK_AUTO_NODE_LABELING_ENV_VAR);
     boolean autoNodeLabeling = autoNodeLabelProp != null && autoNodeLabelProp.equals(Boolean.TRUE.toString());
     String desiredNodeLabel = System.getenv(HadoopSparkJob.SPARK_DESIRED_NODE_LABEL_ENV_VAR);
-    String executorMem = null;
-    String executorVcore = null;
-    String executorMemOverhead = null;
 
     SparkConf sparkConf = getSparkProperties();
 
     if (nodeLabelingYarn && nodeLabelingPolicy) {
-      for (int i = 0; i < argArray.length; i++) {
-        if (argArray[i] == null) {
-          continue;
-        }
-        if (nodeLabelingPolicy) {
-          // If yarn cluster enables node labeling, applications should be submitted to a default
-          // queue by a default conf(spark.yarn.queue) in spark-defaults.conf
-          // We should ignore user-specified queue param to enforece the node labeling
-          // (--queue test or --conf spark.yarn.queue=test)
-          if ((argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) &&
-               argArray[i+1].startsWith(SPARK_CONF_QUEUE))
-              || (argArray[i].equals(SparkJobArg.QUEUE.sparkParamName))) {
+      ignoreUserSpecifiedNodeLabelParameter(argArray, autoNodeLabeling);
 
-            logger.info("Azbakan enforces node labeling. Ignore user param: "
-              + argArray[i] + " " + argArray[i+1]);
-            argArray[i] = null;
-            argArray[++i] = null;
-            continue;
-          }
-          if (autoNodeLabeling) {
-            // If auto node labeling is enabled, job type should ignore user supplied
-            // node label expression for Spark executors. This config will be automatically
-            // set by the job type based on the mem-to-vcore resource ratio requested by
-            // the user application.
-            if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) &&
-                argArray[i+1].startsWith(SPARK_EXECUTOR_NODE_LABEL_EXP)) {
-              logger.info("Azbakan auto-sets node label expression. Ignore user param: "
-                + argArray[i] + " " + argArray[i+1]);
-              argArray[i] = null;
-              argArray[++i] = null;
-              continue;
-            }
-            if (argArray[i].equals(SparkJobArg.EXECUTOR_CORES.sparkParamName)) {
-              executorVcore = argArray[++i];
-            }
-            if (argArray[i].equals(SparkJobArg.EXECUTOR_MEMORY.sparkParamName)) {
-              executorMem = argArray[++i];
-            }
-            if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) &&
-                argArray[i+1].startsWith(SPARK_EXECUTOR_MEMORY_OVERHEAD)) {
-              executorMemOverhead = argArray[i+1].split("=")[1].trim();
-            }
-          }
-        }
+      // If yarn cluster enables node labelling, applications should be submitted to a default
+      // queue by a default conf(spark.yarn.queue) in spark-defaults.conf.
+      int queueParameterIndex = getUserSpecifiedQueueParameterIndex(argArray);
+      if (queueParameterIndex != -1) {
+        logger.info(
+            "Azbakan enforces node labeling. Ignore user param: " + argArray[queueParameterIndex] + " " + argArray[
+                queueParameterIndex + 1]);
+        argArray[queueParameterIndex] = null;
+        argArray[queueParameterIndex + 1] = null;
       }
+
       // If auto node labeling is enabled, automatically sets spark.yarn.executor.nodeLabelExpression
       // config based on user requested resources.
       if (autoNodeLabeling) {
-        if (isLargeContainerRequired(executorVcore, executorMem, executorMemOverhead, conf, sparkConf)) {
+        if (isLargeContainerRequired(argArray, conf, sparkConf)) {
           LinkedList<String> argList = new LinkedList<String>(Arrays.asList(argArray));
           argList.addFirst(SPARK_EXECUTOR_NODE_LABEL_EXP + "=" + desiredNodeLabel);
           argList.addFirst(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName);
@@ -389,6 +336,80 @@ public class HadoopSecureSparkWrapper {
       }
     }
     return argArray;
+  }
+
+  /**
+   * This method is used to ignore user specified node label Parameter. When auto node labeling is enabled,
+   * job type should ignore user supplied node label expression for Spark executors.
+   * @param argArray
+   * @param autoNodeLabeling
+   */
+  private static void ignoreUserSpecifiedNodeLabelParameter(String[] argArray, boolean autoNodeLabeling) {
+    for (int i = 0; i < argArray.length; i++) {
+      if (argArray[i] == null) {
+        continue;
+      }
+      if (autoNodeLabeling) {
+        // This config will be automatically set by the job type based on the mem-to-vcore resource ratio requested by
+        // the user application.
+        if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) && argArray[i + 1]
+            .startsWith(SPARK_EXECUTOR_NODE_LABEL_EXP)) {
+          logger.info(
+              "Azbakan auto-sets node label expression. Ignore user param: " + argArray[i] + " " + argArray[i + 1]);
+          argArray[i] = null;
+          argArray[++i] = null;
+          continue;
+        }
+      }
+    }
+  }
+
+  /**
+   * This method is used to get User specified executor parameters. It is capturing executor-memory, executor-cores and
+   * spark.yarn.executor.memoryOverhead.
+   * @param argArray
+   * @return
+   */
+  private static Map<String, String> getUserSpecifiedExecutorParameters(String[] argArray) {
+    Map<String, String> executorParameters = Maps.newHashMap();
+    for (int i = 0; i < argArray.length; i++) {
+      if (argArray[i] == null) {
+        continue;
+      }
+      if (argArray[i].equals(SparkJobArg.EXECUTOR_CORES.sparkParamName)) {
+        executorParameters.put(SPARK_EXECUTOR_CORES, argArray[++i]);
+      }
+      if (argArray[i].equals(SparkJobArg.EXECUTOR_MEMORY.sparkParamName)) {
+        executorParameters.put(SPARK_EXECUTOR_MEMORY, argArray[++i]);
+      }
+      if (argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) && argArray[i + 1]
+          .startsWith(SPARK_EXECUTOR_MEMORY_OVERHEAD)) {
+        executorParameters.put(SPARK_EXECUTOR_MEMORY_OVERHEAD, argArray[i + 1].split("=")[1].trim());
+      }
+    }
+    return executorParameters;
+  }
+
+  /**
+   * This method is used to retrieve index of queue parameter passed by User.
+   * @param argArray
+   * @return
+   */
+  private static int getUserSpecifiedQueueParameterIndex(String[] argArray) {
+    int queueParameterIndex = -1;
+    for (int i = 0; i < argArray.length; i++) {
+      if (argArray[i] == null) {
+        continue;
+      }
+      // Fetch index of queue parameter passed by User.
+      // (--queue test or --conf spark.yarn.queue=test)
+      if ((argArray[i].equals(SparkJobArg.SPARK_CONF_PREFIX.sparkParamName) && argArray[i + 1]
+          .startsWith(SPARK_CONF_QUEUE)) || (argArray[i].equals(SparkJobArg.QUEUE.sparkParamName))) {
+        queueParameterIndex = i++;
+        break;
+      }
+    }
+    return queueParameterIndex;
   }
 
   /**

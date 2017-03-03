@@ -16,39 +16,24 @@
 
 package azkaban.jobtype;
 
-import static azkaban.flow.CommonJobProperties.ATTEMPT_LINK;
-import static azkaban.flow.CommonJobProperties.EXECUTION_LINK;
-import static azkaban.flow.CommonJobProperties.JOB_LINK;
-import static azkaban.flow.CommonJobProperties.WORKFLOW_LINK;
-import static azkaban.security.commons.HadoopSecurityManager.ENABLE_PROXYING;
-import static azkaban.security.commons.HadoopSecurityManager.OBTAIN_BINARY_TOKEN;
-import static azkaban.security.commons.HadoopSecurityManager.USER_TO_PROXY;
-import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
-import java.util.Map.Entry;
-import java.util.StringTokenizer;
-
-import javolution.testing.AssertionException;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.math.NumberUtils;
-import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.log4j.Logger;
-
 import azkaban.flow.CommonJobProperties;
 import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.StringTokenizer;
+import org.apache.commons.lang.math.NumberUtils;
+import org.apache.log4j.Logger;
+
+import static azkaban.security.commons.HadoopSecurityManager.ENABLE_PROXYING;
+import static azkaban.security.commons.HadoopSecurityManager.OBTAIN_BINARY_TOKEN;
+import static azkaban.security.commons.HadoopSecurityManager.USER_TO_PROXY;
+import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 /**
  * <pre>
@@ -66,7 +51,7 @@ import azkaban.utils.StringUtils;
  *             Conf will be either SPARK_CONF_DIR(we do not override it) or {spark.home}/conf
  *
  * spark.1.6.0.home (spark.{version}.home is REQUIRED for the {version} that we want to support.
- *                  e.g. user can use spark 1.6.0 by setting spark.version=1.6.0 in their job property.
+ *                  e.g. user can use spark 1.6.0 by setting spark-version=1.6.0 in their job property.
  *                  This class will then look for plugin property spark.1.6.0.home to get the proper spark
  *                  bin/conf to launch the client)
  *
@@ -198,25 +183,7 @@ public class HadoopSparkJob extends JavaProcessJob {
     // then set proper env var for client wrapper(HadoopSecureSparkWrapper) to modify spark job conf
     // before calling spark-submit to enforce every spark job uses dynamic allocation or node labeling
     if (getSysProps().getBoolean(SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY, Boolean.FALSE)) {
-      String minMemVcoreRatio = getSysProps().get(SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY);
-      String minMemSize = getSysProps().get(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY);
-      if (minMemVcoreRatio == null
-          || minMemSize == null) {
-        throw new RuntimeException(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY + " and " +
-            SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY + " must be configured when " +
-            SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY + " is set to true.");
-      }
-      if (!NumberUtils.isNumber(minMemVcoreRatio)) {
-        throw new RuntimeException(SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY + " is configured as " +
-            minMemVcoreRatio + ", but it must be a number.");
-      }
-      if (!NumberUtils.isNumber(minMemSize)) {
-        throw new RuntimeException(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY + " is configured as " +
-            minMemSize + ", but it must be a number.");
-      }
       getJobProps().put("env." + SPARK_DYNAMIC_RES_ENV_VAR, Boolean.TRUE.toString());
-      getJobProps().put("env." + SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, minMemVcoreRatio);
-      getJobProps().put("env." + SPARK_MIN_MEM_SIZE_ENV_VAR, minMemSize);
     }
 
     if (getSysProps().getBoolean(SPARK_NODE_LABELING_JOBTYPE_PROPERTY, Boolean.FALSE)) {
@@ -225,14 +192,21 @@ public class HadoopSparkJob extends JavaProcessJob {
 
     if (getSysProps().getBoolean(SPARK_AUTO_NODE_LABELING_JOBTYPE_PROPERTY, Boolean.FALSE)) {
       String desiredNodeLabel = getSysProps().get(SPARK_DESIRED_NODE_LABEL_JOBTYPE_PROPERTY);
+      if (desiredNodeLabel == null) {
+        throw new RuntimeException(SPARK_DESIRED_NODE_LABEL_JOBTYPE_PROPERTY  + " must be configured when " +
+            SPARK_AUTO_NODE_LABELING_JOBTYPE_PROPERTY + " is set to true.");
+      }
+      getJobProps().put("env." + SPARK_AUTO_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
+      getJobProps().put("env." + SPARK_DESIRED_NODE_LABEL_ENV_VAR, desiredNodeLabel);
+    }
+
+    if (getSysProps().getBoolean(SPARK_DYNAMIC_RES_JOBTYPE_PROPERTY, Boolean.FALSE) || getSysProps()
+        .getBoolean(SPARK_AUTO_NODE_LABELING_JOBTYPE_PROPERTY, Boolean.FALSE)) {
       String minMemVcoreRatio = getSysProps().get(SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY);
       String minMemSize = getSysProps().get(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY);
-      if (desiredNodeLabel == null || minMemVcoreRatio == null
-          || minMemSize == null) {
-        throw new RuntimeException(SPARK_DESIRED_NODE_LABEL_JOBTYPE_PROPERTY  + ", " +
-            SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY + " and " +
-            SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY + " must be configured when " +
-            SPARK_AUTO_NODE_LABELING_JOBTYPE_PROPERTY + " is set to true.");
+      if (minMemVcoreRatio == null || minMemSize == null) {
+        throw new RuntimeException(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY + " and " +
+            SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY + " must be configured.");
       }
       if (!NumberUtils.isNumber(minMemVcoreRatio)) {
         throw new RuntimeException(SPARK_MIN_MEM_VCORE_RATIO_JOBTYPE_PROPERTY + " is configured as " +
@@ -242,8 +216,6 @@ public class HadoopSparkJob extends JavaProcessJob {
         throw new RuntimeException(SPARK_MIN_MEM_SIZE_JOBTYPE_PROPERTY + " is configured as " +
             minMemSize + ", but it must be a number.");
       }
-      getJobProps().put("env." + SPARK_AUTO_NODE_LABELING_ENV_VAR, Boolean.TRUE.toString());
-      getJobProps().put("env." + SPARK_DESIRED_NODE_LABEL_ENV_VAR, desiredNodeLabel);
       getJobProps().put("env." + SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, minMemVcoreRatio);
       getJobProps().put("env." + SPARK_MIN_MEM_SIZE_ENV_VAR, minMemSize);
     }
