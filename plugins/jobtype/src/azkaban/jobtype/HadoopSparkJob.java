@@ -536,10 +536,12 @@ public class HadoopSparkJob extends JavaProcessJob {
       String sparkDir = getSysProps().get("spark.home.dir");
       String sparkHomePrefix =
           getSysProps().get("spark.home.prefix") != null ? getSysProps().get("spark.home.prefix") : "*";
+      String replaceTo = getSysProps().get("spark.version.regex.to.replace");
+      String replaceWith = getSysProps().get("spark.version.regex.to.replace.with") != null ? getSysProps()
+          .get("spark.version.regex.to.replace.with") : "";
       String versionPatterToMatch =
-          sparkHomePrefix + (getSysProps().get("spark.version.regex.to.replace") != null ? sparkVersion
-              .replace(getSysProps().get("spark.version.regex.to.replace"),
-                  getSysProps().get("spark.version.regex.to.replace.with")) : sparkVersion) + "*";
+          sparkHomePrefix + ( replaceTo != null ? sparkVersion
+              .replace(replaceTo, replaceWith) : sparkVersion) + "*";
       info("Looking for spark at  " + sparkDir + " directory with " + sparkHomePrefix + " prefix for " + sparkVersion
           + " version.");
       DirectoryScanner scanner = new DirectoryScanner();
