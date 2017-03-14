@@ -18,6 +18,7 @@ package azkaban.jobtype;
 
 import azkaban.utils.Props;
 import com.google.common.collect.Maps;
+
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +27,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -312,17 +314,6 @@ public class HadoopSecureSparkWrapper {
 
     if (nodeLabelingYarn && nodeLabelingPolicy) {
       ignoreUserSpecifiedNodeLabelParameter(argArray, autoNodeLabeling);
-
-      // If yarn cluster enables node labelling, applications should be submitted to a default
-      // queue by a default conf(spark.yarn.queue) in spark-defaults.conf.
-      int queueParameterIndex = getUserSpecifiedQueueParameterIndex(argArray);
-      if (queueParameterIndex != -1) {
-        logger.info(
-            "Azbakan enforces node labeling. Ignore user param: " + argArray[queueParameterIndex] + " " + argArray[
-                queueParameterIndex + 1]);
-        argArray[queueParameterIndex] = null;
-        argArray[queueParameterIndex + 1] = null;
-      }
 
       // If auto node labeling is enabled, automatically sets spark.yarn.executor.nodeLabelExpression
       // config based on user requested resources.

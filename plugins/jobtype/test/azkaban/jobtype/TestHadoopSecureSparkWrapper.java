@@ -62,7 +62,7 @@ public class TestHadoopSecureSparkWrapper {
     };
     argArray = HadoopSecureSparkWrapper.handleNodeLabeling(argArray);
     argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
-    Assert.assertTrue(argArray.length == 6);
+    Assert.assertTrue(argArray.length == 8);
     Assert.assertTrue(argArray[1].contains("test2"));
   }
 
@@ -89,7 +89,7 @@ public class TestHadoopSecureSparkWrapper {
     };
     argArray = HadoopSecureSparkWrapper.handleNodeLabeling(argArray);
     argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
-    Assert.assertTrue(argArray.length == 6);
+    Assert.assertTrue(argArray.length == 8);
     Assert.assertTrue(argArray[1].contains("test"));
   }
 
@@ -114,7 +114,7 @@ public class TestHadoopSecureSparkWrapper {
     };
     argArray = HadoopSecureSparkWrapper.handleNodeLabeling(argArray);
     argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
-    Assert.assertTrue(argArray.length == 2);
+    Assert.assertTrue(argArray.length == 4);
     Assert.assertTrue(argArray[1].contains("test2"));
   }
 
@@ -234,7 +234,7 @@ public class TestHadoopSecureSparkWrapper {
     };
     argArray = HadoopSecureSparkWrapper.handleNodeLabeling(argArray);
     argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
-    Assert.assertTrue(argArray.length == 6);
+    Assert.assertTrue(argArray.length == 8);
     Assert.assertTrue(argArray[1].contains("test2"));
   }
 
