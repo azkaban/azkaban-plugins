@@ -21,18 +21,20 @@ import azkaban.jobExecutor.JavaProcessJob;
 import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.StringTokenizer;
+
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
+import org.apache.tools.ant.DirectoryScanner;
 
 import static azkaban.security.commons.HadoopSecurityManager.ENABLE_PROXYING;
 import static azkaban.security.commons.HadoopSecurityManager.OBTAIN_BINARY_TOKEN;
-import static azkaban.security.commons.HadoopSecurityManager.USER_TO_PROXY;
 import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION;
 
 /**
@@ -47,7 +49,7 @@ import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_
  *
  * Expect the following jobtype property:
  *
- * spark.home (client default SPARK_HOME if user doesn't give a spark.version)
+ * spark.home (client default SPARK_HOME if user doesn't give a spark-version)
  *             Conf will be either SPARK_CONF_DIR(we do not override it) or {spark.home}/conf
  *
  * spark.1.6.0.home (spark.{version}.home is REQUIRED for the {version} that we want to support.
@@ -58,11 +60,11 @@ import static org.apache.hadoop.security.UserGroupInformation.HADOOP_TOKEN_FILE_
  * spark.1.6.0.conf (OPTIONAL. spark.{version}.conf is the conf used for the {version}.
  *                  If not specified, the conf of this {version} will be spark.{version}.home/conf
  *
- * spark.home.dir To reduce dependency on azkban-jobtype plugin properties every time new spark binary is available,
+ * spark.base.dir To reduce dependency on azkban-jobtype plugin properties every time new spark binary is available,
  *                this property needs to be set. It specifies path where spark binaries are kept.
  *                If spark.{sparkVersion}.home is set in commonprivate.properties/private.properties,
- *                then that will be returned. If spark.{sparkVersion}.home is not set and spark.home.dir is set then
- *                it will retrieve Spark directory inside spark.home.dir, matching spark.home.prefix + sparkVersion pattern.
+ *                then that will be returned. If spark.{sparkVersion}.home is not set and spark.base.dir is set then
+ *                it will retrieve Spark directory inside spark.base.dir, matching spark.home.prefix + sparkVersion pattern.
  *
  * spark.dynamic.res.alloc.enforced (set to true if we want to enforce dynamic resource allocation policy.
  *                  Enabling dynamic allocation policy for spark job type is different from enabling dynamic
@@ -128,6 +130,19 @@ public class HadoopSparkJob extends JavaProcessJob {
   // Env var to be passed to {@HadoopSecureSparkWrapper} for the value of minimum
   // memory size in GB
   public static final String SPARK_MIN_MEM_SIZE_ENV_VAR = "SPARK_MIN_MEM_GB_SIZE";
+  // Jobtype property to denote base directory where spark binaries are placed
+  public static final String SPARK_BASE_DIR = "spark.base.dir";
+  // Jobtype property to configure prefix of directory of Spark binaries
+  public static final String SPARK_HOME_PREFIX = "spark.home.prefix";
+  // Jobtype property to configure regex which will be replaced by SPARK_VERSION_REGEX_TO_REPLACE_WITH in Spark version
+  // provided by user as a spark-version parameter
+  public static final String SPARK_VERSION_REGEX_TO_REPLACE = "spark.version.regex.to.replace";
+  // Jobtype property to configure regex which will be replacing SPARK_VERSION_REGEX_TO_REPLACE in Spark version
+  // provided by user as a spark-version parameter.
+  public static final String SPARK_VERSION_REGEX_TO_REPLACE_WITH = "spark.version.regex.to.replace.with";
+  // Jobtype property to configure reference document for available spark versions which can be referred by users
+  // in case they don't know which are the valid spark versions
+  public static final String SPARK_REFERENCE_DOCUMENT = "spark.reference.document";
 
   // security variables
   private String userToProxy = null;
@@ -466,32 +481,36 @@ public class HadoopSparkJob extends JavaProcessJob {
     return classPath;
   }
 
-  private String[] getSparkLibConf() {
+  /**
+   * This method is used to retrieve Spark home and conf locations. Below logic is mentioned in detail.
+   * a) If user has specified spark version in job property, e.g. spark-version=1.6.0, then
+   *    i) If spark.{sparkVersion}.home is set in commonprivate.properties/private.properties, then that will be returned.
+   *   ii) If spark.{sparkVersion}.home is not set and spark.home.dir is set then it will retrieve Spark directory inside
+   *       spark.home.dir, matching spark.home.prefix + sparkVersion pattern.
+   * b) If user has not specified spark version in job property, use default spark.home configured in the jobtype
+   *    plugin's config
+   * c) If spark home is not found by both of the above cases, then throw RuntimeException.
+   * @return
+   */
+  protected String[] getSparkLibConf() {
     String sparkHome = null;
     String sparkConf = null;
-    // If user has specified version in job property. e.g. spark.version=1.6.0
+    // If user has specified version in job property. e.g. spark-version=1.6.0
     String jobSparkVer = getJobProps().get(SparkJobArg.SPARK_VERSION.azPropName);
     if (jobSparkVer != null) {
       info("This job sets spark version: " + jobSparkVer);
       // Spark jobtype supports this version through plugin's jobtype config
-      // e.g. spark.1.6.0.home=/path_to_spark/ in commonprivate.properties
-      sparkHome = getSysProps().get("spark." + jobSparkVer + ".home");
-      if (sparkHome != null) {
-        sparkConf = getSysProps().get("spark." + jobSparkVer + ".conf");
-        if (sparkConf == null) {
-          sparkConf = sparkHome + "/conf";
-        }
-        info("Using job specific spark: " + sparkHome + " and conf: " + sparkConf);
-        // Override the SPARK_HOME SPARK_CONF_DIR env for HadoopSecureSparkWrapper process(spark client)
-        getJobProps().put("env." + SPARK_HOME_ENV_VAR, sparkHome);
-        getJobProps().put("env." + SPARK_CONF_DIR_ENV_VAR, sparkConf);
-      } else {
-        info("The spark version " + jobSparkVer +" is not supported. Using system default.");
+      sparkHome = getSparkHome(jobSparkVer);
+      sparkConf = getSysProps().get("spark." + jobSparkVer + ".conf");
+      if (sparkConf == null) {
+        sparkConf = sparkHome + "/conf";
       }
-    }
-
-    // User job doesn't give spark.version
-    if (sparkHome == null) {
+      info("Using job specific spark: " + sparkHome + " and conf: " + sparkConf);
+      // Override the SPARK_HOME SPARK_CONF_DIR env for HadoopSecureSparkWrapper process(spark client)
+      getJobProps().put("env." + SPARK_HOME_ENV_VAR, sparkHome);
+      getJobProps().put("env." + SPARK_CONF_DIR_ENV_VAR, sparkConf);
+    } else {
+      // User job doesn't give spark-version
       // Use default spark.home. Configured in the jobtype plugin's config
       sparkHome = getSysProps().get("spark.home");
       if (sparkHome == null) {
@@ -523,6 +542,48 @@ public class HadoopSparkJob extends JavaProcessJob {
     }
 
     return new String[]{getSparkLibDir(sparkHome), sparkConf};
+  }
+
+  /**
+   * This method is used to get spark home from plugin's jobtype config.
+   * If spark.{sparkVersion}.home is set in commonprivate.properties/private.properties, then that will be returned.
+   * If spark.{sparkVersion}.home is not set and spark.base.dir is set then it will retrieve Spark directory inside
+   * spark.base.dir, matching spark.home.prefix + sparkVersion pattern. Regex pattern can be passed as properties for
+   * version formatting.
+   * @param sparkVersion
+   * @return
+   */
+  private String getSparkHome(String sparkVersion) {
+    String sparkHome = getSysProps().get("spark." + sparkVersion + ".home");
+    if (sparkHome == null) {
+      info("Couldn't find spark." + sparkVersion + ".home property.");
+      String sparkDir = getSysProps().get(SPARK_BASE_DIR);
+      String sparkHomePrefix =
+          getSysProps().get(SPARK_HOME_PREFIX) != null ? getSysProps().get(SPARK_HOME_PREFIX) : "*";
+      String replaceTo = getSysProps().get(SPARK_VERSION_REGEX_TO_REPLACE);
+      String replaceWith = getSysProps().get(SPARK_VERSION_REGEX_TO_REPLACE_WITH) != null ? getSysProps()
+          .get(SPARK_VERSION_REGEX_TO_REPLACE_WITH) : "";
+      String versionPatterToMatch =
+          sparkHomePrefix + ( replaceTo != null ? sparkVersion
+              .replace(replaceTo, replaceWith) : sparkVersion) + "*";
+      info("Looking for spark at  " + sparkDir + " directory with " + sparkHomePrefix + " prefix for " + sparkVersion
+          + " version.");
+      DirectoryScanner scanner = new DirectoryScanner();
+      scanner.setBasedir(sparkDir);
+      scanner.setIncludes(new String[]{versionPatterToMatch});
+      scanner.scan();
+      String[] directories = scanner.getIncludedDirectories();
+      if (directories != null && directories.length > 0) {
+        sparkHome = sparkDir + "/" + directories[directories.length - 1];
+      } else {
+        String sparkReferenceDoc = getSysProps().get(SPARK_REFERENCE_DOCUMENT);
+        String exceptionMessage = sparkReferenceDoc == null ? "SPARK version specified by User is not available."
+            : "SPARK version specified by User is not available. Available versions are mentioned at: "
+                + sparkReferenceDoc;
+        throw new RuntimeException(exceptionMessage);
+      }
+    }
+    return sparkHome;
   }
 
   /**
