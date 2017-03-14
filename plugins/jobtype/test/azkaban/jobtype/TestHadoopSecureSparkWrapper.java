@@ -16,8 +16,12 @@
 
 package azkaban.jobtype;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
@@ -44,6 +48,7 @@ public class TestHadoopSecureSparkWrapper {
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "3");
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR, "8");
     setEnv(envs);
+    setSparkDefaultsConf();
     Configuration.addDefaultResource("yarn-site.xml");
     String[] argArray = new String[] {
         "--conf",
@@ -57,7 +62,7 @@ public class TestHadoopSecureSparkWrapper {
     };
     argArray = HadoopSecureSparkWrapper.handleNodeLabeling(argArray);
     argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
-    Assert.assertTrue(argArray.length == 6);
+    Assert.assertTrue(argArray.length == 8);
     Assert.assertTrue(argArray[1].contains("test2"));
   }
 
@@ -70,6 +75,7 @@ public class TestHadoopSecureSparkWrapper {
     envs.put(HadoopSparkJob.SPARK_DESIRED_NODE_LABEL_ENV_VAR, "test2");
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "3");
     setEnv(envs);
+    setSparkDefaultsConf();
     Configuration.addDefaultResource("yarn-site.xml");
     String[] argArray = new String[] {
         "--conf",
@@ -83,7 +89,7 @@ public class TestHadoopSecureSparkWrapper {
     };
     argArray = HadoopSecureSparkWrapper.handleNodeLabeling(argArray);
     argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
-    Assert.assertTrue(argArray.length == 6);
+    Assert.assertTrue(argArray.length == 8);
     Assert.assertTrue(argArray[1].contains("test"));
   }
 
@@ -98,6 +104,7 @@ public class TestHadoopSecureSparkWrapper {
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "3");
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR, "6");
     setEnv(envs);
+    setSparkDefaultsConf();
     Configuration.addDefaultResource("yarn-site.xml");
     String[] argArray = new String[] {
         "--conf",
@@ -107,8 +114,98 @@ public class TestHadoopSecureSparkWrapper {
     };
     argArray = HadoopSecureSparkWrapper.handleNodeLabeling(argArray);
     argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
-    Assert.assertTrue(argArray.length == 2);
+    Assert.assertTrue(argArray.length == 4);
     Assert.assertTrue(argArray[1].contains("test2"));
+  }
+
+  @Test
+  public void testQueueEnforcementForDisabledDynamicResAllocation() {
+    Map<String, String> envs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    envs.put(HadoopSparkJob.SPARK_DYNAMIC_RES_ENV_VAR, Boolean.TRUE.toString());
+    setEnv(envs);
+    setSparkDefaultsConf();
+    Configuration.addDefaultResource("yarn-site.xml");
+    String[] argArray = new String[] {
+        "--conf",
+        "spark.yarn.queue=test",
+        "--conf",
+        "--executor-cores",
+        "3",
+        "--executor-memory",
+        "7G"
+    };
+    argArray = HadoopSecureSparkWrapper.handleQueueEnforcement(argArray);
+    argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
+    Assert.assertTrue(argArray.length == 5);
+  }
+
+  @Test
+  public void testQueueEnforcementForSmallContainer() {
+    Map<String, String> envs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    envs.put(HadoopSparkJob.SPARK_DYNAMIC_RES_ENV_VAR, Boolean.TRUE.toString());
+    envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "4");
+    envs.put(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR, "8");
+    setEnv(envs);
+    setSparkDefaultsConf("queue-enforcement-spark-defaults.conf");
+    Configuration.addDefaultResource("yarn-site.xml");
+    String[] argArray = new String[] {
+        "--conf",
+        "--executor-cores",
+        "1",
+        "--executor-memory",
+        "2G"
+    };
+    argArray = HadoopSecureSparkWrapper.handleQueueEnforcement(argArray);
+    argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
+    Assert.assertTrue(argArray.length == 7);
+    Assert.assertTrue(argArray[1].contains("default"));
+  }
+
+  @Test
+  public void testUserQueueSpecifiedForSmallContainer() {
+    Map<String, String> envs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    envs.put(HadoopSparkJob.SPARK_DYNAMIC_RES_ENV_VAR, Boolean.TRUE.toString());
+    envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "4");
+    envs.put(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR, "8");
+    setEnv(envs);
+    setSparkDefaultsConf("queue-enforcement-spark-defaults.conf");
+    Configuration.addDefaultResource("yarn-site.xml");
+    String[] argArray = new String[] {
+        "--conf",
+        "spark.yarn.queue=test",
+        "--conf",
+        "--executor-cores",
+        "1",
+        "--executor-memory",
+        "2G"
+    };
+    argArray = HadoopSecureSparkWrapper.handleQueueEnforcement(argArray);
+    argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
+    Assert.assertTrue(argArray.length == 7);
+    Assert.assertTrue(argArray[1].contains("test"));
+  }
+
+  @Test
+  public void testQueueEnforcementForLargeContainer() {
+    Map<String, String> envs = new TreeMap<String, String>(String.CASE_INSENSITIVE_ORDER);
+    envs.put(HadoopSparkJob.SPARK_DYNAMIC_RES_ENV_VAR, Boolean.TRUE.toString());
+    envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "4");
+    envs.put(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR, "8");
+    setEnv(envs);
+    setSparkDefaultsConf("queue-enforcement-spark-defaults.conf");
+    Configuration.addDefaultResource("yarn-site.xml");
+    String[] argArray = new String[] {
+        "--conf",
+        "spark.yarn.queue=test",
+        "--conf",
+        "--executor-cores",
+        "3",
+        "--executor-memory",
+        "20G"
+    };
+    argArray = HadoopSecureSparkWrapper.handleQueueEnforcement(argArray);
+    argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
+    Assert.assertTrue(argArray.length == 5);
   }
 
   @Test
@@ -123,6 +220,7 @@ public class TestHadoopSecureSparkWrapper {
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_VCORE_RATIO_ENV_VAR, "4");
     envs.put(HadoopSparkJob.SPARK_MIN_MEM_SIZE_ENV_VAR, "5");
     setEnv(envs);
+    setSparkDefaultsConf();
     Configuration.addDefaultResource("yarn-site.xml");
     String[] argArray = new String[] {
         "--conf",
@@ -136,10 +234,21 @@ public class TestHadoopSecureSparkWrapper {
     };
     argArray = HadoopSecureSparkWrapper.handleNodeLabeling(argArray);
     argArray = HadoopSecureSparkWrapper.removeNullsFromArgArray(argArray);
-    Assert.assertTrue(argArray.length == 6);
+    Assert.assertTrue(argArray.length == 8);
     Assert.assertTrue(argArray[1].contains("test2"));
   }
 
+  @SuppressWarnings("unchecked")
+  private static void setSparkDefaultsConf(String... sourcePath) {
+    String sourceFile = sourcePath.length == 0 ? "common-spark-defaults.conf" : sourcePath[0];
+    Path source = Paths.get("test_resource/" + sourceFile);
+    Path target = Paths.get("test_resource/spark-defaults.conf");
+    try {
+      Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+    } catch (IOException e) {
+      logger.error(e);
+    }
+  }
   @SuppressWarnings("unchecked")
   private static void setEnv(Map<String, String> newenv) {
     try
