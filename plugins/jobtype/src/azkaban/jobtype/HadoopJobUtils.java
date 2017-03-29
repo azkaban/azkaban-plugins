@@ -85,6 +85,12 @@ public class HadoopJobUtils {
   // Azkaban built in property name
   public static final String JVM_ARGS = "jvm.args";
 
+  // MapReduce config for specifying additional namenodes for delegation tokens
+  public static final String MAPREDUCE_JOB_OTHER_NAMENODES = "mapreduce.job.hdfs-servers";
+
+  // Azkaban property for listing additional namenodes for delegation tokens
+  private static final String OTHER_NAMENODES_PROPERTY = "other_namenodes";
+
   /**
    * Invalidates a Hadoop authentication token file
    * 
@@ -138,6 +144,24 @@ public class HadoopJobUtils {
 
     return hadoopSecurityManager;
 
+  }
+
+  /**
+   * Takes the list of other Namenodes from which to fetch delegation tokens,
+   * the {@link #OTHER_NAMENODES_PROPERTY} property, from Props and inserts it
+   * back with the addition of the the potentially JobType-specific Namenode URIs
+   * from additionalNamenodes. Modifies props in-place.
+   * @param props Props to add the new Namenode URIs to.
+   * @param additionalNamenodes Comma-separated list of Namenode URIs from which to fetch
+   *                            delegation tokens.
+   */
+  public static void addAdditionalNamenodesToProps(Props props, String additionalNamenodes) {
+    String otherNamenodes = props.get(OTHER_NAMENODES_PROPERTY);
+    if (otherNamenodes != null && otherNamenodes.length() > 0) {
+      props.put(OTHER_NAMENODES_PROPERTY, otherNamenodes + "," + additionalNamenodes);
+    } else {
+      props.put(OTHER_NAMENODES_PROPERTY, additionalNamenodes);
+    }
   }
 
   /**

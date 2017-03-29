@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
@@ -178,6 +179,11 @@ public class HadoopJavaJob extends JavaProcessJob {
       props.putAll(getJobProps());
       props.putAll(getSysProps());
 
+      String additionalNamenodes =
+          (new Configuration()).get(HadoopJobUtils.MAPREDUCE_JOB_OTHER_NAMENODES);
+      if (additionalNamenodes != null && additionalNamenodes.length() > 0) {
+        HadoopJobUtils.addAdditionalNamenodesToProps(props, additionalNamenodes);
+      }
       tokenFile =
           HadoopJobUtils
               .getHadoopTokens(hadoopSecurityManager, props, getLog());

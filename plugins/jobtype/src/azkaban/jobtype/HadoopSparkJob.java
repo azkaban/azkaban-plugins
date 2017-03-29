@@ -27,10 +27,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.StringTokenizer;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
+import org.apache.spark.SparkConf;
+import org.apache.spark.util.Utils;
 import org.apache.tools.ant.DirectoryScanner;
 
 import static azkaban.security.commons.HadoopSecurityManager.ENABLE_PROXYING;
@@ -144,6 +147,9 @@ public class HadoopSparkJob extends JavaProcessJob {
   // in case they don't know which are the valid spark versions
   public static final String SPARK_REFERENCE_DOCUMENT = "spark.reference.document";
 
+  // Spark configuration property to specify additional Namenodes to fetch tokens for
+  private static final String SPARK_CONF_ADDITIONAL_NAMENODES = "spark.yarn.access.namenodes";
+
   // security variables
   private String userToProxy = null;
 
@@ -175,6 +181,25 @@ public class HadoopSparkJob extends JavaProcessJob {
     }
   }
 
+  /**
+   * Add additional namenodes specified in the Spark Configuration
+   * ({@link #SPARK_CONF_ADDITIONAL_NAMENODES}) to the Props provided.
+   * @param props Props to add additional namenodes to.
+   * @see HadoopJobUtils#addAdditionalNamenodesToProps(Props, String)
+   */
+  void addAdditionalNamenodesFromConf(Props props) {
+    String sparkConfDir = getSparkLibConf()[1];
+    String sparkConfFile = new File(sparkConfDir, "spark-defaults.conf").toString();
+    SparkConf sparkConf = new SparkConf(false);
+    sparkConf.setAll(Utils.getPropertiesFromFile(sparkConfFile));
+    try {
+      String additionalNamenodes = sparkConf.get(SPARK_CONF_ADDITIONAL_NAMENODES);
+      HadoopJobUtils.addAdditionalNamenodesToProps(props, additionalNamenodes);
+    } catch (NoSuchElementException e) {
+      // Ignore; no additional namenodes to add
+    }
+  }
+
   @Override
   public void run() throws Exception {
     HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(),
@@ -187,6 +212,7 @@ public class HadoopSparkJob extends JavaProcessJob {
       Props props = new Props();
       props.putAll(getJobProps());
       props.putAll(getSysProps());
+      addAdditionalNamenodesFromConf(props);
       tokenFile =
           HadoopJobUtils
               .getHadoopTokens(hadoopSecurityManager, props, getLog());
