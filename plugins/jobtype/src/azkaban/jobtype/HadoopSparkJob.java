@@ -23,17 +23,24 @@ import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
-import org.apache.spark.SparkConf;
-import org.apache.spark.util.Utils;
 import org.apache.tools.ant.DirectoryScanner;
 
 import static azkaban.security.commons.HadoopSecurityManager.ENABLE_PROXYING;
@@ -189,14 +196,24 @@ public class HadoopSparkJob extends JavaProcessJob {
    */
   void addAdditionalNamenodesFromConf(Props props) {
     String sparkConfDir = getSparkLibConf()[1];
-    String sparkConfFile = new File(sparkConfDir, "spark-defaults.conf").toString();
-    SparkConf sparkConf = new SparkConf(false);
-    sparkConf.setAll(Utils.getPropertiesFromFile(sparkConfFile));
+    File sparkConfFile = new File(sparkConfDir, "spark-defaults.conf");
     try {
-      String additionalNamenodes = sparkConf.get(SPARK_CONF_ADDITIONAL_NAMENODES);
-      HadoopJobUtils.addAdditionalNamenodesToProps(props, additionalNamenodes);
-    } catch (NoSuchElementException e) {
-      // Ignore; no additional namenodes to add
+      InputStreamReader inReader =
+          new InputStreamReader(new FileInputStream(sparkConfFile), StandardCharsets.UTF_8);
+      // Use Properties to avoid needing Spark on our classpath
+      Properties sparkProps = new Properties();
+      sparkProps.load(inReader);
+      inReader.close();
+      String additionalNamenodes =
+          sparkProps.getProperty(SPARK_CONF_ADDITIONAL_NAMENODES);
+      if (additionalNamenodes != null && additionalNamenodes.length() > 0) {
+        getLog().info("Found property " + SPARK_CONF_ADDITIONAL_NAMENODES +
+            " = " + additionalNamenodes + "; setting additional namenodes");
+        HadoopJobUtils.addAdditionalNamenodesToProps(props, additionalNamenodes);
+      }
+    } catch (IOException e) {
+      getLog().warn("Unable to load Spark configuration; not adding any additional " +
+          "namenode delegation tokens.", e);
     }
   }
 

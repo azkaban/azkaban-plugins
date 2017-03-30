@@ -147,6 +147,24 @@ public class HadoopJobUtils {
   }
 
   /**
+   * The same as {@link #addAdditionalNamenodesToProps}, but assumes that the
+   * calling job is MapReduce-based and so uses the
+   * {@link #MAPREDUCE_JOB_OTHER_NAMENODES} from a {@link Configuration} object
+   * to get the list of additional namenodes.
+   * @param props Props to add the new Namenode URIs to.
+   * @see #addAdditionalNamenodesToProps(Props, String)
+   */
+  public static void addAdditionalNamenodesToPropsFromMRJob(Props props, Logger log) {
+    String additionalNamenodes =
+        (new Configuration()).get(MAPREDUCE_JOB_OTHER_NAMENODES);
+    if (additionalNamenodes != null && additionalNamenodes.length() > 0) {
+      log.info("Found property " + MAPREDUCE_JOB_OTHER_NAMENODES +
+          " = " + additionalNamenodes + "; setting additional namenodes");
+      HadoopJobUtils.addAdditionalNamenodesToProps(props, additionalNamenodes);
+    }
+  }
+
+  /**
    * Takes the list of other Namenodes from which to fetch delegation tokens,
    * the {@link #OTHER_NAMENODES_PROPERTY} property, from Props and inserts it
    * back with the addition of the the potentially JobType-specific Namenode URIs

@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.StringTokenizer;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
 
@@ -92,11 +91,7 @@ public class HadoopHiveJob extends JavaProcessJob {
       Props props = new Props();
       props.putAll(getJobProps());
       props.putAll(getSysProps());
-      String additionalNamenodes =
-          (new Configuration()).get(HadoopJobUtils.MAPREDUCE_JOB_OTHER_NAMENODES);
-      if (additionalNamenodes != null && additionalNamenodes.length() > 0) {
-        HadoopJobUtils.addAdditionalNamenodesToProps(props, additionalNamenodes);
-      }
+      HadoopJobUtils.addAdditionalNamenodesToPropsFromMRJob(props, getLog());
       tokenFile = HadoopJobUtils.getHadoopTokens(hadoopSecurityManager, props, getLog());
       getJobProps().put("env." + HADOOP_TOKEN_FILE_LOCATION,
           tokenFile.getAbsolutePath());
