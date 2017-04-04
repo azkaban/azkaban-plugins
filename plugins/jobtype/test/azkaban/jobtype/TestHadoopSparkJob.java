@@ -142,4 +142,31 @@ public class TestHadoopSparkJob {
     String sparkConfPath = SPARK_BASE_DIR + "/" + SPARK_210_HOME + "/" + SPARK_HOME_CONF;
     Assert.assertEquals(sparkHomeConfPath[1], sparkConfPath);
   }
+
+  @Test
+  public void testSparkLoadsAdditionalNamenodes() throws Exception {
+    File source = new File("test_resource/additional-namenodes-spark-defaults.conf");
+    File target = new File(SPARK_BASE_DIR + "/" + SPARK_163_HOME + "/" +
+        SPARK_HOME_CONF + "/" + SPARK_DEFAULT_FILE_NAME);
+    Files.copy(source, target);
+
+    Props jobProps = new Props();
+    jobProps.put(SparkJobArg.SPARK_VERSION.azPropName, "1.6.3");
+
+    Props sysProps = new Props();
+    sysProps.put("spark.home", SPARK_BASE_DIR + "/" + SPARK_DEFAULT);
+    sysProps.put("spark.1.6.3.home", SPARK_BASE_DIR + "/" + SPARK_163_HOME);
+
+    HadoopSparkJob sparkJob = new HadoopSparkJob("azkaban_job_1", sysProps, jobProps, logger);
+
+    Props testProps = new Props();
+    sparkJob.addAdditionalNamenodesFromConf(testProps);
+    Assert.assertEquals("hdfs://testNN:9000", testProps.get("other_namenodes"));
+
+    testProps = new Props();
+    testProps.put("other_namenodes", "hdfs://testNN1:9000,hdfs://testNN2:9000");
+    sparkJob.addAdditionalNamenodesFromConf(testProps);
+    Assert.assertEquals("hdfs://testNN1:9000,hdfs://testNN2:9000,hdfs://testNN:9000",
+        testProps.get("other_namenodes"));
+  }
 }

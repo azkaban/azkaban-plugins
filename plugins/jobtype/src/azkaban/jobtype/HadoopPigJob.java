@@ -112,6 +112,7 @@ public class HadoopPigJob extends JavaProcessJob {
       Props props = new Props();
       props.putAll(getJobProps());
       props.putAll(getSysProps());
+      HadoopJobUtils.addAdditionalNamenodesToPropsFromMRJob(props, getLog());
       tokenFile =
           HadoopJobUtils
               .getHadoopTokens(hadoopSecurityManager, props, getLog());

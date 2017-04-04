@@ -23,10 +23,20 @@ import azkaban.utils.Props;
 import azkaban.utils.StringUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Properties;
 import java.util.StringTokenizer;
 
 import org.apache.commons.lang.math.NumberUtils;
@@ -144,6 +154,9 @@ public class HadoopSparkJob extends JavaProcessJob {
   // in case they don't know which are the valid spark versions
   public static final String SPARK_REFERENCE_DOCUMENT = "spark.reference.document";
 
+  // Spark configuration property to specify additional Namenodes to fetch tokens for
+  private static final String SPARK_CONF_ADDITIONAL_NAMENODES = "spark.yarn.access.namenodes";
+
   // security variables
   private String userToProxy = null;
 
@@ -175,6 +188,35 @@ public class HadoopSparkJob extends JavaProcessJob {
     }
   }
 
+  /**
+   * Add additional namenodes specified in the Spark Configuration
+   * ({@link #SPARK_CONF_ADDITIONAL_NAMENODES}) to the Props provided.
+   * @param props Props to add additional namenodes to.
+   * @see HadoopJobUtils#addAdditionalNamenodesToProps(Props, String)
+   */
+  void addAdditionalNamenodesFromConf(Props props) {
+    String sparkConfDir = getSparkLibConf()[1];
+    File sparkConfFile = new File(sparkConfDir, "spark-defaults.conf");
+    try {
+      InputStreamReader inReader =
+          new InputStreamReader(new FileInputStream(sparkConfFile), StandardCharsets.UTF_8);
+      // Use Properties to avoid needing Spark on our classpath
+      Properties sparkProps = new Properties();
+      sparkProps.load(inReader);
+      inReader.close();
+      String additionalNamenodes =
+          sparkProps.getProperty(SPARK_CONF_ADDITIONAL_NAMENODES);
+      if (additionalNamenodes != null && additionalNamenodes.length() > 0) {
+        getLog().info("Found property " + SPARK_CONF_ADDITIONAL_NAMENODES +
+            " = " + additionalNamenodes + "; setting additional namenodes");
+        HadoopJobUtils.addAdditionalNamenodesToProps(props, additionalNamenodes);
+      }
+    } catch (IOException e) {
+      getLog().warn("Unable to load Spark configuration; not adding any additional " +
+          "namenode delegation tokens.", e);
+    }
+  }
+
   @Override
   public void run() throws Exception {
     HadoopConfigurationInjector.prepareResourcesToInject(getJobProps(),
@@ -187,6 +229,7 @@ public class HadoopSparkJob extends JavaProcessJob {
       Props props = new Props();
       props.putAll(getJobProps());
       props.putAll(getSysProps());
+      addAdditionalNamenodesFromConf(props);
       tokenFile =
           HadoopJobUtils
               .getHadoopTokens(hadoopSecurityManager, props, getLog());

@@ -178,6 +178,7 @@ public class HadoopJavaJob extends JavaProcessJob {
       props.putAll(getJobProps());
       props.putAll(getSysProps());
 
+      HadoopJobUtils.addAdditionalNamenodesToPropsFromMRJob(props, getLog());
       tokenFile =
           HadoopJobUtils
               .getHadoopTokens(hadoopSecurityManager, props, getLog());
