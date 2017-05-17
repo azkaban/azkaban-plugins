@@ -3,4 +3,5 @@ jdk:
 - oraclejdk8
 install:
  - time npm install -g less dustjs-linkedin
+ - sudo apt-get install ant-optional
 script: ant
