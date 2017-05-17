@@ -12,3 +12,6 @@ azkaban-jobtype-*.jar
 azkaban-pigvisualizer-*.jar
 dist/
 out/
+node_modules/
+test_resource/spark-defaults.conf
+
