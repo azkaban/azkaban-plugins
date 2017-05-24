@@ -160,7 +160,7 @@
               </div>
               <div class="control-group">
                 <label for="date" class="control-label">Date</label>
-                <div id="date" class="controls">
+                <div id="date" class="controls" style="position: relative">
                   <input type="text" id="schedule-date" name="schedule-date"#if($scheduleDate && $scheduleDate != "") value="$scheduleDate"#end/>
                 </div>
               </div>
@@ -185,6 +185,13 @@
                       <option value="m"#if($scheduleInterval=="m") selected#end>Month(s)</option>
                       <option value="y"#if($scheduleInterval=="y") selected#end>Year(s)</option>
                     </select>
+                  </div>
+                </div>
+
+                <div class="control-group" id='endScheduleId' data-max="$max_allowed_schedule_dates" data-default="$default_schedule_dates">
+                  <label for="endSchedule" class="control-label"> <span style="color:#ff1059">End Schedule Time</span> </label>
+                  <div id="interval_2" class="controls" style="position: relative">
+                    <input type="text" id="end-schedule-date" name="end-schedule-date"#if($endScheduleDate && $endScheduleDate != "") value="$endScheduleDate"#end/>
                   </div>
                 </div>
               </div>

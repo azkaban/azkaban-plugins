@@ -29,6 +29,7 @@ $(document).ready(function () {
   var scheduleOptions = $("#schedule-options");
   var scheduleFields = $("#schedule-fields");
   var scheduleDate = $("#schedule-date");
+  var endScheduleDate = $("#end-schedule-date");
   var scheduleRepeat = $("#schedule-repeat");
   var scheduleRepeatFields = $("#schedule-repeat-fields");
 
@@ -241,4 +242,13 @@ $(document).ready(function () {
   addInitialVariables();
 
   scheduleDate.datetimepicker({format: 'L'});
+  var defaultDate = new Date();
+  var maxDate = new Date();
+  defaultDate.setDate(defaultDate.getDate() + Number($("#endScheduleId").data("default")));
+  maxDate.setDate(maxDate.getDate() +  Number($("#endScheduleId").data("max")) );
+  endScheduleDate.datetimepicker({
+    defaultDate: defaultDate,
+    minDate: new Date(),
+    maxDate: maxDate
+  });
 });

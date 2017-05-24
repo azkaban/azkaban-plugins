@@ -61,6 +61,10 @@ public class Reportal {
   public static final String ACCESS_LIST_SPLIT_REGEX =
       "\\s*,\\s*|\\s*;\\s*|\\s+";
 
+  public static final int MAX_ALLOWED_SCHEDULE_DATES = 365;
+
+  public static final int DEFAULT_SCHEDULE_DATES = 90;
+
   public String reportalUser;
   public String ownerEmail;
 
@@ -79,6 +83,7 @@ public class Reportal {
   public boolean scheduleRepeat;
   public String scheduleIntervalQuantity;
   public String scheduleInterval;
+  public String endSchedule;
 
   public boolean renderResultsAsHtml;
 
@@ -110,6 +115,7 @@ public class Reportal {
     project.getMetadata().put("scheduleIntervalQuantity",
         scheduleIntervalQuantity);
     project.getMetadata().put("scheduleInterval", scheduleInterval);
+    project.getMetadata().put("endSchedule", endSchedule);
 
     project.getMetadata().put("renderResultsAsHtml", renderResultsAsHtml);
 
@@ -196,7 +202,7 @@ public class Reportal {
       options.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
 
       scheduleManager.scheduleFlow(-1, project.getId(), project.getName(),
-          flow.getId(), "ready", firstSchedTime.getMillis(),
+          flow.getId(), "ready", firstSchedTime.getMillis(), 2524608000000L,
           firstSchedTime.getZone(), period, DateTime.now().getMillis(),
           firstSchedTime.getMillis(), firstSchedTime.getMillis(),
           user.getUserId(), options, null);
@@ -377,6 +383,8 @@ public class Reportal {
         stringGetter.get(project.getMetadata().get("scheduleIntervalQuantity"));
     reportal.scheduleInterval =
         stringGetter.get(project.getMetadata().get("scheduleInterval"));
+    reportal.endSchedule =
+        stringGetter.get(project.getMetadata().get("endSchedule"));
 
     reportal.renderResultsAsHtml =
         boolGetter.get(project.getMetadata().get("renderResultsAsHtml"));

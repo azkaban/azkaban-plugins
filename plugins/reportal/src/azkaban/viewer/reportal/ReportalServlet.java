@@ -669,6 +669,11 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("notifications", "");
     page.add("failureNotifications", "");
 
+    page.add("max_allowed_schedule_dates", Reportal.MAX_ALLOWED_SCHEDULE_DATES);
+    page.add("default_schedule_dates", Reportal.DEFAULT_SCHEDULE_DATES);
+
+    page.add("failureNotifications", "");
+
     page.render();
   }
 
@@ -716,6 +721,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("scheduleAmPm", reportal.scheduleAmPm);
     page.add("scheduleTimeZone", reportal.scheduleTimeZone);
     page.add("scheduleDate", reportal.scheduleDate);
+    page.add("endScheduleDate", reportal.endSchedule);
     page.add("scheduleRepeat", reportal.scheduleRepeat);
     page.add("scheduleIntervalQuantity", reportal.scheduleIntervalQuantity);
     page.add("scheduleInterval", reportal.scheduleInterval);
@@ -725,6 +731,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("accessViewer", reportal.accessViewer);
     page.add("accessExecutor", reportal.accessExecutor);
     page.add("accessOwner", reportal.accessOwner);
+    page.add("max_allowed_schedule_dates", Reportal.MAX_ALLOWED_SCHEDULE_DATES);
+    page.add("default_schedule_dates", Reportal.DEFAULT_SCHEDULE_DATES);
 
     page.render();
   }
@@ -811,7 +819,12 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
         getParam(req, "schedule-interval-quantity");
     report.scheduleInterval = getParam(req, "schedule-interval");
     report.renderResultsAsHtml = hasParam(req, "render-results-as-html");
-    
+
+    boolean isEndSchedule = hasParam(req, "end-schedule-date");
+    if (isEndSchedule) {
+      report.endSchedule = getParam(req, "end-schedule-date");
+    }
+
     page.add("schedule", report.schedule);
     page.add("scheduleHour", report.scheduleHour);
     page.add("scheduleMinute", report.scheduleMinute);
@@ -822,13 +835,14 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("scheduleIntervalQuantity", report.scheduleIntervalQuantity);
     page.add("scheduleInterval", report.scheduleInterval);
     page.add("renderResultsAsHtml", report.renderResultsAsHtml);
+    page.add("endSchedule", report.endSchedule);
 
     report.accessViewer = getParam(req, "access-viewer");
     report.accessExecutor = getParam(req, "access-executor");
     report.accessOwner = getParam(req, "access-owner");
     page.add("accessViewer", report.accessViewer);
     page.add("accessExecutor", report.accessExecutor);
-    
+
     // Adding report creator as explicit owner, if not present already
     if (report.accessOwner == null || report.accessOwner.isEmpty()) {
       report.accessOwner = user.getUserId();
@@ -842,7 +856,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
         report.accessOwner = StringUtils.join(splittedOwners, ',');
       }
     }
-    
+
     page.add("accessOwner", report.accessOwner);
 
     report.notifications = getParam(req, "notifications");
@@ -855,7 +869,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     List<Query> queryList = new ArrayList<Query>(numQueries);
     page.add("queries", queryList);
     report.queries = queryList;
-    
+
     List<String> errors = new ArrayList<String>();
     for (int i = 0; i < numQueries; i++) {
       Query query = new Query();
