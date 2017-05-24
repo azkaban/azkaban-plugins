@@ -193,6 +193,8 @@
                   <div id="interval_2" class="controls" style="position: relative">
                     <input type="text" id="end-schedule-date" name="end-schedule-date"#if($endScheduleDate && $endScheduleDate != "") value="$endScheduleDate"#end/>
                   </div>
+                  <div id="expireNote" class="controls" data-end="$endScheduleDate">
+                  </div>
                 </div>
               </div>
             </div>

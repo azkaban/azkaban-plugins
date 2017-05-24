@@ -17,6 +17,10 @@
 package azkaban.reportal.util;
 
 import java.io.File;
+
+import java.text.SimpleDateFormat;
+import java.text.DateFormat;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
@@ -52,6 +57,8 @@ import azkaban.viewer.reportal.ReportalMailCreator;
 import azkaban.viewer.reportal.ReportalTypeManager;
 
 public class Reportal {
+  private static Logger logger = Logger.getLogger(Reportal.class);
+
   public static final String REPORTAL_CONFIG_PREFIX = "reportal.config.";
   public static final String REPORTAL_CONFIG_PREFIX_REGEX =
     "^reportal[.]config[.].+";
@@ -201,11 +208,26 @@ public class Reportal {
           report.renderResultsAsHtml ? "true" : "false");
       options.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
 
+      long endScheduleTime = report.endSchedule == null ?
+          2524608000000L : parseDateToEpoch(report.endSchedule);
+
+      logger.info(" ===== This scheudle end time is " + endScheduleTime);
+
       scheduleManager.scheduleFlow(-1, project.getId(), project.getName(),
-          flow.getId(), "ready", firstSchedTime.getMillis(), 2524608000000L,
+          flow.getId(), "ready", firstSchedTime.getMillis(), endScheduleTime,
           firstSchedTime.getZone(), period, DateTime.now().getMillis(),
           firstSchedTime.getMillis(), firstSchedTime.getMillis(),
           user.getUserId(), options, null);
+    }
+  }
+
+  private long parseDateToEpoch(String date) throws ScheduleManagerException {
+    DateFormat dffrom = new SimpleDateFormat("MM/dd/yyyy h:mm a");
+    try {
+      // this string will be parsed according to system's timezone setting.
+      return dffrom.parse(date).getTime();
+    } catch (Exception ex) {
+      throw new ScheduleManagerException("can not parse this date " + date);
     }
   }
 
