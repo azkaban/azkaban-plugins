@@ -836,6 +836,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("scheduleInterval", report.scheduleInterval);
     page.add("renderResultsAsHtml", report.renderResultsAsHtml);
     page.add("endSchedule", report.endSchedule);
+    page.add("max_allowed_schedule_dates", Reportal.MAX_ALLOWED_SCHEDULE_DATES);
+    page.add("default_schedule_dates", Reportal.DEFAULT_SCHEDULE_DATES);
 
     report.accessViewer = getParam(req, "access-viewer");
     report.accessExecutor = getParam(req, "access-executor");
