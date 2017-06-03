@@ -102,6 +102,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
   private String reportalStorageUser;
   private File webResourcesFolder;
   private int itemsPerPage = 20;
+  private int max_allowed_schedule_dates;
+  private int default_schedule_dates;
   private boolean showNav;
 
   private HadoopSecurityManager hadoopSecurityManager;
@@ -113,6 +115,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     reportalStorageUser = props.getString("reportal.storage.user", "reportal");
     itemsPerPage = props.getInt("reportal.items_per_page", 20);
     showNav = props.getBoolean("reportal.show.navigation", false);
+
+    max_allowed_schedule_dates = props.getInt("reportal.max.allowed.schedule.dates", 180);
+    default_schedule_dates = props.getInt("reportal.default.schedule.dates", 30);
 
     reportalMailTempDirectory =
         new File(props.getString("reportal.mail.temp.dir", "/tmp/reportal"));
@@ -669,8 +674,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("notifications", "");
     page.add("failureNotifications", "");
 
-    page.add("max_allowed_schedule_dates", Reportal.MAX_ALLOWED_SCHEDULE_DATES);
-    page.add("default_schedule_dates", Reportal.DEFAULT_SCHEDULE_DATES);
+    page.add("max_allowed_schedule_dates", max_allowed_schedule_dates);
+    page.add("default_schedule_dates", default_schedule_dates);
 
     page.add("failureNotifications", "");
 
@@ -731,9 +736,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("accessViewer", reportal.accessViewer);
     page.add("accessExecutor", reportal.accessExecutor);
     page.add("accessOwner", reportal.accessOwner);
-    page.add("max_allowed_schedule_dates", Reportal.MAX_ALLOWED_SCHEDULE_DATES);
-    page.add("default_schedule_dates", Reportal.DEFAULT_SCHEDULE_DATES);
 
+    page.add("max_allowed_schedule_dates", max_allowed_schedule_dates);
+    page.add("default_schedule_dates", default_schedule_dates);
     page.render();
   }
 
@@ -836,8 +841,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("scheduleInterval", report.scheduleInterval);
     page.add("renderResultsAsHtml", report.renderResultsAsHtml);
     page.add("endSchedule", report.endSchedule);
-    page.add("max_allowed_schedule_dates", Reportal.MAX_ALLOWED_SCHEDULE_DATES);
-    page.add("default_schedule_dates", Reportal.DEFAULT_SCHEDULE_DATES);
+    page.add("max_allowed_schedule_dates", max_allowed_schedule_dates);
+    page.add("default_schedule_dates", default_schedule_dates);
 
     report.accessViewer = getParam(req, "access-viewer");
     report.accessExecutor = getParam(req, "access-executor");

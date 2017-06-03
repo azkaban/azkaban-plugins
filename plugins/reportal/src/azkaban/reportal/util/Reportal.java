@@ -68,10 +68,6 @@ public class Reportal {
   public static final String ACCESS_LIST_SPLIT_REGEX =
       "\\s*,\\s*|\\s*;\\s*|\\s+";
 
-  public static final int MAX_ALLOWED_SCHEDULE_DATES = 365;
-
-  public static final int DEFAULT_SCHEDULE_DATES = 90;
-
   public String reportalUser;
   public String ownerEmail;
 
