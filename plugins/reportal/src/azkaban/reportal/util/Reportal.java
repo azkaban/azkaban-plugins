@@ -68,6 +68,9 @@ public class Reportal {
   public static final String ACCESS_LIST_SPLIT_REGEX =
       "\\s*,\\s*|\\s*;\\s*|\\s+";
 
+  // One Schedule's default End Time: 01/01/2050, 00:00:00, UTC
+  private static final long DEFAULT_SCHEDULE_END_EPOCH_TIME = 2524608000000L;
+
   public String reportalUser;
   public String ownerEmail;
 
@@ -205,9 +208,9 @@ public class Reportal {
       options.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
 
       long endScheduleTime = report.endSchedule == null ?
-          2524608000000L : parseDateToEpoch(report.endSchedule);
+          DEFAULT_SCHEDULE_END_EPOCH_TIME: parseDateToEpoch(report.endSchedule);
 
-      logger.info(" ===== This scheudle end time is " + endScheduleTime);
+      logger.info("This report scheudle end time is " + endScheduleTime);
 
       scheduleManager.scheduleFlow(-1, project.getId(), project.getName(),
           flow.getId(), "ready", firstSchedTime.getMillis(), endScheduleTime,

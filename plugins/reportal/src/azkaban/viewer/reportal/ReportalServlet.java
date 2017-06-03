@@ -677,8 +677,6 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("max_allowed_schedule_dates", max_allowed_schedule_dates);
     page.add("default_schedule_dates", default_schedule_dates);
 
-    page.add("failureNotifications", "");
-
     page.render();
   }
 

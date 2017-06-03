@@ -247,14 +247,12 @@ $(document).ready(function () {
   defaultDate.setDate(defaultDate.getDate() + Number($("#endScheduleId").data("default")));
   maxDate.setDate(maxDate.getDate() +  Number($("#endScheduleId").data("max")) );
   endScheduleDate.datetimepicker({
-    // inline: true,
-    // sideBySide: true,
     defaultDate: defaultDate,
     minDate: new Date(),
     maxDate: maxDate
   });
 
-  // console.log("endDate = " + $("#expireNote").data("end"));
+  console.log("endDate = " + $("#expireNote").data("end"));
   if($("#expireNote").data("end")) {
     var endMomentTime = moment($("#expireNote").data("end"), 'MM-DD-YYYY hh:mm A');
     var currMomentTime = moment();
