@@ -14,4 +14,4 @@ dist/
 out/
 node_modules/
 test_resource/spark-defaults.conf
-azkaban-webserver.log
+**/*.log
