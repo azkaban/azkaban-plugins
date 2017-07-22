@@ -18,6 +18,7 @@
 $(function() {
   $('#changeUserBtn').click( function() {
     $('#messageDialog').modal();
+    $('#proxyname').focus();
   });
 
   $('#submitChangeUserBtn').click( function() {
