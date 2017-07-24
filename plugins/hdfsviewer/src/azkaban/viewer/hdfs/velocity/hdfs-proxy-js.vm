@@ -39,7 +39,7 @@ $(function() {
   });
 
   $('#proxyname').keyup(function(event) {
-    if (event.which == 13) {
+    if (event.key == "Enter") {
       $('#submitChangeUserBtn').click();
     }
   });
