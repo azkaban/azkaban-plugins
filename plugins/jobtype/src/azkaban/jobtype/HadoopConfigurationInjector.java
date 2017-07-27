@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.log4j.Logger;
 
 
@@ -50,6 +49,7 @@ public class HadoopConfigurationInjector {
   public static final String INJECT_PREFIX = "hadoop-inject.";
 
   public static final String WORKFLOW_ID_SEPERATOR = "$";
+  private static final String WORKFLOW_ID_CONFIG = "yarn.workflow.id";
   /*
    * To be called by the forked process to load the generated links and Hadoop
    * configuration properties to automatically inject.
@@ -145,7 +145,7 @@ public class HadoopConfigurationInjector {
     for(String propertyName : propsToInject) {
       addHadoopProperty(props, propertyName);
     }
-    addHadoopWorkflowProperty(props, MRJobConfig.WORKFLOW_ID);
+    addHadoopWorkflowProperty(props, WORKFLOW_ID_CONFIG);
   }
 
   /**
