@@ -38,6 +38,7 @@ public class TdchParameters {
   private final static Logger _logger = Logger.getLogger(TdchParameters.class);
   private final static String TERADATA_JDBC_URL_PREFIX = "jdbc:teradata://";
   private final static String TERADATA_JDBC_URL_CHARSET_KEY = "/CHARSET=";
+  private final static String TERADATA_JDBC_URL_NETWORK_OPTS = ",MAX_MESSAGE_BODY=16384000,CHATTER=OFF";
   private final static String DEFAULT_CHARSET = "UTF8";
   private static final String DEFAULT_RETRIEVE_METHOD = "split.by.amp";
   private static final int ERROR_TABLE_NAME_LENGTH_LIMIT = 24;
@@ -381,7 +382,8 @@ public class TdchParameters {
       }
 
       String charSet = StringUtils.isEmpty(_tdCharSet) ? DEFAULT_CHARSET : _tdCharSet;
-      _tdUrl = TERADATA_JDBC_URL_PREFIX + _tdHostName + TERADATA_JDBC_URL_CHARSET_KEY + charSet;
+      _tdUrl = TERADATA_JDBC_URL_PREFIX + _tdHostName + TERADATA_JDBC_URL_CHARSET_KEY + charSet
+               + TERADATA_JDBC_URL_NETWORK_OPTS;
 
       validateJobtype();
 
