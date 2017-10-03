@@ -47,7 +47,7 @@ public class JavaJob extends JavaProcessJob {
 
   public JavaJob(String jobid, Props sysProps, Props jobProps, Logger log) {
     super(jobid, sysProps, new Props(sysProps, jobProps), log);
-    
+
     getJobProps().put(CommonJobProperties.JOB_ID, jobid);
   }
 
@@ -68,7 +68,11 @@ public class JavaJob extends JavaProcessJob {
     List<String> classPath = super.getClassPaths();
 
     classPath.add(getSourcePathFromClass(JavaJobRunnerMain.class));
+    // To add az-core jar classpath
     classPath.add(getSourcePathFromClass(Props.class));
+
+    // To add az-common jar classpath
+    classPath.add(getSourcePathFromClass(JavaProcessJob.class));
     classPath.add(getSourcePathFromClass(SecurityUtils.class));
 
     classPath.add(HadoopConfigurationInjector.getPath(getJobProps(),

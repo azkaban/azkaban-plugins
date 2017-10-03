@@ -480,7 +480,11 @@ public class HadoopSparkJob extends JavaProcessJob {
     String pluginDir = getSysProps().get("plugin.dir");
     List<String> classPath = super.getClassPaths();
 
+    // To add az-core jar classpath
     classPath.add(getSourcePathFromClass(Props.class));
+
+    // To add az-common jar classpath
+    classPath.add(getSourcePathFromClass(JavaProcessJob.class));
     classPath.add(getSourcePathFromClass(HadoopSecureHiveWrapper.class));
     classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 

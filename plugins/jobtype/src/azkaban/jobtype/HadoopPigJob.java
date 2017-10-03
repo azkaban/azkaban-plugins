@@ -237,7 +237,11 @@ public class HadoopPigJob extends JavaProcessJob {
 
     List<String> classPath = super.getClassPaths();
 
+    // To add az-core jar classpath
     classPath.add(getSourcePathFromClass(Props.class));
+
+    // To add az-common jar classpath
+    classPath.add(getSourcePathFromClass(JavaProcessJob.class));
     classPath.add(getSourcePathFromClass(HadoopSecurePigWrapper.class));
     classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 
