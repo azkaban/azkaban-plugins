@@ -98,7 +98,7 @@ public class HadoopHiveJob extends JavaProcessJob {
     }
 
     try {
-      super.run();  
+      super.run();
     } catch (Throwable t) {
       t.printStackTrace();
       getLog().error("caught error running the job");
@@ -111,7 +111,7 @@ public class HadoopHiveJob extends JavaProcessJob {
         }
       }
     }
-  } 
+  }
 
   @Override
   protected String getJavaClass() {
@@ -204,7 +204,11 @@ public class HadoopHiveJob extends JavaProcessJob {
 
     List<String> classPath = super.getClassPaths();
 
+    // To add az-core jar classpath
     classPath.add(getSourcePathFromClass(Props.class));
+
+    // To add az-common jar classpath
+    classPath.add(getSourcePathFromClass(JavaProcessJob.class));
     classPath.add(getSourcePathFromClass(HadoopSecureHiveWrapper.class));
     classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 
@@ -271,7 +275,7 @@ public class HadoopHiveJob extends JavaProcessJob {
           .getPath();
     }
   }
-  
+
   /**
    * This cancel method, in addition to the default canceling behavior, also kills the MR jobs launched by Hive
    * on Hadoop

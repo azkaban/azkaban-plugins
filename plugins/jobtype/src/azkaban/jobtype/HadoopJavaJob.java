@@ -122,7 +122,17 @@ public class HadoopJavaJob extends JavaProcessJob {
     }
 
     classPath.add(getSourcePathFromClass(HadoopJavaJobRunnerMain.class));
+
+    /**
+     * Todo kunkun-tang: The legacy code uses a quite outdated method to resolve
+     * Azkaban dependencies, and should be replaced later.
+     */
+
+    // To add az-core jar classpath
     classPath.add(getSourcePathFromClass(Props.class));
+
+    // To add az-common jar classpath
+    classPath.add(getSourcePathFromClass(JavaProcessJob.class));
     classPath.add(getSourcePathFromClass(HadoopSecurityManager.class));
 
     classPath.add(HadoopConfigurationInjector.getPath(getJobProps(),
