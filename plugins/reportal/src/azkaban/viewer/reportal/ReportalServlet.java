@@ -102,6 +102,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
   private String reportalStorageUser;
   private File webResourcesFolder;
   private int itemsPerPage = 20;
+  private int max_allowed_schedule_dates;
+  private int default_schedule_dates;
   private boolean showNav;
 
   private HadoopSecurityManager hadoopSecurityManager;
@@ -113,6 +115,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     reportalStorageUser = props.getString("reportal.storage.user", "reportal");
     itemsPerPage = props.getInt("reportal.items_per_page", 20);
     showNav = props.getBoolean("reportal.show.navigation", false);
+
+    max_allowed_schedule_dates = props.getInt("reportal.max.allowed.schedule.dates", 180);
+    default_schedule_dates = props.getInt("reportal.default.schedule.dates", 30);
 
     reportalMailTempDirectory =
         new File(props.getString("reportal.mail.temp.dir", "/tmp/reportal"));
@@ -669,6 +674,9 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("notifications", "");
     page.add("failureNotifications", "");
 
+    page.add("max_allowed_schedule_dates", max_allowed_schedule_dates);
+    page.add("default_schedule_dates", default_schedule_dates);
+
     page.render();
   }
 
@@ -716,6 +724,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("scheduleAmPm", reportal.scheduleAmPm);
     page.add("scheduleTimeZone", reportal.scheduleTimeZone);
     page.add("scheduleDate", reportal.scheduleDate);
+    page.add("endScheduleDate", reportal.endSchedule);
     page.add("scheduleRepeat", reportal.scheduleRepeat);
     page.add("scheduleIntervalQuantity", reportal.scheduleIntervalQuantity);
     page.add("scheduleInterval", reportal.scheduleInterval);
@@ -726,6 +735,8 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("accessExecutor", reportal.accessExecutor);
     page.add("accessOwner", reportal.accessOwner);
 
+    page.add("max_allowed_schedule_dates", max_allowed_schedule_dates);
+    page.add("default_schedule_dates", default_schedule_dates);
     page.render();
   }
 
@@ -811,7 +822,12 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
         getParam(req, "schedule-interval-quantity");
     report.scheduleInterval = getParam(req, "schedule-interval");
     report.renderResultsAsHtml = hasParam(req, "render-results-as-html");
-    
+
+    boolean isEndSchedule = hasParam(req, "end-schedule-date");
+    if (isEndSchedule) {
+      report.endSchedule = getParam(req, "end-schedule-date");
+    }
+
     page.add("schedule", report.schedule);
     page.add("scheduleHour", report.scheduleHour);
     page.add("scheduleMinute", report.scheduleMinute);
@@ -822,13 +838,16 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     page.add("scheduleIntervalQuantity", report.scheduleIntervalQuantity);
     page.add("scheduleInterval", report.scheduleInterval);
     page.add("renderResultsAsHtml", report.renderResultsAsHtml);
+    page.add("endSchedule", report.endSchedule);
+    page.add("max_allowed_schedule_dates", max_allowed_schedule_dates);
+    page.add("default_schedule_dates", default_schedule_dates);
 
     report.accessViewer = getParam(req, "access-viewer");
     report.accessExecutor = getParam(req, "access-executor");
     report.accessOwner = getParam(req, "access-owner");
     page.add("accessViewer", report.accessViewer);
     page.add("accessExecutor", report.accessExecutor);
-    
+
     // Adding report creator as explicit owner, if not present already
     if (report.accessOwner == null || report.accessOwner.isEmpty()) {
       report.accessOwner = user.getUserId();
@@ -842,7 +861,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
         report.accessOwner = StringUtils.join(splittedOwners, ',');
       }
     }
-    
+
     page.add("accessOwner", report.accessOwner);
 
     report.notifications = getParam(req, "notifications");
@@ -855,7 +874,7 @@ public class ReportalServlet extends LoginAbstractAzkabanServlet {
     List<Query> queryList = new ArrayList<Query>(numQueries);
     page.add("queries", queryList);
     report.queries = queryList;
-    
+
     List<String> errors = new ArrayList<String>();
     for (int i = 0; i < numQueries; i++) {
       Query query = new Query();

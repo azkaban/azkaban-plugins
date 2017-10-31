@@ -29,6 +29,7 @@ $(document).ready(function () {
   var scheduleOptions = $("#schedule-options");
   var scheduleFields = $("#schedule-fields");
   var scheduleDate = $("#schedule-date");
+  var endScheduleDate = $("#end-schedule-date");
   var scheduleRepeat = $("#schedule-repeat");
   var scheduleRepeatFields = $("#schedule-repeat-fields");
 
@@ -241,4 +242,26 @@ $(document).ready(function () {
   addInitialVariables();
 
   scheduleDate.datetimepicker({format: 'L'});
+  var defaultDate = new Date();
+  var maxDate = new Date();
+  defaultDate.setDate(defaultDate.getDate() + Number($("#endScheduleId").data("default")));
+  maxDate.setDate(maxDate.getDate() +  Number($("#endScheduleId").data("max")) );
+  endScheduleDate.datetimepicker({
+    defaultDate: defaultDate,
+    minDate: new Date(),
+    maxDate: maxDate
+  });
+
+  console.log("endDate = " + $("#expireNote").data("end"));
+  if($("#expireNote").data("end")) {
+    var endMomentTime = moment($("#expireNote").data("end"), 'MM-DD-YYYY hh:mm A');
+    var currMomentTime = moment();
+    if (endMomentTime <= currMomentTime) {
+      $('#expireNote').append(
+          '<br/> <span style="font-size: 150%;color: #ff1059;font-weight: bold;" >'
+          + 'The schedule already expired. Please reschedule if needed.' + '</span>');
+      $("#end-schedule-date").val($("#expireNote").data("end"));
+    }
+  }
+
 });

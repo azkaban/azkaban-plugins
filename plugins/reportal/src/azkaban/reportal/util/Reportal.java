@@ -17,6 +17,10 @@
 package azkaban.reportal.util;
 
 import java.io.File;
+
+import java.text.SimpleDateFormat;
+import java.text.DateFormat;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Days;
@@ -52,6 +57,8 @@ import azkaban.viewer.reportal.ReportalMailCreator;
 import azkaban.viewer.reportal.ReportalTypeManager;
 
 public class Reportal {
+  private static Logger logger = Logger.getLogger(Reportal.class);
+
   public static final String REPORTAL_CONFIG_PREFIX = "reportal.config.";
   public static final String REPORTAL_CONFIG_PREFIX_REGEX =
     "^reportal[.]config[.].+";
@@ -60,6 +67,9 @@ public class Reportal {
 
   public static final String ACCESS_LIST_SPLIT_REGEX =
       "\\s*,\\s*|\\s*;\\s*|\\s+";
+
+  // One Schedule's default End Time: 01/01/2050, 00:00:00, UTC
+  private static final long DEFAULT_SCHEDULE_END_EPOCH_TIME = 2524608000000L;
 
   public String reportalUser;
   public String ownerEmail;
@@ -79,6 +89,7 @@ public class Reportal {
   public boolean scheduleRepeat;
   public String scheduleIntervalQuantity;
   public String scheduleInterval;
+  public String endSchedule;
 
   public boolean renderResultsAsHtml;
 
@@ -110,6 +121,7 @@ public class Reportal {
     project.getMetadata().put("scheduleIntervalQuantity",
         scheduleIntervalQuantity);
     project.getMetadata().put("scheduleInterval", scheduleInterval);
+    project.getMetadata().put("endSchedule", endSchedule);
 
     project.getMetadata().put("renderResultsAsHtml", renderResultsAsHtml);
 
@@ -195,11 +207,26 @@ public class Reportal {
           report.renderResultsAsHtml ? "true" : "false");
       options.setMailCreator(ReportalMailCreator.REPORTAL_MAIL_CREATOR);
 
+      long endScheduleTime = report.endSchedule == null ?
+          DEFAULT_SCHEDULE_END_EPOCH_TIME: parseDateToEpoch(report.endSchedule);
+
+      logger.info("This report scheudle end time is " + endScheduleTime);
+
       scheduleManager.scheduleFlow(-1, project.getId(), project.getName(),
-          flow.getId(), "ready", firstSchedTime.getMillis(),
+          flow.getId(), "ready", firstSchedTime.getMillis(), endScheduleTime,
           firstSchedTime.getZone(), period, DateTime.now().getMillis(),
           firstSchedTime.getMillis(), firstSchedTime.getMillis(),
           user.getUserId(), options, null);
+    }
+  }
+
+  private long parseDateToEpoch(String date) throws ScheduleManagerException {
+    DateFormat dffrom = new SimpleDateFormat("MM/dd/yyyy h:mm a");
+    try {
+      // this string will be parsed according to system's timezone setting.
+      return dffrom.parse(date).getTime();
+    } catch (Exception ex) {
+      throw new ScheduleManagerException("can not parse this date " + date);
     }
   }
 
@@ -377,6 +404,8 @@ public class Reportal {
         stringGetter.get(project.getMetadata().get("scheduleIntervalQuantity"));
     reportal.scheduleInterval =
         stringGetter.get(project.getMetadata().get("scheduleInterval"));
+    reportal.endSchedule =
+        stringGetter.get(project.getMetadata().get("endSchedule"));
 
     reportal.renderResultsAsHtml =
         boolGetter.get(project.getMetadata().get("renderResultsAsHtml"));
