@@ -16,14 +16,18 @@
 
 package azkaban.jobtype;
 
+import azkaban.flow.CommonJobProperties;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.sql.DataSource;
@@ -50,6 +54,18 @@ public class ReportalTeradataRunner extends ReportalAbstractRunner {
 
     String user = props.getString("reportal.teradata.username", null);
     String pass = props.getString("reportal.teradata.password", null);
+
+    Map<String,String> queryBandProperties = new HashMap<>();
+    queryBandProperties.put("USER",proxyUser);
+    queryBandProperties.put(CommonJobProperties.EXEC_ID,props.getString(CommonJobProperties.EXEC_ID));
+    queryBandProperties.put(CommonJobProperties.PROJECT_NAME,props.getString(CommonJobProperties.PROJECT_NAME));
+    queryBandProperties.put(CommonJobProperties.FLOW_ID,props.getString(CommonJobProperties.FLOW_ID));
+    queryBandProperties.put(CommonJobProperties.JOB_ID,props.getString(CommonJobProperties.JOB_ID));
+    String attemptUrl = props.getString(CommonJobProperties.ATTEMPT_LINK);
+    queryBandProperties.put(CommonJobProperties.ATTEMPT_LINK,attemptUrl);
+    URI attemptUri = new URI(attemptUrl);
+    queryBandProperties.put("azkaban.server",attemptUri.getHost());
+
     if (user == null) {
       System.out.println("Reportal Teradata: Configuration incomplete");
       throw new RuntimeException(
@@ -65,7 +81,7 @@ public class ReportalTeradataRunner extends ReportalAbstractRunner {
         new TeradataDataSource(connectionString, user, pass);
     Connection conn = teraDataSource.getConnection();
 
-    String sqlQueries[] = cleanAndGetQueries(jobQuery, proxyUser);
+    String sqlQueries[] = cleanAndGetQueries(jobQuery, queryBandProperties);
 
     int numQueries = sqlQueries.length;
 
@@ -109,7 +125,7 @@ public class ReportalTeradataRunner extends ReportalAbstractRunner {
     System.out.println("Reportal Teradata: Ended successfully");
   }
 
-  protected String[] cleanAndGetQueries(String sqlQuery, String proxiedUser) {
+  protected String[] cleanAndGetQueries(String sqlQuery, Map<String, String> queryBandProperties) {
 
     /**
      * Teradata's SET Query_Band allows use to "proxy" to an LDAP user. This
@@ -119,8 +135,15 @@ public class ReportalTeradataRunner extends ReportalAbstractRunner {
      * proper user when a reportal query is impacting the system negatively.
      * Best we could do.
      */
+
+    StringBuilder queryBandBuilder = new StringBuilder();
+    for(Map.Entry<String,String> pair : queryBandProperties.entrySet()){
+      queryBandBuilder.append(""+pair.getKey()+"=" + pair.getValue() + ";");
+    }
+
     String queryBand =
-        "SET Query_Band = 'USER=" + proxiedUser + ";' FOR SESSION;";
+        "SET Query_Band = '" + queryBandBuilder.toString()
+            + "' FOR SESSION;";
     ArrayList<String> injectedQueries = new ArrayList<String>();
 
     injectedQueries.add(queryBand);
