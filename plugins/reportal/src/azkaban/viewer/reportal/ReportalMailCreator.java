@@ -99,7 +99,7 @@ public class ReportalMailCreator implements MailCreator {
     Set<String> emailList = new HashSet<String>(option.getSuccessEmails());
 
     return createEmail(flow, emailList, message, "Success", azkabanName,
-        scheme, clientHostname, clientPortNumber, true);
+        scheme, clientHostname, clientPortNumber, false);
   }
 
   private boolean createEmail(ExecutableFlow flow, Set<String> emailList,
