@@ -127,7 +127,12 @@
                   <span class="sr-only">Loading...</span>
                 </div>
               </div>
+
+    #if ($contentType == "HTML")
+              <div id="file-contents"></div>
+    #else
               <pre id="file-contents"></pre>
+    #end
             </div>
 
     #if ($hasSchema)
