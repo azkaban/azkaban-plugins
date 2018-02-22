@@ -128,7 +128,13 @@ azkaban.HdfsFileView = Backbone.View.extend({
     }
 
     $('#file-contents-loading').hide();
-    $('#file-contents').show().text(file);
+
+    var fileContents = $('#file-contents');
+    if (contentType == "HTML") {
+      fileContents.show().html(file);
+    } else {
+      fileContents.show().text(file);
+    }
     this.rendered = true;
   }
 });
