@@ -30,6 +30,7 @@
       var path = "${path}";
       var hasSchema = ${hasSchema};
       var viewerId = ${viewerId};
+      var contentType = "${contentType}";
     </script>
 #if ($allowproxy)
   #parse ("azkaban/viewer/hdfs/velocity/hdfs-proxy-js.vm")
