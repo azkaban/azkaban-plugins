@@ -39,8 +39,4 @@ public abstract class HdfsFileViewer {
   public String getSchema(FileSystem fs, Path path) {
     return null;
   }
-
-  public ContentType getContentType() {
-    return ContentType.TEXT;
-  }
 }

@@ -30,7 +30,6 @@
       var path = "${path}";
       var hasSchema = ${hasSchema};
       var viewerId = ${viewerId};
-      var contentType = "${contentType}";
     </script>
 #if ($allowproxy)
   #parse ("azkaban/viewer/hdfs/velocity/hdfs-proxy-js.vm")
@@ -128,12 +127,7 @@
                   <span class="sr-only">Loading...</span>
                 </div>
               </div>
-
-    #if ($contentType == "HTML")
-              <div id="file-contents"></div>
-    #else
               <pre id="file-contents"></pre>
-    #end
             </div>
 
     #if ($hasSchema)
