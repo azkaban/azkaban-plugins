@@ -105,7 +105,6 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
 
     defaultViewer = new TextFileViewer();
 
-    viewers.add(new HtmlFileViewer());
     viewers.add(new ORCFileViewer());
     viewers.add(new AvroFileViewer());
     viewers.add(new ParquetFileViewer());
@@ -381,7 +380,6 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
           break;
         }
       }
-      page.add("contentType", viewers.get(viewerId).getContentType().name());
       page.add("viewerId", viewerId);
       page.add("hasSchema", hasSchema);
 
