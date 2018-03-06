@@ -130,7 +130,7 @@
               </div>
 
     #if ($contentType == "HTML")
-              <div id="file-contents"></div>
+              <iframe id="file-contents-iframe" src="about:blank" style="overflow:scroll" sandbox="allow-same-origin"></iframe>
     #else
               <pre id="file-contents"></pre>
     #end
