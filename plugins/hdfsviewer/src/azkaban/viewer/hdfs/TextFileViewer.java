@@ -36,6 +36,9 @@ public class TextFileViewer extends HdfsFileViewer {
   private static Logger logger = Logger.getLogger(TextFileViewer.class);
   private HashSet<String> acceptedSuffix = new HashSet<String>();
 
+  // only display the first 1M chars. it is used to prevent
+  // showing/downloading gb of data
+  private static final int BUFFER_LIMIT = 1000000;
   private static final String VIEWER_NAME = "Text";
 
   public TextFileViewer() {
@@ -65,6 +68,12 @@ public class TextFileViewer extends HdfsFileViewer {
     if (logger.isDebugEnabled())
       logger.debug("read in uncompressed text file");
 
+    displayFileContent(fs, path, outputStream, startLine, endLine, BUFFER_LIMIT);
+  }
+
+  static void displayFileContent(FileSystem fs, Path path, OutputStream outputStream,
+      int startLine, int endLine, int bufferLimit) throws IOException {
+
     InputStream inputStream = null;
     BufferedReader reader = null;
     try {
@@ -73,10 +82,6 @@ public class TextFileViewer extends HdfsFileViewer {
       PrintWriter output = new PrintWriter(outputStream);
       for (int i = 1; i < startLine; i++)
         reader.readLine();
-
-      // only display the first 1M chars. it is used to prevent
-      // showing/downloading gb of data
-      final int bufferLimit = 1000000;
 
       int bufferSize = 0;
       for (int i = startLine; i < endLine; i++) {

@@ -128,7 +128,20 @@ azkaban.HdfsFileView = Backbone.View.extend({
     }
 
     $('#file-contents-loading').hide();
-    $('#file-contents').show().text(file);
+
+    if (contentType == "HTML") {
+      // write to iframe
+      var doc = document.getElementById('file-contents-iframe').contentWindow.document;
+      doc.open();
+      doc.write(file);
+      doc.close();
+      // adjust iframe size
+      var iframe = document.getElementById('file-contents-iframe');
+      iframe.width  = iframe.contentWindow.document.body.scrollWidth;
+      iframe.height = iframe.contentWindow.document.body.scrollHeight;
+    } else {
+      $('#file-contents').show().text(file);
+    }
     this.rendered = true;
   }
 });
