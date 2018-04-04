@@ -174,9 +174,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
       throws ServletException {
     User user = session.getUser();
     String username = user.getUserId();
-    if (hasParam(req, "action") && getParam(req, "action").equals("goHomeDir")) {
-      username = getParam(req, "proxyname");
-    } else if (allowGroupProxy) {
+    if (allowGroupProxy) {
       String proxyName =
           (String) session.getSessionData(PROXY_USER_SESSION_KEY);
       if (proxyName != null) {
