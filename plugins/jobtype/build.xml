@@ -91,7 +91,7 @@
 		<javac fork="true" destdir="${dist.classes.dir}"
 			target="1.8" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
-			<src path="${hadoopsecuritymanager-common.java.src.dir}" />
+			<!--<src path="${hadoopsecuritymanager-common.java.src.dir}" />-->
 
 			<exclude name="**/examples/**"/>
 			<classpath refid="main.classpath" />
