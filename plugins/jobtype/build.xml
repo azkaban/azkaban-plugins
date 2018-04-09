@@ -93,6 +93,9 @@
 		<javac fork="true" destdir="${dist.classes.dir}"
 			target="1.8" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
+
+			<!--The jobtype compilcation destination should not include hadoop security manager
+			byte code.-->
 			<!--<src path="${hadoopsecuritymanager-common.java.src.dir}" />-->
 
 			<exclude name="**/examples/**"/>
