@@ -130,6 +130,9 @@ azkaban.HdfsFileView = Backbone.View.extend({
     $('#file-contents-loading').hide();
 
     if (contentType == "HTML") {
+      var iframe = document.getElementById('file-contents-iframe');
+      // show iframe (initially it's hidden)
+      iframe.style.display = "inline";
       // Write content to iframe. We can't just set the html source content as
       // inner html of the iframe. The iframe hosts a completely separate dom
       // structure than the current html, thus setting the innher HTML will not
@@ -137,7 +140,6 @@ azkaban.HdfsFileView = Backbone.View.extend({
       // the content directly into it or set the content in srcdoc attribute.
       // Since either way is fine, will go with write method since it looks
       // nicer when you inspect the html structure.
-      var iframe = document.getElementById('file-contents-iframe');
       var doc = iframe.contentWindow.document;
       doc.open();
       doc.write(file);
