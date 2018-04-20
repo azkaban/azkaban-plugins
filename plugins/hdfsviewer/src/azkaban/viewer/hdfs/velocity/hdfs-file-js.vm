@@ -130,7 +130,11 @@ azkaban.HdfsFileView = Backbone.View.extend({
     $('#file-contents-loading').hide();
 
     if (contentType == "HTML") {
-      // write to iframe
+      // Write content to iframe. We can't just set the html source content as
+      // inner html of the iframe. The iframe hosts a completely separate dom
+      // structure than the current html, thus setting the innher HTML will not
+      // work. The only way to store html inside iframe is by writing the content
+      // into it.
       var doc = document.getElementById('file-contents-iframe').contentWindow.document;
       doc.open();
       doc.write(file);
