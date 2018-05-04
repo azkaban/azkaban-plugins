@@ -147,8 +147,6 @@ azkaban.HdfsFileView = Backbone.View.extend({
       // adjust iframe size
       iframe.width  = iframe.contentWindow.document.body.scrollWidth;
       iframe.height = iframe.contentWindow.document.body.scrollHeight;
-      // show iframe (initially it's hidden)
-      iframe.style.display = "inline";
     } else {
       $('#file-contents').show().text(file);
     }
