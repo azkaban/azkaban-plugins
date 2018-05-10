@@ -59,6 +59,15 @@ public class HadoopPigJob extends JavaProcessJob {
   public static final String HADOOP_UGI = "hadoop.job.ugi";
   public static final String DEBUG = "debug";
 
+  //Global tuning enabled for Pig, this flag will decide whether azkaban supports tuning for pig or not
+  public static final String PIG_ENABLE_TUNING = "pig.enable.tuning";
+
+  //Job level tuning enabled. Should be set at job level
+  public static final String JOB_ENABLE_TUNING = "job.enable.tuning";
+
+  //Internal flag for seeing whether this was a retry of the job after failure because of auto tuning
+  public static final String AUTO_TUNING_RETRY = "auto.tuning.retry";
+
   public static String HADOOP_SECURE_PIG_WRAPPER =
       "azkaban.jobtype.HadoopSecurePigWrapper";
 
@@ -68,7 +77,7 @@ public class HadoopPigJob extends JavaProcessJob {
   File tokenFile = null;
 
   private final boolean userPigJar;
-
+  private final boolean enableTuning;
   private HadoopSecurityManager hadoopSecurityManager;
 
   private File pigLogFile = null;
@@ -77,8 +86,20 @@ public class HadoopPigJob extends JavaProcessJob {
       throws IOException {
     super(jobid, sysProps, jobProps, log);
 
-    HADOOP_SECURE_PIG_WRAPPER = HadoopSecurePigWrapper.class.getName();
+    if (jobProps.containsKey(JOB_ENABLE_TUNING) && jobProps.containsKey(PIG_ENABLE_TUNING)) {
+      enableTuning = jobProps.getBoolean(JOB_ENABLE_TUNING) && jobProps.getBoolean(PIG_ENABLE_TUNING);
+    }else
+    {
+      enableTuning = false;
+    }
+    if(enableTuning)
+    {
+      HADOOP_SECURE_PIG_WRAPPER = HadoopTuningSecurePigWrapper.class.getName();
 
+    }else
+    {
+      HADOOP_SECURE_PIG_WRAPPER = HadoopSecurePigWrapper.class.getName();
+    }
     getJobProps().put(CommonJobProperties.JOB_ID, jobid);
     shouldProxy =
         getSysProps().getBoolean(HadoopSecurityManager.ENABLE_PROXYING, false);
@@ -248,6 +269,7 @@ public class HadoopPigJob extends JavaProcessJob {
     classPath.add(HadoopConfigurationInjector.getPath(getJobProps(),
         getWorkingDirectory()));
 
+
     // assuming pig 0.8 and up
     if (!userPigJar) {
       classPath.add(getSourcePathFromClass(PigRunner.class));
@@ -390,4 +412,5 @@ public class HadoopPigJob extends JavaProcessJob {
     HadoopJobUtils.proxyUserKillAllSpawnedHadoopJobs(logFilePath, jobProps,
         tokenFile, getLog());
   }
+
 }
