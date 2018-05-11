@@ -86,7 +86,9 @@ public class HtmlFileViewer extends HdfsFileViewer {
     if (logger.isDebugEnabled())
       logger.debug("read in uncompressed html file");
 
-    TextFileViewer.displayFileContent(fs, path, outputStream, startLine, endLine, BUFFER_LIMIT);
+    // BUFFER_LIMIT is the only thing we care about, line limit is redundant and actually not
+    // very useful for html files. Thus using Integer.MAX_VALUE to effectively remove the endLine limit.
+    TextFileViewer.displayFileContent(fs, path, outputStream, startLine, Integer.MAX_VALUE, BUFFER_LIMIT);
   }
 
   public ContentType getContentType() {
