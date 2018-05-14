@@ -12,6 +12,21 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
+ *
+ *
+ * THIS IS AN EXPERIMENTAL FEATURE, USE WITH CAUTION.
+ *
+ * This viewer is aimed to support the rendering of very basic html files.
+ * The content of a html file will be rendered inside an iframe on azkaban
+ * web page to protect from possible malicious javascript code. It does not
+ * support rendering local image files (e.g. image stored on hdfs), but it
+ * does support showing images stored on remote network locations.
+ *
+ * In fact, not just images, but any data that is stored on HDFS are not
+ * accessible from the html page, for example, css and js files. Everything
+ * must either be self contained or referenced with internet location.
+ * (e.g. jquery script hosted on google.com can be fetched, but jquery script
+ * stored on local hdfs cannot)
  */
 
 package azkaban.viewer.hdfs;
@@ -71,7 +86,9 @@ public class HtmlFileViewer extends HdfsFileViewer {
     if (logger.isDebugEnabled())
       logger.debug("read in uncompressed html file");
 
-    TextFileViewer.displayFileContent(fs, path, outputStream, startLine, endLine, BUFFER_LIMIT);
+    // BUFFER_LIMIT is the only thing we care about, line limit is redundant and actually not
+    // very useful for html files. Thus using Integer.MAX_VALUE to effectively remove the endLine limit.
+    TextFileViewer.displayFileContent(fs, path, outputStream, startLine, Integer.MAX_VALUE, BUFFER_LIMIT);
   }
 
   public ContentType getContentType() {

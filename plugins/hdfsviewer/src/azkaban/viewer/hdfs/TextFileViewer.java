@@ -89,7 +89,7 @@ public class TextFileViewer extends HdfsFileViewer {
         if (line == null)
           break;
 
-        // bread if reach the buffer limit
+        // break if reach the buffer limit
         bufferSize += line.length();
         if (bufferSize >= bufferLimit)
           break;
