@@ -65,9 +65,6 @@ public class HadoopPigJob extends JavaProcessJob {
   //Job level tuning enabled. Should be set at job level
   public static final String JOB_ENABLE_TUNING = "job.enable.tuning";
 
-  //Internal flag for seeing whether this was a retry of the job after failure because of auto tuning
-  public static final String AUTO_TUNING_RETRY = "auto.tuning.retry";
-
   public static String HADOOP_SECURE_PIG_WRAPPER =
       "azkaban.jobtype.HadoopSecurePigWrapper";
 
@@ -79,7 +76,7 @@ public class HadoopPigJob extends JavaProcessJob {
   private final boolean userPigJar;
   private final boolean enableTuning;
   private HadoopSecurityManager hadoopSecurityManager;
-
+  private final String securePigWrapper;
   private File pigLogFile = null;
 
   public HadoopPigJob(String jobid, Props sysProps, Props jobProps, Logger log)
@@ -88,17 +85,13 @@ public class HadoopPigJob extends JavaProcessJob {
 
     if (jobProps.containsKey(JOB_ENABLE_TUNING) && jobProps.containsKey(PIG_ENABLE_TUNING)) {
       enableTuning = jobProps.getBoolean(JOB_ENABLE_TUNING) && jobProps.getBoolean(PIG_ENABLE_TUNING);
-    }else
-    {
+    } else {
       enableTuning = false;
     }
-    if(enableTuning)
-    {
-      HADOOP_SECURE_PIG_WRAPPER = HadoopTuningSecurePigWrapper.class.getName();
-
-    }else
-    {
-      HADOOP_SECURE_PIG_WRAPPER = HadoopSecurePigWrapper.class.getName();
+    if (enableTuning) {
+      securePigWrapper = HadoopTuningSecurePigWrapper.class.getName();
+    } else {
+      securePigWrapper = HadoopSecurePigWrapper.class.getName();
     }
     getJobProps().put(CommonJobProperties.JOB_ID, jobid);
     shouldProxy =
@@ -159,7 +152,7 @@ public class HadoopPigJob extends JavaProcessJob {
 
   @Override
   protected String getJavaClass() {
-    return HADOOP_SECURE_PIG_WRAPPER;
+    return securePigWrapper;
   }
 
   @Override
@@ -268,7 +261,6 @@ public class HadoopPigJob extends JavaProcessJob {
 
     classPath.add(HadoopConfigurationInjector.getPath(getJobProps(),
         getWorkingDirectory()));
-
 
     // assuming pig 0.8 and up
     if (!userPigJar) {

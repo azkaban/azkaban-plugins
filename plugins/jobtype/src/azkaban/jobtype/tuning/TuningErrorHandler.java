@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 LinkedIn Corp.
+ * Copyright 2018 LinkedIn Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
+
 /**
  * This class is responsible for finding whether failure is because of tuning parameters.
  * This try to search predefined patterns in the log.
@@ -30,9 +31,9 @@ import org.apache.log4j.Logger;
 public class TuningErrorHandler {
   private Logger log = Logger.getRootLogger();
 
-  List<Pattern> errorPatterns = new ArrayList<Pattern>(3);
+  private static List<Pattern> errorPatterns = new ArrayList<Pattern>();
 
-  public TuningErrorHandler() {
+  static {
     Pattern pattern1 = Pattern.compile(".*Error: Java heap space.*");
     Pattern pattern2 = Pattern.compile(".*java.lang.OutOfMemoryError.*");
     Pattern pattern3 = Pattern.compile(".*Container .* is running beyond virtual memory limits.*");
@@ -44,8 +45,7 @@ public class TuningErrorHandler {
   }
 
   public boolean containsAutoTuningError(String logMessage) {
-    if(logMessage!=null)
-    {
+    if (logMessage != null) {
       for (Pattern pattern : errorPatterns) {
         Matcher matcher = pattern.matcher(logMessage);
         if (matcher.matches()) {

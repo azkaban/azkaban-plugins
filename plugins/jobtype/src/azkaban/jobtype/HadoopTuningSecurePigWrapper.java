@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 LinkedIn Corp.
+ * Copyright 2018 LinkedIn Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,29 +23,24 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.security.PrivilegedExceptionAction;
-import java.util.Iterator;
 import java.util.Properties;
-import java.util.Set;
 
-import org.apache.hadoop.mapred.Counters;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.log4j.Logger;
-import org.apache.pig.PigRunner;
-import org.apache.pig.tools.pigstats.JobStats;
 import org.apache.pig.tools.pigstats.PigStats;
-import org.apache.pig.tools.pigstats.PigStats.JobGraph;
 
+import azkaban.jobtype.pig.PigUtil;
 import azkaban.jobtype.tuning.TuningCommonConstants;
-import azkaban.jobtype.tuning.TuningParameterUtils;
 import azkaban.jobtype.tuning.TuningErrorHandler;
+import azkaban.jobtype.tuning.TuningParameterUtils;
 import azkaban.utils.Props;
+
 
 /**
  * This class represent wrapper for running pig job with tuning enabled.
  */
 public class HadoopTuningSecurePigWrapper {
 
-  private static final String PIG_DUMP_HADOOP_COUNTER_PROPERTY = "pig.dump.hadoopCounter";
   public static final String WORKING_DIR = "working.dir";
 
   private static File pigLogFile;
@@ -58,12 +53,15 @@ public class HadoopTuningSecurePigWrapper {
    * In case if job is failed because of auto tuning parameters, it will be retried with the best parameters
    * we have seen so far. Maximum number of try is 2.
    */
-  private static int maxRetry = 2;
-  private static int tryCount = 1;
+  private static int maxJobRetry = 2;
+  private static int jobTryCount = 1;
   /**
    * Is job failed because of tuning parameters
    */
   private static boolean isTuningError = false;
+
+  private static final String TUNING_JOB_RETRY_COUNT = "tuning.job.retry.count";
+
   static {
     logger = Logger.getRootLogger();
   }
@@ -80,9 +78,12 @@ public class HadoopTuningSecurePigWrapper {
     Props initialJobprops = new Props(null, jobProps);
     boolean retry = false;
     boolean firstTry = true;
+    if (props.containsKey(TUNING_JOB_RETRY_COUNT)) {
+      maxJobRetry = props.getInt(TUNING_JOB_RETRY_COUNT);
+    }
 
-    while (tryCount <= maxRetry && (retry || firstTry)) {
-      tryCount++;
+    while (jobTryCount <= maxJobRetry && (retry || firstTry)) {
+      jobTryCount++;
       firstTry = false;
       props = Props.clone(initialJobprops);
       props.put(TuningCommonConstants.AUTO_TUNING_RETRY, retry + "");
@@ -92,7 +93,7 @@ public class HadoopTuningSecurePigWrapper {
       HadoopTuningConfigurationInjector.prepareResourcesToInject(props,
           HadoopTuningSecurePigWrapper.getWorkingDirectory(props));
 
-      HadoopTuningConfigurationInjector.injectResources(props, HadoopTuningSecurePigWrapper.getWorkingDirectory(props));
+      HadoopTuningConfigurationInjector.injectResources(props);
 
       // special feature of secure pig wrapper: we will append the pig error file
       // onto system out
@@ -114,12 +115,11 @@ public class HadoopTuningSecurePigWrapper {
         }
       } catch (Exception t) {
         retry = false;
-        System.out.println("Error " + isTuningError + " tryCount:" + tryCount + ", maxRetry:" + maxRetry);
-        if (isTuningError && tryCount<=maxRetry) {
+        System.out.println("Error " + isTuningError + ", tryCount:" + jobTryCount + ", maxRetry:" + maxJobRetry);
+        if (isTuningError && jobTryCount <= maxJobRetry) {
           System.out.println("Error due to auto tuning parameters ");
           retry = true;
-        }else
-        {
+        } else {
           throw t;
         }
       }
@@ -128,14 +128,9 @@ public class HadoopTuningSecurePigWrapper {
 
   @SuppressWarnings("deprecation")
   public static void runPigJob(String[] args) throws Exception {
-    PigStats stats = null;
-    if (props.getBoolean("pig.listener.visualizer", false) == true) {
-      stats = PigRunner.run(args, new AzkabanPigListener(props));
-    } else {
-      stats = PigRunner.run(args, null);
-    }
+    PigStats stats = PigUtil.runPigJob(args, props);
 
-    dumpHadoopCounters(stats);
+    PigUtil.dumpHadoopCounters(stats, props);
 
     if (stats.isSuccessful()) {
       return;
@@ -145,61 +140,11 @@ public class HadoopTuningSecurePigWrapper {
       handleError(pigLogFile);
     }
 
-    if (isTuningError && tryCount<=maxRetry) {
+    if (isTuningError && jobTryCount <= maxJobRetry) {
       throw new RuntimeException("Pig job failed.");
     }
-    // see jira ticket PIG-3313. Will remove these when we use pig binary with
-    // that patch.
-    // /////////////////////
-    System.out.println("Trying to do self kill, in case pig could not.");
-    Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
-    Thread[] threadArray = threadSet.toArray(new Thread[threadSet.size()]);
-    for (Thread t : threadArray) {
-      if (!t.isDaemon() && !t.equals(Thread.currentThread())) {
-        System.out.println("Killing thread " + t);
-        t.stop();
-      }
-    }
-    System.exit(1);
-    // ////////////////////
-    throw new RuntimeException("Pig job failed.");
-  }
 
-  /**
-   * Dump Hadoop counters for each of the M/R jobs in the given PigStats.
-   *
-   * @param pigStats
-   */
-  private static void dumpHadoopCounters(PigStats pigStats) {
-    try {
-      if (props.getBoolean(PIG_DUMP_HADOOP_COUNTER_PROPERTY, false)) {
-        if (pigStats != null) {
-          JobGraph jGraph = pigStats.getJobGraph();
-          Iterator<JobStats> iter = jGraph.iterator();
-          while (iter.hasNext()) {
-            JobStats jobStats = iter.next();
-            System.out.println("\n === Counters for job: " + jobStats.getJobId() + " ===");
-            Counters counters = jobStats.getHadoopCounters();
-            if (counters != null) {
-              for (Counters.Group group : counters) {
-                System.out.println(" Counter Group: " + group.getDisplayName() + " (" + group.getName() + ")");
-                System.out.println("  number of counters in this group: " + group.size());
-                for (Counters.Counter counter : group) {
-                  System.out.println("  - " + counter.getDisplayName() + ": " + counter.getCounter());
-                }
-              }
-            } else {
-              System.out.println("There are no counters");
-            }
-          }
-        } else {
-          System.out.println("pigStats is null, can't dump Hadoop counters");
-        }
-      }
-    } catch (Exception e) {
-      System.out.println("Unexpected error: " + e.getMessage());
-      e.printStackTrace(System.out);
-    }
+    PigUtil.selfKill();
   }
 
   private static void handleError(File pigLog) throws Exception {

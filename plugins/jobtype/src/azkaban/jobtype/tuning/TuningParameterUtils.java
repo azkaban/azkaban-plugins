@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 LinkedIn Corp.
+ * Copyright 2018 LinkedIn Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,16 +31,17 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 
+import azkaban.flow.CommonJobProperties;
 import azkaban.jobtype.HadoopConfigurationInjector;
 import azkaban.utils.Props;
 
 import com.google.gson.Gson;
 
+
 /**
  * TuningParameterUtils is a utility class responsible for updating tuned hadoop parameters for the job
  * by calling tuning api. Before calling tuning api, it gets default parameters for the job and passes default
  * parameters to api. By default it tries 3 times in case api is down before running the job with default parameters.
-
  */
 public class TuningParameterUtils {
 
@@ -49,10 +50,11 @@ public class TuningParameterUtils {
   private static final int DEFAULT_TUNING_API_TIMEOUT_MS = 10000;
 
   private static final String USER_TO_PROXY = "user.to.proxy";
-  private static final String TUNING_API_RETRY_COUNT = "tuning.api.retry,count";
+  private static final String TUNING_API_RETRY_COUNT = "tuning.api.retry.count";
   private static final String TUNING_API_TIMEOUT = "tuning.api.timeout";
   private static final String AZKABAN = "azkaban";
   private static final String TUNING_API_VERSION = "2";
+
   private TuningParameterUtils() {
 
   }
@@ -78,28 +80,24 @@ public class TuningParameterUtils {
    * @param props
    */
   public static void updateAutoTuningParameters(Props props) {
-    int count = 0;
+    int retryCount = 0;
     boolean noException = false;
     Map<String, String> params = null;
-    if(props.containsKey(TuningCommonConstants.TUNING_API_END_POINT)==false)
-    {
+    if (!props.containsKey(TuningCommonConstants.TUNING_API_END_POINT)) {
       log.error("Tuning API End Point not found in properties. Not applying auto tuning. ");
       return;
     }
-    int retryCount = DEFAULT_TUNING_API_RETRY_COUNT;
+    int maxRetryCount = DEFAULT_TUNING_API_RETRY_COUNT;
     if (props.containsKey(TUNING_API_RETRY_COUNT)) {
-      retryCount = props.getInt(TUNING_API_RETRY_COUNT);
+      maxRetryCount = props.getInt(TUNING_API_RETRY_COUNT);
     }
 
-    while (!noException && count < retryCount) {
+    while (!noException && retryCount < maxRetryCount) {
       try {
-        count++;
-        log.info("Calling get current run parameters. Try count " + count);
+        retryCount++;
+        log.info("Calling get current run parameters. Try count " + retryCount);
         params = getCurrentRunParameters(props);
-        log.info("Parameters are " + params.toString());
         noException = true;
-      } catch (IOException e) {
-        log.error("Error in getting current run parameter ", e);
       } catch (Exception e) {
         log.error("Error in getting current run parameter ", e);
       }
@@ -110,7 +108,7 @@ public class TuningParameterUtils {
         props.put(HadoopConfigurationInjector.INJECT_PREFIX + param.getKey(), param.getValue());
         log.info("Applied parameter " + param.getKey() + " with value " + param.getValue());
       }
-      props.put(HadoopConfigurationInjector.INJECT_PREFIX + "auto.tuning.enabled", "true");
+      props.put(HadoopConfigurationInjector.INJECT_PREFIX + TuningCommonConstants.AUTO_TUNING_ENABLED, "true");
     }
   }
 
@@ -129,47 +127,68 @@ public class TuningParameterUtils {
     CloseableHttpClient httpClient = HttpClients.createDefault();
 
     HttpResponse response = null;
-    String requestString = String.format("%s", props.get(TuningCommonConstants.TUNING_API_END_POINT));
+    String endPoint = String.format("%s", props.get(TuningCommonConstants.TUNING_API_END_POINT));
 
-    log.info("Dr elephant request : " + requestString);
+    log.info("Dr elephant endPoint : " + endPoint);
 
     int tuningAPITimeoutMS = DEFAULT_TUNING_API_TIMEOUT_MS;
     if (props.containsKey(TUNING_API_TIMEOUT)) {
       tuningAPITimeoutMS = props.getInt(TUNING_API_TIMEOUT);
     }
-    HttpPost request = new HttpPost(requestString);
+    HttpPost request = new HttpPost(endPoint);
     final RequestConfig config =
         RequestConfig.custom().setConnectTimeout(tuningAPITimeoutMS).setSocketTimeout(tuningAPITimeoutMS).build();
     request.setConfig(config);
 
     Map<String, String> params = new HashMap<String, String>();
 
-    params.put(TuningCommonConstants.PROJECT_NAME_API_PARAM, props.get(TuningCommonConstants.AZKABAN_PROJECT_NAME));
-    params.put(TuningCommonConstants.FLOW_DEFINITION_ID_API_PARAM, props.get(TuningCommonConstants.AZKABAN_WORKFLOW_URL));
-    params.put(TuningCommonConstants.JOB_DEFINITION_ID_API_PARAM, props.get(TuningCommonConstants.AZKABAN_JOB_URL));
-    params.put(TuningCommonConstants.FLOW_EXECUTION_ID_API_PARAM, props.get(TuningCommonConstants.AZKABAN_EXECUTION_URL));
-    params.put(TuningCommonConstants.JOB_EXECUTION_ID_API_PARAM, props.get(TuningCommonConstants.AZKABAN_ATTEMPT_URL));
-    params.put(TuningCommonConstants.FLOW_DEFINITION_URL_API_PARAM, props.get(TuningCommonConstants.AZKABAN_WORKFLOW_URL));
-    params.put(TuningCommonConstants.JOB_DEFINITION_URL_API_PARAM, props.get(TuningCommonConstants.AZKABAN_JOB_URL));
-    params.put(TuningCommonConstants.FLOW_EXECUTION_URL_API_PARAM, props.get(TuningCommonConstants.AZKABAN_EXECUTION_URL));
-    params.put(TuningCommonConstants.JOB_EXECUTION_URL_API_PARAM, props.get(TuningCommonConstants.AZKABAN_ATTEMPT_URL));
-    params.put(TuningCommonConstants.JOB_NAME_API_PARAM, props.get(TuningCommonConstants.AZKABAN_JOB_ID));
+    params.put(TuningCommonConstants.PROJECT_NAME_API_PARAM, props.get(CommonJobProperties.PROJECT_NAME));
+
+    params.put(TuningCommonConstants.FLOW_DEFINITION_ID_API_PARAM, props.get(CommonJobProperties.WORKFLOW_LINK));
+
+    params.put(TuningCommonConstants.JOB_DEFINITION_ID_API_PARAM, props.get(CommonJobProperties.JOB_LINK));
+
+    params.put(TuningCommonConstants.FLOW_EXECUTION_ID_API_PARAM, props.get(CommonJobProperties.EXECUTION_LINK));
+
+    params.put(TuningCommonConstants.JOB_EXECUTION_ID_API_PARAM, props.get(CommonJobProperties.ATTEMPT_LINK));
+
+    params.put(TuningCommonConstants.FLOW_DEFINITION_URL_API_PARAM, props.get(CommonJobProperties.WORKFLOW_LINK));
+
+    params.put(TuningCommonConstants.JOB_DEFINITION_URL_API_PARAM, props.get(CommonJobProperties.JOB_LINK));
+
+    params.put(TuningCommonConstants.FLOW_EXECUTION_URL_API_PARAM, props.get(CommonJobProperties.EXECUTION_LINK));
+
+    params.put(TuningCommonConstants.JOB_EXECUTION_URL_API_PARAM, props.get(CommonJobProperties.ATTEMPT_LINK));
+
+    params.put(TuningCommonConstants.JOB_NAME_API_PARAM, props.get(CommonJobProperties.JOB_ID));
+
     params.put(TuningCommonConstants.DEFAULT_PARAM_API_PARAM, getDefaultJobParameterJSON(props));
+
     params.put(TuningCommonConstants.SCHEDULER_API_PARAM, AZKABAN);
+
     params.put(TuningCommonConstants.CLIENT_API_PARAM, AZKABAN);
-    params.put(TuningCommonConstants.AUTO_TUNING_JOB_TYPE_API_PARAM, props.get(TuningCommonConstants.AUTO_TUNING_JOB_TYPE));
-    params.put(TuningCommonConstants.OPTIMIZATION_METRIC_API_PARAM, props.get(TuningCommonConstants.OPTIMIZATION_METRIC));
+
+    params.put(TuningCommonConstants.AUTO_TUNING_JOB_TYPE_API_PARAM,
+        props.get(TuningCommonConstants.AUTO_TUNING_JOB_TYPE));
+
+    params.put(TuningCommonConstants.OPTIMIZATION_METRIC_API_PARAM,
+        props.get(TuningCommonConstants.OPTIMIZATION_METRIC));
+
     params.put(TuningCommonConstants.USER_NAME_API_PARAM, props.get(USER_TO_PROXY));
+
     if (props.containsKey(TuningCommonConstants.AUTO_TUNING_RETRY)) {
       params.put(TuningCommonConstants.IS_RETRY_API_PARAM, props.get(TuningCommonConstants.AUTO_TUNING_RETRY));
     } else {
       params.put(TuningCommonConstants.IS_RETRY_API_PARAM, "false");
     }
+
     params.put(TuningCommonConstants.SKIP_EXECUTION_FOR_OPTIMIZATION_API_PARAM, "false");
+
     if (props.containsKey(TuningCommonConstants.ALLOWED_MAX_EXECUTION_TIME_PERCENT)) {
       params.put(TuningCommonConstants.ALLOWED_MAX_EXECUTION_TIME_PERCENT_API_PARAM,
           props.getString(TuningCommonConstants.ALLOWED_MAX_EXECUTION_TIME_PERCENT));
     }
+
     if (props.containsKey(TuningCommonConstants.ALLOWED_MAX_RESOURCE_USAGE_PERCENT)) {
       params.put(TuningCommonConstants.ALLOWED_MAX_RESOURCE_USAGE_PERCENT_PERCENT_API_PARAM,
           props.getString(TuningCommonConstants.ALLOWED_MAX_RESOURCE_USAGE_PERCENT));
@@ -190,7 +209,6 @@ public class TuningParameterUtils {
       if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
         log.error("Error in response. Response is " + response);
       } else {
-        log.info("Response is " + response);
         HttpEntity responseEntity = response.getEntity();
         String responseJson = EntityUtils.toString(responseEntity);
         outputParams = (Map<String, String>) gson.fromJson(responseJson, Map.class);

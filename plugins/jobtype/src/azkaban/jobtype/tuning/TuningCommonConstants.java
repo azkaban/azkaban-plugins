@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 LinkedIn Corp.
+ * Copyright 2018 LinkedIn Corp.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,16 +24,6 @@ public class TuningCommonConstants {
   private TuningCommonConstants() {
 
   }
-  public static final String AZKABAN_EXEC_ID = "azkaban.flow.execid";
-  public static final String AZKABAN_JOB_ID = "azkaban.job.id";
-  public static final String AZKABAN_FLOW_ID = "azkaban.flow.flowid";
-  public static final String AZKABAN_ATTEMPT_URL = "azkaban.link.attempt.url";
-  public static final String AZKABAN_EXECUTION_URL = "azkaban.link.execution.url";
-  public static final String AZKABAN_JOB_URL = "azkaban.link.job.url";
-  public static final String AZKABAN_WORKFLOW_URL = "azkaban.link.workflow.url";
-  public static final String AZKABAN_JOB_EXECUTION_URL = "azkaban.link.jobexec.url";
-  public static final String AZKABAN_HOST_NAME = "azkaban.url";
-  public static final String AZKABAN_PROJECT_NAME = "azkaban.flow.projectname";
   public static final String AUTO_TUNING_JOB_TYPE = "auto.tuning.job.type";
   public static final String OPTIMIZATION_METRIC = "optimization.metric";
 
@@ -42,8 +32,8 @@ public class TuningCommonConstants {
   public static final String ALLOWED_MAX_RESOURCE_USAGE_PERCENT = "allowed_max_resource_usage_percent";
   public static final String ALLOWED_MAX_EXECUTION_TIME_PERCENT = "allowed_max_execution_time_percent";
 
-  public static final String ENABLE_TUNING = "enable_tuning";
-  public static final String AUTO_TUNING_RETRY = "auto_tuning_retry";
+  public static final String AUTO_TUNING_RETRY = "auto.tuning.retry";
+  public static final String AUTO_TUNING_ENABLED = "auto.tuning.enabled";
 
   public static final String PROJECT_NAME_API_PARAM = "projectName";
   public static final String FLOW_DEFINITION_ID_API_PARAM = "flowDefId";
@@ -66,6 +56,5 @@ public class TuningCommonConstants {
   public static final String ALLOWED_MAX_EXECUTION_TIME_PERCENT_API_PARAM = "allowedMaxExecutionTimePercent";
   public static final String ALLOWED_MAX_RESOURCE_USAGE_PERCENT_PERCENT_API_PARAM = "allowedMaxResourceUsagePercent";
   public static final String VERSION_API_PARAM = "version";
-
 
 }
