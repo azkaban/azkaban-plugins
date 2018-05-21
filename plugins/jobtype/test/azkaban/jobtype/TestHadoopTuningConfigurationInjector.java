@@ -48,21 +48,27 @@ public class TestHadoopTuningConfigurationInjector {
     userProps.put(HadoopConfigurationInjector.INJECT_PREFIX + MRJobConfig.REDUCE_MEMORY_MB, "2048");
     userProps.put(HadoopConfigurationInjector.INJECT_PREFIX + MRJobConfig.MAP_MEMORY_MB, "2048");
 
-    azkabanProps.put(CommonJobProperties.EXEC_ID, CommonJobProperties.EXEC_ID);
-    azkabanProps.put(CommonJobProperties.FLOW_ID, CommonJobProperties.FLOW_ID);
-    azkabanProps.put(CommonJobProperties.JOB_ID, CommonJobProperties.JOB_ID);
-    azkabanProps.put(CommonJobProperties.PROJECT_NAME, CommonJobProperties.PROJECT_NAME);
-    azkabanProps.put(CommonJobProperties.PROJECT_VERSION, CommonJobProperties.PROJECT_VERSION);
-    azkabanProps.put(CommonJobProperties.EXECUTION_LINK, CommonJobProperties.EXECUTION_LINK);
-    azkabanProps.put(CommonJobProperties.JOB_LINK, CommonJobProperties.JOB_LINK);
-    azkabanProps.put(CommonJobProperties.WORKFLOW_LINK, CommonJobProperties.WORKFLOW_LINK);
-    azkabanProps.put(CommonJobProperties.JOBEXEC_LINK, CommonJobProperties.JOBEXEC_LINK);
-    azkabanProps.put(CommonJobProperties.ATTEMPT_LINK, CommonJobProperties.ATTEMPT_LINK);
-    azkabanProps.put(CommonJobProperties.OUT_NODES, CommonJobProperties.OUT_NODES);
-    azkabanProps.put(CommonJobProperties.IN_NODES, CommonJobProperties.IN_NODES);
-    azkabanProps.put(CommonJobProperties.PROJECT_LAST_CHANGED_DATE, CommonJobProperties.PROJECT_LAST_CHANGED_DATE);
-    azkabanProps.put(CommonJobProperties.PROJECT_LAST_CHANGED_BY, CommonJobProperties.PROJECT_LAST_CHANGED_BY);
-    azkabanProps.put(CommonJobProperties.SUBMIT_USER, CommonJobProperties.SUBMIT_USER);
+    String[] propsToInject = new String[]{
+        CommonJobProperties.EXEC_ID,
+        CommonJobProperties.FLOW_ID,
+        CommonJobProperties.JOB_ID,
+        CommonJobProperties.PROJECT_NAME,
+        CommonJobProperties.PROJECT_VERSION,
+        CommonJobProperties.EXECUTION_LINK,
+        CommonJobProperties.JOB_LINK,
+        CommonJobProperties.WORKFLOW_LINK,
+        CommonJobProperties.JOBEXEC_LINK,
+        CommonJobProperties.ATTEMPT_LINK,
+        CommonJobProperties.OUT_NODES,
+        CommonJobProperties.IN_NODES,
+        CommonJobProperties.PROJECT_LAST_CHANGED_DATE,
+        CommonJobProperties.PROJECT_LAST_CHANGED_BY,
+        CommonJobProperties.SUBMIT_USER
+    };
+
+    for (String propertyName : propsToInject) {
+      azkabanProps.put(propertyName, propertyName);
+    }
 
     allProps.putAll(userProps);
     allProps.putAll(azkabanProps);

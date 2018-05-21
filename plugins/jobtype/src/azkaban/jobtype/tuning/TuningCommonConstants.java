@@ -56,5 +56,4 @@ public class TuningCommonConstants {
   public static final String ALLOWED_MAX_EXECUTION_TIME_PERCENT_API_PARAM = "allowedMaxExecutionTimePercent";
   public static final String ALLOWED_MAX_RESOURCE_USAGE_PERCENT_PERCENT_API_PARAM = "allowedMaxResourceUsagePercent";
   public static final String VERSION_API_PARAM = "version";
-
 }

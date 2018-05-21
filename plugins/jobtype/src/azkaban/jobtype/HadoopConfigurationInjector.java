@@ -50,7 +50,6 @@ public class HadoopConfigurationInjector {
 
   public static final String WORKFLOW_ID_SEPERATOR = "$";
   private static final String WORKFLOW_ID_CONFIG = "yarn.workflow.id";
-
   /*
    * To be called by the forked process to load the generated links and Hadoop
    * configuration properties to automatically inject.

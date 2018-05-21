@@ -31,7 +31,8 @@ import org.apache.pig.tools.pigstats.PigStats;
 
 import azkaban.jobtype.pig.PigUtil;
 import azkaban.jobtype.tuning.TuningCommonConstants;
-import azkaban.jobtype.tuning.TuningErrorHandler;
+import azkaban.jobtype.tuning.TuningErrorDetector;
+import azkaban.jobtype.tuning.TuningException;
 import azkaban.jobtype.tuning.TuningParameterUtils;
 import azkaban.utils.Props;
 
@@ -51,14 +52,9 @@ public class HadoopTuningSecurePigWrapper {
 
   /**
    * In case if job is failed because of auto tuning parameters, it will be retried with the best parameters
-   * we have seen so far. Maximum number of try is 2.
+   * we have seen so far. Maximum number of try by default is 2, which can be configured using parameter
+   * tuning.job.retry.count
    */
-  private static int maxJobRetry = 2;
-  private static int jobTryCount = 1;
-  /**
-   * Is job failed because of tuning parameters
-   */
-  private static boolean isTuningError = false;
 
   private static final String TUNING_JOB_RETRY_COUNT = "tuning.job.retry.count";
 
@@ -74,19 +70,21 @@ public class HadoopTuningSecurePigWrapper {
    * @throws Throwable
    */
   public static void main(final String[] args) throws Exception {
+    int jobTryCount = 1;
     Properties jobProps = HadoopSecureWrapperUtils.loadAzkabanProps();
     Props initialJobprops = new Props(null, jobProps);
     boolean retry = false;
     boolean firstTry = true;
-    if (props.containsKey(TUNING_JOB_RETRY_COUNT)) {
-      maxJobRetry = props.getInt(TUNING_JOB_RETRY_COUNT);
+    int maxJobRetry = 2;
+    if (initialJobprops.containsKey(TUNING_JOB_RETRY_COUNT)) {
+      maxJobRetry = initialJobprops.getInt(TUNING_JOB_RETRY_COUNT);
     }
 
     while (jobTryCount <= maxJobRetry && (retry || firstTry)) {
       jobTryCount++;
       firstTry = false;
       props = Props.clone(initialJobprops);
-      props.put(TuningCommonConstants.AUTO_TUNING_RETRY, retry + "");
+      props.put(TuningCommonConstants.AUTO_TUNING_RETRY, String.valueOf(retry));
 
       TuningParameterUtils.updateAutoTuningParameters(props);
 
@@ -113,15 +111,17 @@ public class HadoopTuningSecurePigWrapper {
         } else {
           runPigJob(args);
         }
-      } catch (Exception t) {
+      } catch (TuningException t) {
         retry = false;
-        System.out.println("Error " + isTuningError + ", tryCount:" + jobTryCount + ", maxRetry:" + maxJobRetry);
-        if (isTuningError && jobTryCount <= maxJobRetry) {
+        System.out.println("TryCount:" + jobTryCount + ", maxRetry:" + maxJobRetry);
+        if (jobTryCount <= maxJobRetry) {
           System.out.println("Error due to auto tuning parameters ");
           retry = true;
         } else {
           throw t;
         }
+      } catch (Exception t) {
+        throw t;
       }
     }
   }
@@ -140,10 +140,6 @@ public class HadoopTuningSecurePigWrapper {
       handleError(pigLogFile);
     }
 
-    if (isTuningError && jobTryCount <= maxJobRetry) {
-      throw new RuntimeException("Pig job failed.");
-    }
-
     PigUtil.selfKill();
   }
 
@@ -151,20 +147,21 @@ public class HadoopTuningSecurePigWrapper {
     System.out.println();
     System.out.println("Pig logfile dump:");
     System.out.println();
-    try {
-      BufferedReader reader = new BufferedReader(new FileReader(pigLog));
+    try (BufferedReader reader = new BufferedReader(new FileReader(pigLog))) {
       String line = reader.readLine();
-      isTuningError = false;
-      TuningErrorHandler tuningErrorHandle = new TuningErrorHandler();
+      boolean isTuningError = false;
+      TuningErrorDetector tuningErrorDetector = new TuningErrorDetector();
       while (line != null) {
         System.err.println(line);
         line = reader.readLine();
         //Checks if log have any predefined error pattern which can be caused by auto tuning parameters
-        if (tuningErrorHandle.containsAutoTuningError(line)) {
+        if (tuningErrorDetector.containsAutoTuningError(line)) {
           isTuningError = true;
         }
       }
-      reader.close();
+      if (isTuningError) {
+        throw new TuningException("Auto Tuning Failure");
+      }
     } catch (FileNotFoundException e) {
       System.err.println("pig log file: " + pigLog + "  not found.");
     }

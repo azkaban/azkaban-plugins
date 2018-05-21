@@ -28,10 +28,10 @@ import org.apache.log4j.Logger;
  * This class is responsible for finding whether failure is because of tuning parameters.
  * This try to search predefined patterns in the log.
  */
-public class TuningErrorHandler {
+public class TuningErrorDetector {
   private Logger log = Logger.getRootLogger();
 
-  private static List<Pattern> errorPatterns = new ArrayList<Pattern>();
+  private static List<Pattern> errorPatterns = new ArrayList<>();
 
   static {
     Pattern pattern1 = Pattern.compile(".*Error: Java heap space.*");

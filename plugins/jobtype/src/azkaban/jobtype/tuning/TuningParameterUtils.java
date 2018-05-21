@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 
 import azkaban.flow.CommonJobProperties;
 import azkaban.jobtype.HadoopConfigurationInjector;
+import azkaban.security.commons.HadoopSecurityManager;
 import azkaban.utils.Props;
 
 import com.google.gson.Gson;
@@ -49,7 +50,6 @@ public class TuningParameterUtils {
   private static final int DEFAULT_TUNING_API_RETRY_COUNT = 3;
   private static final int DEFAULT_TUNING_API_TIMEOUT_MS = 10000;
 
-  private static final String USER_TO_PROXY = "user.to.proxy";
   private static final String TUNING_API_RETRY_COUNT = "tuning.api.retry.count";
   private static final String TUNING_API_TIMEOUT = "tuning.api.timeout";
   private static final String AZKABAN = "azkaban";
@@ -81,7 +81,6 @@ public class TuningParameterUtils {
    */
   public static void updateAutoTuningParameters(Props props) {
     int retryCount = 0;
-    boolean noException = false;
     Map<String, String> params = null;
     if (!props.containsKey(TuningCommonConstants.TUNING_API_END_POINT)) {
       log.error("Tuning API End Point not found in properties. Not applying auto tuning. ");
@@ -92,12 +91,12 @@ public class TuningParameterUtils {
       maxRetryCount = props.getInt(TUNING_API_RETRY_COUNT);
     }
 
-    while (!noException && retryCount < maxRetryCount) {
+    while (retryCount < maxRetryCount) {
       try {
         retryCount++;
         log.info("Calling get current run parameters. Try count " + retryCount);
         params = getCurrentRunParameters(props);
-        noException = true;
+        break;
       } catch (Exception e) {
         log.error("Error in getting current run parameter ", e);
       }
@@ -113,8 +112,8 @@ public class TuningParameterUtils {
   }
 
   /**
-   *This method is for getting current run parameters from Dr Elephant
-   * @param props
+   * This method is for getting current run parameters from Dr Elephant
+   * @param props Azkaban Props object which contains information like Job Definition, Job Execution etc
    * @return Map of parameter name and value
    * @throws IOException
    * @throws ParseException
@@ -127,7 +126,7 @@ public class TuningParameterUtils {
     CloseableHttpClient httpClient = HttpClients.createDefault();
 
     HttpResponse response = null;
-    String endPoint = String.format("%s", props.get(TuningCommonConstants.TUNING_API_END_POINT));
+    String endPoint = props.get(TuningCommonConstants.TUNING_API_END_POINT);
 
     log.info("Dr elephant endPoint : " + endPoint);
 
@@ -174,7 +173,7 @@ public class TuningParameterUtils {
     params.put(TuningCommonConstants.OPTIMIZATION_METRIC_API_PARAM,
         props.get(TuningCommonConstants.OPTIMIZATION_METRIC));
 
-    params.put(TuningCommonConstants.USER_NAME_API_PARAM, props.get(USER_TO_PROXY));
+    params.put(TuningCommonConstants.USER_NAME_API_PARAM, props.get(HadoopSecurityManager.USER_TO_PROXY));
 
     if (props.containsKey(TuningCommonConstants.AUTO_TUNING_RETRY)) {
       params.put(TuningCommonConstants.IS_RETRY_API_PARAM, props.get(TuningCommonConstants.AUTO_TUNING_RETRY));
@@ -220,7 +219,7 @@ public class TuningParameterUtils {
 
   /**
    * Get json for default job parameters values
-   * @param props
+   * @param props Azkaban Props object
    * @return JSON string of default hadoop parameter map
    */
   public static String getDefaultJobParameterJSON(Props props) {

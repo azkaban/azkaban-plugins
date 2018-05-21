@@ -28,10 +28,19 @@ import org.apache.pig.tools.pigstats.PigStats.JobGraph;
 import azkaban.jobtype.AzkabanPigListener;
 import azkaban.utils.Props;
 
-
+/**
+ * This class contains utility methods for pig jobs.
+ */
 public class PigUtil {
   private static final String PIG_DUMP_HADOOP_COUNTER_PROPERTY = "pig.dump.hadoopCounter";
 
+  /**
+   * Runs pig job using PigRunner
+   * @param args Arguments to be passed to pig runner
+   * @param props Azkaban props object
+   * @return
+   * @throws Exception
+   */
   public static PigStats runPigJob(String[] args, Props props) throws Exception {
     PigStats stats = null;
     if (props.getBoolean("pig.listener.visualizer", false) == true) {
@@ -45,7 +54,8 @@ public class PigUtil {
   /**
    * Dump Hadoop counters for each of the M/R jobs in the given PigStats.
    *
-   * @param pigStats
+   * @param pigStats PigStats object returned by PigRunner run method after running the pig job
+   * @param props Azkaban Props Object
    */
   public static void dumpHadoopCounters(PigStats pigStats, Props props) {
     try {
@@ -79,6 +89,9 @@ public class PigUtil {
     }
   }
 
+  /**
+   * Utility method for killing self.
+   */
   public static void selfKill() {
     // see jira ticket PIG-3313. Will remove these when we use pig binary with
     // that patch.
