@@ -80,13 +80,14 @@ public class HadoopTuningSecurePigWrapper {
       maxJobRetry = initialJobprops.getInt(TUNING_JOB_RETRY_COUNT);
     }
 
+    TuningParameterUtils tuningParameterUtils = new TuningParameterUtils();
     while (jobTryCount <= maxJobRetry && (retry || firstTry)) {
       jobTryCount++;
       firstTry = false;
       props = Props.clone(initialJobprops);
       props.put(TuningCommonConstants.AUTO_TUNING_RETRY, String.valueOf(retry));
 
-      TuningParameterUtils.updateAutoTuningParameters(props);
+      tuningParameterUtils.updateAutoTuningParameters(props);
 
       HadoopTuningConfigurationInjector.prepareResourcesToInject(props,
           HadoopTuningSecurePigWrapper.getWorkingDirectory(props));

@@ -30,6 +30,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
+import org.mockito.Mock;
 
 import azkaban.flow.CommonJobProperties;
 import azkaban.jobtype.HadoopConfigurationInjector;
@@ -46,17 +47,24 @@ import com.google.gson.Gson;
  */
 public class TuningParameterUtils {
 
-  private static Logger log = Logger.getRootLogger();
-  private static final int DEFAULT_TUNING_API_RETRY_COUNT = 3;
-  private static final int DEFAULT_TUNING_API_TIMEOUT_MS = 10000;
+  private Logger log = Logger.getRootLogger();
 
-  private static final String TUNING_API_RETRY_COUNT = "tuning.api.retry.count";
-  private static final String TUNING_API_TIMEOUT = "tuning.api.timeout";
-  private static final String AZKABAN = "azkaban";
-  private static final String TUNING_API_VERSION = "2";
+  private CloseableHttpClient httpClient;
 
-  private TuningParameterUtils() {
+  private final int DEFAULT_TUNING_API_RETRY_COUNT = 3;
+  private final int DEFAULT_TUNING_API_TIMEOUT_MS = 10000;
 
+  private final String TUNING_API_RETRY_COUNT = "tuning.api.retry.count";
+  private final String TUNING_API_TIMEOUT = "tuning.api.timeout";
+  private final String AZKABAN = "azkaban";
+  private final String TUNING_API_VERSION = "2";
+
+  public TuningParameterUtils(CloseableHttpClient httpClient) {
+    this.httpClient = httpClient;
+  }
+
+  public TuningParameterUtils() {
+    httpClient = HttpClients.createDefault();
   }
 
   /**
@@ -64,7 +72,7 @@ public class TuningParameterUtils {
    * @param props
    * @return Map of parameter name and value
    */
-  public static Map<String, String> getHadoopProperties(Props props) {
+  public Map<String, String> getHadoopProperties(Props props) {
     Map<String, String> confProperties = props.getMapByPrefix(HadoopConfigurationInjector.INJECT_PREFIX);
     if (log.isDebugEnabled()) {
       for (Map.Entry<String, String> entry : confProperties.entrySet()) {
@@ -79,7 +87,7 @@ public class TuningParameterUtils {
    * This method will retry 3 times in case there is timeout while calling rest API.
    * @param props
    */
-  public static void updateAutoTuningParameters(Props props) {
+  public void updateAutoTuningParameters(Props props) {
     int retryCount = 0;
     Map<String, String> params = null;
     if (!props.containsKey(TuningCommonConstants.TUNING_API_END_POINT)) {
@@ -119,11 +127,9 @@ public class TuningParameterUtils {
    * @throws ParseException
    */
   @SuppressWarnings({ "unchecked" })
-  public static Map<String, String> getCurrentRunParameters(Props props) throws IOException {
+  public Map<String, String> getCurrentRunParameters(Props props) throws IOException {
 
     log.debug("Properties are " + props.toString());
-
-    CloseableHttpClient httpClient = HttpClients.createDefault();
 
     HttpResponse response = null;
     String endPoint = props.get(TuningCommonConstants.TUNING_API_END_POINT);
@@ -222,7 +228,7 @@ public class TuningParameterUtils {
    * @param props Azkaban Props object
    * @return JSON string of default hadoop parameter map
    */
-  public static String getDefaultJobParameterJSON(Props props) {
+  public String getDefaultJobParameterJSON(Props props) {
     Map<String, String> paramValueMap = getHadoopProperties(props);
     Gson gson = new Gson();
     String jobParamsJson = gson.toJson(paramValueMap);
