@@ -16,6 +16,8 @@
 	<property name="java.src.dir" value="${basedir}/src" />
 	<property name="java.src.test.dir" value="${basedir}/test" />
 	<property name="azkaban-jobtype-jar" value="${dist.jar.dir}/${name}-${version}.jar" />
+	<property name="az-teradata-hadoop-connector-jar"
+		value="${dist.jar.dir}/az-teradata-hadoop-connector-${version}.jar" />
 	<property name="jobtypes.dir" value="${basedir}/jobtypes" />
 	<property name="javatype.dir" value="${basedir}/jobtypes/java" />
 	<property name="pigtype.dir" value="${basedir}/jobtypes/pig" />
@@ -91,7 +93,10 @@
 		<javac fork="true" destdir="${dist.classes.dir}"
 			target="1.8" debug="true" deprecation="false" failonerror="true">
 			<src path="${java.src.dir}" />
-			<src path="${hadoopsecuritymanager-common.java.src.dir}" />
+
+			<!--The jobtype compilcation destination should not include hadoop security manager
+			byte code.-->
+			<!--<src path="${hadoopsecuritymanager-common.java.src.dir}" />-->
 
 			<exclude name="**/examples/**"/>
 			<classpath refid="main.classpath" />
@@ -132,7 +137,14 @@
 	<target name="jars" depends="junit" description="Compile main source tree java files">
 
 		<mkdir dir="${dist.jar.dir}" />
+
 		<jar destfile="${azkaban-jobtype-jar}">
+			<fileset dir="${dist.classes.dir}">
+				<include name="**/*.*" />
+			</fileset>
+		</jar>
+
+		<jar destfile="${az-teradata-hadoop-connector-jar}">
 			<fileset dir="${dist.classes.dir}">
 				<include name="**/*.*" />
 			</fileset>
