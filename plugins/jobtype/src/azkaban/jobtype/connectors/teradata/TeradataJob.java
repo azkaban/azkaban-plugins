@@ -62,6 +62,10 @@ public abstract class TeradataJob extends HadoopJavaJob {
   }
 
 
+  // Copy the method from HadoopJavaJob class. Since TeradataJob will eventually move to the main
+  // AZ repo, we'd keep private method in HadoopJava, and will deprecate this method during the
+  // move.
+  // TODO kunkun-tang: Remove the method when moving teradata job to the main AZ repo.
   private static String getSourcePathFromClass(Class<?> containedClass) {
     File file =
         new File(containedClass.getProtectionDomain().getCodeSource()
