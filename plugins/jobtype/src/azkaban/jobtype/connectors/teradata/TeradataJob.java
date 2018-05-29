@@ -15,6 +15,7 @@ import static azkaban.jobtype.connectors.teradata.TdchConstants.*;
 
 import java.io.File;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
 
@@ -49,10 +50,37 @@ public abstract class TeradataJob extends HadoopJavaJob {
    */
   @Override
   protected List<String> getClassPaths() {
+
+    List<String> hadoopJavaClassPath = super.getClassPaths();
+
     return ImmutableList.<String>builder()
                         //TDCH w. Tdwallet requires a classpath point to unjarred folder.
                         .add(TeraDataWalletInitializer.getTdchUnjarFolder())
                         .add(TeraDataWalletInitializer.getTdchUnjarFolder() + File.separator + "lib" + File.separator + "*")
-                        .addAll(super.getClassPaths()).build();
+                        .add(getSourcePathFromClass(TeradataToHdfsJobRunnerMain.class))
+                        .addAll(hadoopJavaClassPath).build();
+  }
+
+
+  private static String getSourcePathFromClass(Class<?> containedClass) {
+    File file =
+        new File(containedClass.getProtectionDomain().getCodeSource()
+            .getLocation().getPath());
+
+    if (!file.isDirectory() && file.getName().endsWith(".class")) {
+      String name = containedClass.getName();
+      StringTokenizer tokenizer = new StringTokenizer(name, ".");
+      while (tokenizer.hasMoreTokens()) {
+        tokenizer.nextElement();
+
+        file = file.getParentFile();
+      }
+      return file.getPath();
+    } else {
+      return containedClass.getProtectionDomain().getCodeSource().getLocation()
+          .getPath();
+    }
   }
 }
+
+
