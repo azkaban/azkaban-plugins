@@ -337,7 +337,8 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
       }
       page.add("dirsize", size);
     } catch (AccessControlException e) {
-      page.add("error_message", "Permission denied: " + e.getMessage());
+      String error_message = props.getString("configurable.error.access.message");
+      page.add("error_message", "Permission denied: " + error_message);
       page.add("no_fs", "true");
     } catch (IOException e) {
       page.add("error_message", "Error: " + e.getMessage());
