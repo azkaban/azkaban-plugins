@@ -54,7 +54,9 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
       "hdfs.browser.proxy.user";
   private static final String HADOOP_SECURITY_MANAGER_CLASS_PARAM =
       "hadoop.security.manager.class";
-
+  private static final String HDFSVIEWER_ACCESS_DENIED_MESSAGE = 
+      "viewer.access_denied_message";
+      
   private static final int DEFAULT_FILE_MAX_LINES = 1000;
 
   private int fileMaxLines;
@@ -337,7 +339,7 @@ public class HdfsBrowserServlet extends LoginAbstractAzkabanServlet {
       }
       page.add("dirsize", size);
     } catch (AccessControlException e) {
-      String error_message = props.getString("configurable.error.access.message");
+      String error_message = props.getString(HDFSVIEWER_ACCESS_DENIED_MESSAGE);
       page.add("error_message", "Permission denied: " + error_message);
       page.add("no_fs", "true");
     } catch (IOException e) {
