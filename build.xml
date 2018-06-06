@@ -86,10 +86,6 @@ ${current.time}
 			<fileset dir="plugins/hadoopsecuritymanager-yarn" includes="build.xml" />
 		</subant>
 		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/hdfsviewer" includes="build.xml" />
-		</subant>
-		<subant target="package">
 		  <property name="version" value="${git.tag}" />
 		  <fileset dir="plugins/crypto" includes="build.xml" />
 		</subant>
@@ -105,24 +101,12 @@ ${current.time}
 			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/pigvisualizer" includes="build.xml" />
 		</subant>
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/reportal" includes="build.xml" />
-		</subant>
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/jobsummary" includes="build.xml" />
-		</subant>
 	</target>
 
 	<target name="package-dep-yarn" depends="createDist,clean,repo.file" description="Create azkaban jar">
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/hadoopsecuritymanager-yarn" includes="build.xml" />
-		</subant>
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/hdfsviewer" includes="build.xml" />
 		</subant>
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
@@ -135,14 +119,6 @@ ${current.time}
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/pigvisualizer" includes="build.xml" />
-		</subant>
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/reportal" includes="build.xml" />
-		</subant>
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/jobsummary" includes="build.xml" />
 		</subant>
 		<subant target="package">
 		  <property name="version" value="${git.tag}" />
@@ -155,11 +131,6 @@ ${current.time}
 		<mkdir dir="${dist.packages.dir}" />
 
 		<!-- Copy Azkaban jars and libs-->
-		<copy todir="${dist.packages.dir}/viewer/hdfs" >
-			<fileset dir="${dist.dir}/hdfsviewer/packages" >
-				<exclude name="azkaban-hdfs-viewer-*.gz"/>
-			</fileset>
-		</copy>
 
 		<copy todir="${dist.packages.dir}/jobtypes" >
 			<fileset dir="${dist.dir}/jobtype/packages" >
@@ -183,11 +154,6 @@ ${current.time}
 		<mkdir dir="${dist.packages.dir}" />
 
 		<!-- Copy Azkaban jars and libs-->
-		<copy todir="${dist.packages.dir}/viewer/hdfs" >
-			<fileset dir="${dist.dir}/hdfsviewer/packages" >
-				<exclude name="azkaban-hdfs-viewer-*.gz"/>
-			</fileset>
-		</copy>
 
 		<copy todir="${dist.packages.dir}/jobtypes" >
 			<fileset dir="${dist.dir}/jobtype/packages" >
