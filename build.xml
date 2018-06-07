@@ -78,14 +78,6 @@ ${current.time}
 
 	<target name="package-dep" depends="createDist,clean,repo.file" description="Create azkaban jar">
 		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/hadoopsecuritymanager" includes="build.xml" />
-		</subant>
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/hadoopsecuritymanager-yarn" includes="build.xml" />
-		</subant>
-		<subant target="package">
 		  <property name="version" value="${git.tag}" />
 		  <fileset dir="plugins/crypto" includes="build.xml" />
 		</subant>
@@ -104,10 +96,6 @@ ${current.time}
 	</target>
 
 	<target name="package-dep-yarn" depends="createDist,clean,repo.file" description="Create azkaban jar">
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/hadoopsecuritymanager-yarn" includes="build.xml" />
-		</subant>
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/jobtype" includes="build.xml" />
