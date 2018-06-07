@@ -93,14 +93,6 @@ ${current.time}
 			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/jobtype" includes="build.xml" />
 		</subant>
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/javaviewer" includes="build.xml" />
-		</subant>
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/pigvisualizer" includes="build.xml" />
-		</subant>
 	</target>
 
 	<target name="package-dep-yarn" depends="createDist,clean,repo.file" description="Create azkaban jar">
@@ -111,14 +103,6 @@ ${current.time}
 		<subant target="package">
 			<property name="version" value="${git.tag}" />
 			<fileset dir="plugins/jobtype" includes="build.xml" />
-		</subant>
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/javaviewer" includes="build.xml" />
-		</subant>
-		<subant target="package">
-			<property name="version" value="${git.tag}" />
-			<fileset dir="plugins/pigvisualizer" includes="build.xml" />
 		</subant>
 		<subant target="package">
 		  <property name="version" value="${git.tag}" />
@@ -135,12 +119,6 @@ ${current.time}
 		<copy todir="${dist.packages.dir}/jobtypes" >
 			<fileset dir="${dist.dir}/jobtype/packages" >
 				<exclude name="azkaban-jobtype-*.gz"/>
-			</fileset>
-		</copy>
-
-		<copy todir="${dist.packages.dir}/viewer/javaviewer" >
-			<fileset dir="${dist.dir}/jobtype/packages" >
-				<exclude name="azkaban-javaviewer-*.gz"/>
 			</fileset>
 		</copy>
 
