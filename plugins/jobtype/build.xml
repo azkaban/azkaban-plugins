@@ -71,15 +71,6 @@
 	</target>
 
 	<target name="build" depends="clean" description="Compile main source tree java files">
-		<delete>
-			<fileset file="${lib.dir}/azkaban-hadoopsecuritymanager-*.jar">
-			</fileset>
-		</delete>
-		<!-- copy the latest securitymanager jar -->
-		<copy todir="${lib.dir}">
-			<fileset file="${hadoopsecuritymanagerjar}">
-			</fileset>
-		</copy>
 
 		<delete dir="${dist.classes.dir}" />
 		<mkdir dir="${dist.classes.dir}" />
