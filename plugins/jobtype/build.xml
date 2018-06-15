@@ -175,7 +175,8 @@
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hive" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/hdfsToTeradata" />
 		<copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/teradataToHdfs" />
-                <copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/gobblin" />
+        <copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/gobblin" />
+        <copy file="${azkaban-jobtype-jar}" todir="${dist.packages.dir}/runSql"/>
 
 		<!-- Copy hadoopsecuritymanager-->
 		<copy file="${hadoopsecuritymanagerjar}" todir="${dist.packages.dir}/java" />
